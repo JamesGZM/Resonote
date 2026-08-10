@@ -9,6 +9,10 @@ must not be used as the only implementation source.
 
 ## Documentation
 
+- [Architecture](docs/ARCHITECTURE.md)
+- [Dependency matrix](docs/DEPENDENCY_MATRIX.md)
+- [ADR-0001: Now in Android reference baseline](docs/adr/0001-now-in-android-reference-baseline.md)
+- [ADR-0002: MoeKoe functional reference](docs/adr/0002-moekoe-functional-reference.md)
 - [Design system plan](design/DESIGN_SYSTEM_PLAN.md)
 - [Foundation](design/FOUNDATION.md)
 - [Component system](design/COMPONENT_SYSTEM.md)
@@ -30,8 +34,22 @@ System specification.
 ## Status
 
 Foundation 00–05, Component System 06–08, and the Validation specification are
-frozen. Android implementation evidence for the Validation matrix will be
-added when the app implementation is available.
+frozen. The Android foundation now includes the Gradle build, Material3 1.4.0
+theme tokens, a minimal app, and the standalone Foundation Catalog. Components
+06–08 and Validation cases V-01–V-10 are not implemented or marked as passed.
+
+## Build
+
+JDK 17 and Android SDK 36 are required.
+
+```bash
+./gradlew :app:assembleDebug :app-resonote-catalog:assembleDebug
+```
+
+Install or run `app` for the minimal product shell, and
+`app-resonote-catalog` for Light, Dark, AMOLED, and token inspection.
+Frozen color specifications use `#RRGGBB`; the Catalog displays runtime colors
+as `#AARRGGBB` so their alpha channel remains visible during inspection.
 
 ## License
 
