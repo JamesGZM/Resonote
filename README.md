@@ -9,6 +9,9 @@ must not be used as the only implementation source.
 
 ## Documentation
 
+- [Architecture](docs/ARCHITECTURE.md)
+- [ADR-0001: Now in Android reference baseline](docs/adr/0001-now-in-android-reference-baseline.md)
+- [ADR-0002: MoeKoe functional reference](docs/adr/0002-moekoe-functional-reference.md)
 - [Design system plan](design/DESIGN_SYSTEM_PLAN.md)
 - [Foundation](design/FOUNDATION.md)
 - [Component system](design/COMPONENT_SYSTEM.md)
