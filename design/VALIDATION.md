@@ -1,7 +1,7 @@
 # Resonote Design System Validation
 
-> 状态：规范已冻结；实现证据待 App 实现  
-> 更新日期：2026-08-10  
+> 状态：规范已冻结；实现证据补充中
+> 更新日期：2026-08-11
 > 依赖：[FOUNDATION.md](./FOUNDATION.md)、[COMPONENT_SYSTEM.md](./COMPONENT_SYSTEM.md)  
 > 证据原则：实现截图、自动化结果与录屏用于证明实现；设计稿不能替代实现证据
 
@@ -11,7 +11,7 @@
 
 - 本文记录验证维度、用例、通过条件、证据路径和缺陷分级。
 - `design/approved/` 与 `design/review/` 中的图片只用于设计审阅，不计作 App 实现证据。
-- 当前仓库尚无可验证的 Android App 模块，因此实现截图、语义树、测试日志和动态录屏保持为“待实现验证”，不得用合成稿补位。
+- 当前仓库已有最小 App、独立 Catalog、Design System 与截图测试模块；06A 已开始提供自动化实现证据，其余范围继续保持“待实现验证”，不得用合成稿补位。
 - “规范已冻结”只表示验证维度、用例、门槛、证据合同与缺陷分级已经确定，不表示任何 V-01–V-10 用例已经执行或通过。
 - Player 产品层不属于当前验证范围；Player 接入设计系统后另建产品验证矩阵。
 
@@ -45,7 +45,7 @@
 | V-01 | 全局颜色 | Light / Dark / AMOLED × 主要页面 | Role 映射正确；正文与操作对比度符合 01H | 三主题实现截图 + 对比度报告 | 待实现验证 |
 | V-02 | Typography | 1.0 / 1.3 / 2.0 × 中英混排 / 超长内容 | 无裁切、重叠、强制缩字；阅读顺序正确 | 实现截图 + Layout Inspector | 待实现验证 |
 | V-03 | Adaptive Layout | Compact / Medium / Expanded / Large / Extra-large × 导航与筛选状态 | 导航形态按 03D 切换；Large/Extra-large 复用 Expanded 拓扑但分别验证内容限宽；目的地、查询和筛选不重置 | 五窗口截图 + 状态切换录屏 | 待实现验证 |
-| V-04 | Buttons / Icon Buttons | Enabled / Hover / Focused / Pressed / Disabled / Loading | 目标、图标、状态层、焦点环与 04A、05B、06 一致 | 状态截图 + 指针/键盘录屏 | 待实现验证 |
+| V-04 | Buttons / Icon Buttons | Enabled / Hover / Focused / Pressed / Disabled / Loading | 目标、图标、状态层、焦点环与 04A、05B、06 一致 | 状态截图 + 指针/键盘录屏 | Not Run（06A 已有部分自动化覆盖） |
 | V-05 | Inputs / Selection | Empty / Focused / Filled / Error / Disabled × 2.0 | Label、Support Text、错误语义稳定；不会遮挡输入 | 状态截图 + 语义树 | 待实现验证 |
 | V-06 | Navigation | Bar / Rail / Drawer × Touch / Keyboard / D-pad / TalkBack | 选中项唯一；焦点可见；顺序稳定；可朗读当前项 | 窗口截图 + 无障碍测试日志 | 待实现验证 |
 | V-07 | Feedback | Loading / Empty / Error / Offline / Permission denied | 状态语义不混用；均有明确恢复或退出路径 | 状态截图 + 操作录屏 | 待实现验证 |
@@ -89,6 +89,15 @@ design/validation/
 
 每条证据必须能追溯到 App 版本、设备/API、测试日期和用例 ID。截图不得裁掉系统栏或关键上下文；涉及动态行为时同时提交录屏，不能只提交终态截图。
 
+06A 自动化回归基线保存在 `core/designsystem/src/test/screenshots/`，通过以下命令录制和验证：
+
+```bash
+./gradlew :core:designsystem:recordRoborazziDebug
+./gradlew :core:designsystem:verifyRoborazziDebug
+```
+
+这些 Golden 覆盖 Light、Dark、AMOLED、200% 字号、Disabled、Loading 与 Toggle 状态，属于组件级回归证据；它们不替代 Hover、Focused、Pressed、TalkBack、键盘和真实设备录屏，也不构成 V-04 Pass。
+
 ## 7. 结果记录与缺陷分级
 
 | 级别 | 定义 | 发布处理 |
@@ -106,4 +115,4 @@ design/validation/
 - Light、Dark、AMOLED，1.0 与 2.0 字号，Compact、Medium、Expanded、Large、Extra-large 均有真实实现证据。
 - TalkBack、Keyboard/D-pad、RTL 与 Motion Scale 0 专项通过。
 - 所有证据路径有效并可追溯；设计稿未被当作实现截图。
-- 当前章节状态：**规范已冻结；实现证据待 App 实现**。
+- 当前章节状态：**规范已冻结；实现证据补充中。V-04 已有部分自动化覆盖，但完整用例仍为 Not Run**。

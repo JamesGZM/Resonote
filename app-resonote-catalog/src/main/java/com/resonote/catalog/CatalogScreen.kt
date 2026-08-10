@@ -88,6 +88,8 @@ internal fun CatalogScreen(
                 ShapeGallery()
                 SectionTitle("Extended foundation tokens")
                 ExtendedTokenValues()
+                SectionTitle("06A · Buttons & Actions")
+                ActionsCatalog()
                 Spacer(Modifier.height(ResonoteTokens.spacing.space6))
                 Text(
                     text = "Catalog 是实现证据入口，不代表 V-01–V-10 已通过。",

@@ -36,6 +36,7 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 include(":app")
 include(":app-resonote-catalog")
 include(":core:designsystem")
+include(":core:screenshot-testing")
 
 check(JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
     "Resonote requires JDK 17 or newer. Current JDK: ${JavaVersion.current()}"

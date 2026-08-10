@@ -1,7 +1,7 @@
 # Resonote Design System Plan
 
 > 状态：执行基线  
-> 更新日期：2026-08-10  
+> 更新日期：2026-08-11
 > 规范源：[FOUNDATION.md](./FOUNDATION.md) 及后续分层规范文档  
 > 交付格式：Markdown 规则 + 必要的视觉证据  
 > 执行方式：先顺序完成规划内规范与必要视觉证据，再统一审阅和冻结  
@@ -21,7 +21,7 @@ Player 属于产品设计层，不属于当前 Foundation 建设。已有 Player
 |---|---|---|---|
 | Foundation | [FOUNDATION.md](./FOUNDATION.md) | 00–05：Brand、Color、Typography、Shape、Layout、Icon、Motion、States、Accessibility | 已冻结 |
 | Component System | [COMPONENT_SYSTEM.md](./COMPONENT_SYSTEM.md) | 06–08：Core、Navigation、Feedback、Music Components | 已冻结 |
-| Validation | [VALIDATION.md](./VALIDATION.md) | 11：Theme、字体、Window Size Class、内容与状态矩阵 | 规范已冻结；实现证据待 App 实现 |
+| Validation | [VALIDATION.md](./VALIDATION.md) | 11：Theme、字体、Window Size Class、内容与状态矩阵 | 规范已冻结；实现证据补充中 |
 | Player Product Design | 暂不建立 | Playback Theme、Player Layout 与播放专属组件 | 不在当前范围 |
 
 文档职责：
@@ -164,4 +164,11 @@ Player 属于产品设计层，不属于当前 Foundation 建设。已有 Player
 | 06 Core Components | 文档 + PNG | 已冻结 |
 | 07 Navigation & Feedback | 文档 + 3 PNG | 已冻结 |
 | 08 Music Components | 文档 + PNG | 已冻结；Resonote Extension |
-| 11 Validation Matrix | 文档；实现阶段补截图、录屏与报告 | 规范已冻结；实现证据待 App 实现 |
+| 11 Validation Matrix | 文档；实现阶段补截图、录屏与报告 | 规范已冻结；实现证据补充中，V-04 部分自动化覆盖 |
+
+## 8. 实现进度
+
+- Foundation Theme、Light / Dark / AMOLED ColorScheme、Typography、Shape 与扩展 Token 已在 `core:designsystem` 实现。
+- 06A Buttons & Actions 已实现品牌化 Button、Icon Button 与 Toggle Icon Button，并接入独立 Catalog App。
+- `core:screenshot-testing` 已建立；06A 已提交 Light、Dark、AMOLED 与 200% 字号 Roborazzi Golden，并通过行为、语义、触控边界和截图回归测试。
+- V-04 当前为部分自动化覆盖；Hover、Focused、Pressed、真实设备 TalkBack 与键盘路径仍为待实现验证，不标记为 Pass。
