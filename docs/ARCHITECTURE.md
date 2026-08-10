@@ -1,6 +1,6 @@
 # Resonote Architecture
 
-> 状态：架构参考基线；尚未创建 Android/Gradle 工程
+> 状态：架构参考基线；阶段 1 与 Foundation Theme/Token 基座已创建
 > 更新日期：2026-08-10
 > 参考项目：Now in Android（NIA）
 > 参考提交：[`7d45eae4f8720a0c77f507712ba2437ff974b6ed`](https://github.com/android/nowinandroid/tree/7d45eae4f8720a0c77f507712ba2437ff974b6ed)
