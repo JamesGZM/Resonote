@@ -1,0 +1,145 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1597" height="985" viewBox="0 0 1597 985">
+<defs>
+  <linearGradient id="coverAGrad" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#51142A"/><stop offset=".52" stop-color="#AE2A4B"/><stop offset="1" stop-color="#FFB1C0"/>
+  </linearGradient>
+  <linearGradient id="coverBGrad" x1="0" y1="1" x2="1" y2="0">
+    <stop offset="0" stop-color="#1C4263"/><stop offset=".5" stop-color="#5B8DB8"/><stop offset="1" stop-color="#E6F2FF"/>
+  </linearGradient>
+  <linearGradient id="wideGrad" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#19143B"/><stop offset=".45" stop-color="#7057D9"/><stop offset="1" stop-color="#F5B5FF"/>
+  </linearGradient>
+  <linearGradient id="portraitGrad" x1="0" y1="1" x2="1" y2="0">
+    <stop offset="0" stop-color="#1A4D3E"/><stop offset=".55" stop-color="#57A87B"/><stop offset="1" stop-color="#E9FFD4"/>
+  </linearGradient>
+  <clipPath id="coverMainClip"><rect x="78" y="220" width="282" height="282" rx="34"/></clipPath>
+  <clipPath id="coverSmallClip"><rect x="78" y="620" width="112" height="112" rx="14"/></clipPath>
+  <clipPath id="coverCompactClip"><rect x="218" y="620" width="112" height="112" rx="10"/></clipPath>
+  <clipPath id="wideCropClip"><rect x="704" y="202" width="250" height="250" rx="22"/></clipPath>
+  <clipPath id="portraitCropClip"><rect x="704" y="552" width="250" height="250" rx="22"/></clipPath>
+  <clipPath id="loadedClip"><rect x="1100" y="205" width="170" height="170" rx="20"/></clipPath>
+  <symbol id="albumIcon" viewBox="0 -960 960 960"><path d="M480-300q75 0 127.5-52.5T660-480q0-75-52.5-127.5T480-660q-75 0-127.5 52.5T300-480q0 75 52.5 127.5T480-300Zm-28.5-151.5Q440-463 440-480t11.5-28.5Q463-520 480-520t28.5 11.5Q520-497 520-480t-11.5 28.5Q497-440 480-440t-28.5-11.5ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></symbol>
+  <style>
+    .bg{fill:#FFFBFF}.ink{fill:#201A1B}.muted{fill:#524344}.rose{fill:#AE2A4B}.rule{stroke:#847374;stroke-width:1}.guide{fill:none;stroke:#AE2A4B;stroke-width:2;stroke-dasharray:8 6}.frame{fill:#FFF8F7;stroke:#D7C1C3;stroke-width:1.5}.loading{fill:#F2E5E5}.missing{fill:#ECE0E0}.mast{font:600 42px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:12px}.title{font:500 27px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:3px}.head{font:600 22px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:2px}.label{font:500 15px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:1.3px}.small{font:500 13px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:1px}.foot{font:500 15px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:2px}
+  </style>
+</defs>
+
+<rect width="1597" height="985" class="bg"/>
+<text x="30" y="60" class="mast ink">RESONOTE</text>
+<text x="850" y="53" class="title ink">04B / ALBUM ARTWORK</text>
+<text x="1565" y="38" text-anchor="end" class="small ink">CONTAINER / 1:1 · CROP · CENTER</text>
+<text x="1565" y="62" text-anchor="end" class="small ink">STATE / LOADING · LOADED · FALLBACK</text>
+<line x1="30" y1="84" x2="1567" y2="84" class="rule"/>
+<line x1="535" y1="125" x2="535" y2="870" class="rule"/>
+<line x1="1055" y1="125" x2="1055" y2="870" class="rule"/>
+
+<text x="35" y="145" class="head rose">01</text>
+<text x="82" y="145" class="head ink">RATIO &amp; SHAPE</text>
+<text x="575" y="145" class="head rose">02</text>
+<text x="622" y="145" class="head ink">EXTREME SOURCE CROP</text>
+<text x="1090" y="145" class="head rose">03</text>
+<text x="1137" y="145" class="head ink">STATE MODEL</text>
+
+<!-- 01: one artwork, consistent square containers -->
+<g clip-path="url(#coverMainClip)">
+  <rect x="78" y="220" width="282" height="282" fill="url(#coverAGrad)"/>
+  <circle cx="310" cy="270" r="118" fill="#FFD9DD" opacity=".35"/>
+  <circle cx="200" cy="385" r="92" fill="#201A1B" opacity=".84"/>
+  <path d="M80 475L360 265V505H80Z" fill="#FFFBFF" opacity=".2"/>
+  <circle cx="200" cy="385" r="28" fill="#FFB1C0"/>
+</g>
+<rect x="78" y="220" width="282" height="282" rx="34" fill="none" stroke="#847374" stroke-width="1.5"/>
+<text x="78" y="540" class="label ink">STANDARD / 1:1</text>
+<text x="78" y="570" class="label rose">SHAPE MEDIUM / 12dp</text>
+
+<g clip-path="url(#coverSmallClip)">
+  <rect x="78" y="620" width="112" height="112" fill="url(#coverAGrad)"/>
+  <circle cx="170" cy="640" r="46" fill="#FFD9DD" opacity=".35"/>
+  <circle cx="126" cy="687" r="36" fill="#201A1B" opacity=".84"/>
+</g>
+<rect x="78" y="620" width="112" height="112" rx="14" fill="none" stroke="#847374"/>
+<g clip-path="url(#coverCompactClip)">
+  <rect x="218" y="620" width="112" height="112" fill="url(#coverBGrad)"/>
+  <path d="M218 700Q270 630 330 650V732H218Z" fill="#201A1B" opacity=".66"/>
+  <circle cx="290" cy="666" r="23" fill="#E6F2FF" opacity=".7"/>
+</g>
+<rect x="218" y="620" width="112" height="112" rx="10" fill="none" stroke="#847374"/>
+<text x="78" y="770" class="small ink">DEFAULT / 12dp</text>
+<text x="218" y="770" class="small ink">COMPACT / 8dp</text>
+<text x="78" y="815" class="small muted">SAME MEDIA · SAME CROP RULE</text>
+<text x="78" y="845" class="small muted">SIZE IS DEFINED BY COMPONENTS</text>
+
+<!-- 02: wide and portrait inputs, both center-cropped into square -->
+<svg x="575" y="222" width="84" height="210" viewBox="0 0 240 600" preserveAspectRatio="xMidYMid meet">
+  <rect width="240" height="600" fill="url(#portraitGrad)"/>
+  <circle cx="120" cy="180" r="78" fill="#E9FFD4" opacity=".55"/>
+  <path d="M0 470Q105 270 240 390V600H0Z" fill="#15382E"/>
+  <path d="M70 70L190 530" stroke="#FFFBFF" stroke-width="24" opacity=".35"/>
+</svg>
+<rect x="575" y="222" width="84" height="210" fill="none" stroke="#847374"/>
+<rect x="575" y="285" width="84" height="84" class="guide"/>
+<path d="M659 327H704" class="guide"/>
+<g clip-path="url(#wideCropClip)">
+  <svg x="704" y="202" width="250" height="250" viewBox="0 0 240 600" preserveAspectRatio="xMidYMid slice">
+    <rect width="240" height="600" fill="url(#portraitGrad)"/>
+    <circle cx="120" cy="180" r="78" fill="#E9FFD4" opacity=".55"/>
+    <path d="M0 470Q105 270 240 390V600H0Z" fill="#15382E"/>
+    <path d="M70 70L190 530" stroke="#FFFBFF" stroke-width="24" opacity=".35"/>
+  </svg>
+</g>
+<rect x="704" y="202" width="250" height="250" rx="22" fill="none" stroke="#847374" stroke-width="1.5"/>
+<text x="575" y="480" class="small ink">PORTRAIT INPUT</text>
+<text x="780" y="480" class="small ink">OUTPUT / 1:1</text>
+<text x="704" y="508" class="small rose">CENTER CROP / NO STRETCH</text>
+
+<svg x="575" y="640" width="110" height="44" viewBox="0 0 600 240" preserveAspectRatio="xMidYMid meet">
+  <rect width="600" height="240" fill="url(#wideGrad)"/>
+  <circle cx="300" cy="120" r="84" fill="#FFEEFF" opacity=".58"/>
+  <path d="M0 200L220 70L410 190L600 42V240H0Z" fill="#241B5B" opacity=".8"/>
+</svg>
+<rect x="575" y="640" width="110" height="44" fill="none" stroke="#847374"/>
+<rect x="608" y="640" width="44" height="44" class="guide"/>
+<path d="M685 662H704" class="guide"/>
+<g clip-path="url(#portraitCropClip)">
+  <svg x="704" y="552" width="250" height="250" viewBox="0 0 600 240" preserveAspectRatio="xMidYMid slice">
+    <rect width="600" height="240" fill="url(#wideGrad)"/>
+    <circle cx="300" cy="120" r="84" fill="#FFEEFF" opacity=".58"/>
+    <path d="M0 200L220 70L410 190L600 42V240H0Z" fill="#241B5B" opacity=".8"/>
+  </svg>
+</g>
+<rect x="704" y="552" width="250" height="250" rx="22" fill="none" stroke="#847374" stroke-width="1.5"/>
+<text x="575" y="830" class="small ink">WIDE INPUT</text>
+<text x="780" y="830" class="small ink">OUTPUT / 1:1</text>
+<text x="704" y="858" class="small rose">CENTER CROP / NO LETTERBOX</text>
+
+<!-- 03: loaded, loading, missing and safe error fallback -->
+<g clip-path="url(#loadedClip)">
+  <rect x="1100" y="205" width="170" height="170" fill="url(#coverBGrad)"/>
+  <circle cx="1235" cy="240" r="65" fill="#E6F2FF" opacity=".58"/>
+  <path d="M1100 340Q1185 230 1270 295V375H1100Z" fill="#183B59"/>
+</g>
+<rect x="1100" y="205" width="170" height="170" rx="20" fill="none" stroke="#847374"/>
+<text x="1185" y="402" text-anchor="middle" class="label ink">LOADED</text>
+
+<rect x="1360" y="205" width="170" height="170" rx="20" class="loading"/>
+<rect x="1390" y="258" width="110" height="14" rx="7" fill="#D7C1C3"/>
+<rect x="1415" y="292" width="60" height="14" rx="7" fill="#D7C1C3"/>
+<text x="1445" y="402" text-anchor="middle" class="label ink">LOADING / STATIC</text>
+
+<rect x="1100" y="500" width="170" height="170" rx="20" class="missing"/>
+<g transform="translate(1143 628) scale(.09)" class="muted"><use href="#albumIcon"/></g>
+<text x="1185" y="697" text-anchor="middle" class="label ink">MISSING</text>
+
+<rect x="1360" y="500" width="170" height="170" rx="20" class="missing"/>
+<g transform="translate(1403 628) scale(.09)" class="muted"><use href="#albumIcon"/></g>
+<text x="1445" y="697" text-anchor="middle" class="label ink">ERROR / SAFE FALLBACK</text>
+
+<line x1="1090" y1="745" x2="1535" y2="745" class="rule"/>
+<text x="1090" y="782" class="small ink">ALL STATES / SAME 1:1 + SAME SHAPE</text>
+<text x="1090" y="814" class="small ink">NO FILTER · NO RANDOM COLOR · NO LAYOUT SHIFT</text>
+<text x="1090" y="846" class="small muted">ADJACENT LABEL → CONTENT DESCRIPTION = NULL</text>
+
+<line x1="30" y1="900" x2="1567" y2="900" class="rule"/>
+<text x="35" y="936" class="foot ink">RESONOTE DESIGN SYSTEM</text>
+<text x="1565" y="936" text-anchor="end" class="foot ink">ALBUM ARTWORK / RATIO · CROP · SHAPE · STATE</text>
+</svg>

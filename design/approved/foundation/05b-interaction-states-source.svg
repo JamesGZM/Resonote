@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1597" height="985" viewBox="0 0 1597 985">
+<defs>
+  <symbol id="check" viewBox="0 -960 960 960"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></symbol>
+  <symbol id="error" viewBox="0 -960 960 960"><path d="M508.5-291.5Q520-303 520-320t-11.5-28.5Q497-360 480-360t-28.5 11.5Q440-337 440-320t11.5 28.5Q463-280 480-280t28.5-11.5ZM440-440h80v-240h-80v240Zm40 360q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></symbol>
+  <symbol id="progress" viewBox="0 -960 960 960"><path d="M325-111.5q-73-31.5-127.5-86t-86-127.5Q80-398 80-480.5t31.5-155q31.5-72.5 86-127t127.5-86Q398-880 480-880q17 0 28.5 11.5T520-840q0 17-11.5 28.5T480-800q-133 0-226.5 93.5T160-480q0 133 93.5 226.5T480-160q133 0 226.5-93.5T800-480q0-17 11.5-28.5T840-520q17 0 28.5 11.5T880-480q0 82-31.5 155t-86 127.5q-54.5 54.5-127 86T480.5-80Q398-80 325-111.5Z"/></symbol>
+  <style>
+    .bg{fill:#FFFBFF}.ink{fill:#201A1B}.muted{fill:#524344}.rose{fill:#AE2A4B}.onRose{fill:#FFFFFF}.rule{stroke:#847374;stroke-width:1}.outline{stroke:#847374;stroke-width:1.5;fill:none}.primary{fill:#AE2A4B}.primaryContainer{fill:#FFD9DD}.surface{fill:#FFF8F7}.surfaceHigh{fill:#F2E5E5}.errorContainer{fill:#FFDAD6}.errorInk{fill:#BA1A1A}.mast{font:600 42px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:12px}.title{font:500 27px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:3px}.head{font:600 22px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:2px}.label{font:600 15px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:1.3px}.small{font:500 13px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:1px}.foot{font:500 15px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:2px}
+  </style>
+</defs>
+<rect width="1597" height="985" class="bg"/>
+<text x="30" y="60" class="mast ink">RESONOTE</text>
+<text x="890" y="53" class="title ink">05B / INTERACTION STATES</text>
+<text x="1565" y="38" text-anchor="end" class="small ink">LAYER / 8 · 10 · 10 · 16%</text>
+<text x="1565" y="62" text-anchor="end" class="small ink">STATUS / VISUAL + SEMANTIC</text>
+<line x1="30" y1="84" x2="1567" y2="84" class="rule"/>
+<line x1="535" y1="125" x2="535" y2="870" class="rule"/>
+<line x1="1055" y1="125" x2="1055" y2="870" class="rule"/>
+
+<text x="35" y="145" class="head rose">01</text><text x="82" y="145" class="head ink">STATE LAYERS</text>
+<text x="575" y="145" class="head rose">02</text><text x="622" y="145" class="head ink">FOCUS &amp; TARGET</text>
+<text x="1090" y="145" class="head rose">03</text><text x="1137" y="145" class="head ink">PERSISTENT STATUS</text>
+
+<!-- State layer specimens -->
+<g>
+  <rect x="80" y="220" width="190" height="72" rx="36" class="primary"/>
+  <rect x="80" y="220" width="190" height="72" rx="36" fill="#FFFFFF" opacity=".08"/>
+  <text x="175" y="256" text-anchor="middle" dominant-baseline="middle" class="label onRose">HOVER</text>
+  <text x="80" y="323" class="small ink">ON COLOR / 8%</text>
+
+  <rect x="315" y="220" width="190" height="72" rx="36" class="primary"/>
+  <rect x="315" y="220" width="190" height="72" rx="36" fill="#FFFFFF" opacity=".10"/>
+  <rect x="311" y="216" width="198" height="80" rx="40" fill="none" stroke="#AE2A4B" stroke-width="2"/>
+  <text x="410" y="256" text-anchor="middle" dominant-baseline="middle" class="label onRose">FOCUS</text>
+  <text x="315" y="323" class="small ink">ON COLOR / 10% + RING</text>
+
+  <rect x="80" y="405" width="190" height="72" rx="36" class="primary"/>
+  <clipPath id="pressedClip"><rect x="80" y="405" width="190" height="72" rx="36"/></clipPath>
+  <g clip-path="url(#pressedClip)"><circle cx="175" cy="441" r="66" fill="#FFFFFF" opacity=".10"/></g>
+  <text x="175" y="441" text-anchor="middle" dominant-baseline="middle" class="label onRose">PRESSED</text>
+  <text x="80" y="508" class="small ink">RIPPLE / 10%</text>
+
+  <rect x="315" y="405" width="190" height="72" rx="36" class="primary"/>
+  <rect x="315" y="405" width="190" height="72" rx="36" fill="#FFFFFF" opacity=".16"/>
+  <svg x="464" y="423" width="36" height="36" viewBox="0 -960 960 960" class="onRose"><path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/></svg>
+  <text x="395" y="441" text-anchor="middle" dominant-baseline="middle" class="label onRose">DRAGGED</text>
+  <text x="315" y="508" class="small ink">ON COLOR / 16%</text>
+</g>
+<line x1="80" y1="565" x2="485" y2="565" class="rule"/>
+<text x="80" y="606" class="small ink">ONE LAYER AT A TIME</text>
+<text x="80" y="638" class="small muted">DRAGGED &gt; PRESSED &gt; FOCUSED &gt; HOVERED</text>
+<text x="80" y="690" class="small ink">CONTAINER → STATE LAYER → CONTENT</text>
+<text x="80" y="722" class="small muted">MOTION / EFFECTS FAST · NO DELAY</text>
+
+<!-- Focus, target, and combined selected/focus -->
+<rect x="622" y="220" width="240" height="240" rx="20" class="surface" stroke="#D7C1C3"/>
+<rect x="698" y="296" width="88" height="88" rx="12" fill="none" stroke="#847374" stroke-width="1.5" stroke-dasharray="7 5"/>
+<circle cx="742" cy="340" r="37" class="primaryContainer"/>
+<circle cx="742" cy="340" r="40" fill="none" stroke="#AE2A4B" stroke-width="2"/>
+<svg x="720" y="318" width="44" height="44" viewBox="0 -960 960 960" class="rose"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg>
+<text x="742" y="495" text-anchor="middle" class="label ink">ICON / 24dp</text>
+<text x="742" y="526" text-anchor="middle" class="small rose">LAYER 40dp · TARGET 48dp</text>
+
+<rect x="600" y="610" width="390" height="82" rx="41" class="primaryContainer"/>
+<rect x="596" y="606" width="398" height="90" rx="45" fill="none" stroke="#AE2A4B" stroke-width="2"/>
+<rect x="600" y="610" width="390" height="82" rx="41" fill="#51142A" opacity=".10"/>
+<svg x="670" y="631" width="41" height="41" viewBox="0 -960 960 960" class="rose"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg>
+<text x="731" y="651" dominant-baseline="middle" class="label ink">SELECTED + FOCUSED</text>
+<text x="600" y="735" class="small ink">CONTAINER + CHECK + FOCUS RING</text>
+<text x="600" y="768" class="small muted">COLOR IS NOT THE ONLY INDICATOR</text>
+
+<!-- Persistent state specimens -->
+<rect x="1100" y="205" width="390" height="72" rx="36" class="primary"/>
+<text x="1295" y="241" text-anchor="middle" dominant-baseline="middle" class="label onRose">ENABLED / SAVE</text>
+
+<rect x="1100" y="315" width="390" height="72" rx="36" class="primaryContainer"/>
+<svg x="1192" y="333" width="36" height="36" viewBox="0 -960 960 960" class="rose"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg>
+<text x="1244" y="351" dominant-baseline="middle" class="label ink">SELECTED / SAVED</text>
+
+<rect x="1100" y="425" width="390" height="72" rx="36" fill="#201A1B" opacity=".12"/>
+<text x="1295" y="461" text-anchor="middle" dominant-baseline="middle" class="label ink" opacity=".38">DISABLED / SAVE</text>
+
+<rect x="1100" y="535" width="390" height="72" rx="36" class="primary"/>
+<svg x="1195" y="556" width="30" height="30" viewBox="0 -960 960 960" class="onRose"><path d="M325-111.5q-73-31.5-127.5-86t-86-127.5Q80-398 80-480.5t31.5-155q31.5-72.5 86-127t127.5-86Q398-880 480-880q17 0 28.5 11.5T520-840q0 17-11.5 28.5T480-800q-133 0-226.5 93.5T160-480q0 133 93.5 226.5T480-160q133 0 226.5-93.5T800-480q0-17 11.5-28.5T840-520q17 0 28.5 11.5T880-480q0 82-31.5 155t-86 127.5q-54.5 54.5-127 86T480.5-80Q398-80 325-111.5Z"/></svg>
+<text x="1244" y="571" dominant-baseline="middle" class="label onRose">LOADING / SAVING</text>
+
+<rect x="1100" y="660" width="390" height="96" rx="7" class="surface" stroke="#BA1A1A" stroke-width="2"/>
+<text x="1120" y="696" class="small errorInk">LIBRARY NAME</text>
+<text x="1120" y="732" class="label ink">Favorites</text>
+<svg x="1430" y="688" width="41" height="41" viewBox="0 -960 960 960" class="errorInk"><path d="M508.5-291.5Q520-303 520-320t-11.5-28.5Q497-360 480-360t-28.5 11.5Q440-337 440-320t11.5 28.5Q463-280 480-280t28.5-11.5ZM440-440h80v-240h-80v240Zm40 360q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>
+<text x="1100" y="790" class="small errorInk">ERROR ICON + OUTLINE + SUPPORTING TEXT</text>
+<text x="1100" y="825" class="small muted">VISUAL STATE = SEMANTIC STATE</text>
+
+<line x1="30" y1="900" x2="1567" y2="900" class="rule"/>
+<text x="35" y="936" class="foot ink">RESONOTE DESIGN SYSTEM</text>
+<text x="1565" y="936" text-anchor="end" class="foot ink">INTERACTION / LAYER · FOCUS · STATUS · SEMANTICS</text>
+</svg>

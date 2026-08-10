@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1597" height="985" viewBox="0 0 1597 985">
+<defs>
+  <symbol id="search" viewBox="0 -960 960 960"><path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/></symbol>
+  <symbol id="more" viewBox="0 -960 960 960"><path d="M480-160q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm0-240q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm0-240q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Z"/></symbol>
+  <symbol id="close" viewBox="0 -960 960 960"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></symbol>
+  <symbol id="check" viewBox="0 -960 960 960"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></symbol>
+  <style>
+    .bg{fill:#FFFBFF}.ink{fill:#201A1B}.muted{fill:#524344}.rose{fill:#AE2A4B}.onRose{fill:#FFFFFF}.primaryContainer{fill:#FFD9DD}.secondaryContainer{fill:#F5DBE1}.surface{fill:#FFF8F7}.surfaceHigh{fill:#F2E5E5}.inverse{fill:#362F30}.inverseText{fill:#FCEDEE}.rule{stroke:#847374;stroke-width:1}.outline{fill:none;stroke:#847374;stroke-width:1.5}.mast{font:600 42px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:12px}.title{font:500 27px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:3px}.head{font:600 22px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:2px}.appTitle{font:400 22px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:0}.dialogTitle{font:400 24px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:0}.label{font:600 15px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:1.2px}.body{font:400 16px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:.5px}.snackBody{font:400 14px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:.25px}.small{font:500 13px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:1px}.foot{font:500 15px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:2px}
+  </style>
+</defs>
+<rect width="1597" height="985" class="bg"/>
+<text x="30" y="60" class="mast ink">RESONOTE</text>
+<text x="940" y="53" class="title ink">06 / CORE COMPONENTS</text>
+<text x="1565" y="38" text-anchor="end" class="small ink">FOUNDATION MAPPED</text>
+<text x="1565" y="62" text-anchor="end" class="small ink">48dp TARGET · 200% READY</text>
+<line x1="30" y1="84" x2="1567" y2="84" class="rule"/>
+<line x1="535" y1="125" x2="535" y2="870" class="rule"/><line x1="1055" y1="125" x2="1055" y2="870" class="rule"/>
+<text x="35" y="145" class="head rose">01</text><text x="82" y="145" class="head ink">ACTIONS</text>
+<text x="575" y="145" class="head rose">02</text><text x="622" y="145" class="head ink">INPUT &amp; SELECTION</text>
+<text x="1090" y="145" class="head rose">03</text><text x="1137" y="145" class="head ink">SURFACES &amp; FEEDBACK</text>
+
+<!-- Actions -->
+<rect x="80" y="210" width="300" height="72" rx="36" class="rose"/><text x="230" y="246" text-anchor="middle" dominant-baseline="middle" class="label onRose">FILLED / SAVE</text>
+<rect x="80" y="320" width="300" height="72" rx="36" class="secondaryContainer"/><text x="230" y="356" text-anchor="middle" dominant-baseline="middle" class="label ink">TONAL / ADD TO LIBRARY</text>
+<rect x="80" y="430" width="300" height="72" rx="36" class="outline"/><text x="230" y="466" text-anchor="middle" dominant-baseline="middle" class="label rose">OUTLINED / CANCEL</text>
+<text x="80" y="580" class="label rose">TEXT BUTTON / LEARN MORE</text>
+<rect x="390" y="535" width="88" height="88" rx="44" class="primaryContainer"/>
+<svg x="412" y="557" width="44" height="44" viewBox="0 -960 960 960" class="rose"><path d="M480-160q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm0-240q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm0-240q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Z"/></svg>
+<text x="80" y="680" class="small ink">BUTTON / 40dp · MIN 58dp · FULL SHAPE</text>
+<text x="80" y="713" class="small muted">ICON BUTTON / 24dp GLYPH · 40dp LAYER</text>
+<line x1="80" y1="755" x2="485" y2="755" class="rule"/>
+<text x="80" y="795" class="small ink">BASELINE / CORNER FULL · ICON 18dp · GAP 8dp</text>
+<text x="80" y="827" class="small muted">ONE FILLED PRIMARY PER ACTION GROUP</text>
+
+<!-- Input and selection -->
+<rect x="590" y="205" width="420" height="96" rx="7" class="surface" stroke="#847374" stroke-width="1.5"/>
+<text x="612" y="235" class="small muted">SEARCH LIBRARY</text><text x="612" y="273" class="body ink">Ambient sketches</text>
+<svg x="950" y="231" width="44" height="44" viewBox="0 -960 960 960" class="muted"><path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/></svg>
+<text x="590" y="334" class="small ink">TEXT FIELD / 56dp MIN · FLEX HEIGHT</text>
+
+<rect x="590" y="385" width="195" height="58" rx="12" class="primaryContainer"/>
+<svg x="604" y="398" width="32" height="32" viewBox="0 -960 960 960" class="rose"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg>
+<text x="648" y="414" dominant-baseline="middle" class="label ink">DOWNLOADED</text>
+<rect x="810" y="385" width="120" height="58" rx="12" class="outline"/><text x="870" y="414" text-anchor="middle" dominant-baseline="middle" class="label ink">JAZZ</text>
+<text x="590" y="477" class="small ink">CHIP / 32dp VISUAL · 48dp TARGET</text>
+
+<rect x="590" y="530" width="102" height="40" rx="6" fill="#FFDDB8"/><text x="641" y="556" text-anchor="middle" class="small ink">LOSSLESS</text>
+<circle cx="735" cy="550" r="6" class="rose"/>
+<rect x="775" y="532" width="48" height="36" rx="18" class="rose"/><text x="799" y="556" text-anchor="middle" class="small onRose">12</text>
+<text x="590" y="608" class="small ink">TAG / BADGE / NON-INTERACTIVE METADATA</text>
+
+<rect x="590" y="665" width="420" height="72" rx="36" class="outline"/>
+<rect x="590" y="665" width="140" height="72" rx="36" class="primaryContainer"/>
+<svg x="602" y="685" width="32" height="32" viewBox="0 -960 960 960" class="rose"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg>
+<text x="646" y="701" dominant-baseline="middle" class="label ink">ALBUMS</text><text x="800" y="701" text-anchor="middle" dominant-baseline="middle" class="label ink">ARTISTS</text><text x="940" y="701" text-anchor="middle" dominant-baseline="middle" class="label ink">SONGS</text>
+<text x="590" y="777" class="small ink">SEGMENTED / 2–5 MUTUALLY EXCLUSIVE</text>
+<text x="590" y="809" class="small muted">SELECTED = CONTAINER + CHECK + SEMANTICS</text>
+
+<!-- Surfaces and feedback -->
+<rect x="1100" y="205" width="430" height="96" rx="12" class="surfaceHigh"/>
+<svg x="1118" y="231" width="44" height="44" viewBox="0 -960 960 960" class="ink"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg>
+<text x="1185" y="253" dominant-baseline="middle" class="appTitle ink">Library</text>
+<svg x="1468" y="231" width="44" height="44" viewBox="0 -960 960 960" class="ink"><path d="M480-160q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm0-240q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm0-240q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Z"/></svg>
+<text x="1100" y="334" class="small ink">TOP APP BAR / 64dp + INSETS</text>
+
+<rect x="1100" y="380" width="430" height="78" rx="6" class="inverse"/>
+<text x="1120" y="419" dominant-baseline="middle" class="snackBody inverseText">Added to library</text><text x="1470" y="419" text-anchor="end" dominant-baseline="middle" class="label" fill="#FFB1C0">UNDO</text>
+<text x="1100" y="490" class="small ink">SNACKBAR / RESULT + ONE ACTION</text>
+
+<rect x="1140" y="550" width="350" height="245" rx="28" class="surfaceHigh" stroke="#D7C1C3"/>
+<text x="1170" y="600" class="dialogTitle ink">Remove download?</text>
+<text x="1170" y="640" class="body muted">The song stays in your library.</text>
+<text x="1376" y="750" text-anchor="end" dominant-baseline="middle" class="label rose">CANCEL</text><text x="1466" y="750" text-anchor="end" dominant-baseline="middle" class="label" fill="#BA1A1A">REMOVE</text>
+<text x="1100" y="835" class="small ink">DIALOG / 280–560dp · SHAPE 28dp</text>
+
+<line x1="30" y1="900" x2="1567" y2="900" class="rule"/>
+<text x="35" y="936" class="foot ink">RESONOTE DESIGN SYSTEM</text><text x="1565" y="936" text-anchor="end" class="foot ink">CORE / ACTION · INPUT · SELECTION · FEEDBACK</text>
+</svg>

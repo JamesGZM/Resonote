@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1597" height="985" viewBox="0 0 1597 985">
+<defs>
+<symbol id="home" viewBox="0 -960 960 960"><path d="M240-200h120v-240h240v240h120v-360L480-740 240-560v360Zm-80 80v-480l320-240 320 240v480H520v-240h-80v240H160Zm320-350Z"/></symbol>
+<symbol id="homeFill" viewBox="0 -960 960 960"><path d="M160-120v-480l320-240 320 240v480H560v-280H400v280H160Z"/></symbol>
+<symbol id="search" viewBox="0 -960 960 960"><path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/></symbol>
+<symbol id="favorite" viewBox="0 -960 960 960"><path d="m480-120-58-52q-101-91-167-157T150-447.5Q111-500 95.5-544T80-634q0-94 63-157t157-63q52 0 99 22t81 62q34-40 81-62t99-22q94 0 157 63t63 157q0 46-15.5 90T810-447.5Q771-395 705-329T538-172l-58 52Zm0-108q96-86 158-147.5t98-107q36-45.5 50-81t14-70.5q0-60-40-100t-100-40q-47 0-87 26.5T518-680h-76q-15-41-55-67.5T300-774q-60 0-100 40t-40 100q0 35 14 70.5t50 81q36 45.5 98 107T480-228Zm0-273Z"/></symbol>
+<symbol id="favoriteFill" viewBox="0 -960 960 960"><path d="m480-120-58-52q-101-91-167-157T150-447.5Q111-500 95.5-544T80-634q0-94 63-157t157-63q52 0 99 22t81 62q34-40 81-62t99-22q94 0 157 63t63 157q0 46-15.5 90T810-447.5Q771-395 705-329T538-172l-58 52Z"/></symbol>
+<symbol id="settings" viewBox="0 -960 960 960"><path d="m370-80-16-128q-13-5-24.5-12T307-235l-119 50L78-375l103-78q-1-7-1-13.5v-27q0-6.5 1-13.5L78-585l110-190 119 50q11-8 23-15t24-12l16-128h220l16 128q13 5 24.5 12t22.5 15l119-50 110 190-103 78q1 7 1 13.5v27q0 6.5-2 13.5l103 78-110 190-118-50q-11 8-23 15t-24 12L590-80H370Zm70-80h79l14-106q31-8 57.5-23.5T639-327l99 41 39-68-86-65q5-14 7-29.5t2-31.5q0-16-2-31.5t-7-29.5l86-65-39-68-99 42q-22-23-48.5-38.5T533-694l-13-106h-79l-14 106q-31 8-57.5 23.5T321-633l-99-41-39 68 86 64q-5 15-7 30t-2 32q0 16 2 31t7 30l-86 65 39 68 99-42q22 23 48.5 38.5T427-266l13 106Zm42-180q58 0 99-41t41-99q0-58-41-99t-99-41q-59 0-99.5 41T342-480q0 58 40.5 99t99.5 41Zm-2-140Z"/></symbol>
+<symbol id="play" viewBox="0 -960 960 960"><path d="M320-200v-560l440 280-440 280Zm80-280Zm0 134 210-134-210-134v268Z"/></symbol>
+<symbol id="library" viewBox="0 -960 960 960"><path d="M500-360q42 0 71-29t29-71v-220h120v-80H560v220q-13-10-28-15t-32-5q-42 0-71 29t-29 71q0 42 29 71t71 29ZM320-240q-33 0-56.5-23.5T240-320v-480q0-33 23.5-56.5T320-880h480q33 0 56.5 23.5T880-800v480q0 33-23.5 56.5T800-240H320Zm0-80h480v-480H320v480ZM160-80q-33 0-56.5-23.5T80-160v-560h80v560h560v80H160Zm160-720v480-480Z"/></symbol>
+<symbol id="back" viewBox="0 -960 960 960"><path d="m313-440 224 224-57 56-320-320 320-320 57 56-224 224h487v80H313Z"/></symbol>
+<style>
+.bg{fill:#FFFBFF}.ink{fill:#201A1B}.muted{fill:#524344}.rose{fill:#AE2A4B}.rule{stroke:#847374;stroke-width:1}.gridMinor{stroke:#AE2A4B;stroke-width:.5;opacity:.12}.gridMajor{stroke:#AE2A4B;stroke-width:1;opacity:.25}.live{fill:none;stroke:#AE2A4B;stroke-width:1.5;stroke-dasharray:7 5}.target{fill:none;stroke:#847374;stroke-width:1.5;stroke-dasharray:8 6}.cell{fill:#FFF8F7;stroke:#D7C1C3;stroke-width:1}.selected{fill:#FFD9DD}.mast{font:600 42px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:12px}.title{font:500 27px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:3px}.head{font:600 22px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:2px}.label{font:500 15px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:1.3px}.small{font:500 13px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:1px}.foot{font:500 15px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:2px}
+</style>
+</defs>
+<rect width="1597" height="985" class="bg"/>
+<text x="30" y="60" class="mast ink">RESONOTE</text>
+<text x="1060" y="53" class="title ink">04A / ICON SYSTEM</text>
+<text x="1565" y="38" text-anchor="end" class="small ink">BASE / MATERIAL SYMBOLS OUTLINED</text>
+<text x="1565" y="62" text-anchor="end" class="small ink">AXES / FILL · WGHT · GRAD · OPSZ</text>
+<line x1="30" y1="84" x2="1567" y2="84" class="rule"/>
+<line x1="535" y1="125" x2="535" y2="870" class="rule"/>
+<line x1="1055" y1="125" x2="1055" y2="870" class="rule"/>
+<text x="35" y="145" class="head rose">01</text>
+<text x="82" y="145" class="head ink">GRID &amp; ALIGNMENT</text>
+<text x="575" y="145" class="head rose">02</text>
+<text x="622" y="145" class="head ink">SIZE &amp; TARGET</text>
+<text x="1090" y="145" class="head rose">03</text>
+<text x="1137" y="145" class="head ink">STYLE &amp; STATE</text>
+<rect x="80" y="230" width="288" height="288" fill="#FFF8F7" stroke="#847374" stroke-width="1.5"/>
+<line x1="80" y1="230" x2="80" y2="518" class="gridMajor"/>
+<line x1="80" y1="230" x2="368" y2="230" class="gridMajor"/>
+<line x1="92" y1="230" x2="92" y2="518" class="gridMinor"/>
+<line x1="80" y1="242" x2="368" y2="242" class="gridMinor"/>
+<line x1="104" y1="230" x2="104" y2="518" class="gridMinor"/>
+<line x1="80" y1="254" x2="368" y2="254" class="gridMinor"/>
+<line x1="116" y1="230" x2="116" y2="518" class="gridMinor"/>
+<line x1="80" y1="266" x2="368" y2="266" class="gridMinor"/>
+<line x1="128" y1="230" x2="128" y2="518" class="gridMajor"/>
+<line x1="80" y1="278" x2="368" y2="278" class="gridMajor"/>
+<line x1="140" y1="230" x2="140" y2="518" class="gridMinor"/>
+<line x1="80" y1="290" x2="368" y2="290" class="gridMinor"/>
+<line x1="152" y1="230" x2="152" y2="518" class="gridMinor"/>
+<line x1="80" y1="302" x2="368" y2="302" class="gridMinor"/>
+<line x1="164" y1="230" x2="164" y2="518" class="gridMinor"/>
+<line x1="80" y1="314" x2="368" y2="314" class="gridMinor"/>
+<line x1="176" y1="230" x2="176" y2="518" class="gridMajor"/>
+<line x1="80" y1="326" x2="368" y2="326" class="gridMajor"/>
+<line x1="188" y1="230" x2="188" y2="518" class="gridMinor"/>
+<line x1="80" y1="338" x2="368" y2="338" class="gridMinor"/>
+<line x1="200" y1="230" x2="200" y2="518" class="gridMinor"/>
+<line x1="80" y1="350" x2="368" y2="350" class="gridMinor"/>
+<line x1="212" y1="230" x2="212" y2="518" class="gridMinor"/>
+<line x1="80" y1="362" x2="368" y2="362" class="gridMinor"/>
+<line x1="224" y1="230" x2="224" y2="518" class="gridMajor"/>
+<line x1="80" y1="374" x2="368" y2="374" class="gridMajor"/>
+<line x1="236" y1="230" x2="236" y2="518" class="gridMinor"/>
+<line x1="80" y1="386" x2="368" y2="386" class="gridMinor"/>
+<line x1="248" y1="230" x2="248" y2="518" class="gridMinor"/>
+<line x1="80" y1="398" x2="368" y2="398" class="gridMinor"/>
+<line x1="260" y1="230" x2="260" y2="518" class="gridMinor"/>
+<line x1="80" y1="410" x2="368" y2="410" class="gridMinor"/>
+<line x1="272" y1="230" x2="272" y2="518" class="gridMajor"/>
+<line x1="80" y1="422" x2="368" y2="422" class="gridMajor"/>
+<line x1="284" y1="230" x2="284" y2="518" class="gridMinor"/>
+<line x1="80" y1="434" x2="368" y2="434" class="gridMinor"/>
+<line x1="296" y1="230" x2="296" y2="518" class="gridMinor"/>
+<line x1="80" y1="446" x2="368" y2="446" class="gridMinor"/>
+<line x1="308" y1="230" x2="308" y2="518" class="gridMinor"/>
+<line x1="80" y1="458" x2="368" y2="458" class="gridMinor"/>
+<line x1="320" y1="230" x2="320" y2="518" class="gridMajor"/>
+<line x1="80" y1="470" x2="368" y2="470" class="gridMajor"/>
+<line x1="332" y1="230" x2="332" y2="518" class="gridMinor"/>
+<line x1="80" y1="482" x2="368" y2="482" class="gridMinor"/>
+<line x1="344" y1="230" x2="344" y2="518" class="gridMinor"/>
+<line x1="80" y1="494" x2="368" y2="494" class="gridMinor"/>
+<line x1="356" y1="230" x2="356" y2="518" class="gridMinor"/>
+<line x1="80" y1="506" x2="368" y2="506" class="gridMinor"/>
+<line x1="368" y1="230" x2="368" y2="518" class="gridMajor"/>
+<line x1="80" y1="518" x2="368" y2="518" class="gridMajor"/>
+<rect x="104" y="254" width="240" height="240" class="live"/>
+<g transform="translate(104 494) scale(0.25 0.25)" class="ink"><use href="#home"/></g>
+<text x="80" y="558" class="label ink">24dp VIEWPORT</text>
+<text x="80" y="588" class="label rose">20dp LIVE AREA / 2dp PADDING</text>
+<text x="80" y="618" class="label muted">OPTICAL SHIFT ≤ 1dp</text>
+<text x="80" y="680" class="small muted">SQUARE INTERIOR CORNERS · VISUAL MASS CENTERED</text>
+<line x1="80" y1="705" x2="485" y2="705" class="rule"/>
+<text x="80" y="744" class="small ink">CUSTOM ICON / SAME VIEWPORT + WEIGHT</text>
+<text x="80" y="775" class="small muted">NO STRETCH · NO DECORATIVE DETAIL</text>
+<rect x="580" y="215" width="205" height="205" rx="12" class="target"/>
+<g transform="translate(642 357) scale(0.08333333333333333 0.08333333333333333)" class="ink"><path d="M765-144 526-383q-30 22-65.79 34.5-35.79 12.5-76.18 12.5Q284-336 214-406t-70-170q0-100 70-170t170-70q100 0 170 70t70 170.03q0 40.39-12.5 76.18Q599-464 577-434l239 239-51 51ZM384-408q70 0 119-49t49-119q0-70-49-119t-119-49q-70 0-119 49t-49 119q0 70 49 119t119 49Z"/></g>
+<text x="682" y="448" text-anchor="middle" class="label ink">20dp COMPACT</text>
+<rect x="820" y="215" width="205" height="205" rx="12" class="target"/>
+<g transform="translate(874 365) scale(0.1 0.1)" class="ink"><use href="#home"/></g>
+<text x="922" y="448" text-anchor="middle" class="label ink">24dp DEFAULT</text>
+<rect x="580" y="500" width="205" height="205" rx="12" class="target"/>
+<g transform="translate(602 682) scale(0.16666666666666666 0.16666666666666666)" class="ink"><path d="m480-120.67-46.67-42q-104.18-95.08-172.25-164.04Q193-395.67 152.67-450.17q-40.34-54.5-56.5-99.16Q80-594 80-640q0-91.44 61.33-152.72 61.34-61.28 152-61.28 55.34 0 103.34 25.33 48 25.34 83.33 72.67 39.33-49.33 86.33-73.67 47-24.33 100.34-24.33 90.66 0 152 61.28Q880-731.44 880-640q0 46-16.17 90.67-16.16 44.66-56.5 99.16-40.33 54.5-108.41 123.46-68.07 68.96-172.25 164.04l-46.67 42Zm0-88.66q99.49-90.67 163.75-155.5Q708-429.67 745.67-478.17q37.66-48.5 52.66-86.42t15-75.31q0-64.1-41.33-105.77-41.33-41.66-105.18-41.66-50.02 0-92.59 29.83-42.56 29.83-65.56 81.5h-58q-22.34-51-64.9-81.17-42.57-30.16-92.59-30.16-63.85 0-105.18 41.66-41.33 41.67-41.33 105.88 0 37.46 15 75.62 15 38.17 52.66 87Q252-428.33 316.67-363.83q64.66 64.5 163.33 154.5Zm0-289Z"/></g>
+<text x="682" y="733" text-anchor="middle" class="label ink">40dp EMPHASIS</text>
+<rect x="820" y="500" width="205" height="205" rx="12" class="target"/>
+<g transform="translate(826 698) scale(0.2 0.2)" class="ink"><path d="m388-80-20-126q-19-7-40-19t-37-25l-118 54-93-164 108-79q-2-9-2.5-20.5T185-480q0-9 .5-20.5T188-521L80-600l93-164 118 54q16-13 37-25t40-18l20-127h184l20 126q19 7 40.5 18.5T669-710l118-54 93 164-108 77q2 10 2.5 21.5t.5 21.5q0 10-.5 21t-2.5 21l108 78-93 164-118-54q-16 13-36.5 25.5T592-206L572-80H388Zm48-60h88l14-112q33-8 62.5-25t53.5-41l106 46 40-72-94-69q4-17 6.5-33.5T715-480q0-17-2-33.5t-7-33.5l94-69-40-72-106 46q-23-26-52-43.5T538-708l-14-112h-88l-14 112q-34 7-63.5 24T306-642l-106-46-40 72 94 69q-4 17-6.5 33.5T245-480q0 17 2.5 33.5T254-413l-94 69 40 72 106-46q24 24 53.5 41t62.5 25l14 112Zm44-210q54 0 92-38t38-92q0-54-38-92t-92-38q-54 0-92 38t-38 92q0 54 38 92t92 38Zm0-130Z"/></g>
+<text x="922" y="733" text-anchor="middle" class="label ink">48dp DISPLAY</text>
+<text x="802" y="790" text-anchor="middle" class="label rose">48dp MIN TOUCH TARGET</text>
+<text x="802" y="822" text-anchor="middle" class="small muted">GLYPH SIZE ≠ TOUCH CONTAINER</text>
+<g class="ink">
+<g transform="translate(1100 286) scale(0.07916666666666666 0.07916666666666666)"><use href="#home"/></g><g transform="translate(1230 286) scale(0.07916666666666666 0.07916666666666666)"><use href="#search"/></g><g transform="translate(1360 286) scale(0.07916666666666666 0.07916666666666666)"><use href="#favorite"/></g>
+<g transform="translate(1100 421) scale(0.07916666666666666 0.07916666666666666)"><use href="#settings"/></g><g transform="translate(1230 421) scale(0.07916666666666666 0.07916666666666666)"><use href="#play"/></g><g transform="translate(1360 421) scale(0.07916666666666666 0.07916666666666666)"><use href="#library"/></g>
+</g>
+<text x="1138" y="312" text-anchor="middle" class="small muted">HOME</text><text x="1268" y="312" text-anchor="middle" class="small muted">SEARCH</text><text x="1398" y="312" text-anchor="middle" class="small muted">FAVORITE</text>
+<text x="1138" y="447" text-anchor="middle" class="small muted">SETTINGS</text><text x="1268" y="447" text-anchor="middle" class="small muted">PLAY</text><text x="1398" y="447" text-anchor="middle" class="small muted">LIBRARY</text>
+<line x1="1090" y1="485" x2="1535" y2="485" class="rule"/>
+<rect x="1100" y="530" width="145" height="145" rx="16" class="cell"/>
+<g transform="translate(1124 650) scale(0.1 0.1)" class="ink"><use href="#home"/></g>
+<text x="1172" y="704" text-anchor="middle" class="small ink">DEFAULT / FILL 0</text>
+<rect x="1270" y="530" width="145" height="145" rx="16" class="selected"/>
+<g transform="translate(1294 650) scale(0.1 0.1)" class="rose"><use href="#homeFill"/></g>
+<text x="1342" y="704" text-anchor="middle" class="small ink">SELECTED / FILL 1</text>
+<rect x="1440" y="530" width="95" height="145" rx="16" class="cell"/>
+<g transform="translate(1452 638) scale(0.075 0.075)" class="ink"><use href="#back"/></g>
+<text x="1488" y="704" text-anchor="middle" class="small ink">RTL MIRROR</text>
+<text x="1090" y="770" class="small ink">SEMANTIC / LOCALIZED CONTENT DESCRIPTION</text>
+<text x="1090" y="802" class="small ink">ICON-ONLY ACTION / TOOLTIP + 48dp TARGET</text>
+<text x="1090" y="834" class="small muted">SELECTED REQUIRES A SECOND VISUAL INDICATOR</text>
+<line x1="30" y1="900" x2="1567" y2="900" class="rule"/>
+<text x="35" y="936" class="foot ink">RESONOTE DESIGN SYSTEM</text>
+<text x="1565" y="936" text-anchor="end" class="foot ink">MATERIAL SYMBOLS / GRID · SIZE · STATE · ACCESSIBILITY</text>
+</svg>
