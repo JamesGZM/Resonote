@@ -173,16 +173,14 @@ Variant：
 
 #### Top App Bar
 
-| Property | Value |
-|---|---:|
-| Small height | 64dp（不含已消费的 System Insets） |
-| Horizontal content inset | 4dp Action Area；Title 与 Action 保持 16dp 节奏 |
-| Navigation/Action | 48dp Target / 24dp Icon |
-| Title | `titleLarge` |
-| Surface | `surface` → 滚动后 `surfaceContainer` / Level 2 |
+Top App Bar 使用 Material3 1.4.0 稳定版 `TopAppBar` 默认尺寸、Insets、Typography、Color 与
+Scroll Behavior，不复制其内部 Token。Resonote 封装只提供 Title、Navigation Icon、Actions
+Slot 与一致的调用约定；交互 Icon 使用 Resonote Icon Button 以保持可访问名称、Tooltip 与
+最小 Touch Target。
 
 - 默认 Small Top App Bar；Medium/Large 只用于需要明确页面层级的内容页，不用于高频列表工具栏。
 - 最多保留 2 个直接 Action，其他进入 Overflow；标题优先完整显示，超长时允许一行省略且页面正文提供完整标题。
+- Container 与 Scrolled Container 使用 Material 默认 Semantic Role；确有产品差异时才增加 Resonote Override。
 - App Bar 本身不套 Hover/Pressed；内部 Action 各自应用 05B State。
 
 ### 06D — Progress, Snackbar & Modal Surfaces
@@ -245,18 +243,17 @@ Variant：
 
 ### 07A — Adaptive Primary Navigation
 
-| Layout | Component | Size | Destination |
-|---|---|---:|---:|
-| Compact `<600dp` | Navigation Bar | Standard 64dp 高 + Bottom Insets；Tall 变体 80dp | 3–5 |
-| Medium `600–839dp` | Navigation Rail | Narrow 80dp 宽（默认 Collapsed 96dp）+ Insets | 3–7 |
-| Expanded `≥840dp` | Rail 或 Permanent Drawer | Rail 80dp；Drawer 360dp 上限 | 3–7 |
+Resonote 使用 Material3 Adaptive Navigation Suite 1.4.0 稳定版作为 Primary Navigation 基线。
+`WindowAdaptiveInfo` 综合 Width、Height 与 Posture，默认在 Navigation Bar 与 Navigation Rail
+之间切换；容器尺寸、Indicator、Icon、Label、Insets 与交互行为沿用同版本 Material Token，
+不在 Resonote 重复冻结内部数值。
 
-- Resonote 默认使用 Standard 64dp Navigation Bar；只有明确需要更高容器的页面才使用 Tall 80dp 变体。
-- 五种 Android Width Size Class 共享 Destination ID、Label、Icon、Selected State 与 Back Stack；Large/Extra-large 复用 Expanded 拓扑，窗口切换不重置当前目的地。
-- Navigation Bar 使用 64dp Standard Container、24dp Icon、4dp Icon–Label Gap 与 `labelMedium`；Vertical Item Active Indicator 为 56×32dp，使用 `shapeFull`。
-- Navigation Rail 的 Active Indicator 为 56×32dp，Icon 24dp、Label 使用 `labelMedium`；Permanent Drawer 上限 360dp，Active Indicator 336×56dp、Icon 24dp、Label 使用 `labelLarge`，均使用 `shapeFull`。
-- Selected 同时使用 Indicator、Color 和 Semantics；Icon、Indicator 与 Label 必须完整位于所属 Navigation Container 内，不得越界或与内容区域重叠。
-- Label 默认可见；不能只靠 Icon 猜测主导航含义。目的地超过上限时重组信息架构，不横向滚动 Navigation Bar。
+- Design System 提供无状态 Item DSL，不持有 Destination ID、Selected State 或 Back Stack，也不校验目的地数量。
+- 同一组 Destination、Label、Icon 与 Selected State 在窗口变化前后保持一致；窗口只改变呈现形态。
+- Navigation Bar 通常适合少量顶层目的地；Rail 可承载更宽松的信息架构。具体数量属于 App IA 决策，不是组件运行时合同。
+- Selected 使用 Material 默认 Indicator、Color 与 Selected Semantics；Resonote 只映射 Semantic Color，不覆盖内部布局。
+- Label 默认提供且本地化，不能只靠 Icon 猜测主导航含义；装饰 Icon 不重复提供 Content Description。
+- Drawer、不同窗口目的地集合、“更多”与自动裁剪属于显式产品 IA 扩展，第一阶段不由 Design System 推断。
 - Player、Queue 与 Lyrics 不作为 Foundation Primary Destination 预设；是否进入主导航由 Product IA 决定。
 
 ### 07B — Page Entry, Back & Search

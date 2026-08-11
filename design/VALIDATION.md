@@ -54,11 +54,14 @@
 | V-03 | Adaptive Layout | Compact / Medium / Expanded / Large / Extra-large × 导航与筛选状态 | 导航形态按 03D 切换；Large/Extra-large 复用 Expanded 拓扑但分别验证内容限宽；目的地、查询和筛选不重置 | 五窗口截图 + 状态切换录屏 | 待实现验证 |
 | V-04 | Buttons / Icon Buttons | Enabled / Hover / Focused / Pressed / Disabled / Loading | 目标、图标、状态层、焦点环与 04A、05B、06 一致 | 状态截图 + 指针/键盘录屏 | Not Run（06A 已有部分自动化覆盖） |
 | V-05 | Inputs / Selection | Empty / Focused / Filled / Error / Disabled × 2.0 | Label、Support Text、错误语义稳定；不会遮挡输入 | 状态截图 + 语义树 | Not Run（06B-1 Text Field 已有部分自动化覆盖） |
-| V-06 | Navigation | Bar / Rail / Drawer × Touch / Keyboard / D-pad / TalkBack | 选中项唯一；焦点可见；顺序稳定；可朗读当前项 | 窗口截图 + 无障碍测试日志 | 待实现验证 |
+| V-06 | Navigation | Bar / Rail × Touch / Keyboard / D-pad / TalkBack | 选中项唯一；焦点可见；顺序稳定；可朗读当前项 | 窗口截图 + 无障碍测试日志 | 待实现验证 |
 | V-07 | Feedback | Loading / Empty / Error / Offline / Permission denied | 状态语义不混用；均有明确恢复或退出路径 | 状态截图 + 操作录屏 | 待实现验证 |
 | V-08 | Overlays | Dialog / Bottom Sheet / Snackbar × Keyboard / TalkBack | 焦点被正确约束或恢复；Back 与关闭语义一致 | 焦点录屏 + 语义树 | 待实现验证 |
 | V-09 | Music Components | Album Tile / Song Row / Section Header / Quality Badge × 缺图 / 超长 / RTL | 资料层级稳定；占位与截断符合 04B、08 | 实现截图 | 待实现验证 |
 | V-10 | Motion | Motion Scale 0 / 1 / 10 × Effects / Spatial | 0 时即时到达终态；Spatial 使用 Spring；无关键状态依赖动画传达 | 屏幕录制 + 动画参数日志 | Not Run（00B AVD 参数与 API 32 Light `1×` 已有部分证据） |
+
+V-06 默认范围与 Material Adaptive Navigation Suite、NiA 基线一致，只验证 Bar / Rail。
+Drawer 在产品显式引入对应 IA 与 Layout Type 策略后，作为条件性扩展单独补充验证；未引入时为 N/A。
 
 ## 5. 无障碍门槛
 

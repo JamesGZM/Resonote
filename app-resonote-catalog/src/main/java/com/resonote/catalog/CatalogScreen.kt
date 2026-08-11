@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -43,7 +42,7 @@ private data class TypeEntry(val name: String, val style: TextStyle)
 private data class ShapeEntry(val name: String, val shape: Shape)
 
 @Composable
-internal fun CatalogScreen(
+internal fun FoundationCatalog(
     themeMode: ResonoteThemeMode,
     onThemeModeChange: (ResonoteThemeMode) -> Unit,
 ) {
@@ -54,7 +53,7 @@ internal fun CatalogScreen(
         color = MaterialTheme.colorScheme.background,
     ) {
         LazyColumn(
-            modifier = Modifier.safeDrawingPadding(),
+            modifier = Modifier.fillMaxSize(),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(
                 horizontal = ResonoteTokens.spacing.space4,
                 vertical = ResonoteTokens.spacing.space6,

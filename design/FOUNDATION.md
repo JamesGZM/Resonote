@@ -424,27 +424,33 @@ Border 与触控 Token：
 
 布局判断基于当前 App Window，而不是设备型号、物理屏幕或横竖屏。窗口在分屏、自由窗口或折叠状态变化时必须重新计算。
 
-官方宽度分类与 Resonote 拓扑映射：
+官方宽度分类与 Resonote 内容布局映射：
 
 | Android Width Size Class | Window width | Resonote Layout Mode | 说明 |
 |---|---:|---|---|
-| Compact | `< 600dp` | Compact | 单栏与底部导航为默认 |
-| Medium | `600–839dp` | Medium | Navigation Rail，可按任务使用双栏 |
-| Expanded | `840–1199dp` | Expanded | Rail 或 Permanent Drawer，优先利用双栏 |
+| Compact | `< 600dp` | Compact | 单栏内容为默认 |
+| Medium | `600–839dp` | Medium | 单栏或任务驱动双栏 |
+| Expanded | `840–1199dp` | Expanded | 优先利用双栏 |
 | Large | `1200–1599dp` | Expanded | 保持 Expanded 拓扑并限制内容宽度 |
 | Extra-large | `≥ 1600dp` | Expanded | 内容居中，不无限拉伸列宽 |
 
+Primary Navigation 不从上述宽度表单独推导。实现使用 Material3 Adaptive
+`WindowAdaptiveInfo` 与 `NavigationSuiteScaffoldDefaults.calculateFromAdaptiveInfo()`，由稳定版
+Material 规范综合 Window Width、Window Height 与 Posture 选择 Navigation Bar 或 Navigation
+Rail；例如 Compact Height 与 Tabletop Posture 即使宽度较大也可使用 Navigation Bar。
+
 Resonote Grid：
 
-| Layout Mode | Columns | Outer margin | Gutter | Max body width | Primary navigation | Body pattern |
-|---|---:|---:|---:|---:|---|---|
-| Compact | 4 | 16dp | 16dp | 窗口可用宽度 | Bottom Navigation | 单栏 |
-| Medium | 8 | 24dp | 24dp | 窗口可用宽度 | Navigation Rail | 单栏或任务驱动双栏 |
-| Expanded | 12 | 最少 32dp | 24dp | 1200dp | Rail；目的地较多时使用 Permanent Drawer | 优先 List–Detail 或 Supporting Pane |
+| Layout Mode | Columns | Outer margin | Gutter | Max body width | Body pattern |
+|---|---:|---:|---:|---:|---|
+| Compact | 4 | 16dp | 16dp | 窗口可用宽度 | 单栏 |
+| Medium | 8 | 24dp | 24dp | 窗口可用宽度 | 单栏或任务驱动双栏 |
+| Expanded | 12 | 最少 32dp | 24dp | 1200dp | 优先 List–Detail 或 Supporting Pane |
 
 - Large 与 Extra-large 的实际水平外边距为 `max(32dp, (availableWidth - 1200dp) / 2)`。
 - 阅读型连续文本使用独立 `720dp` 最大宽度，不把正文拉满 1200dp。
-- 断点只切换布局拓扑；同一 Size Class 内仍需弹性伸缩，不能将页面锁死为单一画板尺寸。
+- 五档 Width 分类服务 Grid、内容限宽与验证；Primary Navigation 同时响应 Height 与 Posture。
+- 同一 Size Class 内仍需弹性伸缩，不能将页面锁死为单一画板尺寸。
 - Primary Navigation 的目的地、选中状态和语义在模式切换前后保持一致。
 - 折叠设备存在遮挡式 Hinge/Fold 时，不让文字、触控目标或单个内容 Pane 跨越遮挡区域；可将 Hinge 作为 Pane 分隔。
 

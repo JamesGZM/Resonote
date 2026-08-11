@@ -30,7 +30,7 @@ class CatalogActivity : ComponentActivity() {
             }
             SyncSystemBars(darkTheme = darkTheme)
             ResonoteTheme(themeMode = themeMode) {
-                CatalogScreen(
+                AdaptiveCatalogScreen(
                     themeMode = themeMode,
                     onThemeModeChange = { themeMode = it },
                 )
