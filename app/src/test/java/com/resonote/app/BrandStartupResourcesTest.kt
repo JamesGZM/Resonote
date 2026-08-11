@@ -21,7 +21,8 @@ class BrandStartupResourcesTest {
 
         assertThat(applicationInfo.icon).isEqualTo(R.mipmap.ic_launcher)
         assertThat(context.resources.getResourceTypeName(R.mipmap.ic_launcher_round)).isEqualTo("mipmap")
-        assertThat(tagAttribute(R.drawable.ic_launcher_foreground, "group", "scaleX")).isEqualTo("0.72")
+        assertThat(tagAttribute(R.drawable.ic_launcher_foreground, "group", "scaleX")).isEqualTo("0.62")
+        assertThat(tagAttribute(R.drawable.ic_launcher_foreground, "group", "scaleY")).isEqualTo("0.62")
         assertThat(applicationInfo.theme).isEqualTo(R.style.Theme_Resonote_Splash)
     }
 

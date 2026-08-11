@@ -46,7 +46,7 @@ Signal Signature 的 Android 启动身份以 00A 为唯一概念来源；本节�
 
 Canonical Mark：
 
-- Canonical Mark 使用 `108 × 108` 坐标系；Launcher 与 Splash 派生 Vector 均围绕 `54 / 54` 中心缩放至 `0.72×`，将核心图形限制在居中的安全区内。
+- Canonical Mark 使用 `108 × 108` 坐标系；Launcher 派生 Vector 围绕 `54 / 54` 中心缩放至 `0.62×`，Splash 派生保持 `0.72×`。两者使用独立光学尺寸，不改变母版几何。
 - 以 `R + 波形` 的开放结构为唯一 Mark；基准 Stroke 为 `6`、Round Cap、Round Join，不增加文字、音符、阴影、渐变或装饰角标。
 - 主 App 使用白色 Mark + `brandPrimary / Pulse Rose #B83252` 纯色背景；Catalog 伴生版使用白色 Mark + `brandSecondary / Harmonic Violet #66558F` 纯色背景。
 - Launcher 必须同时提供 Adaptive、Round 与 Android 13+ Monochrome 图层，并验证 Circle、Rounded Square、Squircle、Teardrop Mask 与 `16 / 24 / 32 / 48px` 小尺寸。
@@ -59,7 +59,7 @@ System Splash：
 | Catalog | `#FFFBFF / #66558F` | `#201A1B / #D0BCFE` | 静态终态 |
 
 - 使用 AndroidX Core SplashScreen 与系统 Splash，不创建 Splash Activity 或额外 Compose 品牌页。
-- `0.72×` 派生确保完整 Mark 位于 Launcher 与 Splash 的系统圆形可见安全区；该缩放不修改 Canonical Mark 几何。
+- Launcher 使用 `0.62×` 派生以平衡桌面同列图标的视觉重量；Splash 使用 `0.72×` 派生确保系统圆形内的启动识别度。两者均不修改 Canonical Mark 几何。
 - API 26–30 使用完整 Mark 的静态 VectorDrawable；API 31+ 主 App 使用 AVD。启动动画不循环、不延迟首帧，也不承担状态或进度信息。
 - Motion Scale `0×` 必须直接得到完整终态；系统提前结束或热启动不播放动画时，品牌识别仍须成立。
 - Splash 只跟随系统 Light / Dark。AMOLED 从 Compose 首帧开始；在主题偏好能够于 Activity 创建前读取之前，不宣称 AMOLED Splash。
