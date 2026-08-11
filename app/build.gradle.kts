@@ -6,6 +6,7 @@ plugins {
 
 android {
     namespace = "com.resonote.app"
+    testOptions.unitTests.isIncludeAndroidResources = true
 
     defaultConfig {
         applicationId = "com.resonote.app"
@@ -31,4 +32,9 @@ dependencies {
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.core.splashscreen)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.truth)
 }

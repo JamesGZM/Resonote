@@ -36,9 +36,9 @@ System specification.
 Foundation 00–05, Component System 06–08, and the Validation specification are
 frozen. The Android foundation now includes the Gradle build, Material3 1.4.0
 theme tokens, a minimal app, and the standalone Catalog. Component System 06A
-Buttons & Actions is implemented with behavior tests and Roborazzi baselines;
-06B–08 remain to be implemented. Validation V-04 has partial automated coverage,
-but V-01–V-10 are not marked as passed.
+Buttons & Actions and 06B-1 Text Field are implemented with behavior tests and
+Roborazzi baselines; 06B-2–08 remain to be implemented. Validation V-04 and V-05
+have partial automated coverage, but V-01–V-10 are not marked as passed.
 
 ## Build
 
@@ -53,8 +53,8 @@ Install or run `app` for the minimal product shell, and
 `app-resonote-catalog` for Light, Dark, AMOLED, and token inspection.
 Frozen color specifications use `#RRGGBB`; the Catalog displays runtime colors
 as `#AARRGGBB` so their alpha channel remains visible during inspection.
-The 06A screenshot baselines cover Light, Dark, AMOLED, and 200% font scale under
-`core/designsystem/src/test/screenshots/`.
+The component screenshot baselines cover Light, Dark, AMOLED, font scaling, RTL,
+and representative window classes under `core/designsystem/src/test/screenshots/`.
 
 ## License
 

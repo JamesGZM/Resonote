@@ -11,7 +11,7 @@
 
 - 本文记录验证维度、用例、通过条件、证据路径和缺陷分级。
 - `design/approved/` 与 `design/review/` 中的图片只用于设计审阅，不计作 App 实现证据。
-- 当前仓库已有最小 App、独立 Catalog、Design System 与截图测试模块；06A 已开始提供自动化实现证据，其余范围继续保持“待实现验证”，不得用合成稿补位。
+- 当前仓库已有最小 App、独立 Catalog、Design System 与截图测试模块；06A 与 06B-1 已提供组件级自动化实现证据，其余范围继续保持“待实现验证”，不得用合成稿补位。
 - “规范已冻结”只表示验证维度、用例、门槛、证据合同与缺陷分级已经确定，不表示任何 V-01–V-10 用例已经执行或通过。
 - Player 产品层不属于当前验证范围；Player 接入设计系统后另建产品验证矩阵。
 
@@ -38,20 +38,30 @@
 4. 2.0 字号、RTL、TalkBack、Keyboard/D-pad、AMOLED、Motion Scale 0 单独执行高风险专项。
 5. 缺失、错误、离线和权限拒绝必须分别验证，不能用同一个通用空态替代。
 
+### 3.1 00B 品牌启动身份
+
+- 自动化合同覆盖两个 Manifest 的 Launcher/Splash Theme、主 App API 26–30 静态回退、API 31+ AVD、Catalog 静态 Mark、Light / Dark 启动色和 `750ms` 参数。
+- 设计评审稿覆盖 `16 / 24 / 32 / 48px`、Circle / Rounded / Squircle / Teardrop、Light / Dark 终态与动画分镜；该稿只证明资产设计，不替代真实 Launcher 或启动截图。
+- 已补 API 32 Emulator、Light、Motion Scale `1×`、真实 Launcher 点击冷启动录屏和终态截图；AVD 完整进入圆形安全区，Splash 与 Compose 首帧均为 `#FFFBFF`，未观察到异色闪屏。
+- 待补真实设备证据：API 26 / 30 / 最新 API 的 cold / warm / hot start，以及 Dark、Motion Scale `0× / 10×` 录屏和首帧闪烁检查。
+
 ## 4. 组件验证矩阵
 
 | ID | 范围 | 必测组合 | 通过条件 | 所需证据 | 当前状态 |
 |---|---|---|---|---|---|
-| V-01 | 全局颜色 | Light / Dark / AMOLED × 主要页面 | Role 映射正确；正文与操作对比度符合 01H | 三主题实现截图 + 对比度报告 | 待实现验证 |
+| V-01 | 全局颜色 | Light / Dark / AMOLED × 主要页面 | Role 映射正确；正文与操作对比度符合 01H | 三主题实现截图 + 对比度报告 | Not Run（00B Light 启动色已有自动化与 API 32 截图） |
 | V-02 | Typography | 1.0 / 1.3 / 2.0 × 中英混排 / 超长内容 | 无裁切、重叠、强制缩字；阅读顺序正确 | 实现截图 + Layout Inspector | 待实现验证 |
 | V-03 | Adaptive Layout | Compact / Medium / Expanded / Large / Extra-large × 导航与筛选状态 | 导航形态按 03D 切换；Large/Extra-large 复用 Expanded 拓扑但分别验证内容限宽；目的地、查询和筛选不重置 | 五窗口截图 + 状态切换录屏 | 待实现验证 |
 | V-04 | Buttons / Icon Buttons | Enabled / Hover / Focused / Pressed / Disabled / Loading | 目标、图标、状态层、焦点环与 04A、05B、06 一致 | 状态截图 + 指针/键盘录屏 | Not Run（06A 已有部分自动化覆盖） |
-| V-05 | Inputs / Selection | Empty / Focused / Filled / Error / Disabled × 2.0 | Label、Support Text、错误语义稳定；不会遮挡输入 | 状态截图 + 语义树 | 待实现验证 |
-| V-06 | Navigation | Bar / Rail / Drawer × Touch / Keyboard / D-pad / TalkBack | 选中项唯一；焦点可见；顺序稳定；可朗读当前项 | 窗口截图 + 无障碍测试日志 | 待实现验证 |
+| V-05 | Inputs / Selection | Empty / Focused / Filled / Error / Disabled × 2.0 | Label、Support Text、错误语义稳定；不会遮挡输入 | 状态截图 + 语义树 | Not Run（06B-1 Text Field 已有部分自动化覆盖） |
+| V-06 | Navigation | Bar / Rail × Touch / Keyboard / D-pad / TalkBack | 选中项唯一；焦点可见；顺序稳定；可朗读当前项 | 窗口截图 + 无障碍测试日志 | 待实现验证 |
 | V-07 | Feedback | Loading / Empty / Error / Offline / Permission denied | 状态语义不混用；均有明确恢复或退出路径 | 状态截图 + 操作录屏 | 待实现验证 |
 | V-08 | Overlays | Dialog / Bottom Sheet / Snackbar × Keyboard / TalkBack | 焦点被正确约束或恢复；Back 与关闭语义一致 | 焦点录屏 + 语义树 | 待实现验证 |
 | V-09 | Music Components | Album Tile / Song Row / Section Header / Quality Badge × 缺图 / 超长 / RTL | 资料层级稳定；占位与截断符合 04B、08 | 实现截图 | 待实现验证 |
-| V-10 | Motion | Motion Scale 0 / 1 / 10 × Effects / Spatial | 0 时即时到达终态；Spatial 使用 Spring；无关键状态依赖动画传达 | 屏幕录制 + 动画参数日志 | 待实现验证 |
+| V-10 | Motion | Motion Scale 0 / 1 / 10 × Effects / Spatial | 0 时即时到达终态；Spatial 使用 Spring；无关键状态依赖动画传达 | 屏幕录制 + 动画参数日志 | Not Run（00B AVD 参数与 API 32 Light `1×` 已有部分证据） |
+
+V-06 默认范围与 Material Adaptive Navigation Suite、NiA 基线一致，只验证 Bar / Rail。
+Drawer 在产品显式引入对应 IA 与 Layout Type 策略后，作为条件性扩展单独补充验证；未引入时为 N/A。
 
 ## 5. 无障碍门槛
 
@@ -89,14 +99,18 @@ design/validation/
 
 每条证据必须能追溯到 App 版本、设备/API、测试日期和用例 ID。截图不得裁掉系统栏或关键上下文；涉及动态行为时同时提交录屏，不能只提交终态截图。
 
-06A 自动化回归基线保存在 `core/designsystem/src/test/screenshots/`，通过以下命令录制和验证：
+06A 与 06B-1 自动化回归基线保存在 `core/designsystem/src/test/screenshots/`，通过以下命令录制和验证：
 
 ```bash
 ./gradlew :core:designsystem:recordRoborazziDebug
 ./gradlew :core:designsystem:verifyRoborazziDebug
 ```
 
-这些 Golden 覆盖 Light、Dark、AMOLED、200% 字号、Disabled、Loading 与 Toggle 状态，属于组件级回归证据；它们不替代 Hover、Focused、Pressed、TalkBack、键盘和真实设备录屏，也不构成 V-04 Pass。
+06A Golden 覆盖 Light、Dark、AMOLED、200% 字号、Disabled、Loading 与 Toggle。06B-1 Golden 覆盖 Text Field 持久状态、Metadata/Action、Light、Dark、AMOLED、100%/130%/200% 字号、RTL 与五档窗口成对矩阵；200% Metadata/Action 基线验证 Prefix/Suffix 独立行以及 Error、Disabled、Read-only 和 Trailing Action。行为测试另覆盖状态提升、IME Action、单/多行、Password Semantics、Unicode Code Point 长度限制、错误优先级、24dp 装饰图标和 48dp Trailing Action。
+
+00B 的 API 32 Light `1×` 实现证据保存在 `design/validation/recordings/v-10_resonote-splash_api32_light_1x.mp4` 与 `design/validation/screenshots/v-10_resonote-splash_api32_light_1x_frame.png`；环境和结果见 `design/validation/reports/00b-startup-evidence.md`。
+
+这些结果属于组件级自动化回归证据；它们不替代真实 IME、TalkBack、外接键盘、设备语义树和录屏，也不构成 V-04 或 V-05 Pass。00B 的应用模块资源合同测试同样不替代真实 Launcher Mask、启动截图与 Motion Scale 录屏，也不构成 V-01 或 V-10 Pass。
 
 ## 7. 结果记录与缺陷分级
 
@@ -115,4 +129,4 @@ design/validation/
 - Light、Dark、AMOLED，1.0 与 2.0 字号，Compact、Medium、Expanded、Large、Extra-large 均有真实实现证据。
 - TalkBack、Keyboard/D-pad、RTL 与 Motion Scale 0 专项通过。
 - 所有证据路径有效并可追溯；设计稿未被当作实现截图。
-- 当前章节状态：**规范已冻结；实现证据补充中。V-04 已有部分自动化覆盖，但完整用例仍为 Not Run**。
+- 当前章节状态：**规范已冻结；实现证据补充中。V-01、V-04、V-05 与 V-10 已有部分自动化覆盖，但完整用例仍为 Not Run**。

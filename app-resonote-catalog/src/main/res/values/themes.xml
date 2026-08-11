@@ -1,8 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <style name="Theme.Resonote.Catalog" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:forceDarkAllowed" tools:targetApi="29">false</item>
         <item name="android:fontFamily">sans</item>
         <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowBackground">@color/splash_background</item>
         <item name="android:windowNoTitle">true</item>
+    </style>
+
+    <style name="Theme.Resonote.Catalog.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash</item>
+        <item name="postSplashScreenTheme">@style/Theme.Resonote.Catalog</item>
     </style>
 </resources>

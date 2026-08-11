@@ -24,8 +24,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.FontScale
+import androidx.compose.ui.test.LayoutDirection
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.then
+import androidx.compose.ui.unit.LayoutDirection as UiLayoutDirection
 import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.github.takahirom.roborazzi.checkRoboAccessibility
@@ -81,6 +84,30 @@ fun ComposeContentTestRule.captureResonoteFontScale(
     waitForIdle()
     onRoot().captureRoboImage(
         filePath = "src/test/screenshots/$group/${name}_fontScale${fontScale.toInt()}.png",
+        roborazziOptions = DefaultRoborazziOptions,
+    )
+}
+
+fun ComposeContentTestRule.captureResonoteConfiguration(
+    group: String,
+    name: String,
+    themeMode: ResonoteThemeMode = ResonoteThemeMode.LIGHT,
+    fontScale: Float = 1f,
+    layoutDirection: UiLayoutDirection = UiLayoutDirection.Ltr,
+    checkAccessibility: Boolean = true,
+    content: @Composable () -> Unit,
+) {
+    val configuration = DeviceConfigurationOverride.FontScale(fontScale) then
+        DeviceConfigurationOverride.LayoutDirection(layoutDirection)
+    setContent {
+        DeviceConfigurationOverride(override = configuration) {
+            ResonoteTheme(themeMode = themeMode, content = content)
+        }
+    }
+    waitForIdle()
+    if (checkAccessibility) onRoot().checkRoboAccessibility()
+    onRoot().captureRoboImage(
+        filePath = "src/test/screenshots/$group/$name.png",
         roborazziOptions = DefaultRoborazziOptions,
     )
 }

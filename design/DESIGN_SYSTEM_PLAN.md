@@ -7,6 +7,9 @@
 > 执行方式：先顺序完成规划内规范与必要视觉证据，再统一审阅和冻结  
 > Material 基线：`androidx.compose.material3:material3:1.4.0` 稳定版 Baseline；不使用 1.5 Alpha 或 Expressive API
 
+“已冻结”表示当前评审基线，不表示规则不可修正。真实实现、稳定版 Material3 行为或验证证据
+发现规范重复、冲突或不成立时，应同步修正规范与测试，并记录新的执行基线。
+
 ## 1. 目标
 
 建立一套基于 Material 3、参考 Now in Android 组织方式、同时拥有 Resonote 品牌与音乐产品特征的设计系统。
@@ -142,6 +145,7 @@ Player 属于产品设计层，不属于当前 Foundation 建设。已有 Player
 | 项目 | 交付 | 状态 |
 |---|---|---|
 | 00A Design Principles & Brand IP | 文档 + PNG | 已冻结 |
+| 00B Launcher & Startup Identity | 文档 + SVG + PNG + Android 实现 | 已冻结；V-01 / V-10 部分自动化覆盖 |
 | 01A Brand Key Colors | 文档 + PNG | 已冻结 |
 | 01B Accent Tonal Palettes | 文档 + PNG | 已冻结 |
 | 01C Neutral & Error Tonal Palettes | 文档 + PNG | 已冻结 |
@@ -164,11 +168,18 @@ Player 属于产品设计层，不属于当前 Foundation 建设。已有 Player
 | 06 Core Components | 文档 + PNG | 已冻结 |
 | 07 Navigation & Feedback | 文档 + 3 PNG | 已冻结 |
 | 08 Music Components | 文档 + PNG | 已冻结；Resonote Extension |
-| 11 Validation Matrix | 文档；实现阶段补截图、录屏与报告 | 规范已冻结；实现证据补充中，V-04 部分自动化覆盖 |
+| 11 Validation Matrix | 文档；实现阶段补截图、录屏与报告 | 规范已冻结；实现证据补充中，V-04 / V-05 部分自动化覆盖 |
 
 ## 8. 实现进度
 
 - Foundation Theme、Light / Dark / AMOLED ColorScheme、Typography、Shape 与扩展 Token 已在 `core:designsystem` 实现。
+- 00B Launcher & Startup Identity 已实现主 App Pulse Rose 与 Catalog Harmonic Violet 的 Adaptive / Round / Monochrome Icon、Light / Dark System Splash，以及主 App API 31+ `750ms` AVD 和 API 26–30 静态回退；资源由各应用模块持有，不进入 `core:designsystem`。
 - 06A Buttons & Actions 已实现品牌化 Button、Icon Button 与 Toggle Icon Button，并接入独立 Catalog App。
-- `core:screenshot-testing` 已建立；06A 已提交 Light、Dark、AMOLED 与 200% 字号 Roborazzi Golden，并通过行为、语义、触控边界和截图回归测试。
+- 06B-1 Text Field 已基于 Material3 1.4.0 稳定版 `BasicTextField` 与官方 `OutlinedTextFieldDefaults.DecorationBox` 实现品牌化 Outlined Text Field；覆盖结构化 Label / Supporting / Error / Counter、2dp Error Outline、200% 字号 Prefix/Suffix 独立行、Unicode Code Point 长度限制、单/多行与稳定版密码视觉转换，并接入独立 Catalog App。
+- 06C Small Top App Bar 已基于 Material3 1.4.0 默认尺寸、Insets、Color 与 Scroll Behavior 提供轻量 Slot 封装，并接入独立 Catalog App。
+- 07A Adaptive Primary Navigation 已参考 Now in Android 分层，基于 Material3 Adaptive Navigation Suite 1.4.0 提供无状态 Item DSL；默认由 `WindowAdaptiveInfo` 在 Navigation Bar / Rail 间切换，不持有 App Navigation State，并接入独立 Catalog App。
+- `core:screenshot-testing` 已建立；06A 与 06B-1 已提交 Light、Dark、AMOLED、字号、RTL 与窗口矩阵 Roborazzi Golden，并通过行为、语义、触控边界、MD3 尺寸合同和截图回归测试。
+- 06C / 07A 已增加主题、200% 字号、Width × Height 与 Scaffold Insets 组合截图，以及 Tabletop、Selected Semantics、触控边界和窗口变化状态保持测试；真实 System Insets、Keyboard/D-pad/TalkBack 仍待设备验证，因此 V-03 / V-06 不标记为 Pass。
 - V-04 当前为部分自动化覆盖；Hover、Focused、Pressed、真实设备 TalkBack 与键盘路径仍为待实现验证，不标记为 Pass。
+- V-05 当前为部分自动化覆盖；真实 IME、TalkBack、外接键盘、设备语义树与录屏仍为待实现验证，不标记为 Pass。
+- V-01 / V-10 已增加 00B 资源合同、主题色与 API 分层自动测试，并补充 API 32 Emulator、Light、Motion Scale `1×` 的真实 Launcher 冷启动录屏与终态截图；Dark、`0× / 10×`、API 26 / 30 / 最新 API 和 warm / hot start 仍未执行，不标记为 Pass。
