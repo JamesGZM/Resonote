@@ -1,0 +1,6160 @@
+schema_version: 1
+kind: "request"
+api_commit: "6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb"
+schemas:
+  - endpoint_id: "API-AI-001"
+    root_type: "ApiAiRecommendRequest"
+    fields:
+      - path: "album_audio_id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "appid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "area_code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "client_playlist"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clienttime"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "key"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "mid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "platform"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "playlist_ver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "recommend_source"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "source_type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-ALBUM-001"
+    root_type: "ApiAlbumRequest"
+    fields:
+      - path: "album_id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "appid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clienttime"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "Content-Type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "cookie"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "data"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "dfid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "fields"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "key"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "token"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-ALBUM-002"
+    root_type: "ApiAlbumDetailRequest"
+    fields:
+      - path: "fields"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "is_buy"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "kg-tid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-ALBUM-003"
+    root_type: "ApiAlbumShopRequest"
+    fields:
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-ALBUM-004"
+    root_type: "ApiAlbumSongsRequest"
+    fields:
+      - path: "id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "is_buy"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "kg-tid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-ARTIST-001"
+    root_type: "ApiArtistAlbumsRequest"
+    fields:
+      - path: "area_code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "kg-tid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "sort"
+        type: "ArtistSort"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-ARTIST-002"
+    root_type: "ApiArtistAudiosRequest"
+    fields:
+      - path: "appid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clienttime"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "key"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "kg-tid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "mid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "sort"
+        type: "ArtistSort"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-ARTIST-003"
+    root_type: "ApiArtistDetailRequest"
+    fields:
+      - path: "id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "kg-tid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-ARTIST-004"
+    root_type: "ApiArtistFollowRequest"
+    fields:
+      - path: "clienttime"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "p"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "params"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "plat"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "singerid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "source"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "token"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-ARTIST-005"
+    root_type: "ApiArtistFollowNewsongsRequest"
+    fields:
+      - path: "last_album_id"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "opt_sort"
+        type: "FollowNewSongsSort"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "page_size"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-ARTIST-006"
+    root_type: "ApiArtistHonourRequest"
+    fields:
+      - path: "id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-ARTIST-007"
+    root_type: "ApiArtistListsRequest"
+    fields:
+      - path: "hotsize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "musician"
+        type: "0 | 3"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "sextypes"
+        type: "ArtistSexType"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "showtype"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "type"
+        type: "ArtistRegionType"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+  - endpoint_id: "API-ARTIST-008"
+    root_type: "ApiArtistUnfollowRequest"
+    fields:
+      - path: "id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "p"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "params"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "plat"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "singerid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "source"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "token"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-ARTIST-009"
+    root_type: "ApiArtistVideosRequest"
+    fields:
+      - path: "id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "is_fanmade"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "tag"
+        type: "ArtistVideoTag"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-SONG-001"
+    root_type: "ApiAudioRequest"
+    fields:
+      - path: "appid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clienttime"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "Content-Type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "cookie"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "data"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "dfid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "hash"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "key"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "token"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-SONG-002"
+    root_type: "ApiAudioAccompanyMatchingRequest"
+    fields:
+      - path: "appid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "fileName"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "hash"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "isteen"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "mixid"
+        type: "string"
+        required: true
+        evidence: ["DECLARED"]
+      - path: "mixId"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "platform"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "usemkv"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "version"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-SONG-003"
+    root_type: "ApiAudioKtvTotalRequest"
+    fields:
+      - path: "appid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "isteen"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "platform"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "singerName"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "songHash"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "songId"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "usemkv"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "version"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-RECOGNITION-001"
+    root_type: "ApiAudioMatchRequest"
+    fields:
+      - path: "area_code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "content-type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "data"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "fpid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "include_unpublish"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "multi_result"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "user-agent"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-SONG-004"
+    root_type: "ApiAudioRelatedRequest"
+    fields:
+      - path: "album_audio_id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "show_detail"
+        type: "0 | 1"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "show_type"
+        type: "boolean | string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "sort"
+        type: "AudioRelatedSort"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "type"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+  - endpoint_id: "API-BRUSH-001"
+    root_type: "ApiBrushRequest"
+    fields:
+      - path: "abtest"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "behaviors"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "content_ver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "mode"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "personal_recommend_params"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "platform"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "song_pool_id"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "sort_type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "vipType"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-LOGIN-001"
+    root_type: "ApiCaptchaSentRequest"
+    fields:
+      - path: "businessid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "cookie"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "mobile"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "plat"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-COMMENT-001"
+    root_type: "ApiCommentAlbumRequest"
+    fields:
+      - path: "code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "need_show_image"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "show_classify"
+        type: "0 | 1"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "show_hotword_list"
+        type: "0 | 1"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-COMMENT-002"
+    root_type: "ApiCommentCountRequest"
+    fields:
+      - path: "code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "hash"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "r"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "special_id"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-COMMENT-003"
+    root_type: "ApiCommentFloorRequest"
+    fields:
+      - path: "code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "mixsongid"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "resource_type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "resourceType"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "show_classify"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "show_hotword_list"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "special_id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "tid"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-COMMENT-004"
+    root_type: "ApiCommentMusicRequest"
+    fields:
+      - path: "code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "extdata"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "mixsongid"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "need_show_image"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "show_classify"
+        type: "0 | 1"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "show_hotword_list"
+        type: "0 | 1"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-COMMENT-005"
+    root_type: "ApiCommentMusicClassifyRequest"
+    fields:
+      - path: "code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "extdata"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "mixsongid"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "need_show_image"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "sort"
+        type: "CommentSort"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "type_id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+  - endpoint_id: "API-COMMENT-006"
+    root_type: "ApiCommentMusicHotwordRequest"
+    fields:
+      - path: "code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "extdata"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "hot_word"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "mixsongid"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "need_show_image"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-COMMENT-007"
+    root_type: "ApiCommentPlaylistRequest"
+    fields:
+      - path: "code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "content_type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "need_show_image"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "show_classify"
+        type: "0 | 1"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "show_hotword_list"
+        type: "0 | 1"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "tag"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-DISCOVER-001"
+    root_type: "ApiEverydayFriendRequest"
+    fields:
+      - path: "channel"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "isteen"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "list"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "pid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "platform"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "usemkv"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-DISCOVER-002"
+    root_type: "ApiEverydayHistoryRequest"
+    fields:
+      - path: "date"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "history_name"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "mode"
+        type: "HistoryMode"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "platform"
+        type: "Platform"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-DISCOVER-003"
+    root_type: "ApiEverydayRecommendRequest"
+    fields:
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "platform"
+        type: "Platform"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-DISCOVER-004"
+    root_type: "ApiEverydayStyleRecommendRequest"
+    fields:
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "platform"
+        type: "Platform"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "tagids"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-FAVORITE-001"
+    root_type: "ApiFavoriteCountRequest"
+    fields:
+      - path: "mixsongids"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-FM-001"
+    root_type: "ApiFmClassRequest"
+    fields:
+      - path: "appid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clienttime"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "cookie"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "get_tracker"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "key"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "kguid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "platform"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "uid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-FM-002"
+    root_type: "ApiFmImageRequest"
+    fields:
+      - path: "appid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clienttime"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "Content-Type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "cookie"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "data"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "dfid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "fmid"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "key"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "token"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-FM-003"
+    root_type: "ApiFmRecommendRequest"
+    fields:
+      - path: "appid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "area_code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clienttime"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "cookie"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "dfid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "get_tracker"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "key"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "level"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "rcmdsongcount"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "uid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-FM-004"
+    root_type: "ApiFmSongsRequest"
+    fields:
+      - path: "appid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "area_code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clienttime"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "Content-Type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "cookie"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "data"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "fmid"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "fmoffset"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "fmsize"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "fmtype"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "get_tracker"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "key"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "offset"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "size"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "uid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-LOGIN-002"
+    root_type: "ApiGetVerifyInfoRequest"
+    fields:
+      - path: "edt"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "eventid"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "i"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "platid"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "rtype"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "sid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "userid"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "wasm"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-IMAGES-001"
+    root_type: "ApiImagesRequest"
+    fields:
+      - path: "album_audio_id"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "album_id"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "count"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "hash"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "signature"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-IMAGES-002"
+    root_type: "ApiImagesAudioRequest"
+    fields:
+      - path: "album_audio_id"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "audio_id"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "count"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "filename"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "hash"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "signature"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-IP-001"
+    root_type: "ApiIpRequest"
+    fields:
+      - path: "id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "is_publish"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "query"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "sort"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "type"
+        type: "IpDataType"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+  - endpoint_id: "API-IP-002"
+    root_type: "ApiIpDateilRequest"
+    fields:
+      - path: "data"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "is_publish"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-IP-003"
+    root_type: "ApiIpPlaylistRequest"
+    fields:
+      - path: "id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-IP-004"
+    root_type: "ApiIpZoneRequest"
+    fields:
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-IP-005"
+    root_type: "ApiIpZoneHomeRequest"
+    fields:
+      - path: "id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "share"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-SONG-005"
+    root_type: "ApiKmrAudioMvRequest"
+    fields:
+      - path: "album_audio_id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "data"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "fields"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "KG-TID"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-SONG-006"
+    root_type: "ApiKrmAudioRequest"
+    fields:
+      - path: "album_audio_id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "data"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "fields"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "KG-TID"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-USER-001"
+    root_type: "ApiLastestSongsListenRequest"
+    fields:
+      - path: "area_code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "ret_info"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "sources"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "token"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-LOGIN-003"
+    root_type: "ApiLoginRequest"
+    fields:
+      - path: "clienttime_ms"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "params"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "password"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pk"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "plat"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "support_multi"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "t1"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "t2"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "t3"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "username"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-LOGIN-004"
+    root_type: "ApiLoginCellphoneRequest"
+    fields:
+      - path: "code"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "mobile"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "support-calm"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "User-Agent"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+  - endpoint_id: "API-LOGIN-005"
+    root_type: "ApiLoginDeviceRequest"
+    fields:
+      - path: "clienttime_ms"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "params"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "pk"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "plat"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "token"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+  - endpoint_id: "API-LOGIN-006"
+    root_type: "ApiLoginDeviceKickRequest"
+    fields:
+      - path: "appid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clienttime"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "dfid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "Host"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "mid"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "plat"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "signature"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "srcappid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "t"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "t_appid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "t_clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "t_mid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "token"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "uuid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-LOGIN-007"
+    root_type: "ApiLoginOpenplatRequest"
+    fields:
+      - path: "clienttime_ms"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "code"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "cookie"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "force_login"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "openid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "params"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "partnerid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "pk"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "t1"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "t2"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "t3"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-LOGIN-008"
+    root_type: "ApiLoginQrCheckRequest"
+    fields:
+      - path: "appid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "key"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "plat"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "srcappid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-LOGIN-009"
+    root_type: "ApiLoginQrCreateRequest"
+    fields:
+      - path: "key"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "qrimg"
+        type: "string | boolean"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-LOGIN-010"
+    root_type: "ApiLoginQrKeyRequest"
+    fields:
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "plat"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "qrcode_txt"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "srcappid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-LOGIN-011"
+    root_type: "ApiLoginTokenRequest"
+    fields:
+      - path: "clienttime_ms"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "cookie"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "p3"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "params"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "pk"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "plat"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "t1"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "t2"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "t3"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "token"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+  - endpoint_id: "API-LOGIN-012"
+    root_type: "ApiLoginWxCheckRequest"
+    fields:
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "uuid"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+  - endpoint_id: "API-LOGIN-013"
+    root_type: "ApiLoginWxCreateRequest"
+    fields:
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-LONGAUDIO-001"
+    root_type: "ApiLongaudioAlbumAudiosRequest"
+    fields:
+      - path: "album_id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "area_code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "KG-TID"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "tagid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-LONGAUDIO-002"
+    root_type: "ApiLongaudioAlbumDetailRequest"
+    fields:
+      - path: "album_id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "data"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "fields"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "KG-TID"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "show_album_tag"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-LONGAUDIO-003"
+    root_type: "ApiLongaudioDailyRecommendRequest"
+    fields:
+      - path: "module_id"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-LONGAUDIO-004"
+    root_type: "ApiLongaudioRankRecommendRequest"
+    fields:
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "platform"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-LONGAUDIO-005"
+    root_type: "ApiLongaudioVipRecommendRequest"
+    fields:
+      - path: "album_playlist"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "position"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-LONGAUDIO-006"
+    root_type: "ApiLongaudioWeekRecommendRequest"
+    fields:
+      - path: "album_playlist"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-LYRICS-001"
+    root_type: "ApiLyricRequest"
+    fields:
+      - path: "accesskey"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "charset"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "client"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "decode"
+        type: "boolean | string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "fmt"
+        type: "'lrc' | 'krc'"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "ver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-DISCOVER-005"
+    root_type: "ApiPcDiantaiRequest"
+    fields:
+      - path: "isvip"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "vipType"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-DISCOVER-006"
+    root_type: "ApiPersonalFmRequest"
+    fields:
+      - path: "action"
+        type: "FmAction"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "appid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "area_code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "callerid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clienttime"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "cookie"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "fakem"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "hash"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "is_overplay"
+        type: "boolean | string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "key"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "m_type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "mode"
+        type: "FmMode"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "platform"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "playtime"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "recommend_source_locked"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "remain_songcnt"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "song_pool_id"
+        type: "FmSongPoolId"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "songid"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "token"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "vipType"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-USER-002"
+    root_type: "ApiPlayhistoryUploadRequest"
+    fields:
+      - path: "mxid"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "ot"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "pc"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "plat"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "songs"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "time"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "token"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-PLAYLIST-001"
+    root_type: "ApiPlaylistAddRequest"
+    fields:
+      - path: "from_shupinmv"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "is_pri"
+        type: "0 | 1"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "list_create_gid"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "list_create_listid"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "list_create_userid"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "name"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "source"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "token"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "total_ver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "type"
+        type: "PlaylistAddType"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-PLAYLIST-002"
+    root_type: "ApiPlaylistDelRequest"
+    fields:
+      - path: "appid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clienttime"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "key"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "last_area"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "last_time"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "listid"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "p"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "token"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-PLAYLIST-003"
+    root_type: "ApiPlaylistDetailRequest"
+    fields:
+      - path: "data"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "ids"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "token"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-PLAYLIST-004"
+    root_type: "ApiPlaylistEffectRequest"
+    fields:
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-PLAYLIST-005"
+    root_type: "ApiPlaylistSimilarRequest"
+    fields:
+      - path: "appid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clienttime"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "data"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "ids"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "key"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "need_songs"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "show_list"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "ugc"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-PLAYLIST-006"
+    root_type: "ApiPlaylistTagsRequest"
+    fields:
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "source"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "tag_id"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "tag_type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-PLAYLIST-007"
+    root_type: "ApiPlaylistTrackAllRequest"
+    fields:
+      - path: "area_code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "extend_fields"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "personal_switch"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "plat"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-PLAYLIST-008"
+    root_type: "ApiPlaylistTrackAllNewRequest"
+    fields:
+      - path: "allplatform"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "area_code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "listid"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "show_cover"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "show_relate_goods"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "token"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-PLAYLIST-009"
+    root_type: "ApiPlaylistTracksAddRequest"
+    fields:
+      - path: "data"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "last_area"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "last_time"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "list_ver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "listid"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "scene"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "slow_upload"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "token"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-PLAYLIST-010"
+    root_type: "ApiPlaylistTracksDelRequest"
+    fields:
+      - path: "data"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "fileids"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "list_ver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "listid"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "token"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-SONG-007"
+    root_type: "ApiPrivilegeLiteRequest"
+    fields:
+      - path: "album_id"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "appid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "area_code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "behavior"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "Content-Type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "hash"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "need_hash_offset"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "qualities"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "relate"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "resource"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "support_verify"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-RANKING-001"
+    root_type: "ApiRankAudioRequest"
+    fields:
+      - path: "area_code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "filter_original_remarks"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "kg-tid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "rank_cid"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "rankid"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "show_portrait_mv"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "show_type_total"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-RANKING-002"
+    root_type: "ApiRankInfoRequest"
+    fields:
+      - path: "album_img"
+        type: "0 | 1"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "rank_cid"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "rankid"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "zone"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+  - endpoint_id: "API-RANKING-003"
+    root_type: "ApiRankListRequest"
+    fields:
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "parentid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "plat"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "withsong"
+        type: "boolean | string | number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+  - endpoint_id: "API-RANKING-004"
+    root_type: "ApiRankTopRequest"
+    fields:
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-RANKING-005"
+    root_type: "ApiRankVolRequest"
+    fields:
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "plat"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "rank_cid"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "rankid"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "ranktype"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-DISCOVER-007"
+    root_type: "ApiRecommendSongsRequest"
+    fields:
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "platform"
+        type: "Platform"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "userid"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-DEVICE-001"
+    root_type: "ApiRegisterDevRequest"
+    fields:
+      - path: "accelerometer"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "accelerometerValue"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "availableRamSize"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "availableRomSize"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "availableSDSize"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "basebandVer"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "batteryLevel"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "batteryStatus"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "brand"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "buildSerial"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "device"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "gravity"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "gravityValue"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "gyroscope"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "gyroscopeValue"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "imei"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "imsi"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "light"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "lightValue"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "magnetic"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "magneticValue"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "manufacturer"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "orientation"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "orientationValue"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "p"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "part"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "platid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "pressure"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "pressureValue"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "step_counter"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "step_counterValue"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "temperature"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "temperatureValue"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "token"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "uuid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-SCENE-001"
+    root_type: "ApiSceneAudioListRequest"
+    fields:
+      - path: "appid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "module_id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "tag"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "token"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-SCENE-002"
+    root_type: "ApiSceneCollectionListRequest"
+    fields:
+      - path: "appid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "exposed_data"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "tag_id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "token"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-SCENE-003"
+    root_type: "ApiSceneListsRequest"
+    fields:
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-SCENE-004"
+    root_type: "ApiSceneListsV2Request"
+    fields:
+      - path: "exposure"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "kugouid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "sort"
+        type: "SceneSort"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-SCENE-005"
+    root_type: "ApiSceneModuleRequest"
+    fields:
+      - path: "id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-SCENE-006"
+    root_type: "ApiSceneModuleInfoRequest"
+    fields:
+      - path: "id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "module_id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-SCENE-007"
+    root_type: "ApiSceneMusicRequest"
+    fields:
+      - path: "exposure"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-SCENE-008"
+    root_type: "ApiSceneVideoListRequest"
+    fields:
+      - path: "appid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "exposed_data"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "tag_id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "token"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-SEARCH-001"
+    root_type: "ApiSearchRequest"
+    fields:
+      - path: "iscorrection"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "keywords"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "nocollect"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "platform"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "type"
+        type: "SearchType"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-SEARCH-002"
+    root_type: "ApiSearchComplexRequest"
+    fields:
+      - path: "cursor"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "keywords"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "platform"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-SEARCH-003"
+    root_type: "ApiSearchDefaultRequest"
+    fields:
+      - path: "ability"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "bitmap"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "m_type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "mode"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "own_ads"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "plat"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "sources"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "tags"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "vip_type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-SEARCH-004"
+    root_type: "ApiSearchHotRequest"
+    fields:
+      - path: "navid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "plat"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-SEARCH-005"
+    root_type: "ApiSearchLyricRequest"
+    fields:
+      - path: "album_audio_id"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "appid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "duration"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "hash"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "keywords"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "lrctxt"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "man"
+        type: "LyricMan"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-SEARCH-006"
+    root_type: "ApiSearchMixedRequest"
+    fields:
+      - path: "ab_tag"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "ability"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "albumhide"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "apiver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "area_code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "cursor"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "is_gpay"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "iscorrection"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "keyword"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "kg-clienttimems"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "nocollect"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "osversion"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "platform"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "recver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "req_ai"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "requestid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "search_ability"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "sec_aggre"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "sec_aggre_bitmap"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "style_type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "tag"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-SEARCH-007"
+    root_type: "ApiSearchSuggestRequest"
+    fields:
+      - path: "albumTipCount"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "correctTipCount"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "keywords"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "musicTipCount"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "mvTipCount"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "radiotip"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-MISC-001"
+    root_type: "ApiServerNowRequest"
+    fields:
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "plat"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "token"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-SHEET-001"
+    root_type: "ApiSheetCollectionRequest"
+    fields:
+      - path: "collection_id"
+        type: "string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "position"
+        type: "SheetCollectionPosition"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "srcappid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-SHEET-002"
+    root_type: "ApiSheetDetailRequest"
+    fields:
+      - path: "id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "source"
+        type: "string"
+        required: true
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-SHEET-003"
+    root_type: "ApiSheetExploreRequest"
+    fields:
+      - path: "exposure_mixids"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "instruments"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "level"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "tagid"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-SHEET-004"
+    root_type: "ApiSheetRankRequest"
+    fields:
+      - path: "instruments"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "level"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "tagid"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-SHEET-005"
+    root_type: "ApiSheetSongRequest"
+    fields:
+      - path: "album_audio_id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "instruments"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "level"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-SHEET-006"
+    root_type: "ApiSheetTagsRequest"
+    fields:
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-LOGIN-014"
+    root_type: "ApiSidedtRequest"
+    fields:
+      - path: "dfid"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "mid"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "userid"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+  - endpoint_id: "API-MISC-002"
+    root_type: "ApiSingerListRequest"
+    fields:
+      - path: "hotsize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "musician"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "sextype"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "showtype"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "type"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+  - endpoint_id: "API-SONG-008"
+    root_type: "ApiSongClimaxRequest"
+    fields:
+      - path: "data"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "hash"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-SONG-009"
+    root_type: "ApiSongRankingRequest"
+    fields:
+      - path: "album_audio_id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-SONG-010"
+    root_type: "ApiSongRankingFilterRequest"
+    fields:
+      - path: "album_audio_id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-SONG-011"
+    root_type: "ApiSongUrlRequest"
+    fields:
+      - path: "album_audio_id"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "album_id"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "area_code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "behavior"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "cdnBackup"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "cmd"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "free_part"
+        type: "boolean | string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "hash"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "module"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page_id"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "pid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "pidversion"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "ppage_id"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "quality"
+        type: "SongQuality"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "ssa_flag"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "version"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-SONG-012"
+    root_type: "ApiSongUrlNewRequest"
+    fields:
+      - path: "album_audio_id"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "area_code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "behavior"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "dfid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "free_part"
+        type: "boolean | string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "hash"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "qualities"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "quality"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "token"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "vip"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "vip_token"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "vipType"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-THEME-001"
+    root_type: "ApiThemeMusicRequest"
+    fields:
+      - path: "clienttime"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "ids"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "module_id"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "platform"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-THEME-002"
+    root_type: "ApiThemeMusicDetailRequest"
+    fields:
+      - path: "clienttime"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "module_id"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "platform"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "show_theme_category_id"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-THEME-003"
+    root_type: "ApiThemePlaylistRequest"
+    fields:
+      - path: "area_code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clienttime"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "module_id"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "platform"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-THEME-004"
+    root_type: "ApiThemePlaylistTrackRequest"
+    fields:
+      - path: "area_code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clienttime"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "module_id"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "platform"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "theme_id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-DISCOVER-008"
+    root_type: "ApiTopAlbumRequest"
+    fields:
+      - path: "apiver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "token"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "type"
+        type: "AlbumType"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "withpriv"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-DISCOVER-009"
+    root_type: "ApiTopCardRequest"
+    fields:
+      - path: "appid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "area_code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "card_id"
+        type: "CardId"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "client_playlist"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clienttime"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "dfid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "fakem"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "key"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "mid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "platform"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "u_info"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "uuid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-DISCOVER-010"
+    root_type: "ApiTopCardYouthRequest"
+    fields:
+      - path: "area_code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "card_id"
+        type: "YouthCardId"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "module_id"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "platform"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "source_mixsong"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "tagid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "u_info"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "ver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-DISCOVER-011"
+    root_type: "ApiTopIpRequest"
+    fields:
+      - path: "area_code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "tags"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-DISCOVER-012"
+    root_type: "ApiTopPlaylistRequest"
+    fields:
+      - path: "appid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "category_id"
+        type: "number"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "clienttime"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "cookie"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "key"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "module_id"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "platform"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "req_multi"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "retrun_min"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "return_special_falg"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "sort"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "special_recommend"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "withsong"
+        type: "0 | 1"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "withtag"
+        type: "0 | 1"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-DISCOVER-013"
+    root_type: "ApiTopSongRequest"
+    fields:
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "tags"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-DISCOVER-014"
+    root_type: "ApiTopTagCardYouthRequest"
+    fields:
+      - path: "area_code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "module_id"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "platform"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "source_mixsong"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "tagid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "u_info"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "ver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-CLOUD-001"
+    root_type: "ApiUserCloudRequest"
+    fields:
+      - path: "appid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clienttime"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "key"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "mid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "p"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "token"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-CLOUD-002"
+    root_type: "ApiUserCloudUploadRequest"
+    fields:
+      - path: "album_audio_id"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "appid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "audio_id"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "author_name"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "bitrate"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clienttime"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "data"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "extendname"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "filename"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "key"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "list_ver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "mid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "name"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "p"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timelen"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "token"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-CLOUD-003"
+    root_type: "ApiUserCloudUrlRequest"
+    fields:
+      - path: "album_audio_id"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "album_id"
+        type: "string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "audio_id"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "bucket"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "hash"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "key"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "kv_id"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "name"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "pid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "ssa_flag"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "ssl"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "version"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "with_res_tag"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-USER-003"
+    root_type: "ApiUserDetailRequest"
+    fields:
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "p"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "plat"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "token"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "usertype"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "visit_time"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-USER-004"
+    root_type: "ApiUserFollowRequest"
+    fields:
+      - path: "ext_params"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "id_type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "merge"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "need_iden_type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "p"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "plat"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "token"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-USER-005"
+    root_type: "ApiUserFollowMessageRequest"
+    fields:
+      - path: "filter"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "maxid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-USER-006"
+    root_type: "ApiUserHistoryRequest"
+    fields:
+      - path: "bp"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "source_classify"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "to_subdivide_sr"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "token"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-USER-007"
+    root_type: "ApiUserListenRequest"
+    fields:
+      - path: "area_code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clienttime"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "cover"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "p"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "plat"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "t_userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "token"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "type"
+        type: "ListenType"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-USER-008"
+    root_type: "ApiUserPlaylistRequest"
+    fields:
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "plat"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "token"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "total_ver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-USER-009"
+    root_type: "ApiUserPurchasedAlbumsRequest"
+    fields:
+      - path: "appid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "cookie"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "deleted"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "page"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-USER-010"
+    root_type: "ApiUserPurchasedSongsRequest"
+    fields:
+      - path: "appid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "area_code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "cookie"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "deleted"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "need_audio_info"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "page"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-USER-011"
+    root_type: "ApiUserVideoCollectRequest"
+    fields:
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "plat"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "token"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-USER-012"
+    root_type: "ApiUserVideoLoveRequest"
+    fields:
+      - path: "kugouid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "load_video_info"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "p"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "plat"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-USER-013"
+    root_type: "ApiUserVipDetailRequest"
+    fields:
+      - path: "busi_type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-LOGIN-015"
+    root_type: "ApiVerifyUserInfoRequest"
+    fields:
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "edt"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "eventid"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "platid"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "sid"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "userid"
+        type: "string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "v_type"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "verifycode"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+  - endpoint_id: "API-VIDEO-001"
+    root_type: "ApiVideoDetailRequest"
+    fields:
+      - path: "appid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clienttime"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "data"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "dfid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "key"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "mid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "show_resolution"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "token"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "uuid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-VIDEO-002"
+    root_type: "ApiVideoPrivilegeRequest"
+    fields:
+      - path: "appid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "area_code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "behavior"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "cookie"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "dfid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "hash"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "mid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "resource"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-VIDEO-003"
+    root_type: "ApiVideoUrlRequest"
+    fields:
+      - path: "backupdomain"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "cmd"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "ext"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "hash"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "ismp3"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "pid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-YOUTH-001"
+    root_type: "ApiYouthChannelAllRequest"
+    fields:
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-YOUTH-002"
+    root_type: "ApiYouthChannelAmwayRequest"
+    fields:
+      - path: "global_collection_id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-YOUTH-003"
+    root_type: "ApiYouthChannelDetailRequest"
+    fields:
+      - path: "data"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "global_collection_id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-YOUTH-004"
+    root_type: "ApiYouthChannelSimilarRequest"
+    fields:
+      - path: "area_code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "channel_id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "platform"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "playlist_ver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "vip_type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-YOUTH-005"
+    root_type: "ApiYouthChannelSongRequest"
+    fields:
+      - path: "global_collection_id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "is_filter"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-YOUTH-006"
+    root_type: "ApiYouthChannelSongDetailRequest"
+    fields:
+      - path: "fileid"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "global_collection_id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-YOUTH-007"
+    root_type: "ApiYouthChannelSubRequest"
+    fields:
+      - path: "global_collection_id"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "source"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "t"
+        type: "0 | 1"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-YOUTH-008"
+    root_type: "ApiYouthDayVipRequest"
+    fields:
+      - path: "content-type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "receive_day"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "source_id"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-YOUTH-009"
+    root_type: "ApiYouthDayVipUpgradeRequest"
+    fields:
+      - path: "ad_type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-YOUTH-010"
+    root_type: "ApiYouthDynamicRequest"
+    fields:
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-YOUTH-011"
+    root_type: "ApiYouthDynamicRecentRequest"
+    fields:
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-YOUTH-012"
+    root_type: "ApiYouthListenSongRequest"
+    fields:
+      - path: "clientver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "content-type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "mixsongid"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "user-agent"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-YOUTH-013"
+    root_type: "ApiYouthMonthVipRecordRequest"
+    fields:
+      - path: "latest_limit"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-YOUTH-014"
+    root_type: "ApiYouthUnionVipRequest"
+    fields:
+      - path: "busi_type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "opt_product_types"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "product_type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-YOUTH-015"
+    root_type: "ApiYouthUserSongRequest"
+    fields:
+      - path: "filter_video"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "is_filter"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "page"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "pagesize"
+        type: "number"
+        required: false
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "userid"
+        type: "string"
+        required: true
+        evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+  - endpoint_id: "API-YOUTH-016"
+    root_type: "ApiYouthVipRequest"
+    fields:
+      - path: "ad_id"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "play_end"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "play_start"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+  - endpoint_id: "API-DISCOVER-015"
+    root_type: "ApiYuekuRequest"
+    fields:
+      - path: "area_code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "operator"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "plat"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "req_multi"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-DISCOVER-016"
+    root_type: "ApiYuekuBannerRequest"
+    fields:
+      - path: "ability"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "apiver"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "channel"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "m_type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "mode"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "networktype"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "operator"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "plat"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "tags"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "userid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "vip_type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+  - endpoint_id: "API-DISCOVER-017"
+    root_type: "ApiYuekuFmRequest"
+    fields:
+      - path: "area_code"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "noCookie"
+        type: "boolean"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "operator"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "plat"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "req_multi"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "timestamp"
+        type: "number | string"
+        required: false
+        evidence: ["DECLARED"]
+      - path: "type"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "x-router"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
