@@ -164,11 +164,13 @@ Player 属于产品设计层，不属于当前 Foundation 建设。已有 Player
 | 06 Core Components | 文档 + PNG | 已冻结 |
 | 07 Navigation & Feedback | 文档 + 3 PNG | 已冻结 |
 | 08 Music Components | 文档 + PNG | 已冻结；Resonote Extension |
-| 11 Validation Matrix | 文档；实现阶段补截图、录屏与报告 | 规范已冻结；实现证据补充中，V-04 部分自动化覆盖 |
+| 11 Validation Matrix | 文档；实现阶段补截图、录屏与报告 | 规范已冻结；实现证据补充中，V-04 / V-05 部分自动化覆盖 |
 
 ## 8. 实现进度
 
 - Foundation Theme、Light / Dark / AMOLED ColorScheme、Typography、Shape 与扩展 Token 已在 `core:designsystem` 实现。
 - 06A Buttons & Actions 已实现品牌化 Button、Icon Button 与 Toggle Icon Button，并接入独立 Catalog App。
-- `core:screenshot-testing` 已建立；06A 已提交 Light、Dark、AMOLED 与 200% 字号 Roborazzi Golden，并通过行为、语义、触控边界和截图回归测试。
+- 06B-1 Text Field 已基于 Material3 1.4.0 稳定版 `BasicTextField` 与官方 `OutlinedTextFieldDefaults.DecorationBox` 实现品牌化 Outlined Text Field；覆盖结构化 Label / Supporting / Error / Counter、2dp Error Outline、200% 字号 Prefix/Suffix 独立行、Unicode Code Point 长度限制、单/多行与稳定版密码视觉转换，并接入独立 Catalog App。
+- `core:screenshot-testing` 已建立；06A 与 06B-1 已提交 Light、Dark、AMOLED、字号、RTL 与窗口矩阵 Roborazzi Golden，并通过行为、语义、触控边界、MD3 尺寸合同和截图回归测试。
 - V-04 当前为部分自动化覆盖；Hover、Focused、Pressed、真实设备 TalkBack 与键盘路径仍为待实现验证，不标记为 Pass。
+- V-05 当前为部分自动化覆盖；真实 IME、TalkBack、外接键盘、设备语义树与录屏仍为待实现验证，不标记为 Pass。

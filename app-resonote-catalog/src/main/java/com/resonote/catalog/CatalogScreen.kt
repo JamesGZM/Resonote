@@ -90,6 +90,8 @@ internal fun CatalogScreen(
                 ExtendedTokenValues()
                 SectionTitle("06A · Buttons & Actions")
                 ActionsCatalog()
+                SectionTitle("06B-1 · Text Field")
+                InputsCatalog()
                 Spacer(Modifier.height(ResonoteTokens.spacing.space6))
                 Text(
                     text = "Catalog 是实现证据入口，不代表 V-01–V-10 已通过。",

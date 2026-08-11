@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="core_designsystem_text_field_character_limit_exceeded">
+        <item quantity="other">最多可输入 %1$d 个字符。</item>
+    </plurals>
+</resources>

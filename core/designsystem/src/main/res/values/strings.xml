@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="core_designsystem_text_field_character_limit_exceeded">
+        <item quantity="one">Maximum %1$d character.</item>
+        <item quantity="other">Maximum %1$d characters.</item>
+    </plurals>
+</resources>

@@ -1,6 +1,6 @@
 # Resonote Architecture
 
-> 状态：架构参考基线；阶段 1 已完成，阶段 2 已完成 Foundation 与 06A 纵向切片
+> 状态：架构参考基线；阶段 1 已完成，阶段 2 已完成 Foundation、06A 与 06B-1 纵向切片
 > 更新日期：2026-08-11
 > 参考项目：Now in Android（NIA）
 > 参考提交：[`7d45eae4f8720a0c77f507712ba2437ff974b6ed`](https://github.com/android/nowinandroid/tree/7d45eae4f8720a0c77f507712ba2437ff974b6ed)
@@ -755,8 +755,8 @@ Mobile V2 固定快照已经验证过下列库族，但它们不因旧项目存�
 ### 阶段 2：Design System 与 Catalog
 
 - 已建立 `core:designsystem`、`core:screenshot-testing` 和 `app-resonote-catalog`。
-- Foundation Theme/Token 与 06A Buttons & Actions 已实现；06A 已接入 Catalog，并提交 Light、Dark、AMOLED 与 200% 字号 Roborazzi Golden。
-- 06B–08 继续按纵向切片实现；V-04 仅为部分自动化覆盖，完整 Validation 状态仍为 Not Run。
+- Foundation Theme/Token、06A Buttons & Actions 与 06B-1 Text Field 已实现并接入 Catalog；组件基线覆盖主题、字号、RTL 与代表性窗口矩阵。
+- 06B-2–08 继续按纵向切片实现；V-04 / V-05 仅为部分自动化覆盖，完整 Validation 状态仍为 Not Run。
 
 ### 阶段 3：App Shell
 
