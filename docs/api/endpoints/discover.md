@@ -17,7 +17,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/everyday_friend.js</code> |
 
 ### 上游请求
@@ -67,7 +67,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/everyday_history.js</code> |
 
 ### 上游请求
@@ -116,7 +116,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/everyday_recommend.js</code> |
 
 ### 上游请求
@@ -167,7 +167,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/everyday_style_recommend.js</code> |
 
 ### 上游请求
@@ -213,7 +213,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/pc_diantai.js</code> |
 
 ### 上游请求
@@ -260,7 +260,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/personal_fm.js</code> |
 
 ### 上游请求
@@ -327,7 +327,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/recommend_songs.js</code> |
 
 ### 上游请求
@@ -374,7 +374,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/top_album.js</code> |
 
 ### 上游请求
@@ -429,7 +429,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | <code>SOURCE_CONFIRMED</code> |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/top_card.js</code> |
 
 ### 上游请求
@@ -493,7 +493,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/top_card_youth.js</code> |
 
 ### 上游请求
@@ -547,7 +547,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | <code>SOURCE_CONFIRMED</code> |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/top_ip.js</code> |
 
 ### 上游请求
@@ -599,7 +599,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/top_playlist.js</code> |
 
 ### 上游请求
@@ -667,7 +667,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/top_song.js</code> |
 
 ### 上游请求
@@ -722,7 +722,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/top_tag_card_youth.js</code> |
 
 ### 上游请求
@@ -774,7 +774,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/yueku.js</code> |
 
 ### 上游请求
@@ -824,7 +824,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/yueku_banner.js</code> |
 
 ### 上游请求
@@ -879,7 +879,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/yueku_fm.js</code> |
 
 ### 上游请求

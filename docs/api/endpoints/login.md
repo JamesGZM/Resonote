@@ -17,7 +17,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>module-specific + common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/captcha_sent.js</code> |
 
 ### 上游请求
@@ -30,11 +30,11 @@
 
 | 字段 | 类型 | 必填 | 位置 | 默认值 | 证据 |
 |---|---|---:|---|---|---|
-| <code>businessid</code> | <code>unknown</code> | 否/未知 | <code>body</code> | <code>-</code> | <code>SOURCE_CONFIRMED</code> |
+| <code>businessid</code> | <code>number</code> | 否/未知 | <code>body</code> | <code>5</code> | <code>SOURCE_CONFIRMED</code> |
 | <code>cookie</code> | <code>unknown</code> | 否/未知 | <code>cookie</code> | <code>-</code> | <code>SOURCE_CONFIRMED</code> |
 | <code>mobile</code> | <code>string</code> | 是 | <code>body</code> | <code>-</code> | <code>DECLARED</code>, <code>SOURCE_CONFIRMED</code> |
 | <code>noCookie</code> | <code>boolean</code> | 否/未知 | <code>module</code> | <code>-</code> | <code>DECLARED</code> |
-| <code>plat</code> | <code>unknown</code> | 否/未知 | <code>body</code> | <code>-</code> | <code>SOURCE_CONFIRMED</code> |
+| <code>plat</code> | <code>number</code> | 否/未知 | <code>body</code> | <code>3</code> | <code>SOURCE_CONFIRMED</code> |
 | <code>timestamp</code> | <code>number &#124; string</code> | 否/未知 | <code>module</code> | <code>-</code> | <code>DECLARED</code> |
 
 ### 返回值证据
@@ -71,7 +71,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>module-specific + common-ssa</code> |
+| 风控 | <code>bypass</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/get_verify_info.js</code> |
 
 ### 上游请求
@@ -84,20 +84,25 @@
 
 | 字段 | 类型 | 必填 | 位置 | 默认值 | 证据 |
 |---|---|---:|---|---|---|
-| <code>edt</code> | <code>unknown</code> | 否/未知 | <code>body</code> | <code>-</code> | <code>SOURCE_CONFIRMED</code> |
+| <code>edt</code> | <code>string</code> | 否/未知 | <code>body</code> | <code>''</code> | <code>SOURCE_CONFIRMED</code> |
 | <code>eventid</code> | <code>string</code> | 是 | <code>body</code> | <code>-</code> | <code>DECLARED</code>, <code>SOURCE_CONFIRMED</code> |
-| <code>i</code> | <code>unknown</code> | 否/未知 | <code>body</code> | <code>-</code> | <code>SOURCE_CONFIRMED</code> |
+| <code>i</code> | <code>string</code> | 否/未知 | <code>body</code> | <code>''</code> | <code>SOURCE_CONFIRMED</code> |
 | <code>noCookie</code> | <code>boolean</code> | 否/未知 | <code>module</code> | <code>-</code> | <code>DECLARED</code> |
 | <code>platid</code> | <code>number</code> | 否/未知 | <code>body</code> | <code>2</code> | <code>DECLARED</code>, <code>SOURCE_CONFIRMED</code> |
-| <code>rtype</code> | <code>unknown</code> | 否/未知 | <code>body</code> | <code>-</code> | <code>SOURCE_CONFIRMED</code> |
-| <code>sid</code> | <code>unknown</code> | 否/未知 | <code>body</code> | <code>-</code> | <code>SOURCE_CONFIRMED</code> |
+| <code>rtype</code> | <code>number</code> | 否/未知 | <code>body</code> | <code>1</code> | <code>SOURCE_CONFIRMED</code> |
+| <code>sid</code> | <code>string</code> | 否/未知 | <code>body</code> | <code>''</code> | <code>SOURCE_CONFIRMED</code> |
 | <code>timestamp</code> | <code>number &#124; string</code> | 否/未知 | <code>module</code> | <code>-</code> | <code>DECLARED</code> |
 | <code>userid</code> | <code>string</code> | 否/未知 | <code>body</code> | <code>&lt;redacted&gt;</code> | <code>DECLARED</code>, <code>SOURCE_CONFIRMED</code> |
-| <code>wasm</code> | <code>unknown</code> | 否/未知 | <code>body</code> | <code>-</code> | <code>SOURCE_CONFIRMED</code> |
+| <code>wasm</code> | <code>number</code> | 否/未知 | <code>body</code> | <code>1</code> | <code>SOURCE_CONFIRMED</code> |
 
 ### 返回值证据
 
-上游响应由包装层透传，静态证据未确认字段级结构：`UNKNOWN`。不得据此生成严格 Kotlin DTO。
+| Body 路径 | 证据 |
+|---|---|
+| <code>data.v_type</code> | <code>REFERENCE_CONFIRMED</code> |
+| <code>data.txappid</code> | <code>REFERENCE_CONFIRMED</code> |
+
+这里只列出源码或固定 PC 消费端能够证明的字段；未列出的字段不代表不存在。
 
 ### Android 映射
 
@@ -123,7 +128,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | <code>SOURCE_CONFIRMED</code> |
 | Cookie 回写 | <code>SOURCE_CONFIRMED</code> |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/login.js</code> |
 
 ### 上游请求
@@ -146,7 +151,6 @@
 | <code>support_multi</code> | <code>unknown</code> | 否/未知 | <code>body</code> | <code>-</code> | <code>SOURCE_CONFIRMED</code> |
 | <code>t1</code> | <code>unknown</code> | 否/未知 | <code>body</code> | <code>-</code> | <code>SOURCE_CONFIRMED</code> |
 | <code>t2</code> | <code>unknown</code> | 否/未知 | <code>body</code> | <code>-</code> | <code>SOURCE_CONFIRMED</code> |
-| <code>t3</code> | <code>unknown</code> | 否/未知 | <code>body</code> | <code>-</code> | <code>SOURCE_CONFIRMED</code> |
 | <code>timestamp</code> | <code>number &#124; string</code> | 否/未知 | <code>module</code> | <code>-</code> | <code>DECLARED</code> |
 | <code>username</code> | <code>string</code> | 是 | <code>body</code> | <code>-</code> | <code>DECLARED</code>, <code>SOURCE_CONFIRMED</code> |
 | <code>x-router</code> | <code>unknown</code> | 否/未知 | <code>header</code> | <code>-</code> | <code>SOURCE_CONFIRMED</code> |
@@ -190,7 +194,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | <code>SOURCE_CONFIRMED</code> |
 | Cookie 回写 | <code>SOURCE_CONFIRMED</code> |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/login_cellphone.js</code> |
 
 ### 上游请求
@@ -203,10 +207,21 @@
 
 | 字段 | 类型 | 必填 | 位置 | 默认值 | 证据 |
 |---|---|---:|---|---|---|
+| <code>clienttime_ms</code> | <code>number</code> | 否/未知 | <code>body</code> | <code>-</code> | <code>SOURCE_CONFIRMED</code> |
 | <code>code</code> | <code>string</code> | 是 | <code>module</code> | <code>''</code> | <code>DECLARED</code>, <code>SOURCE_CONFIRMED</code> |
+| <code>dev</code> | <code>string</code> | 否/未知 | <code>body</code> | <code>-</code> | <code>SOURCE_CONFIRMED</code> |
+| <code>dfid</code> | <code>string</code> | 否/未知 | <code>body</code> | <code>-</code> | <code>SOURCE_CONFIRMED</code> |
+| <code>gitversion</code> | <code>string</code> | 否/未知 | <code>body</code> | <code>-</code> | <code>SOURCE_CONFIRMED</code> |
+| <code>key</code> | <code>string</code> | 否/未知 | <code>body</code> | <code>-</code> | <code>SOURCE_CONFIRMED</code> |
 | <code>mobile</code> | <code>string</code> | 是 | <code>module</code> | <code>''</code> | <code>DECLARED</code>, <code>SOURCE_CONFIRMED</code> |
 | <code>noCookie</code> | <code>boolean</code> | 否/未知 | <code>module</code> | <code>-</code> | <code>DECLARED</code> |
+| <code>params</code> | <code>string</code> | 否/未知 | <code>body</code> | <code>-</code> | <code>SOURCE_CONFIRMED</code> |
+| <code>pk</code> | <code>string</code> | 否/未知 | <code>body</code> | <code>-</code> | <code>SOURCE_CONFIRMED</code> |
+| <code>plat</code> | <code>number</code> | 否/未知 | <code>body</code> | <code>1</code> | <code>SOURCE_CONFIRMED</code> |
+| <code>support_multi</code> | <code>number</code> | 否/未知 | <code>body</code> | <code>1</code> | <code>SOURCE_CONFIRMED</code> |
 | <code>support-calm</code> | <code>unknown</code> | 否/未知 | <code>header</code> | <code>-</code> | <code>SOURCE_CONFIRMED</code> |
+| <code>t1</code> | <code>string</code> | 否/未知 | <code>body</code> | <code>-</code> | <code>SOURCE_CONFIRMED</code> |
+| <code>t2</code> | <code>string</code> | 否/未知 | <code>body</code> | <code>-</code> | <code>SOURCE_CONFIRMED</code> |
 | <code>timestamp</code> | <code>number &#124; string</code> | 否/未知 | <code>module</code> | <code>-</code> | <code>DECLARED</code> |
 | <code>User-Agent</code> | <code>unknown</code> | 否/未知 | <code>header</code> | <code>-</code> | <code>SOURCE_CONFIRMED</code> |
 | <code>userid</code> | <code>string</code> | 否/未知 | <code>module</code> | <code>-</code> | <code>DECLARED</code>, <code>SOURCE_CONFIRMED</code> |
@@ -222,6 +237,11 @@
 | <code>data.vip_token</code> | <code>SOURCE_CONFIRMED</code> |
 | <code>status</code> | <code>SOURCE_CONFIRMED</code> |
 | <code>data.secu_params</code> | <code>SOURCE_CONFIRMED</code> |
+| <code>data.info_list</code> | <code>REFERENCE_CONFIRMED</code> |
+| <code>data.info_list.userid</code> | <code>REFERENCE_CONFIRMED</code> |
+| <code>data.info_list.nickname</code> | <code>REFERENCE_CONFIRMED</code> |
+| <code>data.info_list.pic</code> | <code>REFERENCE_CONFIRMED</code> |
+| <code>data.info_list.p_grade</code> | <code>REFERENCE_CONFIRMED</code> |
 
 这里只列出源码或固定 PC 消费端能够证明的字段；未列出的字段不代表不存在。
 
@@ -249,7 +269,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | <code>SOURCE_CONFIRMED</code> |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/login_device.js</code> |
 
 ### 上游请求
@@ -299,7 +319,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | <code>SOURCE_CONFIRMED</code> |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/login_device_kick.js</code> |
 
 ### 上游请求
@@ -359,7 +379,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | <code>SOURCE_CONFIRMED</code> |
 | Cookie 回写 | <code>SOURCE_CONFIRMED</code> |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/login_openplat.js</code> |
 
 ### 上游请求
@@ -425,7 +445,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | <code>SOURCE_CONFIRMED</code> |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/login_qr_check.js</code> |
 
 ### 上游请求
@@ -533,7 +553,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/login_qr_key.js</code> |
 
 ### 上游请求
@@ -586,7 +606,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | <code>SOURCE_CONFIRMED</code> |
 | Cookie 回写 | <code>SOURCE_CONFIRMED</code> |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/login_token.js</code> |
 
 ### 上游请求
@@ -740,7 +760,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>module-specific + common-ssa</code> |
+| 风控 | <code>bypass</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/sidedt.js</code> |
 
 ### 上游请求
@@ -787,7 +807,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | <code>SOURCE_CONFIRMED</code> |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>module-specific + common-ssa</code> |
+| 风控 | <code>bypass</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/verify_user_info.js</code> |
 
 ### 上游请求
@@ -800,9 +820,10 @@
 
 | 字段 | 类型 | 必填 | 位置 | 默认值 | 证据 |
 |---|---|---:|---|---|---|
-| <code>clientver</code> | <code>unknown</code> | 否/未知 | <code>query</code> | <code>-</code> | <code>SOURCE_CONFIRMED</code> |
+| <code>clientver</code> | <code>number</code> | 否/未知 | <code>query</code> | <code>11510</code> | <code>SOURCE_CONFIRMED</code> |
 | <code>edt</code> | <code>string</code> | 否/未知 | <code>module</code> | <code>&lt;source-expression&gt;</code> | <code>DECLARED</code>, <code>SOURCE_CONFIRMED</code> |
 | <code>eventid</code> | <code>string</code> | 是 | <code>module</code> | <code>-</code> | <code>DECLARED</code>, <code>SOURCE_CONFIRMED</code> |
+| <code>i</code> | <code>string</code> | 否/未知 | <code>body</code> | <code>''</code> | <code>SOURCE_CONFIRMED</code> |
 | <code>noCookie</code> | <code>boolean</code> | 否/未知 | <code>module</code> | <code>-</code> | <code>DECLARED</code> |
 | <code>platid</code> | <code>number</code> | 否/未知 | <code>module</code> | <code>2</code> | <code>DECLARED</code>, <code>SOURCE_CONFIRMED</code> |
 | <code>sid</code> | <code>string</code> | 否/未知 | <code>module</code> | <code>&lt;source-expression&gt;</code> | <code>DECLARED</code>, <code>SOURCE_CONFIRMED</code> |
@@ -810,6 +831,7 @@
 | <code>userid</code> | <code>string</code> | 否/未知 | <code>module</code> | <code>&lt;redacted&gt;</code> | <code>DECLARED</code>, <code>SOURCE_CONFIRMED</code> |
 | <code>v_type</code> | <code>number</code> | 否/未知 | <code>module</code> | <code>&lt;source-expression&gt;</code> | <code>DECLARED</code>, <code>SOURCE_CONFIRMED</code> |
 | <code>verifycode</code> | <code>string</code> | 是 | <code>module</code> | <code>&lt;source-expression&gt;</code> | <code>DECLARED</code>, <code>SOURCE_CONFIRMED</code> |
+| <code>wasm</code> | <code>number</code> | 否/未知 | <code>body</code> | <code>1</code> | <code>SOURCE_CONFIRMED</code> |
 
 ### 返回值证据
 

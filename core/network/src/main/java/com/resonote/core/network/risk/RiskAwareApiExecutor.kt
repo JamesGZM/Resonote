@@ -21,13 +21,12 @@ internal class RiskAwareApiExecutor @Inject constructor(
     private val verifier = verifier.orElse(ApiRiskVerifier { ApiRiskVerificationResult.Unavailable })
     private val verificationMutex = Mutex()
 
-    suspend fun execute(
-        riskHandling: ApiRiskHandling = ApiRiskHandling.HandleAndRetryOnce,
-        request: suspend () -> ApiRawResponse,
-    ): ApiRawResponse {
+    suspend fun <T> execute(
+        request: suspend () -> ApiCallResult<T>,
+    ): T {
         val firstResponse = request()
-        val challenge = detector.detect(firstResponse) ?: return firstResponse
-        if (riskHandling == ApiRiskHandling.Bypass) {
+        val challenge = detector.detect(firstResponse.raw) ?: return firstResponse.decode()
+        if (firstResponse.riskHandling == ApiRiskHandling.Bypass) {
             throw ApiRiskException(challenge, ApiRiskException.Reason.Failed)
         }
 
@@ -40,8 +39,14 @@ internal class RiskAwareApiExecutor @Inject constructor(
         }
 
         val retryResponse = request()
-        val repeated = detector.detect(retryResponse)
+        val repeated = detector.detect(retryResponse.raw)
         if (repeated != null) throw ApiRiskException(repeated, ApiRiskException.Reason.RepeatedChallenge)
-        return retryResponse
+        return retryResponse.decode()
     }
 }
+
+internal data class ApiCallResult<T>(
+    val raw: ApiRawResponse,
+    val decode: () -> T,
+    val riskHandling: ApiRiskHandling = ApiRiskHandling.HandleAndRetryOnce,
+)

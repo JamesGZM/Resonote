@@ -6,6 +6,7 @@
 
 - PC 消费端：`MoeKoeMusic@52c9833afe2e7fedcba8d5b23ff8d1f9731af73a`
 - API 协议源：`MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb`
+- 行为旁证：`MoeKoeMusic-Mobile-V2@c4b4f1d`（仅 `REFERENCE_CONFIRMED`，不得覆盖 Lite）
 - 平台：概念版 `lite`（`appid=3116`、`clientver=11440`）
 - 模块：164
 - 验证：仅静态分析，无外部网络请求
@@ -18,7 +19,7 @@
 4. [验证与缺口](VERIFICATION.md)
 5. [接口领域索引](#接口领域)
 
-Node 包装路由只描述 PC 调用的本地 Express 接口；每个接口章节中的“上游请求”才是 Android 直连契约。字段证据等级为 `SOURCE_CONFIRMED`、`CONSUMER_CONFIRMED`、`DECLARED`、`FIXTURE_CONFIRMED`、`INFERRED`、`UNKNOWN`。
+Node 包装路由只描述 PC 调用的本地 Express 接口；每个接口章节中的“上游请求”才是 Android 直连契约。字段证据等级为 `SOURCE_CONFIRMED`、`CONSUMER_CONFIRMED`、`REFERENCE_CONFIRMED`、`DECLARED`、`FIXTURE_CONFIRMED`、`INFERRED`、`UNKNOWN`。
 
 ## 接口领域
 
@@ -54,7 +55,7 @@ Node 包装路由只描述 PC 调用的本地 Express 接口；每个接口章�
 
 - 全量模块：164/164
 - 固定 PC 消费端直接使用：46
-- 无字段级响应证据：118
+- 无字段级响应证据：117
 - 未映射的固定 PC 请求路由：0
 
 完整统计和限制见 [VERIFICATION](VERIFICATION.md)。

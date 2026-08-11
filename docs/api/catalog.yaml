@@ -18,7 +18,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/ai.md#api-ai-001"
     upstream_requests:
       - sequence: 1
@@ -144,7 +144,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/album.md#api-album-001"
     upstream_requests:
       - sequence: 1
@@ -264,7 +264,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/album.md#api-album-002"
     upstream_requests:
       - sequence: 1
@@ -340,7 +340,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/album.md#api-album-003"
     upstream_requests:
       - sequence: 1
@@ -382,7 +382,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/album.md#api-album-004"
     upstream_requests:
       - sequence: 1
@@ -468,7 +468,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/artist.md#api-artist-001"
     upstream_requests:
       - sequence: 1
@@ -552,7 +552,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/artist.md#api-artist-002"
     upstream_requests:
       - sequence: 1
@@ -670,7 +670,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/artist.md#api-artist-003"
     upstream_requests:
       - sequence: 1
@@ -732,7 +732,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/artist.md#api-artist-004"
     upstream_requests:
       - sequence: 1
@@ -828,7 +828,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/artist.md#api-artist-005"
     upstream_requests:
       - sequence: 1
@@ -894,7 +894,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/artist.md#api-artist-006"
     upstream_requests:
       - sequence: 1
@@ -954,7 +954,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/artist.md#api-artist-007"
     upstream_requests:
       - sequence: 1
@@ -1026,7 +1026,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/artist.md#api-artist-008"
     upstream_requests:
       - sequence: 1
@@ -1116,7 +1116,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/artist.md#api-artist-009"
     upstream_requests:
       - sequence: 1
@@ -1188,7 +1188,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/song.md#api-song-001"
     upstream_requests:
       - sequence: 1
@@ -1302,7 +1302,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/song.md#api-song-002"
     upstream_requests:
       - sequence: 1
@@ -1398,7 +1398,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/song.md#api-song-003"
     upstream_requests:
       - sequence: 1
@@ -1488,7 +1488,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/recognition.md#api-recognition-001"
     upstream_requests:
       - sequence: 1
@@ -1568,7 +1568,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/song.md#api-song-004"
     upstream_requests:
       - sequence: 1
@@ -1652,7 +1652,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/brush.md#api-brush-001"
     upstream_requests:
       - sequence: 1
@@ -1766,7 +1766,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "module-specific + common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/login.md#api-login-001"
     upstream_requests:
       - sequence: 1
@@ -1779,10 +1779,10 @@ endpoints:
         response_type: "json"
     request_fields:
       - name: "businessid"
-        type: "unknown"
+        type: "number"
         required: false
         locations: ["body"]
-        default: null
+        default: "5"
         evidence: ["SOURCE_CONFIRMED"]
       - name: "cookie"
         type: "unknown"
@@ -1803,10 +1803,10 @@ endpoints:
         default: null
         evidence: ["DECLARED"]
       - name: "plat"
-        type: "unknown"
+        type: "number"
         required: false
         locations: ["body"]
-        default: null
+        default: "3"
         evidence: ["SOURCE_CONFIRMED"]
       - name: "timestamp"
         type: "number | string"
@@ -1836,7 +1836,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/comment.md#api-comment-001"
     upstream_requests:
       - sequence: 1
@@ -1920,7 +1920,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/comment.md#api-comment-002"
     upstream_requests:
       - sequence: 1
@@ -2094,7 +2094,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/comment.md#api-comment-004"
     upstream_requests:
       - sequence: 1
@@ -2184,7 +2184,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/comment.md#api-comment-005"
     upstream_requests:
       - sequence: 1
@@ -2274,7 +2274,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/comment.md#api-comment-006"
     upstream_requests:
       - sequence: 1
@@ -2358,7 +2358,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/comment.md#api-comment-007"
     upstream_requests:
       - sequence: 1
@@ -2454,7 +2454,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/discover.md#api-discover-001"
     upstream_requests:
       - sequence: 1
@@ -2532,7 +2532,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/discover.md#api-discover-002"
     upstream_requests:
       - sequence: 1
@@ -2604,7 +2604,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/discover.md#api-discover-003"
     upstream_requests:
       - sequence: 1
@@ -2660,7 +2660,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/discover.md#api-discover-004"
     upstream_requests:
       - sequence: 1
@@ -2714,7 +2714,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/favorite.md#api-favorite-001"
     upstream_requests:
       - sequence: 1
@@ -2762,7 +2762,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/fm.md#api-fm-001"
     upstream_requests:
       - sequence: 1
@@ -2870,7 +2870,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/fm.md#api-fm-002"
     upstream_requests:
       - sequence: 1
@@ -2984,7 +2984,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/fm.md#api-fm-003"
     upstream_requests:
       - sequence: 1
@@ -3098,7 +3098,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/fm.md#api-fm-004"
     upstream_requests:
       - sequence: 1
@@ -3254,7 +3254,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "module-specific + common-ssa"
+      risk: "bypass"
     documentation: "endpoints/login.md#api-login-002"
     upstream_requests:
       - sequence: 1
@@ -3267,10 +3267,10 @@ endpoints:
         response_type: "json"
     request_fields:
       - name: "edt"
-        type: "unknown"
+        type: "string"
         required: false
         locations: ["body"]
-        default: null
+        default: "''"
         evidence: ["SOURCE_CONFIRMED"]
       - name: "eventid"
         type: "string"
@@ -3279,10 +3279,10 @@ endpoints:
         default: null
         evidence: ["DECLARED", "SOURCE_CONFIRMED"]
       - name: "i"
-        type: "unknown"
+        type: "string"
         required: false
         locations: ["body"]
-        default: null
+        default: "''"
         evidence: ["SOURCE_CONFIRMED"]
       - name: "noCookie"
         type: "boolean"
@@ -3297,16 +3297,16 @@ endpoints:
         default: "2"
         evidence: ["DECLARED", "SOURCE_CONFIRMED"]
       - name: "rtype"
-        type: "unknown"
+        type: "number"
         required: false
         locations: ["body"]
-        default: null
+        default: "1"
         evidence: ["SOURCE_CONFIRMED"]
       - name: "sid"
-        type: "unknown"
+        type: "string"
         required: false
         locations: ["body"]
-        default: null
+        default: "''"
         evidence: ["SOURCE_CONFIRMED"]
       - name: "timestamp"
         type: "number | string"
@@ -3321,14 +3321,16 @@ endpoints:
         default: "<redacted>"
         evidence: ["DECLARED", "SOURCE_CONFIRMED"]
       - name: "wasm"
-        type: "unknown"
+        type: "number"
         required: false
         locations: ["body"]
-        default: null
+        default: "1"
         evidence: ["SOURCE_CONFIRMED"]
     response_fields:
-      - path: "*"
-        evidence: "UNKNOWN"
+      - path: "data.v_type"
+        evidence: "REFERENCE_CONFIRMED"
+      - path: "data.txappid"
+        evidence: "REFERENCE_CONFIRMED"
     consumer_files: []
   - id: "API-IMAGES-001"
     module: "images"
@@ -3344,7 +3346,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/images.md#api-images-001"
     upstream_requests:
       - sequence: 1
@@ -3416,7 +3418,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/images.md#api-images-002"
     upstream_requests:
       - sequence: 1
@@ -3494,7 +3496,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/ip.md#api-ip-001"
     upstream_requests:
       - sequence: 1
@@ -3578,7 +3580,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/ip.md#api-ip-002"
     upstream_requests:
       - sequence: 1
@@ -3638,7 +3640,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/ip.md#api-ip-003"
     upstream_requests:
       - sequence: 1
@@ -3698,7 +3700,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/ip.md#api-ip-004"
     upstream_requests:
       - sequence: 1
@@ -3748,7 +3750,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/ip.md#api-ip-005"
     upstream_requests:
       - sequence: 1
@@ -3808,7 +3810,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/song.md#api-song-005"
     upstream_requests:
       - sequence: 1
@@ -3880,7 +3882,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/song.md#api-song-006"
     upstream_requests:
       - sequence: 1
@@ -3952,7 +3954,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/user.md#api-user-001"
     upstream_requests:
       - sequence: 1
@@ -4030,7 +4032,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: true
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/login.md#api-login-003"
     upstream_requests:
       - sequence: 1
@@ -4102,12 +4104,6 @@ endpoints:
         locations: ["body"]
         default: null
         evidence: ["SOURCE_CONFIRMED"]
-      - name: "t3"
-        type: "unknown"
-        required: false
-        locations: ["body"]
-        default: null
-        evidence: ["SOURCE_CONFIRMED"]
       - name: "timestamp"
         type: "number | string"
         required: false
@@ -4158,7 +4154,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: true
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/login.md#api-login-004"
     upstream_requests:
       - sequence: 1
@@ -4170,12 +4166,42 @@ endpoints:
         signing: "android"
         response_type: "json"
     request_fields:
+      - name: "clienttime_ms"
+        type: "number"
+        required: false
+        locations: ["body"]
+        default: null
+        evidence: ["SOURCE_CONFIRMED"]
       - name: "code"
         type: "string"
         required: true
         locations: ["module"]
         default: "''"
         evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - name: "dev"
+        type: "string"
+        required: false
+        locations: ["body"]
+        default: null
+        evidence: ["SOURCE_CONFIRMED"]
+      - name: "dfid"
+        type: "string"
+        required: false
+        locations: ["body"]
+        default: null
+        evidence: ["SOURCE_CONFIRMED"]
+      - name: "gitversion"
+        type: "string"
+        required: false
+        locations: ["body"]
+        default: null
+        evidence: ["SOURCE_CONFIRMED"]
+      - name: "key"
+        type: "string"
+        required: false
+        locations: ["body"]
+        default: null
+        evidence: ["SOURCE_CONFIRMED"]
       - name: "mobile"
         type: "string"
         required: true
@@ -4188,10 +4214,46 @@ endpoints:
         locations: ["module"]
         default: null
         evidence: ["DECLARED"]
+      - name: "params"
+        type: "string"
+        required: false
+        locations: ["body"]
+        default: null
+        evidence: ["SOURCE_CONFIRMED"]
+      - name: "pk"
+        type: "string"
+        required: false
+        locations: ["body"]
+        default: null
+        evidence: ["SOURCE_CONFIRMED"]
+      - name: "plat"
+        type: "number"
+        required: false
+        locations: ["body"]
+        default: "1"
+        evidence: ["SOURCE_CONFIRMED"]
+      - name: "support_multi"
+        type: "number"
+        required: false
+        locations: ["body"]
+        default: "1"
+        evidence: ["SOURCE_CONFIRMED"]
       - name: "support-calm"
         type: "unknown"
         required: false
         locations: ["header"]
+        default: null
+        evidence: ["SOURCE_CONFIRMED"]
+      - name: "t1"
+        type: "string"
+        required: false
+        locations: ["body"]
+        default: null
+        evidence: ["SOURCE_CONFIRMED"]
+      - name: "t2"
+        type: "string"
+        required: false
+        locations: ["body"]
         default: null
         evidence: ["SOURCE_CONFIRMED"]
       - name: "timestamp"
@@ -4227,6 +4289,16 @@ endpoints:
         evidence: "SOURCE_CONFIRMED"
       - path: "data.secu_params"
         evidence: "SOURCE_CONFIRMED"
+      - path: "data.info_list"
+        evidence: "REFERENCE_CONFIRMED"
+      - path: "data.info_list.userid"
+        evidence: "REFERENCE_CONFIRMED"
+      - path: "data.info_list.nickname"
+        evidence: "REFERENCE_CONFIRMED"
+      - path: "data.info_list.pic"
+        evidence: "REFERENCE_CONFIRMED"
+      - path: "data.info_list.p_grade"
+        evidence: "REFERENCE_CONFIRMED"
     consumer_files: []
   - id: "API-LOGIN-005"
     module: "login_device"
@@ -4242,7 +4314,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/login.md#api-login-005"
     upstream_requests:
       - sequence: 1
@@ -4320,7 +4392,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/login.md#api-login-006"
     upstream_requests:
       - sequence: 1
@@ -4458,7 +4530,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: true
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/login.md#api-login-007"
     upstream_requests:
       - sequence: 1
@@ -4584,7 +4656,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: true
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/login.md#api-login-008"
     upstream_requests:
       - sequence: 1
@@ -4716,7 +4788,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/login.md#api-login-010"
     upstream_requests:
       - sequence: 1
@@ -4784,7 +4856,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: true
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/login.md#api-login-011"
     upstream_requests:
       - sequence: 1
@@ -4994,7 +5066,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/longaudio.md#api-longaudio-001"
     upstream_requests:
       - sequence: 1
@@ -5078,7 +5150,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/longaudio.md#api-longaudio-002"
     upstream_requests:
       - sequence: 1
@@ -5150,7 +5222,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/longaudio.md#api-longaudio-003"
     upstream_requests:
       - sequence: 1
@@ -5210,7 +5282,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/longaudio.md#api-longaudio-004"
     upstream_requests:
       - sequence: 1
@@ -5258,7 +5330,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/longaudio.md#api-longaudio-005"
     upstream_requests:
       - sequence: 1
@@ -5318,7 +5390,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/longaudio.md#api-longaudio-006"
     upstream_requests:
       - sequence: 1
@@ -5372,7 +5444,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/lyrics.md#api-lyrics-001"
     upstream_requests:
       - sequence: 1
@@ -5462,7 +5534,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/discover.md#api-discover-005"
     upstream_requests:
       - sequence: 1
@@ -5522,7 +5594,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/discover.md#api-discover-006"
     upstream_requests:
       - sequence: 1
@@ -5702,7 +5774,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/user.md#api-user-002"
     upstream_requests:
       - sequence: 1
@@ -5792,7 +5864,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/playlist.md#api-playlist-001"
     upstream_requests:
       - sequence: 1
@@ -5902,7 +5974,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/playlist.md#api-playlist-002"
     upstream_requests:
       - sequence: 1
@@ -6010,7 +6082,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/playlist.md#api-playlist-003"
     upstream_requests:
       - sequence: 1
@@ -6082,7 +6154,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/playlist.md#api-playlist-004"
     upstream_requests:
       - sequence: 1
@@ -6136,7 +6208,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/playlist.md#api-playlist-005"
     upstream_requests:
       - sequence: 1
@@ -6238,7 +6310,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/playlist.md#api-playlist-006"
     upstream_requests:
       - sequence: 1
@@ -6300,7 +6372,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/playlist.md#api-playlist-007"
     upstream_requests:
       - sequence: 1
@@ -6396,7 +6468,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/playlist.md#api-playlist-008"
     upstream_requests:
       - sequence: 1
@@ -6504,7 +6576,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/playlist.md#api-playlist-009"
     upstream_requests:
       - sequence: 1
@@ -6606,7 +6678,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/playlist.md#api-playlist-010"
     upstream_requests:
       - sequence: 1
@@ -6696,7 +6768,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/song.md#api-song-007"
     upstream_requests:
       - sequence: 1
@@ -6816,7 +6888,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/ranking.md#api-ranking-001"
     upstream_requests:
       - sequence: 1
@@ -6920,7 +6992,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/ranking.md#api-ranking-002"
     upstream_requests:
       - sequence: 1
@@ -6986,7 +7058,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/ranking.md#api-ranking-003"
     upstream_requests:
       - sequence: 1
@@ -7048,7 +7120,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/ranking.md#api-ranking-004"
     upstream_requests:
       - sequence: 1
@@ -7090,7 +7162,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/ranking.md#api-ranking-005"
     upstream_requests:
       - sequence: 1
@@ -7162,7 +7234,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/discover.md#api-discover-007"
     upstream_requests:
       - sequence: 1
@@ -7222,7 +7294,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: true
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/device.md#api-device-001"
     upstream_requests:
       - sequence: 1
@@ -7484,7 +7556,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/scene.md#api-scene-001"
     upstream_requests:
       - sequence: 1
@@ -7580,7 +7652,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/scene.md#api-scene-002"
     upstream_requests:
       - sequence: 1
@@ -7670,7 +7742,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/scene.md#api-scene-003"
     upstream_requests:
       - sequence: 1
@@ -7712,7 +7784,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/scene.md#api-scene-004"
     upstream_requests:
       - sequence: 1
@@ -7796,7 +7868,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/scene.md#api-scene-005"
     upstream_requests:
       - sequence: 1
@@ -7844,7 +7916,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/scene.md#api-scene-006"
     upstream_requests:
       - sequence: 1
@@ -7898,7 +7970,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/scene.md#api-scene-007"
     upstream_requests:
       - sequence: 1
@@ -7964,7 +8036,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/scene.md#api-scene-008"
     upstream_requests:
       - sequence: 1
@@ -8054,7 +8126,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/search.md#api-search-001"
     upstream_requests:
       - sequence: 1
@@ -8148,7 +8220,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/search.md#api-search-002"
     upstream_requests:
       - sequence: 1
@@ -8226,7 +8298,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/search.md#api-search-003"
     upstream_requests:
       - sequence: 1
@@ -8334,7 +8406,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/search.md#api-search-004"
     upstream_requests:
       - sequence: 1
@@ -8396,7 +8468,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/search.md#api-search-005"
     upstream_requests:
       - sequence: 1
@@ -8490,7 +8562,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/search.md#api-search-006"
     upstream_requests:
       - sequence: 1
@@ -8670,7 +8742,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/search.md#api-search-007"
     upstream_requests:
       - sequence: 1
@@ -8754,7 +8826,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/misc.md#api-misc-001"
     upstream_requests:
       - sequence: 1
@@ -8820,7 +8892,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/sheet.md#api-sheet-001"
     upstream_requests:
       - sequence: 1
@@ -8892,7 +8964,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/sheet.md#api-sheet-002"
     upstream_requests:
       - sequence: 1
@@ -8946,7 +9018,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/sheet.md#api-sheet-003"
     upstream_requests:
       - sequence: 1
@@ -9024,7 +9096,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/sheet.md#api-sheet-004"
     upstream_requests:
       - sequence: 1
@@ -9096,7 +9168,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/sheet.md#api-sheet-005"
     upstream_requests:
       - sequence: 1
@@ -9156,7 +9228,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/sheet.md#api-sheet-006"
     upstream_requests:
       - sequence: 1
@@ -9198,7 +9270,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "module-specific + common-ssa"
+      risk: "bypass"
     documentation: "endpoints/login.md#api-login-014"
     upstream_requests:
       - sequence: 1
@@ -9258,7 +9330,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/misc.md#api-misc-002"
     upstream_requests:
       - sequence: 1
@@ -9330,7 +9402,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/song.md#api-song-008"
     upstream_requests:
       - sequence: 1
@@ -9386,7 +9458,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/song.md#api-song-009"
     upstream_requests:
       - sequence: 1
@@ -9434,7 +9506,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/song.md#api-song-010"
     upstream_requests:
       - sequence: 1
@@ -9494,7 +9566,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/song.md#api-song-011"
     upstream_requests:
       - sequence: 1
@@ -9660,7 +9732,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/song.md#api-song-012"
     upstream_requests:
       - sequence: 1
@@ -9780,7 +9852,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/theme.md#api-theme-001"
     upstream_requests:
       - sequence: 1
@@ -9852,7 +9924,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/theme.md#api-theme-002"
     upstream_requests:
       - sequence: 1
@@ -9930,7 +10002,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/theme.md#api-theme-003"
     upstream_requests:
       - sequence: 1
@@ -10014,7 +10086,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/theme.md#api-theme-004"
     upstream_requests:
       - sequence: 1
@@ -10104,7 +10176,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/discover.md#api-discover-008"
     upstream_requests:
       - sequence: 1
@@ -10184,7 +10256,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/discover.md#api-discover-009"
     upstream_requests:
       - sequence: 1
@@ -10314,7 +10386,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/discover.md#api-discover-010"
     upstream_requests:
       - sequence: 1
@@ -10416,7 +10488,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/discover.md#api-discover-011"
     upstream_requests:
       - sequence: 1
@@ -10478,7 +10550,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/discover.md#api-discover-012"
     upstream_requests:
       - sequence: 1
@@ -10636,7 +10708,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/discover.md#api-discover-013"
     upstream_requests:
       - sequence: 1
@@ -10712,7 +10784,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/discover.md#api-discover-014"
     upstream_requests:
       - sequence: 1
@@ -10802,7 +10874,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/cloud.md#api-cloud-001"
     upstream_requests:
       - sequence: 1
@@ -10914,7 +10986,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "partial-common-ssa"
+      risk: "handle-and-replay-once + native-partial"
     documentation: "endpoints/cloud.md#api-cloud-002"
     upstream_requests:
       - sequence: 1
@@ -11088,7 +11160,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/cloud.md#api-cloud-003"
     upstream_requests:
       - sequence: 1
@@ -11212,7 +11284,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/user.md#api-user-003"
     upstream_requests:
       - sequence: 1
@@ -11298,7 +11370,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/user.md#api-user-004"
     upstream_requests:
       - sequence: 1
@@ -11404,7 +11476,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/user.md#api-user-005"
     upstream_requests:
       - sequence: 1
@@ -11476,7 +11548,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/user.md#api-user-006"
     upstream_requests:
       - sequence: 1
@@ -11548,7 +11620,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/user.md#api-user-007"
     upstream_requests:
       - sequence: 1
@@ -11646,7 +11718,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/user.md#api-user-008"
     upstream_requests:
       - sequence: 1
@@ -11738,7 +11810,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/user.md#api-user-009"
     upstream_requests:
       - sequence: 1
@@ -11804,7 +11876,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/user.md#api-user-010"
     upstream_requests:
       - sequence: 1
@@ -11882,7 +11954,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/user.md#api-user-011"
     upstream_requests:
       - sequence: 1
@@ -11954,7 +12026,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/user.md#api-user-012"
     upstream_requests:
       - sequence: 1
@@ -12032,7 +12104,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/user.md#api-user-013"
     upstream_requests:
       - sequence: 1
@@ -12082,7 +12154,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "module-specific + common-ssa"
+      risk: "bypass"
     documentation: "endpoints/login.md#api-login-015"
     upstream_requests:
       - sequence: 1
@@ -12095,10 +12167,10 @@ endpoints:
         response_type: "json"
     request_fields:
       - name: "clientver"
-        type: "unknown"
+        type: "number"
         required: false
         locations: ["query"]
-        default: null
+        default: "11510"
         evidence: ["SOURCE_CONFIRMED"]
       - name: "edt"
         type: "string"
@@ -12112,6 +12184,12 @@ endpoints:
         locations: ["module"]
         default: null
         evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - name: "i"
+        type: "string"
+        required: false
+        locations: ["body"]
+        default: "''"
+        evidence: ["SOURCE_CONFIRMED"]
       - name: "noCookie"
         type: "boolean"
         required: false
@@ -12154,6 +12232,12 @@ endpoints:
         locations: ["module"]
         default: "<source-expression>"
         evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - name: "wasm"
+        type: "number"
+        required: false
+        locations: ["body"]
+        default: "1"
+        evidence: ["SOURCE_CONFIRMED"]
     response_fields:
       - path: "*"
         evidence: "UNKNOWN"
@@ -12172,7 +12256,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/video.md#api-video-001"
     upstream_requests:
       - sequence: 1
@@ -12286,7 +12370,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/video.md#api-video-002"
     upstream_requests:
       - sequence: 1
@@ -12388,7 +12472,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/video.md#api-video-003"
     upstream_requests:
       - sequence: 1
@@ -12480,7 +12564,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/youth.md#api-youth-001"
     upstream_requests:
       - sequence: 1
@@ -12540,7 +12624,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/youth.md#api-youth-002"
     upstream_requests:
       - sequence: 1
@@ -12588,7 +12672,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/youth.md#api-youth-003"
     upstream_requests:
       - sequence: 1
@@ -12642,7 +12726,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/youth.md#api-youth-004"
     upstream_requests:
       - sequence: 1
@@ -12714,7 +12798,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/youth.md#api-youth-005"
     upstream_requests:
       - sequence: 1
@@ -12780,7 +12864,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/youth.md#api-youth-006"
     upstream_requests:
       - sequence: 1
@@ -12834,7 +12918,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/youth.md#api-youth-007"
     upstream_requests:
       - sequence: 1
@@ -12894,7 +12978,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/youth.md#api-youth-008"
     upstream_requests:
       - sequence: 1
@@ -12954,7 +13038,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/youth.md#api-youth-009"
     upstream_requests:
       - sequence: 1
@@ -13008,7 +13092,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/youth.md#api-youth-010"
     upstream_requests:
       - sequence: 1
@@ -13050,7 +13134,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/youth.md#api-youth-011"
     upstream_requests:
       - sequence: 1
@@ -13092,7 +13176,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/youth.md#api-youth-012"
     upstream_requests:
       - sequence: 1
@@ -13158,7 +13242,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/youth.md#api-youth-013"
     upstream_requests:
       - sequence: 1
@@ -13206,7 +13290,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/youth.md#api-youth-014"
     upstream_requests:
       - sequence: 1
@@ -13266,7 +13350,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/youth.md#api-youth-015"
     upstream_requests:
       - sequence: 1
@@ -13344,7 +13428,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/youth.md#api-youth-016"
     upstream_requests:
       - sequence: 1
@@ -13406,7 +13490,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/discover.md#api-discover-015"
     upstream_requests:
       - sequence: 1
@@ -13484,7 +13568,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/discover.md#api-discover-016"
     upstream_requests:
       - sequence: 1
@@ -13592,7 +13676,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "common-ssa"
+      risk: "handle-and-replay-once"
     documentation: "endpoints/discover.md#api-discover-017"
     upstream_requests:
       - sequence: 1

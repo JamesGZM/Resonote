@@ -26,7 +26,7 @@ android {
 
 dependencies {
     implementation(projects.core.designsystem)
-    implementation(projects.core.network)
+    implementation(projects.core.data)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material3)

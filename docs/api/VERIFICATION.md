@@ -6,7 +6,7 @@
 |---|---:|
 | API 模块覆盖 | 164/164 |
 | 有 PC 消费证据的接口 | 46 |
-| 无字段级响应证据 | 118 |
+| 无字段级响应证据 | 117 |
 | 未映射 PC 请求路由 | 0 |
 | 外部请求 | 0 |
 | 实时验证 | 0 |
@@ -23,10 +23,11 @@
 
 1. API 模块实际构造和转换：`SOURCE_CONFIRMED`。
 2. 固定 PC 应用读取字段：`CONSUMER_CONFIRMED`。
-3. `interface.d.ts` 或现有说明：`DECLARED`。
-4. 固定仓库已有脱敏样例：`FIXTURE_CONFIRMED`。
-5. 静态推断：`INFERRED`。
-6. 无证据：`UNKNOWN`。
+3. V2 固定版本实际读取或测试的行为旁证：`REFERENCE_CONFIRMED`；不得覆盖 Lite 源码。
+4. `interface.d.ts` 或现有说明：`DECLARED`。
+5. 固定仓库已有脱敏样例：`FIXTURE_CONFIRMED`。
+6. 静态推断：`INFERRED`。
+7. 无证据：`UNKNOWN`。
 
 ## 固有限制
 

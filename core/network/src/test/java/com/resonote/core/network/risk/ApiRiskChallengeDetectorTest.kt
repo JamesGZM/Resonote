@@ -44,5 +44,5 @@ class ApiRiskChallengeDetectorTest {
     private fun response(
         body: String,
         headers: Map<String, List<String>> = emptyMap(),
-    ) = ApiRawResponse(200, headers, Json.parseToJsonElement(body).jsonObject)
+    ) = ApiRawResponse(200, headers, body.encodeToByteArray(), Json.parseToJsonElement(body).jsonObject)
 }

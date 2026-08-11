@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 const API_COMMIT = '6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb';
 const APP_COMMIT = '52c9833afe2e7fedcba8d5b23ff8d1f9731af73a';
+const V2_COMMIT = 'c4b4f1d';
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const DOC_ROOT = resolve(SCRIPT_DIR, '..');
 const WORKSPACE_ROOT = resolve(DOC_ROOT, '../..');
@@ -16,11 +17,70 @@ const API_ROOT = join(MOEKOE_ROOT, 'api');
 const EVIDENCE = Object.freeze({
   source: 'SOURCE_CONFIRMED',
   consumer: 'CONSUMER_CONFIRMED',
+  reference: 'REFERENCE_CONFIRMED',
   declared: 'DECLARED',
   fixture: 'FIXTURE_CONFIRMED',
   inferred: 'INFERRED',
   unknown: 'UNKNOWN',
 });
+
+const LOGIN_MODULES = new Set([
+  'captcha_sent', 'get_verify_info', 'login', 'login_cellphone', 'login_device',
+  'login_device_kick', 'login_openplat', 'login_qr_check', 'login_qr_create',
+  'login_qr_key', 'login_token', 'login_wx_check', 'login_wx_create', 'sidedt',
+  'verify_user_info',
+]);
+
+const LOGIN_REFERENCE_FIELDS = {
+  get_verify_info: ['data.v_type', 'data.txappid'],
+  login_cellphone: [
+    'data.info_list', 'data.info_list.userid', 'data.info_list.nickname',
+    'data.info_list.pic', 'data.info_list.p_grade', 'data.secu_params',
+    'data.token', 'data.userid', 'data.t1', 'data.vip_type', 'data.vip_token',
+  ],
+};
+
+function applyLiteLoginContract(module, requestFields, responseFields) {
+  if (!LOGIN_MODULES.has(module)) return requestFields;
+  const fields = new Map(requestFields.map((field) => [field.name, field]));
+  if (module === 'login' || module === 'login_cellphone') fields.delete('t3');
+  const ensure = (name, type, location, defaultValue = null) => {
+    const field = fields.get(name) || {
+      name, required: false, type, description: '', locations: new Set(),
+      evidence: new Set(), default: null,
+    };
+    field.type = type;
+    field.locations.add(location);
+    field.evidence.add(EVIDENCE.source);
+    if (defaultValue != null) field.default = defaultValue;
+    fields.set(name, field);
+  };
+  if (module === 'captcha_sent') {
+    ensure('businessid', 'number', 'body', '5');
+    ensure('plat', 'number', 'body', '3');
+  }
+  if (module === 'get_verify_info') {
+    ensure('rtype', 'number', 'body', '1');
+    ensure('wasm', 'number', 'body', '1');
+    ensure('i', 'string', 'body', "''");
+    ensure('sid', 'string', 'body', "''");
+    ensure('edt', 'string', 'body', "''");
+  }
+  if (module === 'login_cellphone') {
+    for (const name of ['plat', 'support_multi']) ensure(name, 'number', 'body', '1');
+    for (const name of ['t1', 't2', 'dfid', 'dev', 'gitversion', 'key', 'pk', 'params']) ensure(name, 'string', 'body');
+    ensure('clienttime_ms', 'number', 'body');
+  }
+  if (module === 'verify_user_info') {
+    ensure('clientver', 'number', 'query', '11510');
+    ensure('wasm', 'number', 'body', '1');
+    ensure('i', 'string', 'body', "''");
+  }
+  for (const path of LOGIN_REFERENCE_FIELDS[module] || []) {
+    if (!responseFields.has(path)) responseFields.set(path, EVIDENCE.reference);
+  }
+  return [...fields.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
 
 const DOMAIN_NAMES = {
   ai: 'AI 推荐', album: '专辑', artist: '歌手', audio: '音频与识曲', brush: '刷刷',
@@ -553,6 +613,20 @@ function staticDocuments(endpoints, consumerRoutes) {
     '## 首条纵切片',
     '## 通用风控\n\n`core:network` 从 Body 与 Header 统一识别 `20028`/`ssaCode` Challenge，通过不依赖 UI 的 `ApiRiskVerifier` 串行完成验证。普通请求验证成功后重新生成时间戳和签名并最多重试一次；验证接口必须旁路协调器，超时或断网不得触发重试。\n\n## 首条纵切片',
   );
+  generatedDocuments['README.md'] = generatedDocuments['README.md'].replace(
+    `- API 协议源：\`MoeKoeMusic/api@${API_COMMIT}\``,
+    `- API 协议源：\`MoeKoeMusic/api@${API_COMMIT}\`\n- 行为旁证：\`MoeKoeMusic-Mobile-V2@${V2_COMMIT}\`（仅 \`${EVIDENCE.reference}\`，不得覆盖 Lite）`,
+  );
+  generatedDocuments['PROTOCOL.md'] = generatedDocuments['PROTOCOL.md'].replace(
+    '## 加密与二进制',
+    '## 登录 Origin 与 Lite 条件\n\n- 发送手机验证码：`http://login.user.kugou.com/v7/send_mobile_code`，唯一允许的明文 Origin，只携带 MID 身份。\n- 手机验证码登录：`https://loginserviceretry.kugou.com/v7/login_by_verifycode`。\n- 密码登录：`https://gateway.kugou.com/v9/login_by_pwd`，并设置 `x-router: login.user.kugou.com`。\n- 风控提交：`https://verifyservice.kugou.com/v4/verify_user_info`；扫码端点使用各自独立 HTTPS Origin。\n\nLite 验证码登录固定发送 `t1/t2/dfid/dev/gitversion`，不得发送 Standard 分支的 `t3`。登录成功必须解密 `secu_params`、校验 token/userid、合并响应 Cookie，再由数据层原子提交加密 Session。\n\n## 加密与二进制',
+  );
+  generatedDocuments['VERIFICATION.md'] = generatedDocuments['VERIFICATION.md'].replace(
+    `3. \`interface.d.ts\` 或现有说明：\`${EVIDENCE.declared}\`。`,
+    `3. V2 固定版本实际读取或测试的行为旁证：\`${EVIDENCE.reference}\`；不得覆盖 Lite 源码。\n4. \`interface.d.ts\` 或现有说明：\`${EVIDENCE.declared}\`。`,
+  ).replace('4. 固定仓库已有脱敏样例', '5. 固定仓库已有脱敏样例')
+    .replace('5. 静态推断', '6. 静态推断')
+    .replace('6. 无证据', '7. 无证据');
   generatedDocuments['VERIFICATION.md'] = generatedDocuments['VERIFICATION.md'].replace(
     '## 证据优先级',
     '以上统计只描述静态文档生成过程。\n\n## Android 运行时 Canary\n\n- 2026-08-11：`API-SEARCH-001` 已到达上游网关，但使用未注册的 `dfid=-` 时被业务代码 `152` 拒绝，因此该端点需要有效设备上下文后才能作为正式搜索验证。\n- 2026-08-11：参考 `MoeKoeMusic-Mobile-V2@c4b4f1d` 的无签名匿名搜索 Canary 已通过，确认当前网络、基础 JSON 解析与歌曲字段映射可工作。\n- Live Test 必须由 `RESONOTE_RUN_LIVE_API_TESTS=true` 显式启用；没有保存原始响应、账号、Cookie 或设备标识。\n\n## 证据优先级',
@@ -632,11 +706,11 @@ function main() {
     const transforms = /decodeLyrics|crypto[A-Z]|playlistAes|\.body\s*[.=\[]/.test(source);
     const cookieWriteback = /(?:res|resp|response)\.cookie\.push/.test(source);
     const hasNativeRequests = upstreamRequests.some((request) => request.kind === 'native');
-    const riskHandling = /verify|sidedt|captcha/.test(module)
-      ? 'module-specific + common-ssa'
+    const riskHandling = /^(get_verify_info|verify_user_info|sidedt)$/.test(module)
+      ? 'bypass'
       : hasNativeRequests && callObjects.length
-        ? 'partial-common-ssa'
-        : callObjects.length ? 'common-ssa' : 'none-or-dynamic';
+        ? 'handle-and-replay-once + native-partial'
+        : callObjects.length ? 'handle-and-replay-once' : 'none-or-dynamic';
     const manual = upstreamRequests.length > 1 || upstreamRequests.some((request) => request.kind !== 'useAxios' || request.responseType !== 'json' || request.path.startsWith('dynamic:'));
     const components = new Set();
     if (upstreamRequests.some((request) => !['none', 'unknown'].includes(request.signing))) components.add('ApiRequestSigner');
@@ -649,7 +723,11 @@ function main() {
       authentication: requiredAuth ? 'required' : hasSession ? 'optional' : 'anonymous',
       operation, productScope: productScope(module), validation: 'static-only',
       upstreamRequests,
-      requestFields: parseRequestFields(source, declaredFields, objects, callObjects),
+      requestFields: applyLiteLoginContract(
+        module,
+        parseRequestFields(source, declaredFields, objects, callObjects),
+        responseFields,
+      ),
       responseFields,
       consumerFiles: consumer?.files || new Set(),
       operationName: camel(module),

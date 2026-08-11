@@ -1,13 +1,16 @@
 package com.resonote.core.network.di
 
 import com.resonote.core.network.ApiNetworkDataSource
-import com.resonote.core.network.protocol.ApiDeviceIdentity
-import com.resonote.core.network.protocol.ApiDeviceIdentityFactory
-import com.resonote.core.network.protocol.ApiProtocolConfig
-import com.resonote.core.network.protocol.ApiProtocolInterceptor
+import com.resonote.core.network.protocol.ProtocolRandom
+import com.resonote.core.network.protocol.ApiEndpointOrigins
+import com.resonote.core.network.protocol.ApiOriginPolicy
+import com.resonote.core.network.protocol.ProductionApiOriginPolicy
 import com.resonote.core.network.protocol.RedactedNetworkLoggingInterceptor
-import com.resonote.core.network.retrofit.RetrofitApiNetworkDataSource
+import com.resonote.core.network.retrofit.RealApiNetworkDataSource
 import com.resonote.core.network.risk.ApiRiskVerifier
+import com.resonote.core.network.risk.ApiRiskGateway
+import com.resonote.core.network.risk.RealApiRiskGateway
+import com.resonote.core.network.session.ApiSessionStore
 import dagger.Binds
 import dagger.BindsOptionalOf
 import dagger.Module
@@ -18,10 +21,7 @@ import java.time.Clock
 import javax.inject.Singleton
 import kotlinx.serialization.json.Json
 import okhttp3.Call
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
-import retrofit2.Retrofit
-import retrofit2.converter.kotlinx.serialization.asConverterFactory
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -39,29 +39,27 @@ internal object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideDeviceIdentity(factory: ApiDeviceIdentityFactory): ApiDeviceIdentity = factory.create()
+    fun provideEndpointOrigins(): ApiEndpointOrigins = ApiEndpointOrigins()
+
+    @Provides
+    @Singleton
+    fun provideOriginPolicy(): ApiOriginPolicy = ProductionApiOriginPolicy()
+
+    @Provides
+    @Singleton
+    fun provideProtocolRandom(): ProtocolRandom = ProtocolRandom { length ->
+        val alphabet = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        val random = java.security.SecureRandom()
+        buildString(length) { repeat(length) { append(alphabet[random.nextInt(alphabet.length)]) } }
+    }
 
     @Provides
     @Singleton
     fun provideCallFactory(
-        protocolInterceptor: ApiProtocolInterceptor,
         loggingInterceptor: RedactedNetworkLoggingInterceptor,
     ): Call.Factory =
         OkHttpClient.Builder()
-            .addInterceptor(protocolInterceptor)
             .addInterceptor(loggingInterceptor)
-            .build()
-
-    @Provides
-    @Singleton
-    fun provideRetrofit(
-        json: Json,
-        callFactory: dagger.Lazy<Call.Factory>,
-    ): Retrofit =
-        Retrofit.Builder()
-            .baseUrl(ApiProtocolConfig.BASE_URL)
-            .callFactory { request -> callFactory.get().newCall(request) }
-            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
 }
 
@@ -69,8 +67,14 @@ internal object NetworkModule {
 @InstallIn(SingletonComponent::class)
 internal abstract class NetworkBindings {
     @Binds
-    abstract fun bindApiNetworkDataSource(implementation: RetrofitApiNetworkDataSource): ApiNetworkDataSource
+    abstract fun bindApiNetworkDataSource(implementation: RealApiNetworkDataSource): ApiNetworkDataSource
+
+    @Binds
+    abstract fun bindApiRiskGateway(implementation: RealApiRiskGateway): ApiRiskGateway
 
     @BindsOptionalOf
     abstract fun optionalRiskVerifier(): ApiRiskVerifier
+
+    @BindsOptionalOf
+    abstract fun optionalSessionStore(): ApiSessionStore
 }

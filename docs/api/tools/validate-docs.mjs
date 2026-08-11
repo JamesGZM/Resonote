@@ -11,7 +11,7 @@ const DOC_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const WORKSPACE_ROOT = resolve(DOC_ROOT, '../..');
 const MOEKOE_ROOT = resolve(process.env.MOEKOE_ROOT || join(WORKSPACE_ROOT, '..', 'MoeKoeMusic'));
 const API_ROOT = join(MOEKOE_ROOT, 'api');
-const ALLOWED_EVIDENCE = new Set(['SOURCE_CONFIRMED', 'CONSUMER_CONFIRMED', 'DECLARED', 'FIXTURE_CONFIRMED', 'INFERRED', 'UNKNOWN']);
+const ALLOWED_EVIDENCE = new Set(['SOURCE_CONFIRMED', 'CONSUMER_CONFIRMED', 'REFERENCE_CONFIRMED', 'DECLARED', 'FIXTURE_CONFIRMED', 'INFERRED', 'UNKNOWN']);
 
 function git(repo, args) {
   return execFileSync('git', ['-C', repo, ...args], { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 });
@@ -88,6 +88,18 @@ function main() {
   if (schemaEntries !== 164) fail(`响应 Schema 数量错误：${schemaEntries}`);
   const consumerFields = [...responseSchema.matchAll(/^        evidence: "CONSUMER_CONFIRMED"$/gm)].length;
   if (consumerFields < 20) fail(`PC 消费字段提取异常：仅 ${consumerFields} 个`);
+  const loginDoc = readFileSync(join(DOC_ROOT, 'endpoints/login.md'), 'utf8');
+  const protocolDoc = readFileSync(join(DOC_ROOT, 'PROTOCOL.md'), 'utf8');
+  for (const required of [
+    'http://login.user.kugou.com', 'https://loginserviceretry.kugou.com',
+    'login.user.kugou.com', 'https://verifyservice.kugou.com',
+    '<code>dfid</code>', '<code>dev</code>', '<code>gitversion</code>',
+    '<code>support-calm</code>', '<code>clientver</code>', '<code>11510</code>',
+  ]) if (!loginDoc.includes(required) && !protocolDoc.includes(required)) fail(`登录 Lite 契约缺失：${required}`);
+  const mobileLoginSection = loginDoc.slice(loginDoc.indexOf('## API-LOGIN-004'), loginDoc.indexOf('## API-LOGIN-005'));
+  if (mobileLoginSection.includes('<code>t3</code>')) fail('Lite 手机验证码登录不得包含 Standard-only t3');
+  if ((loginDoc.match(/^## API-LOGIN-/gm) || []).length !== 15) fail('登录模块文档必须恰好覆盖 15 个模块');
+  if (!responseSchema.includes('REFERENCE_CONFIRMED')) fail('缺少 V2 行为旁证字段');
   const fixtureDir = join(DOC_ROOT, 'fixtures');
   const fixtureFiles = readdirSync(fixtureDir).filter((name) => name.endsWith('.json'));
   const secretPatterns = [

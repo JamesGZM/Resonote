@@ -814,7 +814,7 @@ schemas:
     root_type: "ApiCaptchaSentRequest"
     fields:
       - path: "businessid"
-        type: "unknown"
+        type: "number"
         required: false
         evidence: ["SOURCE_CONFIRMED"]
       - path: "cookie"
@@ -830,7 +830,7 @@ schemas:
         required: false
         evidence: ["DECLARED"]
       - path: "plat"
-        type: "unknown"
+        type: "number"
         required: false
         evidence: ["SOURCE_CONFIRMED"]
       - path: "timestamp"
@@ -1513,7 +1513,7 @@ schemas:
     root_type: "ApiGetVerifyInfoRequest"
     fields:
       - path: "edt"
-        type: "unknown"
+        type: "string"
         required: false
         evidence: ["SOURCE_CONFIRMED"]
       - path: "eventid"
@@ -1521,7 +1521,7 @@ schemas:
         required: true
         evidence: ["DECLARED", "SOURCE_CONFIRMED"]
       - path: "i"
-        type: "unknown"
+        type: "string"
         required: false
         evidence: ["SOURCE_CONFIRMED"]
       - path: "noCookie"
@@ -1533,11 +1533,11 @@ schemas:
         required: false
         evidence: ["DECLARED", "SOURCE_CONFIRMED"]
       - path: "rtype"
-        type: "unknown"
+        type: "number"
         required: false
         evidence: ["SOURCE_CONFIRMED"]
       - path: "sid"
-        type: "unknown"
+        type: "string"
         required: false
         evidence: ["SOURCE_CONFIRMED"]
       - path: "timestamp"
@@ -1549,7 +1549,7 @@ schemas:
         required: false
         evidence: ["DECLARED", "SOURCE_CONFIRMED"]
       - path: "wasm"
-        type: "unknown"
+        type: "number"
         required: false
         evidence: ["SOURCE_CONFIRMED"]
   - endpoint_id: "API-IMAGES-001"
@@ -1881,10 +1881,6 @@ schemas:
         type: "unknown"
         required: false
         evidence: ["SOURCE_CONFIRMED"]
-      - path: "t3"
-        type: "unknown"
-        required: false
-        evidence: ["SOURCE_CONFIRMED"]
       - path: "timestamp"
         type: "number | string"
         required: false
@@ -1900,10 +1896,30 @@ schemas:
   - endpoint_id: "API-LOGIN-004"
     root_type: "ApiLoginCellphoneRequest"
     fields:
+      - path: "clienttime_ms"
+        type: "number"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
       - path: "code"
         type: "string"
         required: true
         evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "dev"
+        type: "string"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "dfid"
+        type: "string"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "gitversion"
+        type: "string"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "key"
+        type: "string"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
       - path: "mobile"
         type: "string"
         required: true
@@ -1912,8 +1928,32 @@ schemas:
         type: "boolean"
         required: false
         evidence: ["DECLARED"]
+      - path: "params"
+        type: "string"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "pk"
+        type: "string"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "plat"
+        type: "number"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "support_multi"
+        type: "number"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
       - path: "support-calm"
         type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "t1"
+        type: "string"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
+      - path: "t2"
+        type: "string"
         required: false
         evidence: ["SOURCE_CONFIRMED"]
       - path: "timestamp"
@@ -5497,7 +5537,7 @@ schemas:
     root_type: "ApiVerifyUserInfoRequest"
     fields:
       - path: "clientver"
-        type: "unknown"
+        type: "number"
         required: false
         evidence: ["SOURCE_CONFIRMED"]
       - path: "edt"
@@ -5508,6 +5548,10 @@ schemas:
         type: "string"
         required: true
         evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "i"
+        type: "string"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
       - path: "noCookie"
         type: "boolean"
         required: false
@@ -5536,6 +5580,10 @@ schemas:
         type: "string"
         required: true
         evidence: ["DECLARED", "SOURCE_CONFIRMED"]
+      - path: "wasm"
+        type: "number"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
   - endpoint_id: "API-VIDEO-001"
     root_type: "ApiVideoDetailRequest"
     fields:

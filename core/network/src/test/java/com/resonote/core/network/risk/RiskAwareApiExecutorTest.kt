@@ -25,11 +25,26 @@ class RiskAwareApiExecutorTest {
         val executor = RiskAwareApiExecutor(detector, Optional.of(verifier))
 
         val result = executor.execute {
-            if (calls.incrementAndGet() == 1) riskResponse() else successResponse()
+            result(if (calls.incrementAndGet() == 1) riskResponse() else successResponse())
         }
 
-        assertThat(result.body["status"].toString()).isEqualTo("1")
+        assertThat(result).isEqualTo("ok")
         assertThat(calls.get()).isEqualTo(2)
+    }
+
+    @Test
+    fun challengedBodyIsNotDecodedBeforeVerification() = runTest {
+        var attempt = 0
+        var decodes = 0
+        val executor = RiskAwareApiExecutor(detector, Optional.of(ApiRiskVerifier { ApiRiskVerificationResult.Verified }))
+
+        val value = executor.execute {
+            val response = if (attempt++ == 0) riskResponse() else successResponse()
+            ApiCallResult(response, decode = { decodes += 1; "decoded" })
+        }
+
+        assertThat(value).isEqualTo("decoded")
+        assertThat(decodes).isEqualTo(1)
     }
 
     @Test
@@ -40,7 +55,7 @@ class RiskAwareApiExecutorTest {
         val exception = expectRiskException {
             executor.execute {
                 calls.incrementAndGet()
-                riskResponse()
+                result(riskResponse())
             }
         }
 
@@ -59,9 +74,9 @@ class RiskAwareApiExecutorTest {
             val calls = AtomicInteger()
             val executor = RiskAwareApiExecutor(detector, Optional.of(ApiRiskVerifier { result }))
             val exception = expectRiskException {
-                executor.execute {
+                executor.execute<String> {
                     calls.incrementAndGet()
-                    riskResponse()
+                    result(riskResponse())
                 }
             }
             assertThat(exception.reason).isEqualTo(expected)
@@ -86,7 +101,7 @@ class RiskAwareApiExecutorTest {
         List(3) {
             async {
                 var attempt = 0
-                executor.execute { if (attempt++ == 0) riskResponse() else successResponse() }
+                executor.execute { result(if (attempt++ == 0) riskResponse() else successResponse()) }
             }
         }.awaitAll()
 
@@ -103,7 +118,7 @@ class RiskAwareApiExecutorTest {
             )
 
         expectRiskException {
-            executor.execute(ApiRiskHandling.Bypass) { riskResponse() }
+            executor.execute { result(riskResponse(), ApiRiskHandling.Bypass) }
         }
         assertThat(verified).isFalse()
     }
@@ -114,10 +129,10 @@ class RiskAwareApiExecutorTest {
         val executor = RiskAwareApiExecutor(detector, Optional.empty())
         val job =
             launch {
-                executor.execute {
+                executor.execute<String> {
                     calls.incrementAndGet()
                     delay(Long.MAX_VALUE)
-                    successResponse()
+                    result(successResponse())
                 }
             }
 
@@ -136,13 +151,24 @@ class RiskAwareApiExecutorTest {
         ApiRawResponse(
             200,
             emptyMap(),
+            """{"status":0,"error_code":20028,"ssaCode":"event"}""".encodeToByteArray(),
             Json.parseToJsonElement("""{"status":0,"error_code":20028,"ssaCode":"event"}""").jsonObject,
         )
 
     private fun successResponse() =
-        ApiRawResponse(200, emptyMap(), Json.parseToJsonElement("""{"status":1}""").jsonObject)
+        ApiRawResponse(
+            200,
+            emptyMap(),
+            """{"status":1}""".encodeToByteArray(),
+            Json.parseToJsonElement("""{"status":1}""").jsonObject,
+        )
 
-    private suspend fun expectRiskException(block: suspend () -> Unit): ApiRiskException =
+    private fun result(
+        response: ApiRawResponse,
+        handling: ApiRiskHandling = ApiRiskHandling.HandleAndRetryOnce,
+    ) = ApiCallResult(response, decode = { "ok" }, riskHandling = handling)
+
+    private suspend fun expectRiskException(block: suspend () -> Any?): ApiRiskException =
         try {
             block()
             throw AssertionError("Expected ApiRiskException")

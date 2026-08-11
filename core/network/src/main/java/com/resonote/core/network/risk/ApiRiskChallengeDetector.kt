@@ -9,7 +9,7 @@ import kotlinx.serialization.json.contentOrNull
 
 internal class ApiRiskChallengeDetector @Inject constructor() {
     fun detect(response: ApiRawResponse): ApiRiskChallenge? {
-        val root = response.body
+        val root = response.body ?: return null
         val data = root["data"] as? JsonObject
         val serviceCode = root.text("error_code") ?: data?.text("error_code")
         val eventId =

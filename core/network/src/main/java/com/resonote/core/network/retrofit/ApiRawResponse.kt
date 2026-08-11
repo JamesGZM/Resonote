@@ -5,5 +5,6 @@ import kotlinx.serialization.json.JsonObject
 internal data class ApiRawResponse(
     val statusCode: Int,
     val headers: Map<String, List<String>>,
-    val body: JsonObject,
+    val bytes: ByteArray,
+    val body: JsonObject?,
 )
