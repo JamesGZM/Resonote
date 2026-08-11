@@ -1,0 +1,25 @@
+{
+  "status": "1",
+  "data": {
+    "total": "2",
+    "lists": [
+      {
+        "FileHash": "hash-standard",
+        "HQFileHash": "hash-high",
+        "SQFileHash": "hash-lossless",
+        "OriSongName": "Synthetic Song",
+        "SingerName": "Synthetic Artist",
+        "Image": "https://example.test/{size}.jpg",
+        "Duration": "245",
+        "unknown_future_field": { "kept_outside_model": true }
+      },
+      {
+        "FileHash": "hash-second",
+        "SongName": "Fallback Title",
+        "Duration": 90
+      }
+    ],
+    "unknown_page_field": true
+  },
+  "unknown_root_field": "ignored"
+}

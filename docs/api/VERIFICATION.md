@@ -11,6 +11,14 @@
 | 外部请求 | 0 |
 | 实时验证 | 0 |
 
+以上统计只描述静态文档生成过程。
+
+## Android 运行时 Canary
+
+- 2026-08-11：`API-SEARCH-001` 已到达上游网关，但使用未注册的 `dfid=-` 时被业务代码 `152` 拒绝，因此该端点需要有效设备上下文后才能作为正式搜索验证。
+- 2026-08-11：参考 `MoeKoeMusic-Mobile-V2@c4b4f1d` 的无签名匿名搜索 Canary 已通过，确认当前网络、基础 JSON 解析与歌曲字段映射可工作。
+- Live Test 必须由 `RESONOTE_RUN_LIVE_API_TESTS=true` 显式启用；没有保存原始响应、账号、Cookie 或设备标识。
+
 ## 证据优先级
 
 1. API 模块实际构造和转换：`SOURCE_CONFIRMED`。

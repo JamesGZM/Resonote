@@ -71,6 +71,7 @@ hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt"
 hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "hilt" }
 junit = { module = "junit:junit", version.ref = "junit" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 okhttp-bom = { module = "com.squareup.okhttp3:okhttp-bom", version.ref = "okhttp" }
 okhttp-core = { module = "com.squareup.okhttp3:okhttp" }
@@ -108,3 +109,4 @@ resonote-android-application = { id = "resonote.android.application" }
 resonote-android-application-compose = { id = "resonote.android.application.compose" }
 resonote-android-library = { id = "resonote.android.library" }
 resonote-android-library-compose = { id = "resonote.android.library.compose" }
+resonote-hilt = { id = "resonote.hilt" }

@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.resonote.android.application)
     alias(libs.plugins.resonote.android.application.compose)
+    alias(libs.plugins.resonote.hilt)
 }
 
 android {
@@ -25,6 +26,7 @@ android {
 
 dependencies {
     implementation(projects.core.designsystem)
+    implementation(projects.core.network)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material3)
