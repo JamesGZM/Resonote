@@ -17,7 +17,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/longaudio_album_audios.js</code> |
 
 ### 上游请求
@@ -68,7 +68,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/longaudio_album_detail.js</code> |
 
 ### 上游请求
@@ -117,7 +117,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/longaudio_daily_recommend.js</code> |
 
 ### 上游请求
@@ -164,7 +164,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/longaudio_rank_recommend.js</code> |
 
 ### 上游请求
@@ -209,7 +209,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/longaudio_vip_recommend.js</code> |
 
 ### 上游请求
@@ -256,7 +256,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/longaudio_week_recommend.js</code> |
 
 ### 上游请求

@@ -17,7 +17,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/search.js</code> |
 
 ### 上游请求
@@ -43,11 +43,20 @@
 
 ### 返回值证据
 
-| Body 路径 | 证据 |
-|---|---|
-| <code>status</code> | <code>CONSUMER_CONFIRMED</code> |
-| <code>data.lists</code> | <code>CONSUMER_CONFIRMED</code> |
-| <code>data.total</code> | <code>CONSUMER_CONFIRMED</code> |
+| Body 路径 | 条件 | 证据 |
+|---|---|---|
+| <code>status</code> | <code>-</code> | <code>CONSUMER_CONFIRMED</code> |
+| <code>data.lists</code> | <code>-</code> | <code>CONSUMER_CONFIRMED</code> |
+| <code>data.total</code> | <code>-</code> | <code>CONSUMER_CONFIRMED</code> |
+| <code>data.lists[].FileHash</code> | <code>type == "song"</code> | <code>CONSUMER_CONFIRMED</code> |
+| <code>data.lists[].HQFileHash</code> | <code>type == "song"</code> | <code>CONSUMER_CONFIRMED</code> |
+| <code>data.lists[].SQFileHash</code> | <code>type == "song"</code> | <code>CONSUMER_CONFIRMED</code> |
+| <code>data.lists[].OriSongName</code> | <code>type == "song"</code> | <code>CONSUMER_CONFIRMED</code> |
+| <code>data.lists[].SongName</code> | <code>type == "song"</code> | <code>CONSUMER_CONFIRMED</code> |
+| <code>data.lists[].FileName</code> | <code>type == "song"</code> | <code>CONSUMER_CONFIRMED</code> |
+| <code>data.lists[].SingerName</code> | <code>type == "song"</code> | <code>CONSUMER_CONFIRMED</code> |
+| <code>data.lists[].Image</code> | <code>type == "song"</code> | <code>CONSUMER_CONFIRMED</code> |
+| <code>data.lists[].Duration</code> | <code>type == "song"</code> | <code>CONSUMER_CONFIRMED</code> |
 
 这里只列出源码或固定 PC 消费端能够证明的字段；未列出的字段不代表不存在。
 
@@ -75,7 +84,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/search_complex.js</code> |
 
 ### 上游请求
@@ -131,7 +140,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/search_default.js</code> |
 
 ### 上游请求
@@ -186,7 +195,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/search_hot.js</code> |
 
 ### 上游请求
@@ -238,7 +247,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/search_lyric.js</code> |
 
 ### 上游请求
@@ -296,7 +305,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | <code>SOURCE_CONFIRMED</code> |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/search_mixed.js</code> |
 
 ### 上游请求
@@ -363,7 +372,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>common-ssa</code> |
+| 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/search_suggest.js</code> |
 
 ### 上游请求

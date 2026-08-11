@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+option java_package = "com.resonote.core.datastore.proto";
+option java_multiple_files = true;
+
+message EncryptedApiSession {
+  int32 schema_version = 1;
+  bytes iv = 2;
+  bytes ciphertext = 3;
+}

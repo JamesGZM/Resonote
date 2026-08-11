@@ -1,0 +1,11 @@
+Resonote API protocol implementation
+
+Portions of the protocol behavior in this module were independently adapted from
+MoeKoeMusic/api at commit 6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb.
+That project is distributed under the MIT License; its license text is included in
+LICENSE-MoeKoeMusic-api.
+
+MoeKoeMusic-Mobile-V2 at commit c4b4f1d was consulted only as behavioral evidence.
+No Kotlin source from that project was copied into this module.
+
+The source-code licenses do not grant permission to use any upstream service.

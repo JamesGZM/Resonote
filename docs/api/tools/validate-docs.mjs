@@ -7,11 +7,13 @@ import { fileURLToPath } from 'node:url';
 
 const API_COMMIT = '6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb';
 const APP_COMMIT = '52c9833afe2e7fedcba8d5b23ff8d1f9731af73a';
+const V2_COMMIT = 'c4b4f1d56c7484580444cf294914fe0601e120bd';
 const DOC_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const WORKSPACE_ROOT = resolve(DOC_ROOT, '../..');
 const MOEKOE_ROOT = resolve(process.env.MOEKOE_ROOT || join(WORKSPACE_ROOT, '..', 'MoeKoeMusic'));
 const API_ROOT = join(MOEKOE_ROOT, 'api');
-const ALLOWED_EVIDENCE = new Set(['SOURCE_CONFIRMED', 'CONSUMER_CONFIRMED', 'DECLARED', 'FIXTURE_CONFIRMED', 'INFERRED', 'UNKNOWN']);
+const V2_ROOT = resolve(process.env.MOEKOE_V2_ROOT || join(WORKSPACE_ROOT, '..', 'MoeKoeMusic-Mobile-V2'));
+const ALLOWED_EVIDENCE = new Set(['SOURCE_CONFIRMED', 'CONSUMER_CONFIRMED', 'REFERENCE_CONFIRMED', 'DECLARED', 'FIXTURE_CONFIRMED', 'INFERRED', 'UNKNOWN']);
 
 function git(repo, args) {
   return execFileSync('git', ['-C', repo, ...args], { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 });
@@ -19,6 +21,13 @@ function git(repo, args) {
 
 function fail(message) {
   throw new Error(message);
+}
+
+function requiredSection(content, marker, nextMarker, description) {
+  const start = content.indexOf(marker);
+  if (start < 0) fail(`${description} 起始标记不存在：${marker}`);
+  const end = content.indexOf(nextMarker, start + marker.length);
+  return content.slice(start, end < 0 ? content.length : end);
 }
 
 function markdownFiles(root) {
@@ -32,6 +41,7 @@ function markdownFiles(root) {
 }
 
 function main() {
+  if (git(V2_ROOT, ['cat-file', '-t', V2_COMMIT]).trim() !== 'commit') fail('V2 固定旁证 commit 不存在');
   const catalogPath = join(DOC_ROOT, 'catalog.yaml');
   if (!existsSync(catalogPath)) fail('缺少 catalog.yaml');
   const catalog = readFileSync(catalogPath, 'utf8');
@@ -84,10 +94,48 @@ function main() {
     }
   }
   const responseSchema = readFileSync(join(DOC_ROOT, 'schemas/responses.yaml'), 'utf8');
+  const searchDoc = readFileSync(join(DOC_ROOT, 'endpoints/search.md'), 'utf8');
+  const searchCatalogSection = requiredSection(catalog, '  - id: "API-SEARCH-001"', '\n  - id:', 'catalog API-SEARCH-001');
+  const searchSchemaSection = requiredSection(responseSchema, '  - endpoint_id: "API-SEARCH-001"', '\n  - endpoint_id:', '响应 Schema API-SEARCH-001');
+  const searchMarkdownSection = requiredSection(searchDoc, '<a id="api-search-001"></a>', '\n<a id=', '搜索 Markdown API-SEARCH-001');
   const schemaEntries = [...responseSchema.matchAll(/^  - endpoint_id:/gm)].length;
   if (schemaEntries !== 164) fail(`响应 Schema 数量错误：${schemaEntries}`);
   const consumerFields = [...responseSchema.matchAll(/^        evidence: "CONSUMER_CONFIRMED"$/gm)].length;
   if (consumerFields < 20) fail(`PC 消费字段提取异常：仅 ${consumerFields} 个`);
+  for (const field of [
+    'data.lists[].FileHash', 'data.lists[].HQFileHash', 'data.lists[].SQFileHash',
+    'data.lists[].OriSongName', 'data.lists[].SongName', 'data.lists[].FileName',
+    'data.lists[].SingerName', 'data.lists[].Image', 'data.lists[].Duration',
+  ]) {
+    const contract = [
+      `path: "${field}"`,
+      '        type: "unknown"',
+      '        evidence: "CONSUMER_CONFIRMED"',
+      '        condition: "type == \\"song\\""',
+    ].join('\n');
+    if (!searchSchemaSection.includes(contract)) fail(`固定 PC 单曲搜索字段契约缺失或条件错误：${field}`);
+    const catalogContract = [
+      `path: "${field}"`,
+      '        evidence: "CONSUMER_CONFIRMED"',
+      '        condition: "type == \\"song\\""',
+    ].join('\n');
+    if (!searchCatalogSection.includes(catalogContract)) fail(`catalog 单曲搜索字段契约缺失或条件错误：${field}`);
+    const markdownContract = `| <code>${field}</code> | <code>type == "song"</code> | <code>CONSUMER_CONFIRMED</code> |`;
+    if (!searchMarkdownSection.includes(markdownContract)) fail(`搜索 Markdown 字段契约缺失或条件错误：${field}`);
+  }
+  const loginDoc = readFileSync(join(DOC_ROOT, 'endpoints/login.md'), 'utf8');
+  const protocolDoc = readFileSync(join(DOC_ROOT, 'PROTOCOL.md'), 'utf8');
+  for (const required of [
+    'http://login.user.kugou.com', 'https://loginserviceretry.kugou.com',
+    'login.user.kugou.com', 'https://verifyservice.kugou.com',
+    '<code>dfid</code>', '<code>dev</code>', '<code>gitversion</code>',
+    '<code>support-calm</code>', '<code>clientver</code>', '<code>11510</code>',
+  ]) if (!loginDoc.includes(required) && !protocolDoc.includes(required)) fail(`登录 Lite 契约缺失：${required}`);
+  const mobileLoginSection = loginDoc.slice(loginDoc.indexOf('## API-LOGIN-004'), loginDoc.indexOf('## API-LOGIN-005'));
+  if (mobileLoginSection.includes('<code>t3</code>')) fail('Lite 手机验证码登录不得包含 Standard-only t3');
+  if ((loginDoc.match(/^## API-LOGIN-/gm) || []).length !== 15) fail('登录模块文档必须恰好覆盖 15 个模块');
+  if (!responseSchema.includes('REFERENCE_CONFIRMED')) fail('缺少 V2 行为旁证字段');
+  if (!readFileSync(join(DOC_ROOT, 'README.md'), 'utf8').includes(`MoeKoeMusic-Mobile-V2@${V2_COMMIT}`)) fail('V2 固定旁证提交记录不正确');
   const fixtureDir = join(DOC_ROOT, 'fixtures');
   const fixtureFiles = readdirSync(fixtureDir).filter((name) => name.endsWith('.json'));
   const secretPatterns = [

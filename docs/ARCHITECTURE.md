@@ -336,7 +336,7 @@ NIA 没有音乐播放实现，以下模块是 Resonote 的扩展架构。Androi
 
 - 顶层目的地不等于一个巨型模块。“我的”可以组合 profile、localmusic、settings、cloud 等 feature API，但不得直接拥有它们的 Repository 实现。
 - 页面只是同一领域的不同筛选或详情时，先保留在同一 feature；只有可被多个来源独立导航、团队并行或依赖明显不同才拆模块。
-- Provider 专属签名、加密、Cookie、DTO 和 Endpoint 不进入通用 `core:network`。后端确定后建立 `:platform:<provider>`；若确认继续使用酷狗协议，模块名才冻结为 `:platform:kugou`。
+- 按 NIA 结构，Provider 专属签名、加密、Cookie、Network DTO 和 Endpoint 进入 `core:network`，并以 `protocol`、`model`、`retrofit` 等内部 package 隔离；不建立额外的 `platform` 模块。
 - `core:data` 通过 provider 接口组合远端与本地，不向 feature 暴露 provider DTO、Cookie、短期播放 URL 或服务端错误字符串。
 - 旧代码展示的功能不代表 Endpoint 当前可用，也不代表服务条款允许；每条真实纵切片都必须重新验证协议、权限、错误和合规边界。
 
@@ -690,14 +690,13 @@ dependencies {
 
 ### 6.7 功能模块依赖补充
 
-#### 6.7.1 Provider 协议模块
+#### 6.7.1 Provider 协议实现
 
-后端确定后建立 `:platform:<provider>`。它依赖 `core:network` 提供的 OkHttp/Retrofit 基础设施，但拥有自己的 Endpoint、DTO、签名、加密、Cookie 和类型化协议错误：
+Endpoint、Network DTO、签名、加密、Cookie、设备身份和类型化协议错误均由 `:core:network` 拥有。业务 Feature 只依赖 Repository，不直接依赖这些协议类型：
 
 ```kotlin
 dependencies {
     implementation(projects.core.common)
-    implementation(projects.core.network)
 
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
@@ -711,6 +710,8 @@ dependencies {
 ```
 
 Mobile V2 的 `:kugou-api` 使用 Ktor Client `3.5.1` + OkHttp Engine `5.4.0`，只作为协议验证证据。Resonote 已批准 OkHttp3 + Retrofit2，不同时引入 Ktor；如果某种动态协议无法由 Retrofit 清晰表达，先用注入的 OkHttp `Call.Factory` 写小型 data source，而不是增加第二套 Client 栈。
+
+风控是跨 Endpoint 的协议能力。`core:network` 负责识别 Challenge、串行调用抽象的 Verifier，并在验证成功后重新签名、最多重试一次；验证码 UI 由应用层实现，风控接口本身必须旁路该协调器以避免递归。
 
 #### 6.7.2 Feature 依赖矩阵
 
