@@ -90,6 +90,15 @@ const DEFERRED_PREFIXES = new Set(['audio_match', 'user_cloud', 'video']);
 const EXCLUDED_PREFIXES = new Set(['comment', 'youth_vip', 'youth_day_vip', 'youth_month_vip', 'youth_union_vip']);
 const MUTATION_WORDS = /(add|del|upload|follow|unfollow|kick|sub|upgrade|login|captcha|verify|playhistory)/;
 const SENSITIVE_WORDS = /(token|secret|password|passwd|pwd|authorization|cookie|t1|t2|private|userid|dfid|guid|mid|mac|imei|imsi)/i;
+const SEARCH_SONG_RESPONSE_FIELDS = new Set([
+  'data.lists[].FileHash', 'data.lists[].HQFileHash', 'data.lists[].SQFileHash',
+  'data.lists[].OriSongName', 'data.lists[].SongName', 'data.lists[].FileName',
+  'data.lists[].SingerName', 'data.lists[].Image', 'data.lists[].Duration',
+]);
+
+function responseFieldCondition(endpoint, path) {
+  return endpoint.module === 'search' && SEARCH_SONG_RESPONSE_FIELDS.has(path) ? 'type == "song"' : null;
+}
 
 function git(repo, args) {
   return execFileSync('git', ['-C', repo, ...args], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
@@ -482,10 +491,17 @@ function extractConsumerEvidence() {
     const source = show(MOEKOE_ROOT, APP_COMMIT, file);
     searchEvidence.files.add(file);
     for (const field of fields) {
-      if (!new RegExp(`\\b${field}\\b`).test(source)) throw new Error(`固定 PC 搜索证据缺少字段：${file}:${field}`);
+      if (!new RegExp(`\\bsong(?:\\?\\.|\\.)${field}\\b`).test(source)) {
+        throw new Error(`固定 PC 单曲对象缺少字段消费证据：${file}:${field}`);
+      }
       searchEvidence.fields.add(`data.lists[].${field}`);
     }
   }
+  const searchView = show(MOEKOE_ROOT, APP_COMMIT, 'src/views/Search.vue');
+  for (const evidence of [
+    'searchResults.value = response.data.lists',
+    `v-else-if="searchType === 'song'" :songs="searchResults"`,
+  ]) if (!searchView.includes(evidence)) throw new Error(`固定 PC 单曲搜索数据流证据缺失：${evidence}`);
   return routes;
 }
 
@@ -553,6 +569,8 @@ function catalogYaml(endpoints) {
     else for (const [path, evidence] of responseFields) {
       lines.push(`      - path: ${yamlScalar(path)}`);
       lines.push(`        evidence: ${yamlScalar(evidence)}`);
+      const condition = responseFieldCondition(endpoint, path);
+      if (condition) lines.push(`        condition: ${yamlScalar(condition)}`);
     }
     lines.push(`    consumer_files: [${[...endpoint.consumerFiles].map(yamlScalar).join(', ')}]`);
   }
@@ -597,8 +615,17 @@ function endpointMarkdown(domain, endpoints) {
     const responseFields = [...endpoint.responseFields.entries()];
     if (responseFields.length === 0) lines.push(`上游响应由包装层透传，静态证据未确认字段级结构：\`${EVIDENCE.unknown}\`。不得据此生成严格 Kotlin DTO。`);
     else {
-      lines.push('| Body 路径 | 证据 |', '|---|---|');
-      for (const [path, evidence] of responseFields) lines.push(`| ${mdCode(path)} | ${mdCode(evidence)} |`);
+      const conditional = responseFields.some(([path]) => responseFieldCondition(endpoint, path));
+      lines.push(
+        conditional ? '| Body 路径 | 条件 | 证据 |' : '| Body 路径 | 证据 |',
+        conditional ? '|---|---|---|' : '|---|---|',
+      );
+      for (const [path, evidence] of responseFields) {
+        const condition = responseFieldCondition(endpoint, path);
+        lines.push(conditional
+          ? `| ${mdCode(path)} | ${mdCode(condition || '-')} | ${mdCode(evidence)} |`
+          : `| ${mdCode(path)} | ${mdCode(evidence)} |`);
+      }
       lines.push('', '这里只列出源码或固定 PC 消费端能够证明的字段；未列出的字段不代表不存在。');
     }
     lines.push('', '### Android 映射', '', '| 项目 | 建议 |', '|---|---|');
@@ -696,6 +723,8 @@ function schemaYaml(endpoints, kind) {
         lines.push(`      - path: ${yamlScalar(path)}`);
         lines.push('        type: "unknown"');
         lines.push(`        evidence: ${yamlScalar(evidence)}`);
+        const condition = responseFieldCondition(endpoint, path);
+        if (condition) lines.push(`        condition: ${yamlScalar(condition)}`);
       }
     }
   }

@@ -35,6 +35,7 @@ dependencies {
     compileOnly(libs.android.gradlePlugin)
     compileOnly(libs.compose.gradlePlugin)
     compileOnly(libs.kotlin.gradlePlugin)
+    implementation(libs.spotless.gradlePlugin)
 }
 
 tasks.validatePlugins {
@@ -63,6 +64,10 @@ gradlePlugin {
         register("jvmLibrary") {
             id = "resonote.jvm.library"
             implementationClass = "JvmLibraryConventionPlugin"
+        }
+        register("androidLint") {
+            id = "resonote.android.lint"
+            implementationClass = "AndroidLintConventionPlugin"
         }
         register("hilt") {
             id = "resonote.hilt"

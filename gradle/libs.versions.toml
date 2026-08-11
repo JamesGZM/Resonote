@@ -17,6 +17,7 @@ dependencyGuard = "0.5.0"
 hilt = "2.59"
 junit = "4.13.2"
 kotlin = "2.3.0"
+ktlint = "1.4.0"
 kotlinxCoroutines = "1.10.1"
 kotlinxSerializationJson = "1.8.0"
 ksp = "2.3.4"
@@ -91,6 +92,8 @@ turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 android-gradlePlugin = { module = "com.android.tools.build:gradle-api", version.ref = "androidGradlePlugin" }
 compose-gradlePlugin = { module = "org.jetbrains.kotlin:compose-compiler-gradle-plugin", version.ref = "kotlin" }
 kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+spotless-gradlePlugin = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless" }
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }

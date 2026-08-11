@@ -43,20 +43,20 @@
 
 ### 返回值证据
 
-| Body 路径 | 证据 |
-|---|---|
-| <code>status</code> | <code>CONSUMER_CONFIRMED</code> |
-| <code>data.lists</code> | <code>CONSUMER_CONFIRMED</code> |
-| <code>data.total</code> | <code>CONSUMER_CONFIRMED</code> |
-| <code>data.lists[].FileHash</code> | <code>CONSUMER_CONFIRMED</code> |
-| <code>data.lists[].HQFileHash</code> | <code>CONSUMER_CONFIRMED</code> |
-| <code>data.lists[].SQFileHash</code> | <code>CONSUMER_CONFIRMED</code> |
-| <code>data.lists[].OriSongName</code> | <code>CONSUMER_CONFIRMED</code> |
-| <code>data.lists[].SongName</code> | <code>CONSUMER_CONFIRMED</code> |
-| <code>data.lists[].FileName</code> | <code>CONSUMER_CONFIRMED</code> |
-| <code>data.lists[].SingerName</code> | <code>CONSUMER_CONFIRMED</code> |
-| <code>data.lists[].Image</code> | <code>CONSUMER_CONFIRMED</code> |
-| <code>data.lists[].Duration</code> | <code>CONSUMER_CONFIRMED</code> |
+| Body 路径 | 条件 | 证据 |
+|---|---|---|
+| <code>status</code> | <code>-</code> | <code>CONSUMER_CONFIRMED</code> |
+| <code>data.lists</code> | <code>-</code> | <code>CONSUMER_CONFIRMED</code> |
+| <code>data.total</code> | <code>-</code> | <code>CONSUMER_CONFIRMED</code> |
+| <code>data.lists[].FileHash</code> | <code>type == "song"</code> | <code>CONSUMER_CONFIRMED</code> |
+| <code>data.lists[].HQFileHash</code> | <code>type == "song"</code> | <code>CONSUMER_CONFIRMED</code> |
+| <code>data.lists[].SQFileHash</code> | <code>type == "song"</code> | <code>CONSUMER_CONFIRMED</code> |
+| <code>data.lists[].OriSongName</code> | <code>type == "song"</code> | <code>CONSUMER_CONFIRMED</code> |
+| <code>data.lists[].SongName</code> | <code>type == "song"</code> | <code>CONSUMER_CONFIRMED</code> |
+| <code>data.lists[].FileName</code> | <code>type == "song"</code> | <code>CONSUMER_CONFIRMED</code> |
+| <code>data.lists[].SingerName</code> | <code>type == "song"</code> | <code>CONSUMER_CONFIRMED</code> |
+| <code>data.lists[].Image</code> | <code>type == "song"</code> | <code>CONSUMER_CONFIRMED</code> |
+| <code>data.lists[].Duration</code> | <code>type == "song"</code> | <code>CONSUMER_CONFIRMED</code> |
 
 这里只列出源码或固定 PC 消费端能够证明的字段；未列出的字段不代表不存在。
 

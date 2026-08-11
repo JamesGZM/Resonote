@@ -23,6 +23,13 @@ function fail(message) {
   throw new Error(message);
 }
 
+function requiredSection(content, marker, nextMarker, description) {
+  const start = content.indexOf(marker);
+  if (start < 0) fail(`${description} 起始标记不存在：${marker}`);
+  const end = content.indexOf(nextMarker, start + marker.length);
+  return content.slice(start, end < 0 ? content.length : end);
+}
+
 function markdownFiles(root) {
   const result = [];
   for (const entry of readdirSync(root, { withFileTypes: true })) {
@@ -87,6 +94,10 @@ function main() {
     }
   }
   const responseSchema = readFileSync(join(DOC_ROOT, 'schemas/responses.yaml'), 'utf8');
+  const searchDoc = readFileSync(join(DOC_ROOT, 'endpoints/search.md'), 'utf8');
+  const searchCatalogSection = requiredSection(catalog, '  - id: "API-SEARCH-001"', '\n  - id:', 'catalog API-SEARCH-001');
+  const searchSchemaSection = requiredSection(responseSchema, '  - endpoint_id: "API-SEARCH-001"', '\n  - endpoint_id:', '响应 Schema API-SEARCH-001');
+  const searchMarkdownSection = requiredSection(searchDoc, '<a id="api-search-001"></a>', '\n<a id=', '搜索 Markdown API-SEARCH-001');
   const schemaEntries = [...responseSchema.matchAll(/^  - endpoint_id:/gm)].length;
   if (schemaEntries !== 164) fail(`响应 Schema 数量错误：${schemaEntries}`);
   const consumerFields = [...responseSchema.matchAll(/^        evidence: "CONSUMER_CONFIRMED"$/gm)].length;
@@ -95,7 +106,23 @@ function main() {
     'data.lists[].FileHash', 'data.lists[].HQFileHash', 'data.lists[].SQFileHash',
     'data.lists[].OriSongName', 'data.lists[].SongName', 'data.lists[].FileName',
     'data.lists[].SingerName', 'data.lists[].Image', 'data.lists[].Duration',
-  ]) if (!responseSchema.includes(`path: "${field}"`)) fail(`固定 PC 搜索字段证据缺失：${field}`);
+  ]) {
+    const contract = [
+      `path: "${field}"`,
+      '        type: "unknown"',
+      '        evidence: "CONSUMER_CONFIRMED"',
+      '        condition: "type == \\"song\\""',
+    ].join('\n');
+    if (!searchSchemaSection.includes(contract)) fail(`固定 PC 单曲搜索字段契约缺失或条件错误：${field}`);
+    const catalogContract = [
+      `path: "${field}"`,
+      '        evidence: "CONSUMER_CONFIRMED"',
+      '        condition: "type == \\"song\\""',
+    ].join('\n');
+    if (!searchCatalogSection.includes(catalogContract)) fail(`catalog 单曲搜索字段契约缺失或条件错误：${field}`);
+    const markdownContract = `| <code>${field}</code> | <code>type == "song"</code> | <code>CONSUMER_CONFIRMED</code> |`;
+    if (!searchMarkdownSection.includes(markdownContract)) fail(`搜索 Markdown 字段契约缺失或条件错误：${field}`);
+  }
   const loginDoc = readFileSync(join(DOC_ROOT, 'endpoints/login.md'), 'utf8');
   const protocolDoc = readFileSync(join(DOC_ROOT, 'PROTOCOL.md'), 'utf8');
   for (const required of [
