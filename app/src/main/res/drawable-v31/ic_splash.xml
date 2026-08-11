@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_splash_animated_vector">
+    <target
+        android:name="signal_signature_main"
+        android:animation="@animator/ic_splash_main_draw" />
+    <target
+        android:name="signal_signature_stem"
+        android:animation="@animator/ic_splash_finish_draw" />
+    <target
+        android:name="signal_signature_leg"
+        android:animation="@animator/ic_splash_finish_draw" />
+</animated-vector>

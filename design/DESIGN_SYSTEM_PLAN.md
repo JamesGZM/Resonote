@@ -142,6 +142,7 @@ Player 属于产品设计层，不属于当前 Foundation 建设。已有 Player
 | 项目 | 交付 | 状态 |
 |---|---|---|
 | 00A Design Principles & Brand IP | 文档 + PNG | 已冻结 |
+| 00B Launcher & Startup Identity | 文档 + SVG + PNG + Android 实现 | 已冻结；V-01 / V-10 部分自动化覆盖 |
 | 01A Brand Key Colors | 文档 + PNG | 已冻结 |
 | 01B Accent Tonal Palettes | 文档 + PNG | 已冻结 |
 | 01C Neutral & Error Tonal Palettes | 文档 + PNG | 已冻结 |
@@ -169,8 +170,10 @@ Player 属于产品设计层，不属于当前 Foundation 建设。已有 Player
 ## 8. 实现进度
 
 - Foundation Theme、Light / Dark / AMOLED ColorScheme、Typography、Shape 与扩展 Token 已在 `core:designsystem` 实现。
+- 00B Launcher & Startup Identity 已实现主 App Pulse Rose 与 Catalog Harmonic Violet 的 Adaptive / Round / Monochrome Icon、Light / Dark System Splash，以及主 App API 31+ `750ms` AVD 和 API 26–30 静态回退；资源由各应用模块持有，不进入 `core:designsystem`。
 - 06A Buttons & Actions 已实现品牌化 Button、Icon Button 与 Toggle Icon Button，并接入独立 Catalog App。
 - 06B-1 Text Field 已基于 Material3 1.4.0 稳定版 `BasicTextField` 与官方 `OutlinedTextFieldDefaults.DecorationBox` 实现品牌化 Outlined Text Field；覆盖结构化 Label / Supporting / Error / Counter、2dp Error Outline、200% 字号 Prefix/Suffix 独立行、Unicode Code Point 长度限制、单/多行与稳定版密码视觉转换，并接入独立 Catalog App。
 - `core:screenshot-testing` 已建立；06A 与 06B-1 已提交 Light、Dark、AMOLED、字号、RTL 与窗口矩阵 Roborazzi Golden，并通过行为、语义、触控边界、MD3 尺寸合同和截图回归测试。
 - V-04 当前为部分自动化覆盖；Hover、Focused、Pressed、真实设备 TalkBack 与键盘路径仍为待实现验证，不标记为 Pass。
 - V-05 当前为部分自动化覆盖；真实 IME、TalkBack、外接键盘、设备语义树与录屏仍为待实现验证，不标记为 Pass。
+- V-01 / V-10 已增加 00B 资源合同、主题色与 API 分层自动测试，并补充 API 32 Emulator、Light、Motion Scale `1×` 的真实 Launcher 冷启动录屏与终态截图；Dark、`0× / 10×`、API 26 / 30 / 最新 API 和 warm / hot start 仍未执行，不标记为 Pass。
