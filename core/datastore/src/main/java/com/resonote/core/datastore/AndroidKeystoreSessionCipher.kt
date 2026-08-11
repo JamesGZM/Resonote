@@ -40,6 +40,7 @@ internal class AndroidKeystoreSessionCipher @Inject constructor() : SessionCiphe
                     KEY_ALIAS,
                     KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT,
                 ).setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                    .setKeySize(KEY_SIZE_BITS)
                     .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
                     .setRandomizedEncryptionRequired(true)
                     .build(),
@@ -53,5 +54,6 @@ internal class AndroidKeystoreSessionCipher @Inject constructor() : SessionCiphe
         const val KEY_ALIAS = "resonote.api.session.v1"
         const val TRANSFORMATION = "AES/GCM/NoPadding"
         const val TAG_BITS = 128
+        const val KEY_SIZE_BITS = 256
     }
 }

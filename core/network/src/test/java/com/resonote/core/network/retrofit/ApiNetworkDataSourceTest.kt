@@ -36,7 +36,11 @@ import org.junit.Before
 import org.junit.Test
 
 class ApiNetworkDataSourceTest {
-    private lateinit var server: MockWebServer
+    private lateinit var gatewayServer: MockWebServer
+    private lateinit var mobileCodeServer: MockWebServer
+    private lateinit var mobileLoginServer: MockWebServer
+    private lateinit var deviceRegistrationServer: MockWebServer
+    private lateinit var riskVerificationServer: MockWebServer
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }
     private val crypto = ApiProtocolCrypto(ProtocolRandom { length -> "A".repeat(length) })
     private val session = ApiSession(
@@ -50,41 +54,50 @@ class ApiNetworkDataSourceTest {
     )
 
     @Before
-    fun startServer() {
-        server = MockWebServer()
-        server.start()
+    fun startServers() {
+        gatewayServer = MockWebServer().apply { start() }
+        mobileCodeServer = MockWebServer().apply { start() }
+        mobileLoginServer = MockWebServer().apply { start() }
+        deviceRegistrationServer = MockWebServer().apply { start() }
+        riskVerificationServer = MockWebServer().apply { start() }
     }
 
     @After
-    fun stopServer() {
-        server.shutdown()
+    fun stopServers() {
+        gatewayServer.shutdown()
+        mobileCodeServer.shutdown()
+        mobileLoginServer.shutdown()
+        deviceRegistrationServer.shutdown()
+        riskVerificationServer.shutdown()
     }
 
     @Test
     fun sendMobileCodeUsesIsolatedMidIdentityAndExactBody() = runTest {
-        server.enqueue(jsonResponse("""{"status":1}"""))
+        mobileCodeServer.enqueue(jsonResponse("""{"status":1}"""))
 
         dataSource().sendMobileCode("13800000000")
 
-        val request = server.takeRequest()
+        val request = mobileCodeServer.takeRequest()
         assertThat(request.path).contains("/v7/send_mobile_code?")
         assertThat(request.requestUrl?.queryParameter("token")).isNull()
         assertThat(request.requestUrl?.queryParameter("userid")).isNull()
         assertThat(request.getHeader("Cookie")).isEqualTo("mid=fixture-mid")
         assertThat(request.body.readUtf8()).isEqualTo("""{"businessid":5,"mobile":"13800000000","plat":3}""")
+        assertThat(gatewayServer.requestCount).isEqualTo(0)
+        assertThat(mobileLoginServer.requestCount).isEqualTo(0)
     }
 
     @Test
     fun missingDfidRegistersAnonymousDeviceBeforeSignedSearch() = runTest {
         val registration = crypto.encryptPlaylist("""{"status":1,"data":{"dfid":"registered-dfid"}}""")
-        server.enqueue(MockResponse().setResponseCode(200).setBody(Buffer().write(registration.ciphertext)))
-        server.enqueue(jsonResponse("""{"status":1,"data":{"lists":[],"total":0}}"""))
+        deviceRegistrationServer.enqueue(MockResponse().setResponseCode(200).setBody(Buffer().write(registration.ciphertext)))
+        gatewayServer.enqueue(jsonResponse("""{"status":1,"data":{"lists":[],"total":0}}"""))
 
         dataSource(session.copy(dfid = null, token = null, userId = null, cookies = emptyMap()))
             .searchSongs("fixture", page = 1, pageSize = 1)
 
-        val register = server.takeRequest()
-        val search = server.takeRequest()
+        val register = deviceRegistrationServer.takeRequest()
+        val search = gatewayServer.takeRequest()
         assertThat(register.path).contains("/risk/v2/r_register_dev?")
         assertThat(register.requestUrl?.queryParameter("part")).isEqualTo("1")
         assertThat(register.requestUrl?.queryParameter("p")).isNotEmpty()
@@ -96,7 +109,7 @@ class ApiNetworkDataSourceTest {
     @Test
     fun mobileLoginBuildsLiteBodyMergesCookiesAndAcceptsObjectSecret() = runTest {
         val encrypted = crypto.encryptTemporary("""{"token":"new-token","userid":"42","t1":"new-t1"}""")
-        server.enqueue(
+        mobileLoginServer.enqueue(
             jsonResponse("""{"status":1,"data":{"secu_params":"${encrypted.ciphertextHex}"}}""")
                 .addHeader("Set-Cookie", "server_cookie=value; Path=/; HttpOnly"),
         )
@@ -107,7 +120,9 @@ class ApiNetworkDataSourceTest {
         assertThat(authenticated.session.token).isEqualTo("new-token")
         assertThat(authenticated.session.userId).isEqualTo("42")
         assertThat(authenticated.session.cookies).containsEntry("server_cookie", "value")
-        val body = json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject
+        val request = mobileLoginServer.takeRequest()
+        val body = json.parseToJsonElement(request.body.readUtf8()).jsonObject
+        assertThat(request.getHeader("Cookie")).contains("token=existing-token")
         assertThat(body["t1"]?.jsonPrimitive?.content).isNotEqualTo("0")
         assertThat(body["t2"]?.jsonPrimitive?.content).isNotEqualTo("0")
         assertThat(body).doesNotContainKey("t3")
@@ -120,7 +135,7 @@ class ApiNetworkDataSourceTest {
     @Test
     fun mobileLoginAcceptsPlaintextTokenSecret() = runTest {
         val encrypted = crypto.encryptTemporary("plain-token")
-        server.enqueue(jsonResponse("""{"status":1,"data":{"userid":42,"secu_params":"${encrypted.ciphertextHex}"}}"""))
+        mobileLoginServer.enqueue(jsonResponse("""{"status":1,"data":{"userid":42,"secu_params":"${encrypted.ciphertextHex}"}}"""))
 
         val result = dataSource().loginWithMobileCode("13800000000", "246810")
 
@@ -129,7 +144,7 @@ class ApiNetworkDataSourceTest {
 
     @Test
     fun mobileLoginMapsMultipleAccountsWithoutChangingSession() = runTest {
-        server.enqueue(
+        mobileLoginServer.enqueue(
             jsonResponse(
                 """{"status":0,"error_code":1001,"data":{"info_list":[{"userid":42,"nickname":"first","pic":"avatar","p_grade":7}]}}""",
             ),
@@ -145,7 +160,7 @@ class ApiNetworkDataSourceTest {
 
     @Test
     fun httpStatusIsClassifiedBeforeNonJsonBody() {
-        server.enqueue(MockResponse().setResponseCode(503).setBody("upstream unavailable"))
+        mobileCodeServer.enqueue(MockResponse().setResponseCode(503).setBody("upstream unavailable"))
 
         val failure = assertThrows(ApiHttpException::class.java) {
             runTest { dataSource().sendMobileCode("13800000000") }
@@ -156,7 +171,7 @@ class ApiNetworkDataSourceTest {
 
     @Test
     fun jsonServiceRejectionRemainsTyped() {
-        server.enqueue(jsonResponse("""{"status":0,"error_code":"12345"}"""))
+        mobileCodeServer.enqueue(jsonResponse("""{"status":0,"error_code":"12345"}"""))
 
         val failure = assertThrows(ApiServiceException::class.java) {
             runTest { dataSource().sendMobileCode("13800000000") }
@@ -174,16 +189,23 @@ class ApiNetworkDataSourceTest {
             OkHttpClient(), json, Clock.fixed(Instant.ofEpochMilli(1_700_000_000_123), ZoneOffset.UTC), signer,
             sessions, Lazy { risk }, ApiOriginPolicy { true },
         )
-        val origin = server.url("/").toString().removeSuffix("/")
         return RealApiNetworkDataSource(
             executor,
             json,
             crypto,
             signer,
             sessions,
-            ApiEndpointOrigins(origin, origin, origin, origin, origin),
+            ApiEndpointOrigins(
+                gateway = gatewayServer.origin(),
+                mobileCode = mobileCodeServer.origin(),
+                mobileLogin = mobileLoginServer.origin(),
+                deviceRegistration = deviceRegistrationServer.origin(),
+                riskVerification = riskVerificationServer.origin(),
+            ),
         )
     }
+
+    private fun MockWebServer.origin(): String = url("/").toString().removeSuffix("/")
 
     private fun jsonResponse(body: String) =
         MockResponse().setResponseCode(200).addHeader("Content-Type", "application/json").setBody(body)

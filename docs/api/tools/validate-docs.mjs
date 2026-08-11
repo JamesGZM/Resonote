@@ -91,6 +91,11 @@ function main() {
   if (schemaEntries !== 164) fail(`响应 Schema 数量错误：${schemaEntries}`);
   const consumerFields = [...responseSchema.matchAll(/^        evidence: "CONSUMER_CONFIRMED"$/gm)].length;
   if (consumerFields < 20) fail(`PC 消费字段提取异常：仅 ${consumerFields} 个`);
+  for (const field of [
+    'data.lists[].FileHash', 'data.lists[].HQFileHash', 'data.lists[].SQFileHash',
+    'data.lists[].OriSongName', 'data.lists[].SongName', 'data.lists[].FileName',
+    'data.lists[].SingerName', 'data.lists[].Image', 'data.lists[].Duration',
+  ]) if (!responseSchema.includes(`path: "${field}"`)) fail(`固定 PC 搜索字段证据缺失：${field}`);
   const loginDoc = readFileSync(join(DOC_ROOT, 'endpoints/login.md'), 'utf8');
   const protocolDoc = readFileSync(join(DOC_ROOT, 'PROTOCOL.md'), 'utf8');
   for (const required of [

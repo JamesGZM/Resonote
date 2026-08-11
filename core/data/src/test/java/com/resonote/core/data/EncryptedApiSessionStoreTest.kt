@@ -6,8 +6,12 @@ import com.resonote.core.datastore.EncryptedSessionEnvelope
 import com.resonote.core.datastore.EncryptedSessionStorage
 import com.resonote.core.datastore.SessionCipher
 import com.resonote.core.network.session.ApiSession
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class EncryptedApiSessionStoreTest {
@@ -42,6 +46,15 @@ class EncryptedApiSessionStoreTest {
         assertThat(store.read()).isEqualTo(authenticatedSession())
     }
 
+    @Test
+    fun cancelledReadPropagatesWithoutClearingSession() {
+        val storage = CancellingStorage()
+        val store = EncryptedApiSessionStore(storage, XorCipher())
+
+        assertThrows(CancellationException::class.java) { runTest { store.read() } }
+        assertThat(storage.clearCount).isEqualTo(0)
+    }
+
     private class FakeStorage(initial: EncryptedSessionEnvelope? = null) : EncryptedSessionStorage {
         val state = MutableStateFlow(initial)
         var clearCount = 0
@@ -54,6 +67,13 @@ class EncryptedApiSessionStoreTest {
         override fun encrypt(plaintext: ByteArray) = Ciphertext(byteArrayOf(7), plaintext.map { (it.toInt() xor 0x55).toByte() }.toByteArray())
         override fun decrypt(ciphertext: Ciphertext) = ciphertext.bytes.map { (it.toInt() xor 0x55).toByte() }.toByteArray()
         override fun reset() = Unit
+    }
+
+    private class CancellingStorage : EncryptedSessionStorage {
+        var clearCount = 0
+        override val data: Flow<EncryptedSessionEnvelope?> = flow { throw CancellationException("cancelled") }
+        override suspend fun write(envelope: EncryptedSessionEnvelope) = Unit
+        override suspend fun clear() { clearCount += 1 }
     }
 
     private class InvalidatableCipher : SessionCipher {

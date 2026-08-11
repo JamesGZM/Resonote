@@ -472,6 +472,20 @@ function extractConsumerEvidence() {
       }
     }
   }
+  const searchEvidence = routes.get('/search');
+  if (!searchEvidence) throw new Error('固定 PC 消费端缺少 /search 路由');
+  const searchSources = [
+    ['src/views/Search.vue', ['FileHash', 'HQFileHash', 'SQFileHash', 'OriSongName', 'SongName', 'FileName', 'SingerName', 'Image', 'Duration']],
+    ['src/components/search/SongSearchList.vue', ['OriSongName', 'SongName', 'SingerName', 'Duration']],
+  ];
+  for (const [file, fields] of searchSources) {
+    const source = show(MOEKOE_ROOT, APP_COMMIT, file);
+    searchEvidence.files.add(file);
+    for (const field of fields) {
+      if (!new RegExp(`\\b${field}\\b`).test(source)) throw new Error(`固定 PC 搜索证据缺少字段：${file}:${field}`);
+      searchEvidence.fields.add(`data.lists[].${field}`);
+    }
+  }
   return routes;
 }
 

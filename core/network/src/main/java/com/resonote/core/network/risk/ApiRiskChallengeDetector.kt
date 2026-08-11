@@ -9,24 +9,26 @@ import kotlinx.serialization.json.contentOrNull
 
 internal class ApiRiskChallengeDetector @Inject constructor() {
     fun detect(response: ApiRawResponse): ApiRiskChallenge? {
-        val root = response.body ?: return null
-        val data = root["data"] as? JsonObject
-        val serviceCode = root.text("error_code") ?: data?.text("error_code")
+        val root = response.body
+        val data = root?.get("data") as? JsonObject
+        val serviceCode = root?.text("error_code") ?: data?.text("error_code")
+        val status = root?.text("status") ?: data?.text("status")
         val eventId =
-            root.text("ssaCode")
-                ?: root.text("ssa_code")
+            root?.text("ssaCode")
+                ?: root?.text("ssa_code")
                 ?: data?.text("ssaCode")
                 ?: data?.text("ssa_code")
                 ?: response.header("ssa-code")
                 ?: response.header("ssa")
                 ?: response.header("ssaCode")
-        val isRisk = serviceCode == RISK_CODE || !eventId.isNullOrBlank()
+        val failed = if (status == null) true else status.toDoubleOrNull() == 0.0
+        val isRisk = serviceCode == RISK_CODE || (failed && !eventId.isNullOrBlank())
         if (!isRisk) return null
         if (eventId.isNullOrBlank()) throw ApiProtocolException(ApiProtocolException.Reason.MissingRiskEvent)
         return ApiRiskChallenge(
             eventId = eventId,
-            sid = root.text("sid") ?: data?.text("sid"),
-            edt = root.text("edt") ?: data?.text("edt"),
+            sid = root?.text("sid") ?: data?.text("sid"),
+            edt = root?.text("edt") ?: data?.text("edt"),
             serviceCode = serviceCode,
         )
     }

@@ -109,4 +109,5 @@ resonote-android-application = { id = "resonote.android.application" }
 resonote-android-application-compose = { id = "resonote.android.application.compose" }
 resonote-android-library = { id = "resonote.android.library" }
 resonote-android-library-compose = { id = "resonote.android.library.compose" }
+resonote-jvm-library = { id = "resonote.jvm.library" }
 resonote-hilt = { id = "resonote.hilt" }

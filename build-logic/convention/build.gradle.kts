@@ -60,6 +60,10 @@ gradlePlugin {
             id = "resonote.android.library.compose"
             implementationClass = "AndroidLibraryComposeConventionPlugin"
         }
+        register("jvmLibrary") {
+            id = "resonote.jvm.library"
+            implementationClass = "JvmLibraryConventionPlugin"
+        }
         register("hilt") {
             id = "resonote.hilt"
             implementationClass = "HiltConventionPlugin"

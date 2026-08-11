@@ -36,7 +36,8 @@ internal class EncryptedApiSessionStore @Inject constructor(
                 storage.clear()
                 null
             }
-        }.catch {
+        }.catch { failure ->
+            if (failure is CancellationException) throw failure
             storage.clear()
             emit(null)
         }

@@ -41,6 +41,20 @@ class ApiRiskChallengeDetectorTest {
         assertThat(detector.detect(response("""{"status":0,"error_code":123}"""))).isNull()
     }
 
+    @Test
+    fun detectsHeaderOnlyChallengeWithoutBody() {
+        val response = ApiRawResponse(200, mapOf("ssa-code" to listOf("header-event")), byteArrayOf(), null)
+
+        assertThat(detector.detect(response)?.eventId).isEqualTo("header-event")
+    }
+
+    @Test
+    fun successfulBodyDoesNotTreatIncidentalRiskHeaderAsChallenge() {
+        val response = response("""{"status":1}""", mapOf("ssa-code" to listOf("incidental-event")))
+
+        assertThat(detector.detect(response)).isNull()
+    }
+
     private fun response(
         body: String,
         headers: Map<String, List<String>> = emptyMap(),
