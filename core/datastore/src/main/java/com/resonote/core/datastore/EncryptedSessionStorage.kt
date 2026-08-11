@@ -36,4 +36,7 @@ interface SessionCipher {
     fun encrypt(plaintext: ByteArray): Ciphertext
 
     fun decrypt(ciphertext: Ciphertext): ByteArray
+
+    /** Deletes unusable key material so the next write can create a fresh key. */
+    fun reset()
 }

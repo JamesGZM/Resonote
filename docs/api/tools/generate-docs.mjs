@@ -7,12 +7,13 @@ import { fileURLToPath } from 'node:url';
 
 const API_COMMIT = '6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb';
 const APP_COMMIT = '52c9833afe2e7fedcba8d5b23ff8d1f9731af73a';
-const V2_COMMIT = 'c4b4f1d';
+const V2_COMMIT = 'c4b4f1d56c7484580444cf294914fe0601e120bd';
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const DOC_ROOT = resolve(SCRIPT_DIR, '..');
 const WORKSPACE_ROOT = resolve(DOC_ROOT, '../..');
 const MOEKOE_ROOT = resolve(process.env.MOEKOE_ROOT || join(WORKSPACE_ROOT, '..', 'MoeKoeMusic'));
 const API_ROOT = join(MOEKOE_ROOT, 'api');
+const V2_ROOT = resolve(process.env.MOEKOE_V2_ROOT || join(WORKSPACE_ROOT, '..', 'MoeKoeMusic-Mobile-V2'));
 
 const EVIDENCE = Object.freeze({
   source: 'SOURCE_CONFIRMED',
@@ -31,14 +32,7 @@ const LOGIN_MODULES = new Set([
   'verify_user_info',
 ]);
 
-const LOGIN_REFERENCE_FIELDS = {
-  get_verify_info: ['data.v_type', 'data.txappid'],
-  login_cellphone: [
-    'data.info_list', 'data.info_list.userid', 'data.info_list.nickname',
-    'data.info_list.pic', 'data.info_list.p_grade', 'data.secu_params',
-    'data.token', 'data.userid', 'data.t1', 'data.vip_type', 'data.vip_token',
-  ],
-};
+let loginReferenceFields = new Map();
 
 function applyLiteLoginContract(module, requestFields, responseFields) {
   if (!LOGIN_MODULES.has(module)) return requestFields;
@@ -76,7 +70,7 @@ function applyLiteLoginContract(module, requestFields, responseFields) {
     ensure('wasm', 'number', 'body', '1');
     ensure('i', 'string', 'body', "''");
   }
-  for (const path of LOGIN_REFERENCE_FIELDS[module] || []) {
+  for (const path of loginReferenceFields.get(module) || []) {
     if (!responseFields.has(path)) responseFields.set(path, EVIDENCE.reference);
   }
   return [...fields.values()].sort((a, b) => a.name.localeCompare(b.name));
@@ -115,6 +109,27 @@ function listTree(repo, commit, prefix) {
 function ensureCommit(repo, commit) {
   const type = git(repo, ['cat-file', '-t', commit]).trim();
   if (type !== 'commit') throw new Error(`${repo} 中 ${commit} 不是 commit`);
+}
+
+function extractV2ReferenceEvidence() {
+  ensureCommit(V2_ROOT, V2_COMMIT);
+  const decoderPath = 'kugou-api/src/main/kotlin/cn/james/music/kugou/api/endpoint/KugouAuthDecoders.kt';
+  const decoder = show(V2_ROOT, V2_COMMIT, decoderPath);
+  const expected = new Map([
+    ['get_verify_info', ['data.v_type', 'data.txappid']],
+    ['login_cellphone', [
+      'data.info_list', 'data.info_list.userid', 'data.info_list.nickname',
+      'data.info_list.pic', 'data.info_list.p_grade', 'data.secu_params',
+      'data.token', 'data.userid', 'data.t1', 'data.vip_type', 'data.vip_token',
+    ]],
+  ]);
+  for (const fields of expected.values()) {
+    for (const path of fields) {
+      const terminal = path.split('.').at(-1);
+      if (!decoder.includes(`\"${terminal}\"`)) throw new Error(`V2 固定证据缺少字段：${path}`);
+    }
+  }
+  return expected;
 }
 
 function balancedSlice(source, openIndex, open = '{', close = '}') {
@@ -621,6 +636,10 @@ function staticDocuments(endpoints, consumerRoutes) {
     '## 加密与二进制',
     '## 登录 Origin 与 Lite 条件\n\n- 发送手机验证码：`http://login.user.kugou.com/v7/send_mobile_code`，唯一允许的明文 Origin，只携带 MID 身份。\n- 手机验证码登录：`https://loginserviceretry.kugou.com/v7/login_by_verifycode`。\n- 密码登录：`https://gateway.kugou.com/v9/login_by_pwd`，并设置 `x-router: login.user.kugou.com`。\n- 风控提交：`https://verifyservice.kugou.com/v4/verify_user_info`；扫码端点使用各自独立 HTTPS Origin。\n\nLite 验证码登录固定发送 `t1/t2/dfid/dev/gitversion`，不得发送 Standard 分支的 `t3`。登录成功必须解密 `secu_params`、校验 token/userid、合并响应 Cookie，再由数据层原子提交加密 Session。\n\n## 加密与二进制',
   );
+  generatedDocuments['PROTOCOL.md'] = generatedDocuments['PROTOCOL.md'].replace(
+    '## 错误模型',
+    '## 风控 SID/EDT\n\n固定 PC 包装层在仅收到 `ssa-code` Header 时不会等待上游返回 `sid/edt`，而是使用当前 MID、userid、dfid、进程级 WebGL 指纹和行为事件生成 EDT，并以 RSA-OAEP(SHA-256/MGF1-SHA-256) 封装临时 AES 密钥得到 SID。Android 协议层在 Challenge 已携带完整 `sid/edt` 时保留原值，仅对缺失上下文生成一次，并且只在验证提交请求的协程内存中使用。\n\n## 错误模型',
+  );
   generatedDocuments['VERIFICATION.md'] = generatedDocuments['VERIFICATION.md'].replace(
     `3. \`interface.d.ts\` 或现有说明：\`${EVIDENCE.declared}\`。`,
     `3. V2 固定版本实际读取或测试的行为旁证：\`${EVIDENCE.reference}\`；不得覆盖 Lite 源码。\n4. \`interface.d.ts\` 或现有说明：\`${EVIDENCE.declared}\`。`,
@@ -629,7 +648,7 @@ function staticDocuments(endpoints, consumerRoutes) {
     .replace('6. 无证据', '7. 无证据');
   generatedDocuments['VERIFICATION.md'] = generatedDocuments['VERIFICATION.md'].replace(
     '## 证据优先级',
-    '以上统计只描述静态文档生成过程。\n\n## Android 运行时 Canary\n\n- 2026-08-11：`API-SEARCH-001` 已到达上游网关，但使用未注册的 `dfid=-` 时被业务代码 `152` 拒绝，因此该端点需要有效设备上下文后才能作为正式搜索验证。\n- 2026-08-11：参考 `MoeKoeMusic-Mobile-V2@c4b4f1d` 的无签名匿名搜索 Canary 已通过，确认当前网络、基础 JSON 解析与歌曲字段映射可工作。\n- Live Test 必须由 `RESONOTE_RUN_LIVE_API_TESTS=true` 显式启用；没有保存原始响应、账号、Cookie 或设备标识。\n\n## 证据优先级',
+    `以上统计只描述静态文档生成过程。\n\n## Android 运行时 Canary\n\n- 2026-08-11：\`API-SEARCH-001\` 已到达上游网关，但使用未注册的 \`dfid=-\` 时被业务代码 \`152\` 拒绝，因此该端点需要有效设备上下文后才能作为正式搜索验证。\n- 2026-08-11：参考 \`MoeKoeMusic-Mobile-V2@${V2_COMMIT}\` 的无签名匿名搜索 Canary 已通过，确认当前网络、基础 JSON 解析与歌曲字段映射可工作。\n- Live Test 必须由 \`RESONOTE_RUN_LIVE_API_TESTS=true\` 显式启用；没有保存原始响应、账号、Cookie 或设备标识。\n\n## 证据优先级`,
   );
   return generatedDocuments;
 }
@@ -678,6 +697,7 @@ function write(relative, content) {
 function main() {
   ensureCommit(MOEKOE_ROOT, APP_COMMIT);
   ensureCommit(API_ROOT, API_COMMIT);
+  loginReferenceFields = extractV2ReferenceEvidence();
   const moduleFiles = listTree(API_ROOT, API_COMMIT, 'module')
     .filter((path) => /^module\/[^/]+\.js$/.test(path) && !path.split('/').at(-1).startsWith('_'))
     .sort();

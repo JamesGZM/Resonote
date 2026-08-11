@@ -31,13 +31,15 @@ class EncryptedApiSessionStoreTest {
     @Test
     fun corruptedCiphertextIsClearedAndReturnsAnonymousState() = runTest {
         val storage = FakeStorage(EncryptedSessionEnvelope(1, byteArrayOf(1), "broken".encodeToByteArray()))
-        val store = EncryptedApiSessionStore(storage, object : SessionCipher {
-            override fun encrypt(plaintext: ByteArray) = Ciphertext(byteArrayOf(1), plaintext)
-            override fun decrypt(ciphertext: Ciphertext): ByteArray = error("key invalidated")
-        })
+        val cipher = InvalidatableCipher()
+        val store = EncryptedApiSessionStore(storage, cipher)
 
         assertThat(store.read()).isNull()
         assertThat(storage.clearCount).isEqualTo(1)
+        assertThat(cipher.resetCount).isEqualTo(1)
+
+        store.write(authenticatedSession())
+        assertThat(store.read()).isEqualTo(authenticatedSession())
     }
 
     private class FakeStorage(initial: EncryptedSessionEnvelope? = null) : EncryptedSessionStorage {
@@ -51,6 +53,21 @@ class EncryptedApiSessionStoreTest {
     private class XorCipher : SessionCipher {
         override fun encrypt(plaintext: ByteArray) = Ciphertext(byteArrayOf(7), plaintext.map { (it.toInt() xor 0x55).toByte() }.toByteArray())
         override fun decrypt(ciphertext: Ciphertext) = ciphertext.bytes.map { (it.toInt() xor 0x55).toByte() }.toByteArray()
+        override fun reset() = Unit
+    }
+
+    private class InvalidatableCipher : SessionCipher {
+        private var invalid = true
+        var resetCount = 0
+        override fun encrypt(plaintext: ByteArray): Ciphertext {
+            check(!invalid) { "key invalidated" }
+            return Ciphertext(byteArrayOf(1), plaintext)
+        }
+        override fun decrypt(ciphertext: Ciphertext): ByteArray {
+            check(!invalid) { "key invalidated" }
+            return ciphertext.bytes
+        }
+        override fun reset() { invalid = false; resetCount += 1 }
     }
 
     private fun authenticatedSession() = ApiSession(

@@ -8,6 +8,7 @@ import com.resonote.core.network.session.ApiSession
 import com.resonote.core.network.session.ApiSessionStore
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
@@ -28,7 +29,10 @@ internal class EncryptedApiSessionStore @Inject constructor(
         storage.data.map { envelope ->
             try {
                 decode(envelope)
+            } catch (cancellation: CancellationException) {
+                throw cancellation
             } catch (_: Exception) {
+                cipher.reset()
                 storage.clear()
                 null
             }
@@ -45,7 +49,14 @@ internal class EncryptedApiSessionStore @Inject constructor(
     }
 
     override suspend fun clearAuthentication() = mutex.withLock {
-        val current = runCatching { session.first() }.getOrNull() ?: return@withLock
+        val current =
+            try {
+                session.first()
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (_: Exception) {
+                null
+            } ?: return@withLock
         val anonymous =
             current.copy(
                 token = null,

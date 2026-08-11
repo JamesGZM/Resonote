@@ -225,7 +225,10 @@ internal class RealApiNetworkDataSource @Inject constructor(
         }
         val data = root["data"] as? JsonObject ?: throw missingField()
         val secure = data.text("secu_params")?.takeIf(String::isNotBlank) ?: throw missingField()
-        val decrypted = runCatching { json.parseToJsonElement(crypto.decryptTemporary(secure, temporaryKey)) }.getOrNull()
+        val plaintext =
+            runCatching { crypto.decryptTemporary(secure, temporaryKey) }
+                .getOrElse { throw ApiProtocolException(ApiProtocolException.Reason.MalformedResponse) }
+        val decrypted = runCatching { json.parseToJsonElement(plaintext) }.getOrElse { JsonPrimitive(plaintext) }
         val secret = decrypted as? JsonObject
         val token = secret?.text("token") ?: (decrypted as? JsonPrimitive)?.contentOrNull ?: data.text("token")
         val userId = secret?.text("userid") ?: data.text("userid")

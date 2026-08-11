@@ -16,7 +16,6 @@ import java.time.Clock
 import dagger.Lazy
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -156,7 +155,7 @@ internal class ApiCallExecutor @Inject constructor(
                 }
 
                 override fun onResponse(call: Call, response: Response) {
-                    continuation.resume(response)
+                    continuation.resume(response) { _, cancelledResponse, _ -> cancelledResponse.close() }
                 }
             },
         )

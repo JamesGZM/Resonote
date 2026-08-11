@@ -24,6 +24,13 @@ internal class AndroidKeystoreSessionCipher @Inject constructor() : SessionCiphe
         return cipher.doFinal(ciphertext.bytes)
     }
 
+    override fun reset() {
+        KeyStore.getInstance(KEYSTORE).apply {
+            load(null)
+            if (containsAlias(KEY_ALIAS)) deleteEntry(KEY_ALIAS)
+        }
+    }
+
     private fun secretKey(): SecretKey {
         val keyStore = KeyStore.getInstance(KEYSTORE).apply { load(null) }
         (keyStore.getKey(KEY_ALIAS, null) as? SecretKey)?.let { return it }

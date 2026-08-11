@@ -46,6 +46,10 @@ Lite 验证码登录固定发送 `t1/t2/dfid/dev/gitversion`，不得发送 Stan
 
 固定基线出现 AES、RSA 公钥加密、歌单/云盘 AES 封装、KRC 解码、ArrayBuffer 和 PCM/文件二进制。凡目录标记 `arraybuffer`、多阶段请求或动态 URL 的端点，优先使用共享 OkHttp `Call.Factory`，不强行套用普通 Retrofit JSON 接口。
 
+## 风控 SID/EDT
+
+固定 PC 包装层在仅收到 `ssa-code` Header 时不会等待上游返回 `sid/edt`，而是使用当前 MID、userid、dfid、进程级 WebGL 指纹和行为事件生成 EDT，并以 RSA-OAEP(SHA-256/MGF1-SHA-256) 封装临时 AES 密钥得到 SID。Android 协议层在 Challenge 已携带完整 `sid/edt` 时保留原值，仅对缺失上下文生成一次，并且只在验证提交请求的协程内存中使用。
+
 ## 错误模型
 
 必须分别保留 HTTP 失败、Provider 业务失败、签名/设备失败、登录过期、风控验证、解密失败、结构不兼容和网络失败。上游常同时使用 HTTP 状态与 Body 内 `status`/`error_code`；静态文档没有证明二者存在统一关系。

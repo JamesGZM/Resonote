@@ -22,6 +22,7 @@ internal class RealApiRiskGateway @Inject constructor(
     private val executor: ApiCallExecutor,
     private val crypto: ApiProtocolCrypto,
     private val origins: ApiEndpointOrigins,
+    private val riskContextFactory: ApiRiskContextFactory,
 ) : ApiRiskGateway {
     override suspend fun methodFor(challenge: ApiRiskChallenge): ApiRiskMethod =
         executor.execute { session, _ ->
@@ -61,6 +62,7 @@ internal class RealApiRiskGateway @Inject constructor(
 
     override suspend fun submit(challenge: ApiRiskChallenge, proof: ApiRiskProof) {
         executor.execute { session, _ ->
+            val completeChallenge = riskContextFactory.complete(challenge, session)
             val temporary =
                 when (proof) {
                     is ApiRiskProof.Sms -> crypto.encryptTemporary(buildJsonObject { put("code", proof.code) }.toString())
@@ -79,14 +81,14 @@ internal class RealApiRiskGateway @Inject constructor(
             val type = if (proof is ApiRiskProof.Sms) 32 else 23
             val body =
                 buildJsonObject {
-                    put("eventid", challenge.eventId)
+                    put("eventid", completeChallenge.eventId)
                     put("userid", session.userId?.toLongOrNull() ?: 0)
                     put("platid", 2)
                     put("v_type", type)
                     put("wasm", 1)
                     put("i", "")
-                    put("sid", challenge.sid.orEmpty())
-                    put("edt", challenge.edt.orEmpty())
+                    put("sid", completeChallenge.sid.orEmpty())
+                    put("edt", completeChallenge.edt.orEmpty())
                     if (type == 23) put("verifycode", verifyCode) else put("code", verifyCode)
                     put("pk", crypto.rawLiteRsa(buildJsonObject { put("key", temporary.temporaryKey) }.toString()))
                     put("params", temporary.ciphertextHex)
