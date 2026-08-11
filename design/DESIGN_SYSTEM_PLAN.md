@@ -16,7 +16,9 @@
 
 本文件只负责文档架构、实施顺序、交付类型和状态，不承载具体 Token 数值。Foundation 的 Hex、Tone、sp、dp、比率和行为规则统一维护在 [FOUNDATION.md](./FOUNDATION.md)，避免计划与规范产生双重数据源。
 
-Player 属于产品设计层，不属于当前 Foundation 建设。已有 Player 图片暂时保留，但不在本计划中引用或继续展开。
+Player 属于产品设计层，不属于当前 Foundation 建设。已有 `player-cover-page.png` 与
+`player-lyrics-page.png` 仅作为上一版历史方向稿保留，不再代表 Approved 页面；需求冻结后必须按
+Resonote Design System、NIA 分层和 MD3 Adaptive 重新设计。
 
 ## 2. 文档架构
 
@@ -25,7 +27,8 @@ Player 属于产品设计层，不属于当前 Foundation 建设。已有 Player
 | Foundation | [FOUNDATION.md](./FOUNDATION.md) | 00–05：Brand、Color、Typography、Shape、Layout、Icon、Motion、States、Accessibility | 已冻结 |
 | Component System | [COMPONENT_SYSTEM.md](./COMPONENT_SYSTEM.md) | 06–08：Core、Navigation、Feedback、Music Components | 已冻结 |
 | Validation | [VALIDATION.md](./VALIDATION.md) | 11：Theme、字体、Window Size Class、内容与状态矩阵 | 规范已冻结；实现证据补充中 |
-| Player Product Design | 暂不建立 | Playback Theme、Player Layout 与播放专属组件 | 不在当前范围 |
+| Product Requirements | [PRODUCT_REQUIREMENTS.md](./PRODUCT_REQUIREMENTS.md) | 产品定位、V1 范围、信息架构、关键流程与页面设计输入 | 功能范围已复核；页面 IA 讨论中 |
+| Player Product Design | 需求讨论后建立 | Playback Theme、Player Layout、封面/歌词与播放专属组件；MV 横屏复用 Video Player 全屏能力，不单独出页面稿 | 旧图待更新；尚未开始页面设计 |
 
 文档职责：
 

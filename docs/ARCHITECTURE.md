@@ -1,6 +1,6 @@
 # Resonote Architecture
 
-> 状态：架构参考基线；阶段 1 已完成，阶段 2 已完成 Foundation、06A 与 06B-1 纵向切片
+> 状态：架构参考基线；阶段 1 已完成，阶段 2 已完成 Foundation、06A、06B-1、06C Small Top App Bar 与 07A Adaptive Primary Navigation 纵向切片
 > 更新日期：2026-08-11
 > 参考项目：Now in Android（NIA）
 > 参考提交：[`7d45eae4f8720a0c77f507712ba2437ff974b6ed`](https://github.com/android/nowinandroid/tree/7d45eae4f8720a0c77f507712ba2437ff974b6ed)
@@ -15,8 +15,8 @@
 - 分层、依赖方向、模块职责和模块拆分规则。
 - 依赖库的选型原则，以及必须稳定优先的版本策略。
 - 后续搭建顺序、质量门槛和参考源码入口。
-- “首页 / 发现 / 我的”作为暂定顶层目的地；它们的业务含义和模块名尚未冻结。
-- 播放域的模块、所有权和依赖边界；Controller 字段、队列持久化、音频焦点细节和服务协议尚未设计。
+- “首页 / 发现 / 我的”的产品名称、顶层地位与职责边界已经冻结；内部模块名和具体数据 API 仍由纵向切片决定。
+- 播放域的模块、所有权与依赖方向，以及 Queue、音频焦点、系统通知和恢复的产品语义已经冻结；Controller 字段、持久化 schema、具体焦点实现和 Service 协议仍需 Playback ADR 设计。
 
 本阶段不定义服务端端点、认证方式、网络 DTO、数据库表、业务模型或播放协议。上述内容必须在 API 契约明确后补充 ADR，不能从 NIA 的资讯业务模型推导。
 
@@ -154,6 +154,21 @@ NIA 的功能名属于资讯产品，不复制到 Resonote。Resonote 只采用�
 - 只被一个 feature 使用的类型留在该 feature；确有多个消费者时才提升到合适的 core。
 - “首页 / 发现 / 我的”当前只冻结产品标签。API 评审完成前，不冻结 `home`、`discover`、`library`、`profile` 或 `mine` 等内部模块名。
 
+#### 3.3.1 Resonote 页面导航状态
+
+Resonote 复用 NIA 的 App/Feature 职责、Navigation 3 `NavKey`、Entry Provider、`NavDisplay`、Saveable State 与 ViewModel 生命周期模式，但不复制 NIA 当前的多 Back Stack `NavigationState` 和 `Navigator`。
+
+- App 持有一个以 `TabsShellNavKey` 为起点的全局 `NavBackStack<NavKey>`。搜索、详情、设置、登录、MV 和 Player 等页面依次加入该栈；Feature 只导出类型安全 Key 和入口，不直接修改栈实现。
+- `TabsShellState` 单独持有 `selectedTab`。首页、发现、我的分别拥有根页面作用域的 ViewModel/Saved State，用于保留滚动、筛选、分页和已加载 UI 状态；它们没有可压入详情的独立 subStack。
+- Tab 点击只改变 `selectedTab`。重复选择当前 Tab 是 no-op，不调用 refresh、clear state 或 scroll-to-top；页面刷新由 Feature 自己的显式事件处理。
+- 全局栈只有 `TabsShellNavKey` 时，Back handler 在非首页先选择首页并消费事件；已在首页时不消费，让 Activity/系统完成任务返回。全局栈存在二级 Key 时只弹出当前页面，恢复 Shell 内原 Tab 状态。
+- 主 Navigation Suite 只由 Tabs Shell 渲染，因此二级页面自然不显示 Bar/Rail。Mini Player 属 App 播放 UI 合同，不作为 NavKey；Full Player 与 MV 页面显式隐藏它。
+- 窗口自适应只改变 Navigation Suite 和页面 Pane 呈现，不替换 Key 或重建栈。恢复快照保存全局 Key、Key 的必要参数、selectedTab 和根页面必要状态，不持久化整份网络响应。
+- App 前台收到文件打开/分享 Intent 时，把统一导入流程压入现有全局栈；完成后显示本地音乐，Back 恢复 Intent 前的 Key。由文件管理器冷启动时建立独立的可返回任务上下文，完成后仍显示本地音乐，Back 结束 Resonote 任务并返回来源 App。
+- Deep Link 或系统媒体入口先解析为类型安全 Key，并选择该内容归属的顶层 Tab，再压入全局栈；Back 返回该 Tab 根页面。来源已经知道缺少有效 ID 时不创建 Key，无法预判的无效参数由目标页完整错误状态兜底。
+
+这一模型与本地 `MoeKoeMusic-Mobile` 的根 `Stack` 包裹 `(tabs)`、详情作为兄弟页面、Tab 页面保持状态的产品行为一致，但以 Navigation 3 和 Resonote 模块边界独立实现，不迁移 Expo Router 代码。
+
 ### 3.4 同步模块
 
 | NIA 模块 | 参考源码目录 | 职责 | Resonote 判断 |
@@ -290,52 +305,81 @@ NIA 没有音乐播放实现，以下模块是 Resonote 的扩展架构。Androi
 |---|---|---|---|---|
 | `:core:playback:api` | 架构冻结，字段待定 | `PlaybackController`、不可变播放状态、播放命令、队列状态的应用内合同 | `core:model`、Coroutines/Flow | Media3 `Player`、`MediaItem`、`SessionToken`、Android Service 类型 |
 | `:core:playback:test` | 与 playback api 同期创建 | Fake PlaybackController、可控时钟、队列与状态 fixtures | playback api、Coroutines Test、Turbine | ExoPlayer、真实 Service、网络与磁盘 |
-| `:core:playback:service` | Playback 阶段创建 | ExoPlayer、MediaSessionService、音频焦点、系统控制、播放通知、恢复与 Media3 映射 | playback api、data/model、media cache、Media3 ExoPlayer/Session、Hilt | feature、Compose、Navigation、Player 产品 UI |
-| `:core:media:local` | 本地音乐纵切片创建 | SAF/MediaStore/ContentResolver 来源读取、受控复制、哈希与媒体元数据提取 | common/model、Android storage/media API、Coroutines | DAO、Repository、Player、UI、外部 URI 进入稳定领域模型 |
-| `:core:media:cache` | 流媒体方案确定后创建 | 共享媒体 `DataSource.Factory`、流式缓存、稳定 cache key 与容量/淘汰策略 | core network、Media3 DataSource/Database/OkHttp | Retrofit API、Repository、UI、永久下载状态 |
-| `:core:media:download` | 离线下载获批后创建 | DownloadManager/DownloadService、DownloadIndex、下载状态和永久媒体缓存 | data/model、media cache、Media3 ExoPlayer/WorkManager | 把下载当普通 `sync:work`、向 UI 暴露 Media3 Download 类型 |
+| `:core:playback:service` | Playback 阶段创建 | ExoPlayer、MediaSessionService、用户音频焦点策略、系统控制、标准媒体通知、系统媒体表面 metadata/actions、恢复与 Media3 映射 | playback api、data/model、media cache、Media3 ExoPlayer/Session、Hilt | feature、Compose、Navigation、Player 产品 UI |
+| `:core:media:local` | 本地音乐纵切片创建 | SAF/ContentResolver 单选、多选与目录遍历、外部 Intent 来源读取、受控复制、SHA-256 哈希、可解码验证与只读媒体元数据提取 | common/model、Android storage/media API、Media3/platform decoder、Coroutines | DAO、Repository、Player、UI、外部 URI 进入稳定领域模型、写回源 metadata |
+| `:core:media:cache` | Playback 纵向切片创建 | 共享媒体 `DataSource.Factory`、有上限的流式缓存、稳定 cache key 与容量/淘汰策略 | core network、Media3 DataSource/Database/OkHttp | Retrofit API、Repository、UI、永久下载状态 |
+| `:core:media:download` | 产品重新批准离线下载后创建 | DownloadManager/DownloadService、DownloadIndex、下载状态和永久媒体缓存 | data/model、media cache、Media3 ExoPlayer/WorkManager | 当前不得提前创建；把下载当普通 `sync:work`、向 UI 暴露 Media3 Download 类型 |
 | `:feature:player:api` | Player IA 确认后创建 | Player destination key 与必要导航参数 | core navigation | Media3、Service、Repository 实现 |
-| `:feature:player:impl` | Player 设计冻结后创建 | Full Player、MiniPlayer、进度、歌词/封面 Pager、Queue Sheet 的 Compose UI 与 ViewModel | player api、playback api、designsystem/ui、model，按需 data/domain | ExoPlayer、MediaSessionService、媒体网络/缓存实现 |
+| `:feature:player:impl` | Player 设计冻结后创建 | Full Player、MiniPlayer、进度、歌词/封面 Pager、Queue surface 的 Compose UI 与 ViewModel | player api、playback api、designsystem/ui、model，按需 data/domain | ExoPlayer、MediaSessionService、媒体网络/缓存实现 |
+
+登录导航只保存类型安全的目标 Destination 与必要参数，不保存可执行 Repository/Playback 命令。
+登录成功后可以继续导航到受限页面；喜欢、收藏、播放、音质切换、签到、上传、删除等原子操作只恢复
+来源页面状态，由用户再次触发。Session 失效遵循同一规则，避免自动重放非幂等写入或产生意外播放。
 
 音乐数据的归属规则：
 
 - Track、Album、Artist、Playlist、Lyrics 等公共业务模型进入 `core:model`；Network DTO、Room Entity 和 Media3 `MediaItem` 各自留在 network、database、playback service 内。
 - 媒体目录、收藏、歌单、播放历史和歌词数据仍通过 `core:data` Repository 提供；不先建立无边界的 `core:music` 聚合模块。Repository 是否拆成 catalog/library/lyrics 子模块由 API 规模决定。
-- Queue 是当前 Session/Player 的有序播放状态，由 playback api 暴露，不建立第二套 Room 队列事实源。只有“保存队列/跨设备同步”成为明确产品能力时，才在 data 层建立持久模型。
+- Queue 是当前 Session/Player 的有序播放状态，由 playback api 暴露，不建立第二套 Room 队列事实源。它支持插播下一首、队尾追加、跳转、移除、清空和重排，并把 Queue、当前项、位置和模式保存为恢复快照；快照不是第二个运行时权威源，恢复后默认暂停。只有跨设备同步成为明确产品能力时，才在 data 层建立远端持久模型。
 - Lyrics 默认是 Player feature 内的页面/组件；只有成为可从多个 feature 独立导航的目的地时才拆 `feature:lyrics:api/impl`。歌词解析、时间轴匹配属于 domain/data，不进入 designsystem。
 - Download 与流式 LRU Cache 语义不同：前者由用户显式管理且不可被自动淘汰，后者是可回收性能缓存。二者可共享上游 DataSource，但不能共享淘汰策略或状态模型。
-- MiniPlayer 属于 Player 产品 UI，不进入 `core:designsystem`；App Scaffold 可以组合 `feature:player:impl` 提供的入口，但只通过 playback api 观察状态。
-- 音频焦点、播放通知和 MediaSession 生命周期由 playback service 共同拥有。NIA 的 `core:notifications` 不能作为播放通知模板。
-- 当前冻结模块职责和依赖方向，不冻结 Controller 字段、缓存容量、音频格式、认证 Header、队列持久化或歌词协议；这些由 API 与 Player ADR 决定。
+- MiniPlayer 属于 Player 产品 UI，不进入 `core:designsystem`；App Scaffold 可以组合 `feature:player:impl` 提供的入口，但只通过 playback api 观察状态。歌曲主体导航到 Full Player，独立 Queue 操作直接打开同一权威 Queue；两个入口不复制状态或临时建立第二份列表。
+- 音频焦点策略、标准媒体通知、System UI 所需 metadata/actions 和 MediaSession 生命周期由 playback service 共同拥有。NIA 的 `core:notifications` 不能作为播放通知模板。
+- 三档音频焦点是产品语义，不把竞争 App 包名或身份加入公共 Controller 合同。`部分场景` 可组合公开的活动播放 `AudioAttributes.usage`、Audio Mode 和活动录音状态进行类别判断；由于 usage 由其他 App 声明且多类媒体共用 `USAGE_MEDIA`，映射仍须通过 Playback ADR 与真实设备矩阵验证。
+- 数据层分别保存 `requested coexistence policy` 与只在运行时计算的 `effective focus policy`。兼容性不足时 effective policy 降级为 `不允许`，但不得覆盖用户保存的 `部分场景`；设置 UI 可观察兼容状态并解释当前降级。
+- Ducking 与 requested/effective policy 正交：`AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK` 或等价导航 usage 只产生瞬时 attenuation state，结束后恢复先前增益，不写 DataStore。用户在 Ducking 期间的暂停、停止或音量修改优先于自动恢复。
+- 当前冻结模块职责、依赖方向和 Queue 恢复语义，不冻结 Controller 字段、缓存容量、音频格式、认证 Header、Queue 持久化 schema/序列化协议或歌词协议；这些由 API 与 Player ADR 决定。
 
 ### 4.5 MoeKoe 功能到 Resonote 模块映射
 
-下表是功能候选清单，不等于首版承诺。只有“架构处理”列明确为基线的模块才进入当前目标图；需要 API、合规或产品决策的能力保持 Deferred。
+下表把已确认产品能力映射到候选模块边界。产品范围以 `PRODUCT_REQUIREMENTS.md` 的 Must/Deferred/Out 为准；“待 API/安全/设计”表示尚未实现或尚未达到交付就绪，不会把已确认的 Must 自动降为 Deferred。
 
 | 旧产品能力 | 参考源码 | Resonote 架构处理 | 主要依赖/边界 | 状态 |
 |---|---|---|---|---|
-| 首页推荐 | `src/views/Home.vue`、`src/components/home/` | 候选 `:feature:home:api/impl`；Repository 提供缓存内容，歌曲操作通过 playback api | data/domain、model、ui/designsystem、Coil | 顶层标签已暂定；内容待 API |
-| 发现、排行榜、新歌、新专辑、推荐歌单 | `src/views/Discover.vue`、`src/components/discover/`、`src/views/Ranking.vue` | 候选 `:feature:discover:api/impl`；排行榜先作为 Discover 子目的地，不单独建模块 | data/domain、model、ui、Coil | 待 API/IA |
-| 我的/资料库 | `src/views/Library.vue` | 保留“我的”顶层标签；登录资产、本地音乐和设置采用聚合导航，不让聚合页拥有所有数据 | auth/library/local repositories、feature api | 语义待 API |
-| 搜索与建议 | `src/views/Search.vue`、`RecommendedSearch.vue`、`components/search/` | 候选 `:feature:search:api/impl`；综合/单曲/歌单/专辑/歌手为内部结果类型 | data/domain、model、ui；分页库按 API 决定 | 待 API |
-| 本地音乐与外部文件 | `src/views/LocalMusic.vue`；Mobile V2 `feature/localmusic` | `:feature:localmusic:api/impl` + `:core:media:local`；SAF/MediaStore 只作来源，App 私有副本/索引为事实源的方案需单独 ADR | data/database、WorkManager、playback api、ContentResolver | 音乐 App 基线候选 |
-| 登录、二维码、手机/密码、风险验证 | `src/views/Login.vue`；Mobile V2 `feature/login` | `:feature:login:api/impl`；session/auth Repository 属 data，provider 协议属 platform adapter | DataStore、Android Keystore；ZXing/WebKit 仅真实流程需要时加入 | 待认证 API/安全审计 |
-| 歌单/专辑/歌手详情 | `src/views/PlaylistDetail.vue` | `:feature:playlist:api/impl` 先承载可复用集合详情；若专辑/歌手差异扩大再拆 feature | data/domain、model、playback api、navigation | 待 API/IA |
+| 首页推荐 | `src/views/Home.vue`、`src/components/home/` | `:feature:home:api/impl`；Repository 提供分区内容，歌曲操作通过 playback api | data/domain、model、ui/designsystem、Coil | 产品范围已确认；待 API/页面设计 |
+| 发现、排行榜、新歌、新专辑、推荐歌单 | `src/views/Discover.vue`、`src/components/discover/`、`src/views/Ranking.vue` | `:feature:discover:api/impl`；排行榜先作为 Discover 子目的地，不单独建模块 | data/domain、model、ui、Coil | 产品范围已确认；待 API/页面设计 |
+| 我的/资料库 | `src/views/Library.vue` | “我的”聚合 profile、account、playlist、cloud、local music 等 feature API，不直接拥有各 Repository 实现 | auth/library/local/cloud repositories、feature api | 产品范围已确认；待 API/页面设计 |
+| 搜索与建议 | `src/views/Search.vue`、`RecommendedSearch.vue`、`components/search/`；Mobile `src/app/search.tsx` | `:feature:search:api/impl`；只从首页进入独立页面；综合/单曲/歌单/专辑/MV/歌手为内部结果类型 | data/domain、model、ui；分页库按 API 决定 | 产品范围与入口已确认；待完整 API |
+| 本地音乐与外部文件 | `src/views/LocalMusic.vue`；Mobile V2 `feature/localmusic` | `:feature:localmusic:api/impl` + `:core:media:local`；SAF/ContentResolver 只作来源，App 私有副本/索引为事实源；本地音乐复用列表/Queue 合同 | data/database、WorkManager、playback api、ContentResolver、crypto digest | 产品范围、导入、去重、副本与删除语义已确认；待存储 ADR |
+| 登录、二维码、手机/密码、风险验证 | `src/views/Login.vue`；Mobile V2 `feature/login` | `:feature:login:api/impl`；session/auth Repository 属 data；App 组合统一登录门禁；provider 状态码映射留在 network/data 边界 | DataStore、Android Keystore；WebKit 仅官方风险页真实需要时加入 | 手机/密码与单一当前账号产品范围已确认；待密码 API/安全审计 |
+| 歌单/专辑/歌手详情 | `src/views/PlaylistDetail.vue` | 产品层使用独立目的地与状态模型；可先由 `:feature:playlist:api/impl` 承载共享集合能力，专辑/歌手边界由 API 纵切片验证后决定是否拆 feature | collection/artist repositories、model、playback api、navigation | 产品 Must；功能合同已确认，待 API/模块切片 |
 | 用户资料 | Library 资料入口；Mobile V2 `feature/profile` | `:feature:profile:api/impl`，允许从“我的”、搜索和内容作者入口复用 | user repository、model、ui/navigation | 待账号 API |
-| 设置、主题、语言、缓存管理 | `src/views/Settings.vue`、`src/config/settings.js` | `:feature:settings:impl`；设置值通过 Repository/DataStore，只有真实消费者存在才显示选项 | datastore/data、designsystem；系统 per-app locale 按需 | 基础设置候选 |
-| Player、MiniPlayer、Queue、歌词 | `src/components/player/`、`src/views/Lyrics.vue` | 使用 4.4 节 playback 与 player feature 分层；Queue/Lyrics 默认不独立成 feature | playback api/service、lyrics repository、player impl | 架构边界已冻结，产品待设计 |
-| 云盘 | `src/views/CloudDrive.vue` | 独立 `:feature:cloud:api/impl` 候选；远端文件与本地下载不得混为同一模型 | provider adapter、data、download/playback api | Deferred |
-| 听歌识曲 | `src/views/Recognize.vue`、`src/utils/recognize.js` | 独立 `:feature:recognition:api/impl` 候选；录音采集与识别协议隔离 | microphone permission、audio capture、provider adapter | Deferred，需隐私审计 |
-| MV/视频播放 | `src/views/VideoPlayer.vue` | 独立 `:feature:video:api/impl` 候选；是否复用音乐 Session 由视频 ADR 决定 | Media3 video/UI、PiP 按需 | Deferred |
-| 收藏、创建/编辑歌单、播放历史 | Playlist/Library 操作与相关 API modules | Repository 能力，按所属页面组合；写入必须定义远端权威、乐观更新与冲突恢复 | data/database/sync、session | 待 API |
-| 每日 VIP 领取 | README/API `youth_day_vip*` | 不进入默认模块或后台任务 | 需要服务条款、账号安全和合规批准 | 排除，除非单独授权 |
-| 评论/社交 | API modules 中的 comment/follow | 旧产品声明“无社交”，不因 Endpoint 存在而建模块 | 无 | 排除，除非产品范围改变 |
+| 设置、主题、语言、缓存管理 | `src/views/Settings.vue`、`src/config/settings.js` | `:feature:settings:impl`；从“我的”进入；设置值通过 Repository/DataStore；播放/歌词通过各自 api，缓存占用与清除通过 media cache port，不直接访问缓存目录 | datastore/data、playback/player api、media cache、designsystem；动态色按平台能力 | 产品 Must；首版仅简体中文，保留资源本地化架构 |
+| Player、MiniPlayer、Queue、歌词 | `src/components/player/`、`src/views/Lyrics.vue` | 使用 4.4 节 playback 与 player feature 分层；Mini Player 常驻 App Scaffold，歌曲主体进入 Full Player，独立操作直接打开 Queue；Queue/Lyrics 默认不独立成 feature；旧 Player 图只作历史方向稿 | playback api/service、lyrics repository、player impl | 入口与状态合同已确认；Full Player 待按 NIA + MD3 Adaptive 重设计 |
+| 云盘 | `src/views/CloudDrive.vue` | 独立 `:feature:cloud:api/impl`；Android 原生实现 PC 已用的列表、上传、删除和播放地址协议；远端文件、流式缓存与本地媒体不得混为同一模型 | core network/data、playback api、upload coordinator | 产品范围和接口能力已确认；待 Android API 纵向切片 |
+| 听歌识曲 | PC `src/views/Recognize.vue`；Mobile `src/app/recognize.tsx`、`features/recognize/recognize-api.ts` | 独立 `:feature:recognition:api/impl`；从首页/搜索话筒进入，录音采集与识别协议隔离 | microphone permission、audio capture、provider adapter、playback api | 产品 Must；待 API 纵向切片、设备验证与隐私审计 |
+| MV/视频播放 | `src/views/VideoPlayer.vue` | 独立 `:feature:video:api/impl`；搜索、歌曲详情和艺人详情按 API 提供入口；播放资格检查未返回阻断条件后才暂停音乐并自动播放；Video Player 发起显式全屏，退出不自动恢复音乐 | video repository、Media3 video/UI、App 统一方向协调；同一播放器全屏横屏，不接传感器自动旋转、后台视频/PiP | 产品 Must；行为已确认，待 API 纵向切片与视频 ADR |
+| 收藏、创建/编辑歌单、播放历史 | Playlist/Library 操作与相关 API modules | 收藏按所属页面组合；账号历史读取远端权威，本机历史独立设备存储；只有自建歌单可编辑/删除和移除歌曲，其他歌单与专辑只允许收藏状态变更 | data/database/sync、session、playback events、ownership policy | 产品 Must；在线历史删除/上传待 API 纵向切片 |
+| 每日 VIP 领取 | README/API `youth_day_vip*`；Mobile `features/account/vip-api.ts` | 作为 Account/Profile Repository 的显式用户操作；签到、升级与 VIP 状态刷新分别建模，不建立后台自动任务 | session、risk、user/vip repositories；每日幂等与错误映射 | 产品 Must；待 Android 纵向切片与安全评审 |
+| 评论/社交 | API modules 中的 comment/follow | 不建立互动式社交能力；“我的”允许只读展示好友资料，且不可点击进入关系或动态页面 | user repository、model；不建立 social feature | 只读资料已确认；互动排除 |
 | 插件、PWA、桌面歌词、Touch Bar、全局快捷键、Electron 更新 | PC 专属组件与 Electron | 不迁移到 Android 架构；Android 平台有独立需求时重新设计 | 不继承 Electron/Vue 依赖 | 排除 |
 
 拆分规则：
 
 - 顶层目的地不等于一个巨型模块。“我的”可以组合 profile、localmusic、settings、cloud 等 feature API，但不得直接拥有它们的 Repository 实现。
 - 页面只是同一领域的不同筛选或详情时，先保留在同一 feature；只有可被多个来源独立导航、团队并行或依赖明显不同才拆模块。
+- 歌单、专辑和歌手必须有类型安全的独立导航合同与状态，不得在路由 query 中用互斥可空 ID 推断页面类型。来源端已知缺少有效 ID 时不创建导航请求，由 UI 禁用入口并就地说明；无法预判而进入目标页后，页面统一处理缺失、失效、已删除或无法解析的 ID，提供返回，并只对网络失败等可恢复错误提供重试。
+- 歌单写操作必须以服务端返回的所有权/权限为准，不根据入口页面或本地创建记录猜测。批量添加可复用 collection repository；批量移除、编辑资料和删除只能在自建歌单权限明确时暴露。
+- Settings 不复制 playback、lyrics、cache 或系统权限状态，只通过各领域公开 port 观察和修改事实源。系统权限返回后重新读取平台状态；不能用 DataStore 布尔值伪装权限结果。
+- 主题模式与动态取色是正交设置：主题决定明暗/AMOLED 语义，动态色决定可用平台上的颜色来源；不支持动态色时回退 Resonote 品牌 scheme。首版不暴露语言选择器，但所有用户文案继续使用 Android string resources 和 locale-safe formatter。
+- 重置设置只清除允许恢复默认值的偏好 key，不得使用全量 DataStore/数据库删除实现；账号凭证、本地媒体索引、Queue、历史、收藏和云盘数据不在其事务范围。
+- 不建立 PC 的代理/API 地址、桌面歌词、快捷键、字体枚举、自定义音频设备、后台节流或应用内更新能力。关于页只读取构建版本和静态法律/项目入口，安装更新交由分发渠道。
+- 所有本地导入入口先归一化为受控 import request，再由同一 coordinator 执行来源读取、媒体验证、大小预筛选、SHA-256、冲突确认、临时复制、原子落盘与索引。Feature 和 Intent handler 不得各自实现复制或去重。
+- 批量/目录导入使用可取消且可观察进度的持久任务；单项以“私有文件原子落盘 + 数据库索引提交”为成功边界。取消或失败清理当前临时文件，不回滚已成功项。
+- Hash 相同的副本模式必须生成新的 LocalMediaId 和独立私有路径；Hash 只用于重复提示，不得作为本地列表唯一主键。删除事务先协调 playback 移除 Queue 引用，再删除索引和私有文件，并对部分失败提供可恢复状态。
+- 本地 metadata 首版只读。媒体解析层可返回真实字段和缺失状态，但不开放 tag writer、封面写回或源 URI 修改能力。
+- Network/Data 层把上游明确的未登录、Session 过期和凭据无效响应映射为统一认证失败语义；普通网络、风控、VIP、版权和权限错误不得误报为 Session 失效。Feature 不硬编码 provider 状态码。
+- App 导航层协调登录门禁，并携带“页面导航”或“原子操作”来源类别。页面导航成功后重新进入目标 Key 并由页面重新加载；原子操作只返回来源 Key。后台没有前台 Nav Host 时不得启动 Activity，只更新认证状态等待前台消费。
+- MV 点击按原子播放操作处理：如果 Session 或已验证的 privilege 在导航前明确返回未登录、Session 失效或凭据无效，App 先显示登录门禁，不创建视频 Key、不暂停音乐；登录成功只返回来源。已进入视频页后才收到认证失败时立即停止解析/播放，门禁返回后保留待播放或错误状态，不自动重试。VIP、版权、地区、内容下架和无可用版本映射为视频业务错误，不得误报认证失败或拉起登录。Feature 只消费统一认证/权限语义，不解析 provider 状态码。
+- Auth Repository 维护单一 active account scope 与递增的 account generation。退出/换号先增加 generation、清理凭据和账号作用域内存，再公布匿名/新账号状态；Repository 丢弃旧 generation 的晚到响应，防止跨账号 UI 污染。
+- 账号资料、收藏、云盘和远端历史以 account scope 隔离，二级页面进入时重新请求。LocalMedia、Queue、设备设置和本地搜索历史不属于 account scope。
+- 媒体地址和缓存 key 必须区分 public 与 account-protected scope。退出/换号使受保护地址和缓存失效；公开缓存可以保留。Playback 观察认证变化：公开当前项可继续，云盘/VIP/账号授权当前项暂停并暴露 `auth required`，不得自动跳过。
+- History Repository 分离远端账号历史与设备本机历史。远端结果只属于 active account generation，退出后不再暴露；本机表使用稳定媒体身份唯一约束，upsert 最近时间与累计次数，并按最近时间保留最多 500 条。
+- Playback service/controller 只在媒体真实进入播放且累计有效播放达到 10 秒时发送一次本机历史资格事件；短于 10 秒但自然播放完成也发送。预缓冲、失败、Seek 跳过和重复进度回调不得重复记账。Repository 负责幂等 upsert，不让 UI 计时。
+- 本地与云盘媒体不调用普通在线历史上传接口。账号在线历史删除仅在 Repository 拥有经验证的远端写操作时暴露；本机删除只修改本机历史表，不级联 LocalMedia、Cloud、Queue 或收藏。
+- V1 产品发布矩阵限定 API 26+ Android 手机，普通页面竖屏，触控为主输入。MV 使用同一个 Video Player：播放器全屏回调发出进入/退出意图，由 App 级单一方向协调器请求横屏沉浸模式或恢复竖屏；离开 MV 或异常销毁时也必须幂等恢复。传感器旋转始终不驱动页面方向，不建立独立横屏 NavKey/Composable，Feature 也不直接竞争修改 `requestedOrientation`。
+- 平板、折叠展开态、ChromeOS/桌面模式、TV、Wear、Auto 与 Cast 不属于 V1，不添加对应平台声明、专属入口或依赖。鼠标/键盘沿用 Compose/Android 标准焦点、滚动和激活语义，不建立桌面快捷键或菜单系统。
+- 产品范围收窄不撤销 Design System 的 Adaptive 验证。WindowAdaptiveInfo、宽度 Token、内容限宽和状态恢复继续保留，使未来扩展不必重写 Feature 业务；V1 页面验收只要求 Compact 竖屏，系统意外 resize 仍必须安全降级且不损坏导航/播放状态。
 - 按 NIA 结构，Provider 专属签名、加密、Cookie、Network DTO 和 Endpoint 进入 `core:network`，并以 `protocol`、`model`、`retrofit` 等内部 package 隔离；不建立额外的 `platform` 模块。
 - `core:data` 通过 provider 接口组合远端与本地，不向 feature 暴露 provider DTO、Cookie、短期播放 URL 或服务端错误字符串。
 - 旧代码展示的功能不代表 Endpoint 当前可用，也不代表服务条款允许；每条真实纵切片都必须重新验证协议、权限、错误和合规边界。
@@ -346,7 +390,7 @@ NIA 没有音乐播放实现，以下模块是 Resonote 的扩展架构。Androi
 |---|---|---|
 | `build-logic`、Version Catalog、类型安全 project accessors | 采用并改用 Resonote plugin id | 1. 构建系统 |
 | `core:designsystem`、catalog app、截图测试 | 采用；以现有冻结设计文档为规范源 | 2. Design System/Catalog |
-| `app`、`core:navigation`、adaptive scaffold | 采用结构；顶层目的地暂为“首页 / 发现 / 我的” | 3. App Shell |
+| `app`、`core:navigation`、adaptive scaffold | 采用结构；顶层目的地冻结为“首页 / 发现 / 我的”，内部模块名按纵向切片决定 | 3. App Shell |
 | `core:model/network/database/datastore/data` | 采用边界；模型与 schema 等 API 明确后定义 | 4. 数据纵切片 |
 | `core:common/domain/ui` | 按实际复用和复杂度引入 | 4–5 |
 | feature `api/impl` | 采用规则；不复制 NIA 的 feature 名称 | 5. Feature 模块 |
@@ -422,7 +466,7 @@ NIA 没有音乐播放实现，以下模块是 Resonote 的扩展架构。Androi
 | `:core:playback:api` | `api(:core:model)` | Coroutines Core/Flow | 面向 UI 的 Media3-free 播放合同；不能暴露 Media3 或 Service 类型 |
 | `:core:playback:test` | `api(:core:playback:api)` | Coroutines Test、Turbine | Fake controller、可控时钟与播放状态 fixtures；供 Player/ViewModel 测试使用 |
 | `:core:playback:service` | `implementation` playback-api、data、model、media-cache | Media3 ExoPlayer、Session、按协议选择 HLS/DASH；Hilt + KSP；Media3 Test Utils 仅测试使用 | 唯一持有 Player/Session 的生产模块；系统播放通知也归这里 |
-| `:core:media:local` | `implementation` common/model | Android ContentResolver/MediaMetadataRetriever、Coroutines；测试使用 Robolectric/受控 fixture | 读取来源、复制、哈希和元数据，不访问 Room 或播放服务 |
+| `:core:media:local` | `implementation` common/model | Android ContentResolver/MediaMetadataRetriever、Media3/platform decoder、Coroutines；测试使用 Robolectric/受控 fixture | 读取来源、验证、复制、SHA-256 和只读元数据，不访问 Room 或播放服务 |
 | `:core:media:cache` | `implementation` core-network | Media3 DataSource、Database、DataSource OkHttp | 向 playback/download 提供共享 DataSource/Cache，不暴露给 feature |
 | `:core:media:download` | `implementation` data、model、media-cache | Media3 ExoPlayer、ExoPlayer WorkManager、WorkManager、Media3 Test Utils | 可选永久下载能力；不与普通数据同步 Worker 混用 |
 | `:feature:player:api` | `api(:core:navigation)` | Navigation 3 Runtime | Player destination 合同；不暴露 Player/Session |
@@ -620,10 +664,30 @@ dependencies {
 ```
 
 - `ExoPlayer` 与 `MediaSession` 只在 `MediaSessionService` 生命周期内创建、持有和释放。
-- App 负责在 Manifest 声明 Service 与前台媒体播放权限；播放通知从 MediaSession metadata/state 生成，不建立独立 notifications 模块。
+- App 负责在 Manifest 声明 Service、前台媒体播放及平台需要的通知权限；标准媒体通知从 MediaSession metadata/state 生成，不建立独立 notifications 模块。
+- 标准 MediaStyle 媒体通知与 MediaSession 是唯一系统播放承接。歌曲、艺人、封面、时长、进度和可用 actions 必须准确，使 Android System UI 能自动呈现通知栏、锁屏、耳机控制及系统支持的岛形/状态栏媒体入口。
+- Resonote 不主动申请 Live Updates，不额外发布重复通知模拟“上岛”，也不接入 OEM 私有岛形组件；具体系统表面不改变播放事实源。
+- 三档音频焦点默认 `不允许`；用户修改后只持久化 requested policy。Playback service 根据 API 能力、活动播放 usage、Audio Mode 与录音状态计算 effective policy；无法安全判断时按 `不允许` 执行，不回写 requested policy。
+- `部分场景` 的候选实现可关闭 Media3 自动焦点处理并自行协调混音/暂停，但只有 Playback ADR、旧版本降级和真实设备测试完成后才能冻结；不得通过 Accessibility、UsageStats、通知读取或包名跟踪推断竞争 App。
+- Playback service 是 Ducking 的唯一协调者：使用 Media3/系统自动 Ducking 时不再手动调节；自管并行播放时，根据 `LOSS_TRANSIENT_CAN_DUCK` 或 `USAGE_ASSISTANCE_NAVIGATION_GUIDANCE` 建立一次临时 attenuation，事件结束后幂等恢复。测试必须覆盖嵌套事件、用户中途调音量、暂停、停止和 Service 重建，避免重复降低或错误恢复。
+- 听歌识曲开始前暂停播放，结束后保持暂停，只有用户明确操作才恢复。
+- `所有场景`、`部分场景`、`不允许` 由 playback service 映射为可验证的焦点请求/丢失策略。来电、录音输入优先级和 Android 12+ 系统强制淡出或静音始终高于 App 设置。
+- 列表单曲点击只插播/跳转该曲，不替换来源列表；只有显式“播放全部”建立新 Queue generation。后台分页只能向创建它的同一 generation 追加，避免旧请求污染用户后来建立的队列。
+- 播放地址解析先执行音质降级链。普通版权/URL/云盘/本地副本失败在 3 秒后自动前进，初始失败后最多执行 5 次自动切换；成功播放或用户主动建立播放目标后清零。登录失效、风控和交互式授权错误暂停自动前进并进入恢复流程。
+- Queue 重排、当前项移除、清空、单曲循环失败和恢复快照必须作为 playback api/service 状态机测试，不由 Player Composable 临时修补。
+- 播放模式公共语义固定为列表循环、随机、单曲循环和顺序播放到队尾停止；模式及随机历史属于 playback state，UI 不自行推算下一首。
+- Track actions 公共合同包含立即播放、下一首、队尾追加、喜欢和收藏到歌单。Player UI 保留分享入口并可放入 Overflow，但当前只返回明确的“暂未开放”反馈；分享数据、链接和系统 Intent 不进入 playback api，实际能力保持 Deferred。
+- Lyrics state 表达原文、翻译、音译、行/字符时间轴与加载/空/失败，不暴露 provider DTO。逐字数据缺失时降级逐行，歌词失败不能改变 Player state。
+- 在线音质解析保留七档领域语义与逐级降档；本地媒体从解析后的真实格式信息建模，云盘使用服务端实际版本。切换音质必须保持 position 与 playWhenReady，并接受新 load sequence 防止旧请求覆盖。
+- 倍速、响度均衡和睡眠定时由 playback service 拥有。系统媒体音量不进入 Resonote DataStore；Ducking 使用临时 player gain，不伪装成用户系统音量变化。
+- 睡眠定时在 Service 生命周期内使用单调时钟，支持固定时长与当前曲结束，触发时淡出并暂停但不清空 Queue；进程/Service 重建后的恢复策略在 Playback ADR 中验证。
+- 无缝播放使用 Player/playlist 的预准备能力；交叉淡化为关闭、3、5、8 秒设置且默认关闭。两者不能同时处理同一边界：交叉淡化开启时优先执行可用的重叠过渡，不支持时降级为无缝或普通切换。
+- 不引入均衡器、低音增强或虚拟环绕依赖；上游蝰蛇音质只作为媒体版本，不映射为 Android AudioEffect。
+- 音频路由由系统 Output Switcher/MediaRouter 拥有，playback api 只暴露当前路由的必要展示状态，不管理设备清单。当前有线/蓝牙输出意外断开时暂停，重连不自动恢复；用户主动切换到有效路由不触发该暂停规则。
+- MediaSession 对蓝牙/耳机暴露可用播放命令和准确 metadata。Android Auto 与 Google Cast 明确不进入当前范围；不添加车载声明/浏览树、Car App Library、Cast SDK、Receiver 或远端 Session。未来启用任一能力必须重新完成产品与 ADR 评审。
 - Service 把 Repository 提供的领域模型映射为 Media3 `MediaItem`，把 Player events 映射为 playback api state。
 - UI 进程内外均通过 Controller 合同发命令；Composable 不绑定 Service，也不直接操作 ExoPlayer。
-- HLS/DASH、DRM、Cast、音效和均衡器都不是默认依赖，只有明确需求及测试方案后再通过 ADR 加入。
+- HLS/DASH 与 DRM 只有真实媒体协议需要且具备测试方案时才通过 ADR 加入。Cast、均衡器、低音增强和虚拟环绕当前明确排除，不建立依赖或占位接口。
 
 #### 6.6.4 Media Cache 与 OkHttp
 
@@ -685,7 +749,8 @@ dependencies {
 - Player UI 依赖 playback api 的不可变状态，不依赖 `playback:service`、Media3 或 DownloadService。
 - Queue 的 reorder/remove/jump 命令发给 playback controller；UI 不维护与 Session 分离的第二份权威队列。
 - Lyrics UI 从 data/domain 获取歌词内容与时间轴，从 playback api 获取位置。逐帧位置更新只影响局部 state，不把高频进度写入 Room/DataStore。
-- MiniPlayer、Full Player、Queue Sheet、歌词高亮和 Progress 的视觉实现等待 Player 产品规范，不能复用 Foundation 的 Song Row Selected 状态冒充 Playing。
+- MiniPlayer、Full Player、Queue surface、歌词高亮和 Progress 的视觉实现等待 Player 产品规范，不能复用 Foundation 的 Song Row Selected 状态冒充 Playing。MV 横屏只复用同一个 Video Player 的全屏画面与控制层，不要求独立横屏页面视觉稿。
+- 现有 `design/approved/player/player-cover-page.png` 与 `player-lyrics-page.png` 视为历史方向稿，不再代表已批准的视觉与内容布局；其中封面页/歌词页横向 Pager 是继续有效的已确认交互结构。V1 更新稿必须使用 Resonote 组件语义与 MD3 系统行为并覆盖 Compact 竖屏，未来 Medium/Expanded 扩展约束需记录但不作为首版页面验收。
 - Player screenshot/semantics 测试复用 `core:screenshot-testing`，另建 Player Validation Matrix，不修改现有 Foundation V-01–V-10 的完成含义。
 
 ### 6.7 功能模块依赖补充
@@ -725,11 +790,11 @@ Mobile V2 的 `:kugou-api` 使用 Ktor Client `3.5.1` + OkHttp Engine `5.4.0`，
 | `login` | api → navigation；impl → auth repository、ui/designsystem | ZXing Core 用于真实二维码；AndroidX WebKit 只用于官方风险页 | WebView 承载普通登录、明文凭证持久化 |
 | `playlist` | api → navigation；impl → collection repository/domain、model、ui/designsystem、playback-api | Coil Compose | 来源 feature 之间互相依赖、短期播放 URL 入模型 |
 | `profile` | api → navigation；impl → user repository、model、ui/designsystem | Coil Compose | 设计示例计数写入数据库 |
-| `settings` | impl → settings repository、model、designsystem | AppCompat per-app locales 仅真实多语言资源就绪时加入 | 直接 DataStore、无消费者的假开关 |
+| `settings` | impl → settings repository、model、designsystem、playback/player/cache ports | AppCompat per-app locales 仅真实多语言资源就绪时加入 | 直接访问 DataStore/缓存目录、复制系统权限状态、无消费者的假开关 |
 | `player` | 见 6.6.6 | AndroidX Palette、lyrics parser 仅产品/API 确认后加入 | Media3 Service、DTO、DAO |
-| `cloud` | api → navigation；impl → cloud repository、model、ui、playback/download api | provider-specific upload/download | 与本地媒体或普通缓存共用状态模型 |
+| `cloud` | api → navigation；impl → cloud repository、model、ui、playback-api | provider-specific upload 与播放地址解析 | 与本地媒体或普通缓存共用状态模型、直接依赖 Deferred download 模块 |
 | `recognition` | api → navigation；impl → recognition port、ui | 平台录音 API；协议 SDK 经隐私审计后加入 | 后台偷录、原始音频无限期保存 |
-| `video` | api → navigation；impl → video repository、ui/designsystem | Media3 video/UI、PiP | 默认复用音乐 Session 或音频队列 |
+| `video` | api → navigation；impl → video repository、ui/designsystem、playback-api | Media3 video/UI | 复用音乐 Queue、同时播放音频与视频、后台视频、PiP |
 
 #### 6.7.3 条件依赖候选证据
 
@@ -756,12 +821,12 @@ Mobile V2 固定快照已经验证过下列库族，但它们不因旧项目存�
 ### 阶段 2：Design System 与 Catalog
 
 - 已建立 `core:designsystem`、`core:screenshot-testing` 和 `app-resonote-catalog`。
-- Foundation Theme/Token、06A Buttons & Actions 与 06B-1 Text Field 已实现并接入 Catalog；组件基线覆盖主题、字号、RTL 与代表性窗口矩阵。
-- 06B-2–08 继续按纵向切片实现；V-04 / V-05 仅为部分自动化覆盖，完整 Validation 状态仍为 Not Run。
+- Foundation Theme/Token、06A Buttons & Actions、06B-1 Text Field、06C Small Top App Bar 与 07A Adaptive Primary Navigation 已实现并接入 Catalog；组件基线覆盖主题、字号、RTL 与代表性窗口矩阵。
+- 06B 其余 Chip/Tag/Badge、06C 其余 Tabs/Segmented Control、06D、07B–07C 与 08 继续按纵向切片实现；V-04 / V-05 仅为部分自动化覆盖，完整 Validation 状态仍为 Not Run。
 
 ### 阶段 3：App Shell
 
-- 建立 edge-to-edge、主题、adaptive navigation、Navigation 3 back stack 和暂定顶层目的地。
+- 建立 edge-to-edge、主题、adaptive navigation、Navigation 3 back stack，以及已冻结的“首页 / 发现 / 我的”顶层目的地。
 - 窗口尺寸切换时保留 destination、滚动和筛选状态。
 
 ### 阶段 4：数据纵切片
@@ -772,7 +837,7 @@ Mobile V2 固定快照已经验证过下列库族，但它们不因旧项目存�
 ### 阶段 5：Feature 模块
 
 - 根据确认后的 IA/API 命名并建立 feature `api/impl`。
-- “首页 / 发现 / 我的”在此阶段决定是一一对应模块、聚合入口还是二级导航。
+- “首页 / 发现 / 我的”的顶层地位不再讨论；本阶段只根据 IA/API 决定它们是一一对应 feature 模块还是由多个 feature 聚合实现。
 
 ### 阶段 6：Sync 与性能
 
