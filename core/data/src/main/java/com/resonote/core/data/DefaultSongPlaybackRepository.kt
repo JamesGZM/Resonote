@@ -5,14 +5,14 @@ import com.resonote.core.model.PlaybackUnavailableReason
 import com.resonote.core.model.ResolveSongSourceResult
 import com.resonote.core.model.ResolvedSongSource
 import com.resonote.core.network.ApiException
-import com.resonote.core.network.ApiNetworkDataSource
+import com.resonote.core.network.PlaybackNetworkDataSource
 import com.resonote.core.network.ApiPlaybackUnavailableException
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 internal class DefaultSongPlaybackRepository @Inject constructor(
-    private val network: ApiNetworkDataSource,
+    private val network: PlaybackNetworkDataSource,
     private val riskChallenges: RiskChallengeRegistry,
 ) : SongPlaybackRepository {
     override suspend fun resolveSource(song: OnlineSong): ResolveSongSourceResult =
@@ -26,6 +26,7 @@ internal class DefaultSongPlaybackRepository @Inject constructor(
                 when (unavailable.reason) {
                     ApiPlaybackUnavailableException.Reason.Copyright -> PlaybackUnavailableReason.Copyright
                     ApiPlaybackUnavailableException.Reason.Vip -> PlaybackUnavailableReason.Vip
+                    ApiPlaybackUnavailableException.Reason.Cloud -> PlaybackUnavailableReason.Cloud
                 },
             )
         } catch (failure: ApiException) {

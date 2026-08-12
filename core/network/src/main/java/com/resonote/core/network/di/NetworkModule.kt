@@ -1,6 +1,19 @@
 package com.resonote.core.network.di
 
-import com.resonote.core.network.ApiNetworkDataSource
+import com.resonote.core.network.AuthNetworkDataSource
+import com.resonote.core.network.CatalogNetworkDataSource
+import com.resonote.core.network.CloudNetworkDataSource
+import com.resonote.core.network.HomeNetworkDataSource
+import com.resonote.core.network.LyricsNetworkDataSource
+import com.resonote.core.network.VideoNetworkDataSource
+import com.resonote.core.network.RecognitionNetworkDataSource
+import com.resonote.core.network.LibraryNetworkDataSource
+import com.resonote.core.network.PlaybackNetworkDataSource
+import com.resonote.core.network.PlaylistNetworkDataSource
+import com.resonote.core.network.RankingNetworkDataSource
+import com.resonote.core.network.SearchNetworkDataSource
+import com.resonote.core.network.UserProfileNetworkDataSource
+import com.resonote.core.network.VipNetworkDataSource
 import com.resonote.core.network.api.MusicApi
 import com.resonote.core.network.protocol.ApiDefaultsInterceptor
 import com.resonote.core.network.protocol.ApiResponseMetadataInterceptor
@@ -12,7 +25,20 @@ import com.resonote.core.network.protocol.ApiEndpointOrigins
 import com.resonote.core.network.protocol.ApiOriginPolicy
 import com.resonote.core.network.protocol.ProductionApiOriginPolicy
 import com.resonote.core.network.protocol.RedactedNetworkLoggingInterceptor
-import com.resonote.core.network.retrofit.RealApiNetworkDataSource
+import com.resonote.core.network.retrofit.RealHomeNetworkDataSource
+import com.resonote.core.network.retrofit.RealCatalogNetworkDataSource
+import com.resonote.core.network.retrofit.RealRankingNetworkDataSource
+import com.resonote.core.network.retrofit.RealPlaylistNetworkDataSource
+import com.resonote.core.network.retrofit.RealAuthNetworkDataSource
+import com.resonote.core.network.retrofit.RealCloudNetworkDataSource
+import com.resonote.core.network.retrofit.RealPlaybackNetworkDataSource
+import com.resonote.core.network.retrofit.RealSearchNetworkDataSource
+import com.resonote.core.network.retrofit.RealLyricsNetworkDataSource
+import com.resonote.core.network.retrofit.RealVideoNetworkDataSource
+import com.resonote.core.network.retrofit.RealRecognitionNetworkDataSource
+import com.resonote.core.network.retrofit.RealVipNetworkDataSource
+import com.resonote.core.network.retrofit.RealUserProfileNetworkDataSource
+import com.resonote.core.network.retrofit.RealLibraryNetworkDataSource
 import com.resonote.core.network.risk.ApiRiskVerificationService
 import com.resonote.core.network.risk.RealApiRiskVerificationService
 import com.resonote.core.network.session.ApiSessionStore
@@ -104,8 +130,22 @@ internal object NetworkModule {
 @Module
 @InstallIn(SingletonComponent::class)
 internal abstract class NetworkBindings {
-    @Binds
-    abstract fun bindApiNetworkDataSource(implementation: RealApiNetworkDataSource): ApiNetworkDataSource
+    @Binds abstract fun bindHomeNetworkDataSource(implementation: RealHomeNetworkDataSource): HomeNetworkDataSource
+    @Binds abstract fun bindCatalogNetworkDataSource(implementation: RealCatalogNetworkDataSource): CatalogNetworkDataSource
+    @Binds abstract fun bindRankingNetworkDataSource(implementation: RealRankingNetworkDataSource): RankingNetworkDataSource
+    @Binds abstract fun bindPlaylistNetworkDataSource(implementation: RealPlaylistNetworkDataSource): PlaylistNetworkDataSource
+    @Binds abstract fun bindPlaybackNetworkDataSource(implementation: RealPlaybackNetworkDataSource): PlaybackNetworkDataSource
+    @Binds abstract fun bindAuthNetworkDataSource(implementation: RealAuthNetworkDataSource): AuthNetworkDataSource
+    @Binds abstract fun bindUserProfileNetworkDataSource(
+        implementation: RealUserProfileNetworkDataSource,
+    ): UserProfileNetworkDataSource
+    @Binds abstract fun bindLibraryNetworkDataSource(implementation: RealLibraryNetworkDataSource): LibraryNetworkDataSource
+    @Binds abstract fun bindCloudNetworkDataSource(implementation: RealCloudNetworkDataSource): CloudNetworkDataSource
+    @Binds abstract fun bindSearchNetworkDataSource(implementation: RealSearchNetworkDataSource): SearchNetworkDataSource
+    @Binds abstract fun bindLyricsNetworkDataSource(implementation: RealLyricsNetworkDataSource): LyricsNetworkDataSource
+    @Binds abstract fun bindVideoNetworkDataSource(implementation: RealVideoNetworkDataSource): VideoNetworkDataSource
+    @Binds abstract fun bindRecognitionNetworkDataSource(implementation: RealRecognitionNetworkDataSource): RecognitionNetworkDataSource
+    @Binds abstract fun bindVipNetworkDataSource(implementation: RealVipNetworkDataSource): VipNetworkDataSource
 
     @Binds
     abstract fun bindApiRiskVerificationService(

@@ -3,6 +3,7 @@ package com.resonote.core.network.retrofit
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import com.resonote.core.network.ApiProtocolException
+import com.resonote.core.network.ApiAuthenticationRequiredException
 import com.resonote.core.network.ApiServiceException
 import com.resonote.core.network.api.MusicApi
 import com.resonote.core.network.protocol.ProtocolTransport
@@ -18,11 +19,11 @@ import com.resonote.core.network.protocol.ApiSigningInterceptor
 import com.resonote.core.network.protocol.ApiRequestSigner
 import com.resonote.core.network.protocol.ProductionApiOriginPolicy
 import com.resonote.core.network.protocol.ProtocolRandom
-import com.resonote.core.network.protocol.MobileAuthProtocolClient
 import com.resonote.core.network.risk.ApiRiskChallengeDetector
 import com.resonote.core.network.session.ApiSession
 import com.resonote.core.network.session.ApiSessionManager
 import com.resonote.core.network.session.ApiSessionStore
+import com.resonote.core.network.session.ApiAuthenticationGateReason
 import java.security.SecureRandom
 import java.time.Clock
 import java.util.Optional
@@ -38,22 +39,21 @@ import retrofit2.converter.kotlinx.serialization.asConverterFactory
 
 class LiveApiSearchCanaryTest {
     @Test
-    fun registeredLiteDeviceCanSearch() = runTest {
+    fun anonymousSearchReturnsConfirmedAuthenticationFailure() = runTest {
         assumeTrue(System.getenv("RESONOTE_RUN_LIVE_API_TESTS") == "true")
         val fixture = registeredLiveFixture()
 
-        val result =
+        val failure =
             try {
-                fixture.dataSource.searchSongs("周杰伦", page = 1, pageSize = 1)
-            } catch (failure: ApiServiceException) {
-                assumeTrue(
-                    "Anonymous search requires an authenticated cookie when the service returns code 152",
-                    failure.serviceCode != ANONYMOUS_SEARCH_REQUIRES_AUTHENTICATION,
-                )
-                throw failure
+                fixture.search.searchSongs("周杰伦", page = 1, pageSize = 1)
+                null
+            } catch (failure: ApiAuthenticationRequiredException) {
+                failure
             }
 
-        assertThat(result.items).isNotEmpty()
+        assertThat(failure).isNotNull()
+        assertThat(failure?.reason).isEqualTo(ApiAuthenticationGateReason.LoginRequired)
+        assertThat(failure?.serviceCode).isEqualTo(ANONYMOUS_SEARCH_REQUIRES_AUTHENTICATION)
     }
 
     @Test
@@ -87,7 +87,7 @@ class LiveApiSearchCanaryTest {
         var resolved: com.resonote.core.network.model.NetworkSongSource? = null
         val failureKinds = mutableListOf<String>()
         for (song in candidates) {
-            val attempt = runCatching { dataSource.resolveSongSource(song.hash, song.albumId, song.albumAudioId) }
+            val attempt = runCatching { fixture.playback.resolveSongSource(song.hash, song.albumId, song.albumAudioId) }
             resolved = attempt.getOrNull()
             attempt.exceptionOrNull()?.let { failure ->
                 val candidateShape =
@@ -186,16 +186,16 @@ class LiveApiSearchCanaryTest {
                     )
                 },
             )
-        val mobileAuth = MobileAuthProtocolClient(executor, registration, json, crypto, signer, origins)
+        val calls = ApiCallExecutor(sessions)
+        val responses = ApiResponseVerifier(riskDetector, sessions)
+        val home = RealHomeNetworkDataSource(musicApi, registration, signer, clock, responses, calls)
+        val catalog = RealCatalogNetworkDataSource(musicApi, registration, signer, clock, responses, calls, origins)
+        val ranking = RealRankingNetworkDataSource(musicApi, registration, responses, calls)
+        val playlist = RealPlaylistNetworkDataSource(musicApi, registration, responses, calls)
         return LiveFixture(
-            dataSource = RealApiNetworkDataSource(
-                musicApi,
-                registration,
-                mobileAuth,
-                signer,
-                clock,
-                riskDetector,
-            ),
+            dataSource = LivePublicDataSource(home, catalog, ranking, playlist),
+            search = RealSearchNetworkDataSource(musicApi, registration, responses, calls, origins),
+            playback = RealPlaybackNetworkDataSource(musicApi, registration, signer, calls, responses),
             registration = registration,
         )
     }
@@ -241,9 +241,21 @@ class LiveApiSearchCanaryTest {
     }
 
     private data class LiveFixture(
-        val dataSource: RealApiNetworkDataSource,
+        val dataSource: LivePublicDataSource,
+        val search: RealSearchNetworkDataSource,
+        val playback: RealPlaybackNetworkDataSource,
         val registration: DeviceRegistrationCoordinator,
     )
+
+    private class LivePublicDataSource(
+        home: RealHomeNetworkDataSource,
+        catalog: RealCatalogNetworkDataSource,
+        ranking: RealRankingNetworkDataSource,
+        playlist: RealPlaylistNetworkDataSource,
+    ) : com.resonote.core.network.HomeNetworkDataSource by home,
+        com.resonote.core.network.CatalogNetworkDataSource by catalog,
+        com.resonote.core.network.RankingNetworkDataSource by ranking,
+        com.resonote.core.network.PlaylistNetworkDataSource by playlist
 
     private suspend fun <T> liveStep(label: String, block: suspend () -> T): T =
         try {

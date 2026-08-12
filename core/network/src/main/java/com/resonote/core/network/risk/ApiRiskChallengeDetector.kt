@@ -2,7 +2,7 @@ package com.resonote.core.network.risk
 
 import com.resonote.core.network.ApiProtocolException
 import com.resonote.core.network.api.model.MusicApiResponse
-import com.resonote.core.network.retrofit.ApiRawResponse
+import com.resonote.core.network.protocol.ApiRawResponse
 import javax.inject.Inject
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive

@@ -1536,6 +1536,12 @@ endpoints:
         locations: ["query"]
         default: null
         evidence: ["SOURCE_CONFIRMED"]
+      - name: "useid"
+        type: "unknown"
+        required: false
+        locations: ["query"]
+        default: "<source-expression>"
+        evidence: ["SOURCE_CONFIRMED"]
       - name: "user-agent"
         type: "unknown"
         required: false
@@ -1545,7 +1551,7 @@ endpoints:
       - name: "userid"
         type: "unknown"
         required: false
-        locations: ["query"]
+        locations: ["module"]
         default: "<source-expression>"
         evidence: ["SOURCE_CONFIRMED"]
     response_fields:

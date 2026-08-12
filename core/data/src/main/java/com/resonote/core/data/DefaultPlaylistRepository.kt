@@ -3,13 +3,13 @@ package com.resonote.core.data
 import com.resonote.core.model.CollectionLoadResult
 import com.resonote.core.model.PlaylistDetails
 import com.resonote.core.model.PlaylistPage
-import com.resonote.core.network.ApiNetworkDataSource
+import com.resonote.core.network.PlaylistNetworkDataSource
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 internal class DefaultPlaylistRepository @Inject constructor(
-    private val network: ApiNetworkDataSource,
+    private val network: PlaylistNetworkDataSource,
     private val riskChallenges: RiskChallengeRegistry,
 ) : PlaylistRepository {
     override suspend fun loadPlaylist(

@@ -36,8 +36,9 @@
 | <code>fpid</code> | <code>unknown</code> | 否/未知 | <code>query</code> | <code>-</code> | <code>SOURCE_CONFIRMED</code> |
 | <code>include_unpublish</code> | <code>unknown</code> | 否/未知 | <code>query</code> | <code>-</code> | <code>SOURCE_CONFIRMED</code> |
 | <code>multi_result</code> | <code>unknown</code> | 否/未知 | <code>query</code> | <code>-</code> | <code>SOURCE_CONFIRMED</code> |
+| <code>useid</code> | <code>unknown</code> | 否/未知 | <code>query</code> | <code>&lt;source-expression&gt;</code> | <code>SOURCE_CONFIRMED</code> |
 | <code>user-agent</code> | <code>unknown</code> | 否/未知 | <code>header</code> | <code>-</code> | <code>SOURCE_CONFIRMED</code> |
-| <code>userid</code> | <code>unknown</code> | 否/未知 | <code>query</code> | <code>&lt;source-expression&gt;</code> | <code>SOURCE_CONFIRMED</code> |
+| <code>userid</code> | <code>unknown</code> | 否/未知 | <code>module</code> | <code>&lt;source-expression&gt;</code> | <code>SOURCE_CONFIRMED</code> |
 
 ### 返回值证据
 

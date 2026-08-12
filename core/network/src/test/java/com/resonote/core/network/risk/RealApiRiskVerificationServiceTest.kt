@@ -55,6 +55,31 @@ class RealApiRiskVerificationServiceTest {
     }
 
     @Test
+    fun methodForUsesGatewayContractAndDecodesSmsVerification() = runTest {
+        gatewayServer.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setBody("""{"status":1,"data":{"v_type":32}}"""),
+        )
+        val clock = Clock.fixed(Instant.ofEpochMilli(1_700_000_000_123), ZoneOffset.UTC)
+        val service = service(clock)
+
+        val method = service.methodFor(ApiRiskChallenge("risk-event"))
+
+        assertThat(method).isEqualTo(ApiRiskMethod.Sms)
+        val request = checkNotNull(gatewayServer.takeRequest(1, TimeUnit.SECONDS))
+        assertThat(request.path).contains("/verifyservice/v3/get_verify_info?")
+        assertThat(request.requestUrl?.queryParameter("signature")).isNotEmpty()
+        val body = json.parseToJsonElement(request.body.readUtf8()).jsonObject
+        assertThat(body["eventid"]?.jsonPrimitive?.content).isEqualTo("risk-event")
+        assertThat(body["userid"]?.jsonPrimitive?.content).isEqualTo("42")
+        assertThat(body["platid"]?.jsonPrimitive?.content).isEqualTo("2")
+        assertThat(body["rtype"]?.jsonPrimitive?.content).isEqualTo("1")
+        assertThat(body["wasm"]?.jsonPrimitive?.content).isEqualTo("1")
+        assertThat(riskVerificationServer.requestCount).isEqualTo(0)
+    }
+
+    @Test
     fun submitUsesIsolatedRiskOriginAndBypassesRecursiveVerification() {
         listOf(gatewayServer, mobileCodeServer, mobileLoginServer, deviceRegistrationServer).forEach {
             it.enqueue(MockResponse().setResponseCode(200).setBody("""{"status":1}"""))
@@ -65,23 +90,7 @@ class RealApiRiskVerificationServiceTest {
                 .setBody("""{"status":1,"error_code":20028,"ssaCode":"must-not-recurse"}"""),
         )
         val clock = Clock.fixed(Instant.ofEpochMilli(1_700_000_000_123), ZoneOffset.UTC)
-        val session = ApiSession("guid", "mid", "dev", dfid = "dfid", userId = "42")
-        val sessions = ApiSessionManager(Optional.of(MemoryStore(session)), ApiDeviceIdentityFactory())
-        val executor = ProtocolTransport(
-            { OkHttpClient() }, json, clock, ApiRequestSigner(), sessions, ApiRiskChallengeDetector(), ApiOriginPolicy { true },
-        )
-        val service = RealApiRiskVerificationService(
-            executor,
-            ApiProtocolCrypto(ProtocolRandom { length -> "A".repeat(length) }),
-            ApiEndpointOrigins(
-                gateway = gatewayServer.origin(),
-                mobileCode = mobileCodeServer.origin(),
-                mobileLogin = mobileLoginServer.origin(),
-                deviceRegistration = deviceRegistrationServer.origin(),
-                riskVerification = riskVerificationServer.origin(),
-            ),
-            ApiRiskContextFactory(clock),
-        )
+        val service = service(clock)
 
         runTest { service.submit(ApiRiskChallenge("event"), ApiRiskProof.Sms("246810")) }
 
@@ -99,6 +108,26 @@ class RealApiRiskVerificationServiceTest {
         assertThat(mobileCodeServer.requestCount).isEqualTo(0)
         assertThat(mobileLoginServer.requestCount).isEqualTo(0)
         assertThat(deviceRegistrationServer.requestCount).isEqualTo(0)
+    }
+
+    private fun service(clock: Clock): RealApiRiskVerificationService {
+        val session = ApiSession("guid", "mid", "dev", dfid = "dfid", userId = "42")
+        val sessions = ApiSessionManager(Optional.of(MemoryStore(session)), ApiDeviceIdentityFactory())
+        val executor = ProtocolTransport(
+            { OkHttpClient() }, json, clock, ApiRequestSigner(), sessions, ApiRiskChallengeDetector(), ApiOriginPolicy { true },
+        )
+        return RealApiRiskVerificationService(
+            executor,
+            ApiProtocolCrypto(ProtocolRandom { length -> "A".repeat(length) }),
+            ApiEndpointOrigins(
+                gateway = gatewayServer.origin(),
+                mobileCode = mobileCodeServer.origin(),
+                mobileLogin = mobileLoginServer.origin(),
+                deviceRegistration = deviceRegistrationServer.origin(),
+                riskVerification = riskVerificationServer.origin(),
+            ),
+            ApiRiskContextFactory(clock),
+        )
     }
 
     private fun MockWebServer.origin(): String = url("/").toString().removeSuffix("/")

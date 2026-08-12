@@ -9,7 +9,8 @@ import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.RadioRecommendationResult
 import com.resonote.core.model.RecommendationMode
 import com.resonote.core.network.ApiException
-import com.resonote.core.network.ApiNetworkDataSource
+import com.resonote.core.network.CatalogNetworkDataSource
+import com.resonote.core.network.HomeNetworkDataSource
 import com.resonote.core.network.model.NetworkPlaylistSummary
 import com.resonote.core.network.model.NetworkRecommendationMode
 import java.util.concurrent.atomic.AtomicLong
@@ -34,7 +35,8 @@ internal class RandomHomeRecommendationSampler @Inject constructor() : HomeRecom
 
 @Singleton
 internal class DefaultHomeRepository @Inject constructor(
-    private val network: ApiNetworkDataSource,
+    private val homeNetwork: HomeNetworkDataSource,
+    private val catalogNetwork: CatalogNetworkDataSource,
     private val sampler: HomeRecommendationSampler,
     private val riskChallenges: RiskChallengeRegistry,
 ) : HomeRepository {
@@ -45,17 +47,17 @@ internal class DefaultHomeRepository @Inject constructor(
 
     override suspend fun refresh(): HomeRefreshResult = coroutineScope {
         val requestGeneration = generation.incrementAndGet()
-        val daily = async { loadSection(HomeSection.DailyRecommendations) { network.dailyRecommendations().map { it.toOnlineSong() } } }
+        val daily = async { loadSection(HomeSection.DailyRecommendations) { homeNetwork.dailyRecommendations().map { it.toOnlineSong() } } }
         val playlists =
             async {
                 loadSection(HomeSection.RecommendedPlaylists) {
-                    network.recommendedPlaylists(page = 1, pageSize = HOME_ITEM_COUNT).map(::mapPlaylist)
+                    catalogNetwork.recommendedPlaylists(page = 1, pageSize = HOME_ITEM_COUNT).map(::mapPlaylist)
                 }
             }
         val newSongs =
             async {
                 loadSection(HomeSection.NewSongs) {
-                    network.newSongs(page = 1, pageSize = HOME_ITEM_COUNT).map { it.toOnlineSong() }.take(HOME_ITEM_COUNT)
+                    homeNetwork.newSongs(page = 1, pageSize = HOME_ITEM_COUNT).map { it.toOnlineSong() }.take(HOME_ITEM_COUNT)
                 }
             }
         val dailyResult = daily.await()
@@ -85,7 +87,7 @@ internal class DefaultHomeRepository @Inject constructor(
 
     override suspend fun loadRadio(mode: RecommendationMode): RadioRecommendationResult =
         try {
-            val songs = network.radioRecommendations(mode.toNetworkMode()).map { it.toOnlineSong() }
+            val songs = homeNetwork.radioRecommendations(mode.toNetworkMode()).map { it.toOnlineSong() }
             RadioRecommendationResult.Available(songs)
         } catch (failure: ApiException) {
             RadioRecommendationResult.Failed(failure.toContentFailure(riskChallenges))

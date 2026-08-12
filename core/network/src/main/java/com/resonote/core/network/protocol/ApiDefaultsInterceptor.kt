@@ -16,6 +16,10 @@ internal class ApiDefaultsInterceptor @Inject constructor(
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
         val policy = request.apiRequestPolicy() ?: return chain.proceed(request)
+        require(
+            policy.sessionPropagation == ApiSessionPropagation.None ||
+                ApiSessionOriginPolicy.isAllowed(request.url.host),
+        ) { "Session propagation is not allowed for host ${request.url.host}" }
         val session = sessions.snapshot()
         val clientTimeSeconds = clock.millis() / 1_000
         return chain.proceed(request.withDefaults(policy, session, clientTimeSeconds))
@@ -35,44 +39,20 @@ internal class ApiDefaultsInterceptor @Inject constructor(
 
         val query = linkedMapOf<String, String>()
         if (policy.includeDefaultParams) {
-            query += mapOf(
-                "dfid" to session.dfid.orEmpty().ifBlank { "-" },
-                "mid" to session.mid,
-                "uuid" to ApiProtocolConfig.UUID,
-                "appid" to ApiProtocolConfig.APP_ID,
-                "clientver" to ApiProtocolConfig.CLIENT_VERSION,
-                "clienttime" to clientTimeSeconds.toString(),
-            )
-            if (policy.sessionMode == ApiSessionMode.Full) {
-                session.token?.takeIf(String::isNotBlank)?.let { query["token"] = it }
-                session.userId?.takeIf { it.isNotBlank() && it != "0" }?.let { query["userid"] = it }
-            }
+            query += ApiSessionRequestDecorator.defaultQuery(session, clientTimeSeconds, policy.sessionPropagation)
         }
         query += endpointQuery
 
         val updatedUrl = url.newBuilder().query(null).apply { query.forEach(::addQueryParameter) }.build()
         val builder = newBuilder().url(updatedUrl)
-        if (policy.sessionMode != ApiSessionMode.None) {
-            builder.header("dfid", session.dfid.orEmpty().ifBlank { "-" })
-            builder.header("mid", session.mid)
-            builder.header("clienttime", query["clienttime"] ?: clientTimeSeconds.toString())
-            builder.header("kg-rc", "1")
-            builder.header("kg-thash", "5d816a0")
-            builder.header("kg-rec", "1")
-            builder.header("kg-rf", "B9EDA08A64250DEFFBCADDEE00F8F25F")
-            cookieHeader(policy.sessionMode, session)?.let { builder.header("Cookie", it) }
-        }
+        ApiSessionRequestDecorator.applySessionHeaders(
+            builder,
+            session,
+            query["clienttime"] ?: clientTimeSeconds.toString(),
+            policy.sessionPropagation,
+        )
         if (header("User-Agent") == null) builder.header("User-Agent", ApiProtocolConfig.USER_AGENT)
         return builder.build()
     }
 
-    private fun cookieHeader(mode: ApiSessionMode, session: ApiSession): String? {
-        val cookies =
-            when (mode) {
-                ApiSessionMode.None -> emptyMap()
-                ApiSessionMode.DeviceOnly -> mapOf("mid" to session.mid)
-                ApiSessionMode.Full -> session.cookies
-            }
-        return cookies.entries.joinToString("; ") { (name, value) -> "$name=$value" }.takeIf(String::isNotEmpty)
-    }
 }

@@ -342,19 +342,19 @@ NIA 没有音乐播放实现，以下模块是 Resonote 的扩展架构。Androi
 |---|---|---|---|---|
 | 首页推荐 | `src/views/Home.vue`、`src/components/home/` | 单一 `:feature:home`；Repository → ViewModel `StateFlow` → lifecycle-aware Route → stateless Screen；歌曲操作携带有序领域歌曲列表与起始下标；Tabs Shell 直接组合，不建立空 `api` 模块 | data、model、ui/designsystem、Coil | 页面、首批 API/Data、Compose 与 Route/ViewModel 已实现；当前由 App Prototype Adapter 演示播放，待 playback api/service 替换 |
 | 发现、排行榜、新歌、新专辑、推荐歌单 | `src/views/Discover.vue`、`src/components/discover/`、`src/views/Ranking.vue` | `:feature:discover:api/impl`；排行榜先作为 Discover 子目的地，不单独建模块 | data/domain、model、ui、Coil | 榜单列表/歌曲与公开歌单详情 Data 已实现；其余发现切片和页面设计待完成 |
-| 我的/资料库 | `src/views/Library.vue` | “我的”聚合 profile、account、playlist、cloud、local music 等 feature API，不直接拥有各 Repository 实现 | auth/library/local/cloud repositories、feature api | 产品范围已确认；待 API/页面设计 |
-| 搜索与建议 | `src/views/Search.vue`、`RecommendedSearch.vue`、`components/search/`；Mobile `src/app/search.tsx` | `:feature:search:api/impl`；只从首页进入独立页面；综合/单曲/歌单/专辑/MV/歌手为内部结果类型 | data/domain、model、ui；分页库按 API 决定 | 产品范围与入口已确认；待完整 API |
+| 我的/资料库 | `src/views/Library.vue` | “我的”聚合 profile、account、playlist、cloud、local music 等 feature API，不直接拥有各 Repository 实现 | auth/library/local/cloud repositories、feature api | 用户、资料库与云盘首批 API/Data 已完成 fixture；待页面设计与真实账号联调 |
+| 搜索与建议 | `src/views/Search.vue`、`RecommendedSearch.vue`、`components/search/`；Mobile `src/app/search.tsx` | `:feature:search:api/impl`；只从首页进入独立页面；综合/单曲/歌单/专辑/MV/歌手为内部结果类型 | data/domain、model、ui；分页库按 API 决定 | 搜索、综合搜索、热搜与建议 API/Data 已实现并通过 fixture；待页面纵向接入 |
 | 本地音乐与外部文件 | `src/views/LocalMusic.vue` | `:feature:localmusic:api/impl` + `:core:media:local`；SAF/ContentResolver 只作来源，App 私有副本/索引为事实源；本地音乐复用列表/Queue 合同 | data/database、WorkManager、playback api、ContentResolver、crypto digest | 产品范围、导入、去重、副本与删除语义已确认；待存储 ADR |
-| 登录、二维码、手机/密码、风险验证 | `src/views/Login.vue`；Mobile `src/features/account/` | `:feature:login:api/impl`；session/auth Repository 属 data；App 组合统一登录门禁；provider 状态码映射留在 network/data 边界 | DataStore、Android Keystore；WebKit 仅官方风险页真实需要时加入 | 手机/密码与单一当前账号产品范围已确认；待密码 API/安全审计 |
+| 登录、二维码、手机/密码、风险验证 | `src/views/Login.vue`；Mobile `src/features/account/` | `:feature:login:api/impl`；session/auth Repository 属 data；App 组合统一登录门禁；provider 状态码映射留在 network/data 边界 | DataStore、Android Keystore；WebKit 仅官方风险页真实需要时加入 | 手机/密码/二维码协议与统一门禁已实现并通过 fixture；待正式登录页面、真实账号联调与安全审计 |
 | 歌单/专辑/歌手详情 | `src/views/PlaylistDetail.vue` | 产品层使用独立目的地与状态模型；可先由 `:feature:playlist:api/impl` 承载共享集合能力，专辑/歌手边界由 API 纵切片验证后决定是否拆 feature | collection/artist repositories、model、playback api、navigation | 产品 Must；功能合同已确认，待 API/模块切片 |
-| 用户资料 | Library 资料入口；Mobile `src/features/account/` | `:feature:profile:api/impl`，允许从“我的”、搜索和内容作者入口复用 | user repository、model、ui/navigation | 待账号 API |
+| 用户资料 | Library 资料入口；Mobile `src/features/account/` | `:feature:profile:api/impl`，允许从“我的”、搜索和内容作者入口复用 | user repository、model、ui/navigation | 用户详情与 VIP API/Data 已完成 Fake 测试；待页面与真实账号联调 |
 | 设置、主题、语言、缓存管理 | `src/views/Settings.vue`、`src/config/settings.js` | `:feature:settings:impl`；从“我的”进入；设置值通过 Repository/DataStore；播放/歌词通过各自 api，缓存占用与清除通过 media cache port，不直接访问缓存目录 | datastore/data、playback/player api、media cache、designsystem；动态色按平台能力 | 产品 Must；首版仅简体中文，保留资源本地化架构 |
 | Player、MiniPlayer、Queue、歌词 | `src/components/player/`、`src/views/Lyrics.vue` | 使用 4.4 节 playback 与 player feature 分层；Mini Player 常驻 App Scaffold，歌曲主体进入 Full Player，独立操作直接打开 Queue；Queue/Lyrics 默认不独立成 feature；旧 Player 图只作历史方向稿 | playback api/service、lyrics repository、player impl | 入口与状态合同已确认；Full Player 待按 NIA + MD3 Adaptive 重设计 |
-| 云盘 | `src/views/CloudDrive.vue` | 独立 `:feature:cloud:api/impl`；Android 原生实现 PC 已用的列表、上传、删除和播放地址协议；远端文件、流式缓存与本地媒体不得混为同一模型 | core network/data、playback api、upload coordinator | 产品范围和接口能力已确认；待 Android API 纵向切片 |
-| 听歌识曲 | PC `src/views/Recognize.vue`；Mobile `src/app/recognize.tsx`、`features/recognize/recognize-api.ts` | 独立 `:feature:recognition:api/impl`；从首页/搜索话筒进入，录音采集与识别协议隔离 | microphone permission、audio capture、provider adapter、playback api | 产品 Must；待 API 纵向切片、设备验证与隐私审计 |
-| MV/视频播放 | `src/views/VideoPlayer.vue` | 独立 `:feature:video:api/impl`；搜索、歌曲详情和艺人详情按 API 提供入口；播放资格检查未返回阻断条件后才暂停音乐并自动播放；Video Player 发起显式全屏，退出不自动恢复音乐 | video repository、Media3 video/UI、App 统一方向协调；同一播放器全屏横屏，不接传感器自动旋转、后台视频/PiP | 产品 Must；行为已确认，待 API 纵向切片与视频 ADR |
+| 云盘 | `src/views/CloudDrive.vue` | 独立 `:feature:cloud:api/impl`；Android 原生实现 PC 已用的列表、上传、删除和播放地址协议；远端文件、流式缓存与本地媒体不得混为同一模型 | core network/data、playback api、upload coordinator | 列表与播放地址 API/Data 已完成加密 fixture；上传/删除、页面和真实账号联调待完成 |
+| 听歌识曲 | PC `src/views/Recognize.vue`；Mobile `src/app/recognize.tsx`、`features/recognize/recognize-api.ts` | 独立 `:feature:recognition:api/impl`；从首页/搜索话筒进入，录音采集与识别协议隔离 | microphone permission、audio capture、provider adapter、playback api | 识曲 API/Data 已完成 fixture；待页面、真机录音验证与隐私审计 |
+| MV/视频播放 | `src/views/VideoPlayer.vue` | 独立 `:feature:video:api/impl`；搜索、歌曲详情和艺人详情按 API 提供入口；播放资格检查未返回阻断条件后才暂停音乐并自动播放；Video Player 发起显式全屏，退出不自动恢复音乐 | video repository、Media3 video/UI、App 统一方向协调；同一播放器全屏横屏，不接传感器自动旋转、后台视频/PiP | 视频地址 API/Data 已完成 fixture；待播放器页面、真实联调与视频 ADR |
 | 收藏、创建/编辑歌单、播放历史 | Playlist/Library 操作与相关 API modules | 收藏按所属页面组合；账号历史读取远端权威，本机历史独立设备存储；只有自建歌单可编辑/删除和移除歌曲，其他歌单与专辑只允许收藏状态变更 | data/database/sync、session、playback events、ownership policy | 产品 Must；在线历史删除/上传待 API 纵向切片 |
-| 每日 VIP 领取 | README/API `youth_day_vip*`；Mobile `features/account/vip-api.ts` | 作为 Account/Profile Repository 的显式用户操作；签到、升级与 VIP 状态刷新分别建模，不建立后台自动任务 | session、risk、user/vip repositories；每日幂等与错误映射 | 产品 Must；待 Android 纵向切片与安全评审 |
+| 每日 VIP 领取 | README/API `youth_day_vip*`；Mobile `features/account/vip-api.ts` | 作为 Account/Profile Repository 的显式用户操作；签到、升级与 VIP 状态刷新分别建模，不建立后台自动任务 | session、risk、user/vip repositories；每日幂等与错误映射 | 领取/升级 API/Data 与已领取语义已完成 Fake 测试；待 UI、真实账号联调与安全评审 |
 | 评论/社交 | API modules 中的 comment/follow | 不建立互动式社交能力；“我的”允许只读展示好友资料，且不可点击进入关系或动态页面 | user repository、model；不建立 social feature | 只读资料已确认；互动排除 |
 | 插件、PWA、桌面歌词、Touch Bar、全局快捷键、Electron 更新 | PC 专属组件与 Electron | 不迁移到 Android 架构；Android 平台有独立需求时重新设计 | 不继承 Electron/Vue 依赖 | 排除 |
 
@@ -549,17 +549,25 @@ flowchart LR
     client --> raw["ProtocolTransport<br/>special protocols only"]
     converter --> retrofit
     origins["ApiEndpointOrigins<br/>not credentials"] --> retrofit
-    retrofit --> api["MusicApi"]
-    api --> source["RealApiNetworkDataSource"]
+    retrofit --> api["MusicApi aggregation root"]
+    api --> protocolApis["Content / Playback / Search / Lyrics / Video / Recognition / Account API"]
+    protocolApis --> contentSources["Home / Catalog / Ranking / Playlist"]
+    protocolApis --> searchSources["Search / Lyrics / Video / Recognition"]
+    protocolApis --> accountSources["UserProfile / Library / Playback / VIP"]
+    decoder["Shared NetworkSong decoder"] --> contentSources
+    decoder --> searchSources
     raw --> registration["DeviceRegistrationCoordinator"]
     raw --> mobileAuth["MobileAuthProtocolClient / Risk gateway"]
-    registration --> source
-    mobileAuth --> source
-    source --> repository["Repository in core:data"]
+    registration --> contentSources
+    registration --> searchSources
+    contentSources --> repository["Consumer-scoped Repository in core:data"]
+    searchSources --> repository
+    accountSources --> repository
 ```
 
 - 单例 `Json` 同时用于 Retrofit converter 和特殊协议显式序列化，仅启用 `ignoreUnknownKeys` 以兼容新增字段，不启用宽松 JSON 语法。标准 HTTP/JSON 接口由 Retrofit 直接反序列化为 internal `@Serializable` wire DTO；已知字段的兼容变体必须显式建模，必要字段仍在 Network DataSource 映射边界校验。原始 `JsonObject` 仅用于加密、二进制或确有多形结构的特殊协议。
 - Wire DTO 按传输协议域组织，规范化 Network model 按稳定业务概念组织；多个端点共享歌曲语义时统一映射到 `NetworkSong`，再由 Repository 映射为领域 `OnlineSong`。API 字段别名、传输层可空性和 Provider 特有字段不得穿透该边界。
+- Home、Catalog、Ranking、Playlist、Search、Lyrics/Video/Recognition、UserProfile 与 Library 使用独立生产 DataSource；公开 Network port 也按能力独立成文件，不保留 catch-all 接口文件。特殊协议与 Retrofit 共用的 `ApiRawResponse` 位于 `protocol` 包，协议层不得反向依赖 Retrofit 实现包。
 - 单例 `OkHttpClient` 负责连接池和 application interceptor，同时作为 Retrofit 的 `Call.Factory` 与 `ProtocolTransport` 的底层传输；不得创建第二套 REST Client。Retrofit 按固定 NIA 基线通过 `dagger.Lazy<Call.Factory>` 延迟取得 Client，避免 Hilt 构图时在主线程提前初始化 OkHttp。签名 API Client 显式禁用 OkHttp 连接失败重放，业务层也不对 5xx 自动重试。
 - 标准业务端点以方法级 `@ApiRequestPolicy` 声明静态签名和 Session 策略；拦截器通过 Retrofit `Invocation` Tag 读取该注解。`ApiDefaultsInterceptor` 只读取已初始化的内存 Session 快照并注入公共参数/Header/Cookie，`ApiSigningInterceptor` 对最终 Query 和 Retrofit 已序列化的 Body 字节签名，不传递可变请求上下文。
 - `ApiResponseMetadataInterceptor` 仅对带上述策略、携带 `ssa-code` 且大小受限的 JSON 响应归一化 `ssaCode` 字段；`error_code=20028` 才由 Network DataSource 映射为类型化 Challenge。普通成功响应携带该 Header 时不得误判失败。

@@ -1,6 +1,5 @@
 package com.resonote.core.network.protocol
 
-import com.resonote.core.network.retrofit.ApiRawResponse
 
 internal fun ApiRawResponse.responseCookies(): Map<String, String> =
     headers.entries

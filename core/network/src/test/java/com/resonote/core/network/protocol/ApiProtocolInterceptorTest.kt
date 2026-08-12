@@ -83,6 +83,27 @@ class ApiRequestInterceptorsTest {
     }
 
     @Test
+    fun fullPropagationUsesCachedCookiesWithoutReconstructingThem() = runTest {
+        server.enqueue(jsonResponse("""{"status":1,"data":{"value":"ok"}}"""))
+        fixture(session.copy(cookies = mapOf("dfid" to "dfid"))).api.signed(1, TestBody(1))
+        val authenticatedRequest = server.takeRequest()
+
+        server.enqueue(jsonResponse("""{"status":1,"data":{"value":"ok"}}"""))
+        fixture(
+            session.copy(
+                token = null,
+                userId = null,
+                cookies = mapOf("dfid" to "dfid", "TOKEN" to "stale", "userid" to "42", "t1" to "stale"),
+            ),
+        ).api.signed(1, TestBody(1))
+        val anonymousRequest = server.takeRequest()
+
+        assertThat(authenticatedRequest.getHeader("Cookie")).isEqualTo("dfid=dfid")
+        assertThat(anonymousRequest.getHeader("Cookie"))
+            .isEqualTo("dfid=dfid; TOKEN=stale; userid=42; t1=stale")
+    }
+
+    @Test
     fun unannotatedRequestPassesThroughWithoutProtocolFields() = runTest {
         server.enqueue(jsonResponse("""{"status":1,"data":{"value":"ok"}}"""))
 
@@ -156,8 +177,8 @@ class ApiRequestInterceptorsTest {
         assertThat(recorded.requestUrl?.queryParameter("signature")).isNull()
     }
 
-    private fun fixture(): Fixture {
-        val sessions = ApiSessionManager(Optional.of(MemoryStore(session)), ApiDeviceIdentityFactory())
+    private fun fixture(initialSession: ApiSession = session): Fixture {
+        val sessions = ApiSessionManager(Optional.of(MemoryStore(initialSession)), ApiDeviceIdentityFactory())
         runBlocking { sessions.current() }
         val client =
             OkHttpClient.Builder()
@@ -190,7 +211,7 @@ class ApiRequestInterceptorsTest {
         @ApiRequestPolicy(
             id = "test-unsigned",
             signatureMode = ApiSignatureMode.None,
-            sessionMode = ApiSessionMode.None,
+            sessionPropagation = ApiSessionPropagation.None,
             includeDefaultParams = false,
         )
         @GET("plain?existing=1")

@@ -1,4 +1,4 @@
-package com.resonote.core.network.retrofit
+package com.resonote.core.network.protocol
 
 import kotlinx.serialization.json.JsonObject
 

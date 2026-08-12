@@ -35,6 +35,9 @@ internal class ApiRequestSigner @Inject constructor() {
     fun signSongKey(hash: String, mid: String, userId: String?): String =
         md5("${hash.lowercase()}$LITE_SONG_KEY_SALT${ApiProtocolConfig.APP_ID}$mid${userId.orEmpty().ifBlank { "0" }}")
 
+    fun signCloudKey(hash: String, pid: Int = CLOUD_PID): String =
+        md5("musicclound${hash.lowercase()}$pid$CLOUD_KEY_SALT")
+
     private fun digest(vararg parts: ByteArray): String =
         MessageDigest.getInstance("MD5").run {
             parts.forEach(::update)
@@ -43,6 +46,8 @@ internal class ApiRequestSigner @Inject constructor() {
 
     private companion object {
         const val LITE_SONG_KEY_SALT = "185672dd44712f60bb1736df5a377e82"
+        const val CLOUD_PID = 20026
+        const val CLOUD_KEY_SALT = "ebd1ac3134c880bda6a2194537843caa0162e2e7"
     }
 }
 

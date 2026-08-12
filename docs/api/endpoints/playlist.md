@@ -59,7 +59,7 @@
 |---|---|
 | DataSource 操作 | <code>playlistAdd</code> |
 | Request DTO | <code>ApiPlaylistAddRequest</code> |
-| Response DTO | <code>NetworkApiPlaylistAddResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
+| Response DTO | <code>NetworkApiPlaylistAddResponse</code>；名称为静态候选，现行实现由 internal <code>@Serializable</code> 类型化 wire DTO 直接承接 Retrofit 响应 |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiPlaylistAddResponse |
