@@ -4,4 +4,6 @@ import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 
 @Serializable
-data object LocalMusicNavKey : NavKey
+data class LocalMusicNavKey(
+    val finishTaskOnBack: Boolean = false,
+) : NavKey

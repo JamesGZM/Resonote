@@ -41,15 +41,25 @@ import com.resonote.feature.video.impl.VideoRoute
 internal fun ResonoteApp(
     viewModel: MainActivityViewModel = hiltViewModel(),
     playbackViewModel: PlaybackViewModel = hiltViewModel(),
+    onFinishExternalTask: () -> Unit = {},
 ) {
     val backStack = rememberNavBackStack(TabsShellNavKey)
     val playbackState by playbackViewModel.state.collectAsStateWithLifecycle()
     val authState by viewModel.authState.collectAsStateWithLifecycle()
+    val externalImportRequests by viewModel.externalImportRequests.collectAsStateWithLifecycle()
+    val externalImportRequest = externalImportRequests.firstOrNull()
     val myViewModel: MyViewModel = hiltViewModel()
     val setVideoFullscreen = rememberVideoFullscreenController()
 
     LaunchedEffect(authState) {
         backStack.synchronizeAuthenticationGate(authState)
+    }
+
+    LaunchedEffect(externalImportRequest?.id) {
+        val request = externalImportRequest ?: return@LaunchedEffect
+        if (backStack.lastOrNull() !is LocalMusicNavKey) {
+            backStack.add(LocalMusicNavKey(finishTaskOnBack = request.finishTaskOnBack))
+        }
     }
 
     NavDisplay(
@@ -80,7 +90,7 @@ internal fun ResonoteApp(
                     onRecognitionClick = { backStack.add(RecognitionNavKey) },
                     onDailyVipClick = { backStack.navigateToDailyVip(authState) },
                     onCloudClick = { backStack.navigateToCloud(authState) },
-                    onLocalMusicClick = { backStack.add(LocalMusicNavKey) },
+                    onLocalMusicClick = { backStack.add(LocalMusicNavKey()) },
                     onPlaylistClick = { backStack.add(PlaylistNavKey(it)) },
                     onAlbumClick = { album ->
                         backStack.add(
@@ -205,13 +215,19 @@ internal fun ResonoteApp(
                     onAppendTracks = playbackViewModel::appendCloud,
                 )
             }
-            entry<LocalMusicNavKey> {
+            entry<LocalMusicNavKey> { key ->
                 LocalMusicRoute(
                     playingMediaId = playbackState.currentMetadata?.mediaId,
                     bottomContentPadding = if (playbackState.currentMetadata == null) 32.dp else 120.dp,
-                    onBack = { backStack.removeAt(backStack.lastIndex) },
+                    onBack = {
+                        if (key.finishTaskOnBack) onFinishExternalTask()
+                        else backStack.removeAt(backStack.lastIndex)
+                    },
                     onPlayAll = playbackViewModel::playAllLocal,
                     onPlayMedia = playbackViewModel::playLocal,
+                    pendingImportRequestId = externalImportRequest?.id,
+                    pendingImportUris = externalImportRequest?.uris.orEmpty(),
+                    onPendingImportAccepted = viewModel::acknowledgeExternalImportRequest,
                 )
             }
             entry<VideoNavKey> { key ->

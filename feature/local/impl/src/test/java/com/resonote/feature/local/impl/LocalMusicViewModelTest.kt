@@ -160,6 +160,22 @@ class LocalMusicViewModelTest {
     }
 
     @Test
+    fun busyImporterRejectsHandoffUntilCurrentBatchIsCancelled() = runTest(dispatcher) {
+        val repository = FakeLocalMediaRepository(blockImports = true)
+        val viewModel = LocalMusicViewModel(repository)
+
+        assertThat(viewModel.importUris(listOf("content://one"))).isTrue()
+        runCurrent()
+        assertThat(viewModel.importUris(listOf("content://queued"))).isFalse()
+
+        viewModel.cancelImport()
+        advanceUntilIdle()
+        assertThat(viewModel.importUris(listOf("content://queued"))).isTrue()
+        viewModel.cancelImport()
+        advanceUntilIdle()
+    }
+
+    @Test
     fun deleteFailureIsVisibleAndSuccessClearsIt() = runTest(dispatcher) {
         val target = media("one")
         val repository = FakeLocalMediaRepository(initialMedia = listOf(target))

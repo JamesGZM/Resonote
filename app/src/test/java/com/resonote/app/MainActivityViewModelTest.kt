@@ -1,5 +1,8 @@
 package com.resonote.app
 
+import android.content.ClipData
+import android.content.Intent
+import android.net.Uri
 import androidx.navigation3.runtime.NavKey
 import com.google.common.truth.Truth.assertThat
 import com.resonote.core.data.AuthRepository
@@ -25,8 +28,13 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 @OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [35])
 class MainActivityViewModelTest {
     private val dispatcher = UnconfinedTestDispatcher()
 
@@ -109,6 +117,76 @@ class MainActivityViewModelTest {
         backStack.synchronizeAuthenticationGate(AuthState.Authenticated("42"))
         assertThat(backStack.filterIsInstance<CloudNavKey>()).hasSize(1)
         assertThat(backStack.last()).isEqualTo(CloudNavKey)
+    }
+
+    @Test
+    fun externalIntentParserAcceptsViewSendAndMultipleContentUris() {
+        val viewed = Intent(Intent.ACTION_VIEW, Uri.parse("content://media/audio/one"))
+        assertThat(ExternalLocalImportIntentParser.parse(viewed))
+            .containsExactly("content://media/audio/one")
+
+        val sent = Intent(Intent.ACTION_SEND).apply {
+            putExtra(Intent.EXTRA_STREAM, Uri.parse("content://provider/two"))
+            clipData = ClipData.newRawUri("audio", Uri.parse("content://provider/two"))
+        }
+        assertThat(ExternalLocalImportIntentParser.parse(sent))
+            .containsExactly("content://provider/two")
+
+        val multiple = Intent(Intent.ACTION_SEND_MULTIPLE).apply {
+            putParcelableArrayListExtra(
+                Intent.EXTRA_STREAM,
+                arrayListOf(Uri.parse("content://provider/three"), Uri.parse("content://provider/four")),
+            )
+        }
+        assertThat(ExternalLocalImportIntentParser.parse(multiple)).containsExactly(
+            "content://provider/three",
+            "content://provider/four",
+        ).inOrder()
+    }
+
+    @Test
+    fun externalIntentParserRejectsUnrelatedActionsAndNonContentUris() {
+        assertThat(
+            ExternalLocalImportIntentParser.parse(
+                Intent(Intent.ACTION_VIEW, Uri.parse("file:///storage/emulated/0/song.mp3")),
+            ),
+        ).isEmpty()
+        assertThat(
+            ExternalLocalImportIntentParser.parse(
+                Intent(Intent.ACTION_EDIT, Uri.parse("content://provider/song")),
+            ),
+        ).isEmpty()
+    }
+
+    @Test
+    fun externalImportRequestsQueueAndAcknowledgeWithoutOverwriting() {
+        val viewModel = MainActivityViewModel(FakeAuthRepository())
+
+        assertThat(
+            viewModel.handleExternalImportIntent(
+                Intent(Intent.ACTION_VIEW, Uri.parse("content://provider/cold")),
+                finishTaskOnBack = true,
+            ),
+        ).isTrue()
+        assertThat(
+            viewModel.handleExternalImportIntent(
+                Intent(Intent.ACTION_SEND).putExtra(
+                    Intent.EXTRA_STREAM,
+                    Uri.parse("content://provider/foreground"),
+                ),
+                finishTaskOnBack = false,
+            ),
+        ).isTrue()
+
+        assertThat(viewModel.externalImportRequests.value).containsExactly(
+            ExternalLocalImportRequest(1, listOf("content://provider/cold"), finishTaskOnBack = true),
+            ExternalLocalImportRequest(2, listOf("content://provider/foreground"), finishTaskOnBack = false),
+        ).inOrder()
+
+        viewModel.acknowledgeExternalImportRequest(1)
+        assertThat(viewModel.externalImportRequests.value).containsExactly(
+            ExternalLocalImportRequest(2, listOf("content://provider/foreground"), finishTaskOnBack = false),
+        )
     }
 
     private class FakeAuthRepository : AuthRepository {

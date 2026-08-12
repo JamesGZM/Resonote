@@ -46,6 +46,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -81,9 +82,16 @@ fun LocalMusicRoute(
     onBack: () -> Unit,
     onPlayAll: (List<LocalMedia>) -> Unit,
     onPlayMedia: (LocalMedia) -> Unit,
+    pendingImportRequestId: Long? = null,
+    pendingImportUris: List<String> = emptyList(),
+    onPendingImportAccepted: (Long) -> Unit = {},
     viewModel: LocalMusicViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(pendingImportRequestId, state.importState) {
+        val requestId = pendingImportRequestId ?: return@LaunchedEffect
+        if (viewModel.importUris(pendingImportUris)) onPendingImportAccepted(requestId)
+    }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
         viewModel.importUris(uris.map { it.toString() })
     }

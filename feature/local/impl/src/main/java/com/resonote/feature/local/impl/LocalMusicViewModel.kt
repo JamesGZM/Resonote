@@ -51,10 +51,10 @@ class LocalMusicViewModel @Inject constructor(
         mutableUiState.update { it.copy(sort = sort) }
     }
 
-    fun importUris(uris: List<String>) {
-        if (importJob?.isActive == true || pendingDuplicateUri != null) return
+    fun importUris(uris: List<String>): Boolean {
+        if (importJob?.isActive == true || pendingDuplicateUri != null) return false
         val uniqueUris = uris.filter(String::isNotBlank).distinct()
-        if (uniqueUris.isEmpty()) return
+        if (uniqueUris.isEmpty()) return false
         pendingUris = ArrayDeque(uniqueUris)
         batchTotal = uniqueUris.size
         completed = 0
@@ -62,6 +62,7 @@ class LocalMusicViewModel @Inject constructor(
         skipped = 0
         failures.clear()
         continueImport()
+        return true
     }
 
     fun resolveDuplicate(importCopy: Boolean) {
