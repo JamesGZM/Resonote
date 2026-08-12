@@ -30,6 +30,18 @@ class PrototypePlaybackStateTest {
         assertThat(state.currentSongId).isEqualTo("second")
     }
 
+    @Test
+    fun playlistPlayAllReplacesQueueAndStartsAtFirstSong() {
+        val state = PrototypePlaybackState()
+        state.play(song("existing"))
+
+        state.playAll(listOf(song("playlist-1"), song("playlist-2")))
+
+        assertThat(state.queue.map { it.hash }).containsExactly("playlist-1", "playlist-2").inOrder()
+        assertThat(state.currentSongId).isEqualTo("playlist-1")
+        assertThat(state.isPlaying).isTrue()
+    }
+
     private fun song(id: String) = OnlineSong(
         hash = id,
         title = id,

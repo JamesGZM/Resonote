@@ -10,6 +10,9 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import com.resonote.core.navigation.LoginGateNavKey
 import com.resonote.core.navigation.TabsShellNavKey
+import com.resonote.core.model.AuthState
+import com.resonote.feature.playlist.api.PlaylistNavKey
+import com.resonote.feature.playlist.impl.PlaylistRoute
 import com.resonote.feature.search.api.SearchNavKey
 import com.resonote.feature.search.impl.SearchRoute
 
@@ -30,6 +33,7 @@ internal fun ResonoteApp(viewModel: MainActivityViewModel = hiltViewModel()) {
                 TabsShell(
                     playbackState = playbackState,
                     onSearchClick = { backStack.add(SearchNavKey()) },
+                    onPlaylistClick = { backStack.add(PlaylistNavKey(it)) },
                 )
             }
             entry<SearchNavKey> { key ->
@@ -39,10 +43,21 @@ internal fun ResonoteApp(viewModel: MainActivityViewModel = hiltViewModel()) {
                     onRecognitionClick = null,
                     onSongClick = playbackState::play,
                     onSongMoreClick = null,
-                    onPlaylistClick = null,
+                    onPlaylistClick = { backStack.add(PlaylistNavKey(it)) },
                     onAlbumClick = null,
                     onArtistClick = null,
                     onMvClick = null,
+                )
+            }
+            entry<PlaylistNavKey> { key ->
+                PlaylistRoute(
+                    playlistId = key.playlistId,
+                    playingMediaId = playbackState.currentSongId,
+                    isAuthenticated = authState is AuthState.Authenticated,
+                    onBack = { backStack.removeAt(backStack.lastIndex) },
+                    onPlayAll = { playbackState.playAll(it) },
+                    onSongClick = playbackState::play,
+                    onSongMoreClick = null,
                 )
             }
             entry<LoginGateNavKey> { key ->

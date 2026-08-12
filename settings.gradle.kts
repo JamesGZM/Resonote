@@ -45,6 +45,8 @@ include(":core:data")
 include(":core:screenshot-testing")
 include(":feature:home:impl")
 include(":feature:player:impl")
+include(":feature:playlist:api")
+include(":feature:playlist:impl")
 include(":feature:search:api")
 include(":feature:search:impl")
 

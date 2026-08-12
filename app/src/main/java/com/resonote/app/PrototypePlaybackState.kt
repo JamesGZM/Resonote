@@ -25,8 +25,14 @@ internal class PrototypePlaybackState {
         get() = queue.firstOrNull { it.hash == currentSongId }
 
     fun play(request: HomePlaybackRequest) {
-        queue = request.songs
-        select(request.songs[request.startIndex])
+        playAll(request.songs, request.startIndex)
+    }
+
+    fun playAll(songs: List<OnlineSong>, startIndex: Int = 0) {
+        require(songs.isNotEmpty()) { "Playback queue must not be empty" }
+        require(startIndex in songs.indices) { "startIndex must point to a song" }
+        queue = songs
+        select(songs[startIndex])
     }
 
     fun play(song: OnlineSong) {

@@ -50,6 +50,7 @@ internal fun TabsShell(
     homeViewModel: HomeViewModel? = null,
     playbackState: PrototypePlaybackState = rememberPrototypePlaybackState(),
     onSearchClick: () -> Unit = {},
+    onPlaylistClick: (String) -> Unit = {},
 ) {
     val tabsShellState = rememberTabsShellState()
     val selectedTab = tabsShellState.selectedTab
@@ -94,7 +95,8 @@ internal fun TabsShell(
                                     onSearchClick = onSearchClick, onRecognitionClick = ::showComingSoon,
                                     onPlay = playbackState::play, onOpenRankings = ::showComingSoon,
                                     onOpenFeaturedPlaylists = ::showComingSoon,
-                                    onSongMoreClick = { showComingSoon() }, onPlaylistClick = { showComingSoon() },
+                                    onSongMoreClick = { showComingSoon() },
+                                    onPlaylistClick = { onPlaylistClick(it.id) },
                                 )
                             } else {
                                 HomeRoute(
@@ -102,7 +104,8 @@ internal fun TabsShell(
                                     onSearchClick = onSearchClick, onRecognitionClick = ::showComingSoon,
                                     onPlay = playbackState::play, onOpenRankings = ::showComingSoon,
                                     onOpenFeaturedPlaylists = ::showComingSoon,
-                                    onSongMoreClick = { showComingSoon() }, onPlaylistClick = { showComingSoon() },
+                                    onSongMoreClick = { showComingSoon() },
+                                    onPlaylistClick = { onPlaylistClick(it.id) },
                                     viewModel = suppliedViewModel,
                                 )
                             }
