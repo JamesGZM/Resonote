@@ -6,14 +6,18 @@
 
 ## NIA 对应方式
 
-- 以 `ApiNetworkDataSource` 暴露远端能力，具体 Retrofit/OkHttp 类保持 internal。
+- 以按业务能力拆分的 Network DataSource 暴露远端能力，具体 Retrofit/OkHttp 类保持 internal；生产代码不提供全能力聚合接口。
+- 生产 DataSource 按消费者职责拆为 Home、Catalog、Ranking、Playlist、Search、Lyrics、Video、Recognition、UserProfile 与 Library；每个公开 Network port 独立成文件，不保留 catch-all 接口文件。共享歌曲 DTO 解码器独立复用，特殊协议共用的原始响应模型归属 `protocol`，协议层不得反向依赖 `retrofit` 包。
 - 每个接口章节给出稳定操作名与静态 DTO 命名候选；候选名称不表示对应类已经实现，已迁移状态以本页纵切片记录和代码为准。
 - 固定 API 包的 `ApiResponse<T = any>` 明确定义了泛型响应模式；默认 `any` 只是 TypeScript 对尚未声明端点 Body 类型的退路。Android 的 Retrofit Service 直接返回 internal `ApiResponse<具体 Data DTO>`，对应实测服务端 JSON 的 `status/error_code/data` 信封；没有该信封的播放地址使用独立 DTO。HTTP 状态由 Retrofit 异常映射，`ssa-code` Header 由受限响应拦截器归一化，Cookie 由 Session/特殊协议在内部处理，不向 Service 返回类型或 DataSource 暴露 `retrofit2.Response`。各端点 Data DTO 仍需结合 Mobile 消费模型与字段读取、PC 实际字段访问和脱敏实测来收敛。
 - Retrofit converter 直接把标准 HTTP/JSON 响应反序列化为 internal `@Serializable` wire DTO；`ignoreUnknownKeys` 只用于兼容服务端新增字段，已知的字符串/数字变体由字段 serializer 显式处理。DataSource 校验必要字段后映射 Network model，wire DTO 与 Network model 均不得进入 Compose 或公共领域模型。`JsonObject` 只保留在加密、二进制或确有多形结构的特殊协议边界。
 - Retrofit wire DTO 只描述上游传输结构并保持 internal；Network DataSource 校验必要字段后，将不同端点归一化为按稳定业务概念命名的 Network model；Repository 再映射为 `core:model` 领域模型，三层不得复用同一个类。
 - 首页、搜索、榜单和歌单共享歌曲语义时统一映射到 `NetworkSong`，不复制 `NetworkHomeSong`、`NetworkSearchSong` 等页面所有权类型；传输结构确实不同时可以拆 wire DTO。wire DTO 按协议域拆文件，Network/Domain model 按内聚业务概念拆文件，避免 catch-all 模型文件。
 - Repository 使用 fake DataSource 测试，不以脆弱的调用顺序 mock 为主。
-- 标准 HTTP/JSON 业务接口由内部 `MusicApi` 以 Retrofit 声明；方法级 `@ApiRequestPolicy` 声明静态策略；`ApiDefaultsInterceptor` 读取已初始化的 Session 内存快照并注入公共参数/Header/Cookie，`ApiSigningInterceptor` 通过 Retrofit `Invocation` Tag 对最终 Query 与序列化 Body 字节签名。
+- 标准 HTTP/JSON 端点分别声明在内部 `ContentApi`、`PlaybackApi`、`SearchApi`、`LyricsApi`、`VideoApi`、`RecognitionApi` 与 `AccountApi`，空的 `MusicApi` 只作为 Retrofit 聚合创建入口；它们共享同一个 Retrofit、OkHttp 和拦截器链。方法级 `@ApiRequestPolicy` 声明静态策略；`ApiDefaultsInterceptor` 读取已初始化的 Session 内存快照并注入公共参数/Header/Cookie，`ApiSigningInterceptor` 通过 Retrofit `Invocation` Tag 对最终 Query 与序列化 Body 字节签名。
+- 会话传播使用 `sessionPropagation` 明确区分 `Full/DeviceOnly/None`：可信酷狗 API Host 默认在缓存存在时注入完整会话，登录、验证码和二维码只携带设备身份，非可信 Host 禁止传播 Session。`Full` 原样传播持久化的 Cookie 快照；Cookie 合并与认证字段清理由 Session 存储边界负责。`includeDefaultParams=false` 只关闭默认 Query，不关闭 Header/Cookie，歌词搜索因此仍使用 `Full`。
+- 响应认证分类由共享 verifier 负责。首个经 PC 源码、文档和真实 Canary 共同确认的规则是 `API-SEARCH-001 + error_code 152`，适用于 Mobile `search` 模块的歌曲及 `special/album/author/mv` 类型变体；匿名请求进入 `LoginRequired`，已认证请求进入 `SessionExpired` 并只清除认证字段。App 根级认证状态统一导航到可持续占位的登录门禁页面，不使用瞬时 Snackbar 代替认证流程；Feature 不解析 provider 状态码。
+- 远端认证响应携带请求前 Session revision；本地“接口要求登录”检查、门禁确认、Session 写入和失效清理由 `ApiSessionManager` 使用同一 Mutex 串行化。公开 `authenticationState` 也在该锁内读取 Store 最终值并推进外部变更的 revision，不得发出“认证字段已清但尚无门禁”的匿名中间态；即使没有 Flow 订阅，旧请求也不得清除或遮蔽新登录 Session。
 - `Call.Factory` 只作为最底层传输抽象，并由 `ProtocolTransport` 用于设备注册、加密登录和风控验证等二进制、加密或多阶段特殊协议；普通业务接口不得用它重新实现一套 Retrofit。Retrofit 按固定 NIA 基线通过 `dagger.Lazy<Call.Factory>` 延迟取得共享 Client。
 - 设备注册通过可注入 Provider 按 Mobile 合同读取总内存、品牌、Build ID、型号和厂商，缺失时使用 fallback，存储字段保留 Mobile 固定兼容值；携带 `ssa-code` 的响应按 2 MiB 上限有界读取并在拒绝路径关闭 Body。
 
@@ -21,9 +25,17 @@
 
 `core:network` 将 `ssa-code` Header 归一化进类型化 `ApiResponse<T>`，仅在 `error_code=20028` 时上抛内部 Challenge。`core:data` 将其登记为不透明 `RiskChallengeHandle`，并通过 `RiskVerificationRepository` 暴露验证方式查询和证明提交；Feature/ViewModel 不依赖 Network 类型。验证成功后的单次显式重试仍由原发起流程持有，Interceptor、Authenticator、Network DataSource 和特殊协议传输均不得自动重放。验证接口必须旁路 Challenge 检测以避免递归。
 
+## Mobile 39 API 与认证首期
+
+- `MoeKoeMusic-Mobile/src` 实际消费的固定 39 个 API 已全部提供 Network DataSource 与 Repository 能力；总账及逐项离线测试见 [MOBILE_MIGRATION.md](MOBILE_MIGRATION.md)。完整 catalog 的 164 个 Lite 模块不等于本期迁移数量。
+- 手机验证码、密码和二维码登录协议已实现；登录成功先安全持久化 Session，存储失败不得报告成功。完整登录表单仍待后续接入。
+- 用户资料、个人歌单写操作、云盘和每日 VIP 等登录后能力只通过认证 Fake Session、MockWebServer 与 synthetic fixture 验证，尚未使用真实账号联调。
+- 搜索包含单曲、歌单、专辑、歌手、MV、综合搜索、热搜与建议；歌词、视频和听歌识曲使用独立 Network/Data 边界。
+- 所有标准响应统一把非零 `error_code` 视为业务失败；识曲 `status=0` 无匹配和 VIP `131001` 已领取是经 Mobile 消费源码确认的端点特例，不得扩散为全局规则。
+
 ## 首页首批纵切片
 
-- `ApiNetworkDataSource` 暴露每日推荐、`top_card`、推荐歌单、新歌速递和歌曲 URL 五个窄操作；共同复用设备注册、Session、签名、类型化风控检测和 Retrofit 调用链。
+- `HomeNetworkDataSource` 提供每日推荐、`top_card` 和新歌速递，`CatalogNetworkDataSource` 提供推荐歌单，歌曲 URL 由独立 `PlaybackNetworkDataSource` 提供；它们共同复用设备注册、Session、签名、类型化风控检测和 Retrofit 调用链。
 - `HomeRepository` 并发刷新三个首页区块，每日推荐在每次成功请求后重抽 6 首；单区失败保留旧快照，旧代际结果不得覆盖新请求。
 - `loadRadio(mode)` 按需加载 `card_id=1/2/3/4/6`，默认私人好歌为 1。
 - `SongPlaybackRepository` 只返回服务原生 HTTPS 主/备用地址、时长和扩展名；仅返回 HTTP 时报告 `InsecureMediaUrl` 协议错误，其他非空畸形地址报告 `MalformedResponse`，不通过改写 scheme 伪造安全地址。匿名 VIP 候选实测返回的 `error_code=35104` 与无 URL 的 VIP 响应统一映射为 `PlaybackUnavailableReason.Vip`；其他未知业务码仍保持服务拒绝，从而类型化区分版权、VIP、网络、协议与风控失败。

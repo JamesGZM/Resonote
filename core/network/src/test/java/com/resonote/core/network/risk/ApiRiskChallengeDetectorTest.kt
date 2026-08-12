@@ -2,7 +2,7 @@ package com.resonote.core.network.risk
 
 import com.google.common.truth.Truth.assertThat
 import com.resonote.core.network.ApiProtocolException
-import com.resonote.core.network.retrofit.ApiRawResponse
+import com.resonote.core.network.protocol.ApiRawResponse
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import org.junit.Assert.assertThrows

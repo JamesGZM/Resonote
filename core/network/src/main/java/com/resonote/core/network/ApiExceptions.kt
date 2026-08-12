@@ -1,9 +1,15 @@
 package com.resonote.core.network
 
 import com.resonote.core.network.risk.ApiRiskChallenge
+import com.resonote.core.network.session.ApiAuthenticationGateReason
 import java.io.IOException
 
 sealed class ApiException(message: String, cause: Throwable? = null) : IOException(message, cause)
+
+class ApiAuthenticationRequiredException(
+    val reason: ApiAuthenticationGateReason = ApiAuthenticationGateReason.LoginRequired,
+    val serviceCode: String? = null,
+) : ApiException("Authentication is required ($reason)${serviceCode?.let { ", serviceCode=$it" }.orEmpty()}")
 
 class ApiHttpException(val statusCode: Int) : ApiException("HTTP request failed with status $statusCode")
 
@@ -34,6 +40,7 @@ class ApiPlaybackUnavailableException(val reason: Reason) : ApiException("Song p
     enum class Reason {
         Copyright,
         Vip,
+        Cloud,
     }
 }
 

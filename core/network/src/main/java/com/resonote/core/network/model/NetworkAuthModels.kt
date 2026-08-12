@@ -15,3 +15,8 @@ sealed interface NetworkMobileCodeLoginResult {
     data class Authenticated(val session: ApiSession) : NetworkMobileCodeLoginResult
     data class MultipleAccounts(val accounts: List<NetworkAccountOption>) : NetworkMobileCodeLoginResult
 }
+
+sealed interface NetworkPasswordLoginResult {
+    data class Authenticated(val session: ApiSession) : NetworkPasswordLoginResult
+    data class MultipleAccounts(val accounts: List<NetworkAccountOption>) : NetworkPasswordLoginResult
+}

@@ -11,9 +11,25 @@ const MOBILE_COMMIT = 'ab71195d4cf3297332490fd37704d1ae8973d4c5';
 const MOBILE_API_COMMIT = '283f1e97';
 const TOP_CARD_PC_COMMIT = 'a86cfefb';
 const ANDROID_RETROFIT_ENDPOINTS = new Set([
+  'API-DISCOVER-003', 'API-DISCOVER-008', 'API-DISCOVER-009', 'API-DISCOVER-012',
+  'API-DISCOVER-013', 'API-DISCOVER-016', 'API-SONG-011', 'API-RANKING-003',
+  'API-RANKING-001', 'API-PLAYLIST-001', 'API-PLAYLIST-006', 'API-PLAYLIST-007',
+  'API-PLAYLIST-009', 'API-PLAYLIST-010', 'API-SEARCH-001', 'API-SEARCH-002',
+  'API-SEARCH-004', 'API-SEARCH-005', 'API-SEARCH-007', 'API-LYRICS-001',
+  'API-VIDEO-003', 'API-RECOGNITION-001', 'API-ALBUM-004', 'API-ARTIST-002',
+  'API-ARTIST-003', 'API-USER-003', 'API-USER-008', 'API-USER-013',
+  'API-CLOUD-003', 'API-LOGIN-008', 'API-LOGIN-010', 'API-YOUTH-008',
+  'API-YOUTH-009',
+]);
+const ANDROID_SPECIAL_PROTOCOL_ENDPOINTS = new Set([
+  'API-DEVICE-001', 'API-LOGIN-001', 'API-LOGIN-002', 'API-LOGIN-003',
+  'API-LOGIN-004', 'API-LOGIN-015', 'API-CLOUD-001',
+]);
+const ANDROID_TYPED_WIRE_ENDPOINTS = new Set([
   'API-DISCOVER-003', 'API-DISCOVER-009', 'API-DISCOVER-012', 'API-DISCOVER-013',
-  'API-SONG-011', 'API-RANKING-003', 'API-RANKING-001', 'API-PLAYLIST-007',
-  'API-SEARCH-001',
+  'API-SONG-011', 'API-RANKING-003', 'API-RANKING-001', 'API-PLAYLIST-001',
+  'API-PLAYLIST-007', 'API-SEARCH-001', 'API-USER-003', 'API-USER-008',
+  'API-USER-013',
 ]);
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const DOC_ROOT = resolve(SCRIPT_DIR, '..');
@@ -86,6 +102,23 @@ function applyLiteLoginContract(module, requestFields, responseFields) {
   for (const path of loginReferenceFields.get(module) || []) {
     if (!responseFields.has(path)) responseFields.set(path, EVIDENCE.reference);
   }
+  return [...fields.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function applyEndpointRequestContract(module, requestFields) {
+  if (module !== 'audio_match') return requestFields;
+  const fields = new Map(requestFields.map((field) => [field.name, field]));
+  const moduleUserId = fields.get('userid');
+  if (moduleUserId) moduleUserId.locations = new Set(['module']);
+  fields.set('useid', {
+    name: 'useid',
+    required: false,
+    type: 'unknown',
+    description: 'Provider wire spelling for the optional user id.',
+    locations: new Set(['query']),
+    evidence: new Set([EVIDENCE.source]),
+    default: '<source-expression>',
+  });
   return [...fields.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -656,7 +689,7 @@ function endpointMarkdown(domain, endpoints) {
     lines.push('', '### Android 映射', '', '| 项目 | 建议 |', '|---|---|');
     lines.push(`| DataSource 操作 | ${mdCode(endpoint.operationName)} |`);
     lines.push(`| Request DTO | ${mdCode(endpoint.requestDto)} |`);
-    const responseMapping = ANDROID_RETROFIT_ENDPOINTS.has(endpoint.id)
+    const responseMapping = ANDROID_TYPED_WIRE_ENDPOINTS.has(endpoint.id)
       ? `${mdCode(endpoint.responseDto)}；名称为静态候选，现行实现由 internal ${mdCode('@Serializable')} 类型化 wire DTO 直接承接 Retrofit 响应`
       : `${mdCode(endpoint.responseDto)}；含 UNKNOWN 时不得据此生成严格 DTO`;
     lines.push(`| Response DTO | ${responseMapping} |`);
@@ -709,6 +742,24 @@ function staticDocuments(endpoints, consumerRoutes) {
     'schemas/README.md': `# 静态 Schema 说明\n\n- \`requests.yaml\` 合并固定 \`interface.d.ts\` 声明与模块实际构造字段。\n- \`responses.yaml\` 只列 API 转换代码和固定 PC 消费端能够证明的 Body 路径。\n- \`type: unknown\` 是有意保守结果；在获得合规的脱敏响应 Fixture 前不得收紧。\n- \`path: "*"\` + \`${EVIDENCE.unknown}\` 表示包装层透传响应且没有字段级静态证据。\n`,
     'fixtures/README.md': `# Fixture 准入规则\n\n当前静态基线没有可安全认定为完整上游响应的 JSON Fixture，因此本目录暂不包含伪造样例。后续 Fixture 必须：\n\n- 来自固定源码已提交样例或经批准的只读采样。\n- 旁置来源、提交或采样条件。\n- 删除 token、userid、Cookie、dfid、MID、GUID、设备信息和账号内容。\n- 不以人工拼装 JSON 冒充真实响应。\n- 在响应 Schema 中把相应字段标为 \`${EVIDENCE.fixture}\`。\n`,
   };
+  generatedDocuments['ANDROID_MAPPING.md'] = generatedDocuments['ANDROID_MAPPING.md']
+    .replace(
+      '以 `ApiNetworkDataSource` 暴露远端能力，具体 Retrofit/OkHttp 类保持 internal。',
+      '以按业务能力拆分的 Network DataSource 暴露远端能力，具体 Retrofit/OkHttp 类保持 internal；生产代码不提供全能力聚合接口。',
+    )
+    .replace(
+      '`ApiNetworkDataSource` 暴露每日推荐、`top_card`、推荐歌单、新歌速递和歌曲 URL 五个窄操作；',
+      '`HomeNetworkDataSource` 暴露每日推荐、`top_card`、推荐歌单和新歌速递；歌曲 URL 由独立 `PlaybackNetworkDataSource` 提供，两者',
+    );
+  generatedDocuments['ANDROID_MAPPING.md'] = generatedDocuments['ANDROID_MAPPING.md']
+    .replace(
+      '- 每个接口章节给出稳定操作名与静态 DTO 命名候选；',
+      '- 生产 DataSource 按消费者职责拆为 Home、Catalog、Ranking、Playlist、Search、Lyrics、Video、Recognition、UserProfile 与 Library；每个公开 Network port 独立成文件，不保留 catch-all 接口文件。共享歌曲 DTO 解码器独立复用，特殊协议共用的原始响应模型归属 `protocol`，协议层不得反向依赖 `retrofit` 包。\n- 每个接口章节给出稳定操作名与静态 DTO 命名候选；',
+    )
+    .replace(
+      '- 标准 HTTP/JSON 业务接口由内部 `MusicApi` 以 Retrofit 声明；',
+      '- 标准 HTTP/JSON 端点分别声明在内部 `ContentApi`、`PlaybackApi`、`SearchApi`、`LyricsApi`、`VideoApi`、`RecognitionApi` 与 `AccountApi`，空的 `MusicApi` 只作为 Retrofit 聚合创建入口；它们共享同一个 Retrofit、OkHttp 和拦截器链。',
+    );
   generatedDocuments['ANDROID_MAPPING.md'] = generatedDocuments['ANDROID_MAPPING.md'].replace(
     '固定 API 包只把响应声明为 `ApiResponse<T = any>`，Mobile runtime 进一步暴露 `MobileApiResult.body: unknown`，没有可直接复制的九接口 wire response DTO。Mobile 的 `HomeSong`、`PlayerTrack`、`PlaylistInfo` 等是消费模型；其 `Record<string, unknown>` 读取路径和 PC 的实际字段访问共同作为 Android wire DTO 的字段证据。',
     '固定 API 包的 `ApiResponse<T = any>` 明确定义了泛型响应模式；默认 `any` 只是 TypeScript 对尚未声明端点 Body 类型的退路。Android 的 Retrofit Service 直接返回 internal `ApiResponse<具体 Data DTO>`，对应实测服务端 JSON 的 `status/error_code/data` 信封；没有该信封的播放地址使用独立 DTO。HTTP 状态、Header 与 Cookie 由 Retrofit 异常映射、单次请求上下文和 OkHttp CookieJar/Session 在内部处理，不向 Service 返回类型或 DataSource 暴露 `retrofit2.Response`。各端点 Data DTO 仍需结合 Mobile 消费模型与字段读取、PC 实际字段访问和脱敏实测来收敛。',
@@ -740,7 +791,7 @@ function staticDocuments(endpoints, consumerRoutes) {
   );
   generatedDocuments['ANDROID_MAPPING.md'] = generatedDocuments['ANDROID_MAPPING.md'].replace(
     '## 首条纵切片\n\n按搜索 → 播放地址 → 歌词 → Media3 播放实施。开始 Kotlin 代码前，先为相应端点补齐签名 golden fixture、脱敏响应 fixture 或明确的类型化 DTO 契约。',
-    '## 通用风控\n\n`core:network` 从 Body 与 Header 统一识别 `20028`/`ssaCode` Challenge，通过不依赖 UI 的 `ApiRiskVerifier` 串行完成验证。普通请求验证成功后重新生成时间戳和签名并最多重试一次；验证接口必须旁路协调器，超时或断网不得触发重试。\n\n## 首页首批纵切片\n\n- `ApiNetworkDataSource` 暴露每日推荐、`top_card`、推荐歌单、新歌速递和歌曲 URL 五个窄操作；共同复用设备注册、Session、签名、风控和请求执行器。\n- `HomeRepository` 并发刷新三个首页区块，每日推荐在每次成功请求后重抽 6 首；单区失败保留旧快照，旧代际结果不得覆盖新请求。\n- `loadRadio(mode)` 按需加载 `card_id=1/2/3/4/6`，默认私人好歌为 1。\n- `SongPlaybackRepository` 只返回首个 HTTPS 主/备用地址、时长和扩展名，并类型化区分版权、VIP、网络、协议与风控失败。\n- 本批只落到 `core:network`、`core:data`、`core:model`，不包含 Compose、导航、Media3、Queue 或 Mini Player。\n\n这里的“首批”只覆盖首页首屏内容请求，不等于所有首页入口的目标页面已经可用。Feature 模块的 `api` 是跨功能导航/调用合同，不承载网络接口；首页作为 Tabs Shell 根页面当前使用单一 `:feature:home`，不建立空的 `:feature:home:api`。\n\n## 首页入口可达闭环\n\n- 排行榜快捷入口本身不请求网络，进入发现的榜单子页面后由发现领域加载 `API-RANKING-003`（榜单列表），进入具体榜单后使用 `API-RANKING-001`（榜单歌曲）。两者不得加入首页下拉刷新的并发组。\n- 精选歌单快捷入口进入发现的推荐歌单分类，复用已经实现的 `API-DISCOVER-012`，不复制 PC 固定个人歌单 ID，也不增加一个首页专属接口。\n- 首页 6 个推荐歌单和发现歌单共用详情目的地；点击后使用 `API-PLAYLIST-007` 分页读取歌单信息和歌曲。\n- 上述 `API-RANKING-003`、`API-RANKING-001`、`API-PLAYLIST-007` 是下一批共享发现/歌单数据能力，不扩充 `HomeRepository.refresh()` 的职责。',
+    '## 通用风控\n\n`core:network` 从 Body 与 Header 统一识别 `20028`/`ssaCode` Challenge，通过不依赖 UI 的 `ApiRiskVerifier` 串行完成验证。普通请求验证成功后重新生成时间戳和签名并最多重试一次；验证接口必须旁路协调器，超时或断网不得触发重试。\n\n## 首页首批纵切片\n\n- `HomeNetworkDataSource` 提供每日推荐、`top_card` 和新歌速递，`CatalogNetworkDataSource` 提供推荐歌单，歌曲 URL 由独立 `PlaybackNetworkDataSource` 提供；它们共同复用设备注册、Session、签名、风控和请求执行器。\n- `HomeRepository` 并发刷新三个首页区块，每日推荐在每次成功请求后重抽 6 首；单区失败保留旧快照，旧代际结果不得覆盖新请求。\n- `loadRadio(mode)` 按需加载 `card_id=1/2/3/4/6`，默认私人好歌为 1。\n- `SongPlaybackRepository` 只返回首个 HTTPS 主/备用地址、时长和扩展名，并类型化区分版权、VIP、网络、协议与风控失败。\n- 本批只落到 `core:network`、`core:data`、`core:model`，不包含 Compose、导航、Media3、Queue 或 Mini Player。\n\n这里的“首批”只覆盖首页首屏内容请求，不等于所有首页入口的目标页面已经可用。Feature 模块的 `api` 是跨功能导航/调用合同，不承载网络接口；首页作为 Tabs Shell 根页面当前使用单一 `:feature:home`，不建立空的 `:feature:home:api`。\n\n## 首页入口可达闭环\n\n- 排行榜快捷入口本身不请求网络，进入发现的榜单子页面后由发现领域加载 `API-RANKING-003`（榜单列表），进入具体榜单后使用 `API-RANKING-001`（榜单歌曲）。两者不得加入首页下拉刷新的并发组。\n- 精选歌单快捷入口进入发现的推荐歌单分类，复用已经实现的 `API-DISCOVER-012`，不复制 PC 固定个人歌单 ID，也不增加一个首页专属接口。\n- 首页 6 个推荐歌单和发现歌单共用详情目的地；点击后使用 `API-PLAYLIST-007` 分页读取歌单信息和歌曲。\n- 上述 `API-RANKING-003`、`API-RANKING-001`、`API-PLAYLIST-007` 是下一批共享发现/歌单数据能力，不扩充 `HomeRepository.refresh()` 的职责。',
   );
   generatedDocuments['ANDROID_MAPPING.md'] = generatedDocuments['ANDROID_MAPPING.md']
     .replace(
@@ -758,7 +809,11 @@ function staticDocuments(endpoints, consumerRoutes) {
   );
   generatedDocuments['ANDROID_MAPPING.md'] = generatedDocuments['ANDROID_MAPPING.md'].replace(
     '- `Call.Factory` 只作为最底层传输抽象，并由 `ProtocolTransport` 用于设备注册、加密登录和风控验证等二进制、加密或多阶段特殊协议；普通业务接口不得用它重新实现一套 Retrofit。',
-    '- `Call.Factory` 只作为最底层传输抽象，并由 `ProtocolTransport` 用于设备注册、加密登录和风控验证等二进制、加密或多阶段特殊协议；普通业务接口不得用它重新实现一套 Retrofit。Retrofit 按固定 NIA 基线通过 `dagger.Lazy<Call.Factory>` 延迟取得共享 Client。\n- 设备注册通过可注入 Provider 按 Mobile 合同读取总内存、品牌、Build ID、型号和厂商，缺失时使用 fallback，存储字段保留 Mobile 固定兼容值；携带 `ssa-code` 的响应按 2 MiB 上限有界读取并在拒绝路径关闭 Body。',
+    '- 会话传播使用 `sessionPropagation` 明确区分 `Full/DeviceOnly/None`：可信酷狗 API Host 默认在缓存存在时注入完整会话，登录、验证码和二维码只携带设备身份，非可信 Host 禁止传播 Session。`Full` 原样传播持久化的 Cookie 快照；Cookie 合并与认证字段清理由 Session 存储边界负责。`includeDefaultParams=false` 只关闭默认 Query，不关闭 Header/Cookie，歌词搜索因此仍使用 `Full`。\n- 响应认证分类由共享 verifier 负责。首个经 PC 源码、文档和真实 Canary 共同确认的规则是 `API-SEARCH-001 + error_code 152`，适用于 Mobile `search` 模块的歌曲及 `special/album/author/mv` 类型变体；匿名请求进入 `LoginRequired`，已认证请求进入 `SessionExpired` 并只清除认证字段。App 根级认证状态统一导航到可持续占位的登录门禁页面，不使用瞬时 Snackbar 代替认证流程；Feature 不解析 provider 状态码。\n- 远端认证响应携带请求前 Session revision；本地“接口要求登录”检查、门禁确认、Session 写入和失效清理由 `ApiSessionManager` 使用同一 Mutex 串行化。公开 `authenticationState` 也在该锁内读取 Store 最终值并推进外部变更的 revision，不得发出“认证字段已清但尚无门禁”的匿名中间态；即使没有 Flow 订阅，旧请求也不得清除或遮蔽新登录 Session。\n- `Call.Factory` 只作为最底层传输抽象，并由 `ProtocolTransport` 用于设备注册、加密登录和风控验证等二进制、加密或多阶段特殊协议；普通业务接口不得用它重新实现一套 Retrofit。Retrofit 按固定 NIA 基线通过 `dagger.Lazy<Call.Factory>` 延迟取得共享 Client。\n- 设备注册通过可注入 Provider 按 Mobile 合同读取总内存、品牌、Build ID、型号和厂商，缺失时使用 fallback，存储字段保留 Mobile 固定兼容值；携带 `ssa-code` 的响应按 2 MiB 上限有界读取并在拒绝路径关闭 Body。',
+  );
+  generatedDocuments['ANDROID_MAPPING.md'] = generatedDocuments['ANDROID_MAPPING.md'].replace(
+    '## 首页首批纵切片',
+    '## Mobile 39 API 与认证首期\n\n- `MoeKoeMusic-Mobile/src` 实际消费的固定 39 个 API 已全部提供 Network DataSource 与 Repository 能力；总账及逐项离线测试见 [MOBILE_MIGRATION.md](MOBILE_MIGRATION.md)。完整 catalog 的 164 个 Lite 模块不等于本期迁移数量。\n- 手机验证码、密码和二维码登录协议已实现；登录成功先安全持久化 Session，存储失败不得报告成功。完整登录表单仍待后续接入。\n- 用户资料、个人歌单写操作、云盘和每日 VIP 等登录后能力只通过认证 Fake Session、MockWebServer 与 synthetic fixture 验证，尚未使用真实账号联调。\n- 搜索包含单曲、歌单、专辑、歌手、MV、综合搜索、热搜与建议；歌词、视频和听歌识曲使用独立 Network/Data 边界。\n- 所有标准响应统一把非零 `error_code` 视为业务失败；识曲 `status=0` 无匹配和 VIP `131001` 已领取是经 Mobile 消费源码确认的端点特例，不得扩散为全局规则。\n\n## 首页首批纵切片',
   );
   generatedDocuments['README.md'] = generatedDocuments['README.md'].replace(
     `- API 协议源：\`MoeKoeMusic/api@${API_COMMIT}\``,
@@ -895,17 +950,22 @@ function main() {
       authentication: requiredAuth ? 'required' : hasSession ? 'optional' : 'anonymous',
       operation, productScope: productScope(module), validation: 'static-only',
       upstreamRequests,
-      requestFields: applyLiteLoginContract(
+      requestFields: applyEndpointRequestContract(
         module,
-        parseRequestFields(source, declaredFields, objects, callObjects),
-        responseFields,
+        applyLiteLoginContract(
+          module,
+          parseRequestFields(source, declaredFields, objects, callObjects),
+          responseFields,
+        ),
       ),
       responseFields,
       consumerFiles: consumer?.files || new Set(),
       operationName: camel(module),
       requestDto: `Api${pascal(module)}Request`,
       responseDto: `NetworkApi${pascal(module)}Response`,
-      transport: ANDROID_RETROFIT_ENDPOINTS.has(id) || !manual ? 'Retrofit' : 'OkHttp Call.Factory',
+      transport: ANDROID_SPECIAL_PROTOCOL_ENDPOINTS.has(id)
+        ? 'OkHttp Call.Factory'
+        : ANDROID_RETROFIT_ENDPOINTS.has(id) || !manual ? 'Retrofit' : 'OkHttp Call.Factory',
       components: [...components], transforms, cookieWriteback, riskHandling,
     };
   });

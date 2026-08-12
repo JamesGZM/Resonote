@@ -97,6 +97,12 @@ class EncryptedApiSessionStoreTest {
         dfid = "device-dfid",
         token = "secret-token",
         userId = "42",
-        cookies = mapOf("dfid" to "device-dfid", "token" to "secret-token", "userid" to "42"),
+        cookies = mapOf(
+            "dfid" to "device-dfid",
+            "TOKEN" to "secret-token",
+            "userid" to "42",
+            "t1" to "secret-t1",
+            "vip_token" to "secret-vip",
+        ),
     )
 }

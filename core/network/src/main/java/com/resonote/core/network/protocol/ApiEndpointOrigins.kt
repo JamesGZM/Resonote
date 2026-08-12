@@ -8,6 +8,12 @@ internal data class ApiEndpointOrigins(
     val mobileLogin: String = "https://loginserviceretry.kugou.com",
     val deviceRegistration: String = "https://userservice.kugou.com",
     val riskVerification: String = "https://verifyservice.kugou.com",
+    val vip: String = "https://kugouvip.kugou.com",
+    val cloud: String = "https://mcloudservice.kugou.com",
+    val openApi: String = "https://openapi.kugou.com",
+    val complexSearch: String = "https://complexsearch.kugou.com",
+    val lyrics: String = "https://lyrics.kugou.com",
+    val qrLogin: String = "https://login-user.kugou.com",
 )
 
 internal fun interface ApiOriginPolicy {

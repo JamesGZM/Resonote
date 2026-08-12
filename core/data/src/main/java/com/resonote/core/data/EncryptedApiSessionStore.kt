@@ -6,6 +6,7 @@ import com.resonote.core.datastore.EncryptedSessionStorage
 import com.resonote.core.datastore.SessionCipher
 import com.resonote.core.network.session.ApiSession
 import com.resonote.core.network.session.ApiSessionStore
+import com.resonote.core.network.session.apiAuthenticationCookieNames
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
@@ -62,7 +63,7 @@ internal class EncryptedApiSessionStore @Inject constructor(
             current.copy(
                 token = null,
                 userId = null,
-                cookies = current.cookies.filterKeys { it !in AUTH_COOKIE_NAMES },
+                cookies = current.cookies.filterKeys { it.lowercase() !in apiAuthenticationCookieNames },
             )
         val encrypted = cipher.encrypt(json.encodeToString(ApiSession.serializer(), anonymous).encodeToByteArray())
         storage.write(EncryptedSessionEnvelope(SCHEMA_VERSION, encrypted.iv, encrypted.bytes))
@@ -77,6 +78,5 @@ internal class EncryptedApiSessionStore @Inject constructor(
 
     private companion object {
         const val SCHEMA_VERSION = 1
-        val AUTH_COOKIE_NAMES = setOf("token", "userid", "t1", "vip_type", "vip_token")
     }
 }

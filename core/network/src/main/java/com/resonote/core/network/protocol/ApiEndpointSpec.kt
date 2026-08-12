@@ -1,11 +1,10 @@
 package com.resonote.core.network.protocol
 
-import com.resonote.core.network.retrofit.ApiRawResponse
 import com.resonote.core.network.session.ApiSession
 
 internal enum class ApiHttpMethod { Get, Post }
 internal enum class ApiSignatureMode { Android, Web, Register, None }
-internal enum class ApiSessionMode { Full, DeviceOnly, None }
+internal enum class ApiSessionPropagation { Full, DeviceOnly, None }
 internal enum class ApiResponseFormat { Json, Bytes }
 internal enum class ApiCleartextPolicy { Deny, LoginMobileCode }
 internal enum class ApiRiskPolicy { Detect, Bypass }
@@ -18,8 +17,9 @@ internal data class ApiEndpointSpec(
     val query: Map<String, String> = emptyMap(),
     val headers: Map<String, String> = emptyMap(),
     val body: ByteArray? = null,
+    val contentType: String = "application/json",
     val signatureMode: ApiSignatureMode = ApiSignatureMode.Android,
-    val sessionMode: ApiSessionMode = ApiSessionMode.Full,
+    val sessionPropagation: ApiSessionPropagation = ApiSessionPropagation.Full,
     val includeDefaultParams: Boolean = true,
     val responseFormat: ApiResponseFormat = ApiResponseFormat.Json,
     val cleartextPolicy: ApiCleartextPolicy = ApiCleartextPolicy.Deny,
@@ -28,7 +28,7 @@ internal data class ApiEndpointSpec(
     override fun toString(): String =
         "ApiEndpointSpec(id=$id, origin=$origin, path=$path, method=$method, " +
             "queryNames=${query.keys.sorted()}, headerNames=${headers.keys.sorted()}, bodyBytes=${body?.size ?: 0}, " +
-            "signatureMode=$signatureMode, sessionMode=$sessionMode, responseFormat=$responseFormat, " +
+            "signatureMode=$signatureMode, sessionPropagation=$sessionPropagation, responseFormat=$responseFormat, " +
             "cleartextPolicy=$cleartextPolicy, riskPolicy=$riskPolicy)"
 }
 

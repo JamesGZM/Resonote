@@ -23,9 +23,25 @@ const API_ROOT = join(MOEKOE_ROOT, 'api');
 const MOBILE_ROOT = resolve(process.env.MOEKOE_MOBILE_ROOT || join(REFERENCE_ROOT, 'MoeKoeMusic-Mobile'));
 const ALLOWED_EVIDENCE = new Set(['SOURCE_CONFIRMED', 'CONSUMER_CONFIRMED', 'REFERENCE_CONFIRMED', 'DECLARED', 'FIXTURE_CONFIRMED', 'INFERRED', 'UNKNOWN']);
 const ANDROID_RETROFIT_ENDPOINTS = new Set([
+  'API-DISCOVER-003', 'API-DISCOVER-008', 'API-DISCOVER-009', 'API-DISCOVER-012',
+  'API-DISCOVER-013', 'API-DISCOVER-016', 'API-SONG-011', 'API-RANKING-003',
+  'API-RANKING-001', 'API-PLAYLIST-001', 'API-PLAYLIST-006', 'API-PLAYLIST-007',
+  'API-PLAYLIST-009', 'API-PLAYLIST-010', 'API-SEARCH-001', 'API-SEARCH-002',
+  'API-SEARCH-004', 'API-SEARCH-005', 'API-SEARCH-007', 'API-LYRICS-001',
+  'API-VIDEO-003', 'API-RECOGNITION-001', 'API-ALBUM-004', 'API-ARTIST-002',
+  'API-ARTIST-003', 'API-USER-003', 'API-USER-008', 'API-USER-013',
+  'API-CLOUD-003', 'API-LOGIN-008', 'API-LOGIN-010', 'API-YOUTH-008',
+  'API-YOUTH-009',
+]);
+const ANDROID_SPECIAL_PROTOCOL_ENDPOINTS = new Set([
+  'API-DEVICE-001', 'API-LOGIN-001', 'API-LOGIN-002', 'API-LOGIN-003',
+  'API-LOGIN-004', 'API-LOGIN-015', 'API-CLOUD-001',
+]);
+const ANDROID_TYPED_WIRE_ENDPOINTS = new Set([
   'API-DISCOVER-003', 'API-DISCOVER-009', 'API-DISCOVER-012', 'API-DISCOVER-013',
-  'API-SONG-011', 'API-RANKING-003', 'API-RANKING-001', 'API-PLAYLIST-007',
-  'API-SEARCH-001',
+  'API-SONG-011', 'API-RANKING-003', 'API-RANKING-001', 'API-PLAYLIST-001',
+  'API-PLAYLIST-007', 'API-SEARCH-001', 'API-USER-003', 'API-USER-008',
+  'API-USER-013',
 ]);
 
 function git(repo, args) {
@@ -46,9 +62,21 @@ function requiredSection(content, marker, nextMarker, description) {
 function markdownFiles(root) {
   const result = [];
   for (const entry of readdirSync(root, { withFileTypes: true })) {
+    if (entry.isDirectory() && ['.git', 'build', 'node_modules'].includes(entry.name)) continue;
     const path = join(root, entry.name);
     if (entry.isDirectory()) result.push(...markdownFiles(path));
     else if (entry.name.endsWith('.md')) result.push(path);
+  }
+  return result;
+}
+
+function sourceFiles(root, extension) {
+  const result = [];
+  for (const entry of readdirSync(root, { withFileTypes: true })) {
+    if (entry.isDirectory() && ['.git', 'build', 'node_modules'].includes(entry.name)) continue;
+    const path = join(root, entry.name);
+    if (entry.isDirectory()) result.push(...sourceFiles(path, extension));
+    else if (entry.name.endsWith(extension)) result.push(path);
   }
   return result;
 }
@@ -62,6 +90,56 @@ function main() {
   const catalog = readFileSync(catalogPath, 'utf8');
   const modules = [...catalog.matchAll(/^    module: "([^"]+)"$/gm)].map((match) => match[1]);
   const ids = [...catalog.matchAll(/^  - id: "([^"]+)"$/gm)].map((match) => match[1]);
+  const mobileMigration = readFileSync(join(DOC_ROOT, 'MOBILE_MIGRATION.md'), 'utf8');
+  const mobileLedger = requiredSection(
+    mobileMigration,
+    '| Mobile 模块 | 文档 ID |',
+    '\n## 测试与联调规则',
+    'Mobile 迁移总账',
+  );
+  const mobileRows = [...mobileLedger.matchAll(/^\| `([^`]+)` \| (API-[A-Z]+-\d+) \|/gm)]
+    .map((match) => ({ module: match[1], endpointId: match[2] }));
+  if (mobileRows.length !== 39) fail(`Mobile 迁移总账数量错误：${mobileRows.length}/39`);
+  if (new Set(mobileRows.map(({ module }) => module)).size !== 39) fail('Mobile 迁移总账存在重复模块');
+  const unknownMobileIds = mobileRows
+    .map(({ endpointId }) => endpointId)
+    .filter((endpointId) => !ids.includes(endpointId));
+  if (unknownMobileIds.length) fail(`Mobile 迁移总账包含未知文档 ID：${unknownMobileIds.join(', ')}`);
+  const mobileSourceFiles = git(MOBILE_ROOT, ['ls-tree', '-r', '--name-only', MOBILE_COMMIT, '--', 'src'])
+    .split('\n')
+    .filter((path) => /\.(?:ts|tsx)$/.test(path));
+  const mobileSourceModules = new Set();
+  for (const file of mobileSourceFiles) {
+    const source = git(MOBILE_ROOT, ['show', `${MOBILE_COMMIT}:${file}`]);
+    for (const match of source.matchAll(/\bmobileApi\.([A-Za-z0-9_]+)\s*\(/g)) mobileSourceModules.add(match[1]);
+  }
+  const ledgerModules = new Set(mobileRows.map(({ module }) => module));
+  const missingMobileModules = [...mobileSourceModules].filter((module) => !ledgerModules.has(module));
+  const staleMobileModules = [...ledgerModules].filter((module) => !mobileSourceModules.has(module));
+  if (mobileSourceModules.size !== 39 || missingMobileModules.length || staleMobileModules.length) {
+    fail(`Mobile 固定源码与迁移总账不一致：source=${mobileSourceModules.size}, missing=${missingMobileModules.join(',') || '-'}, stale=${staleMobileModules.join(',') || '-'}`);
+  }
+  const androidSource = sourceFiles(join(WORKSPACE_ROOT, 'core/network/src/main'), '.kt')
+    .map((path) => readFileSync(path, 'utf8'))
+    .join('\n');
+  const missingAndroidImplementations = [...new Set(mobileRows.map(({ endpointId }) => endpointId))]
+    .filter((endpointId) => !androidSource.includes(`\"${endpointId}\"`));
+  if (missingAndroidImplementations.length) {
+    fail(`Mobile 迁移总账缺少 Android 网络实现：${missingAndroidImplementations.join(', ')}`);
+  }
+  const retrofitSource = sourceFiles(join(WORKSPACE_ROOT, 'core/network/src/main/java/com/resonote/core/network/api'), '.kt')
+    .map((path) => readFileSync(path, 'utf8'))
+    .join('\n');
+  const specialProtocolSource = [
+    ...sourceFiles(join(WORKSPACE_ROOT, 'core/network/src/main/java/com/resonote/core/network/protocol'), '.kt'),
+    ...sourceFiles(join(WORKSPACE_ROOT, 'core/network/src/main/java/com/resonote/core/network/risk'), '.kt'),
+  ].map((path) => readFileSync(path, 'utf8')).join('\n');
+  for (const endpointId of ANDROID_RETROFIT_ENDPOINTS) {
+    if (!retrofitSource.includes(`\"${endpointId}\"`)) fail(`${endpointId} 的 Retrofit 注册表与 Android 声明不一致`);
+  }
+  for (const endpointId of ANDROID_SPECIAL_PROTOCOL_ENDPOINTS) {
+    if (!specialProtocolSource.includes(`\"${endpointId}\"`)) fail(`${endpointId} 的特殊协议注册表与 Android 实现不一致`);
+  }
   const sourceModules = git(API_ROOT, ['ls-tree', '-r', '--name-only', API_COMMIT, '--', 'module'])
     .split('\n')
     .filter((path) => /^module\/[^/_][^/]*\.js$/.test(path))
@@ -140,6 +218,11 @@ function main() {
   }
   const loginDoc = readFileSync(join(DOC_ROOT, 'endpoints/login.md'), 'utf8');
   const protocolDoc = readFileSync(join(DOC_ROOT, 'PROTOCOL.md'), 'utf8');
+  const androidMapping = readFileSync(join(DOC_ROOT, 'ANDROID_MAPPING.md'), 'utf8');
+  for (const required of [
+    'sessionPropagation', 'API-SEARCH-001 + error_code 152', 'LoginRequired', 'SessionExpired',
+    'Mobile 39 API 与认证首期', 'ContentApi', 'RecognitionApi', '不保留 catch-all 接口文件',
+  ]) if (!androidMapping.includes(required)) fail(`Android/NIA 映射缺失：${required}`);
   for (const required of [
     'http://login.user.kugou.com', 'https://loginserviceretry.kugou.com',
     'login.user.kugou.com', 'https://verifyservice.kugou.com',
@@ -181,9 +264,56 @@ function main() {
     if (!section.includes('| 传输实现 | <code>Retrofit</code> |')) {
       fail(`${endpointId} 的 Android 传输实现未标记为 Retrofit`);
     }
+  }
+  for (const endpointId of ANDROID_TYPED_WIRE_ENDPOINTS) {
+    const anchor = endpointId.toLowerCase();
+    const endpointDoc = markdownFiles(join(DOC_ROOT, 'endpoints')).find((path) =>
+      readFileSync(path, 'utf8').includes(`<a id="${anchor}"></a>`),
+    );
+    const content = readFileSync(endpointDoc, 'utf8');
+    const section = requiredSection(content, `<a id="${anchor}"></a>`, '\n<a id="', endpointId);
     if (!section.includes('类型化 wire DTO 直接承接 Retrofit 响应')) {
       fail(`${endpointId} 的 Android DTO 映射未标记为类型化 Retrofit 响应`);
     }
+  }
+  for (const endpointId of ANDROID_SPECIAL_PROTOCOL_ENDPOINTS) {
+    const anchor = endpointId.toLowerCase();
+    const endpointDoc = markdownFiles(join(DOC_ROOT, 'endpoints')).find((path) =>
+      readFileSync(path, 'utf8').includes(`<a id="${anchor}"></a>`),
+    );
+    if (!endpointDoc) fail(`${endpointId} 缺少 Endpoint 文档`);
+    const content = readFileSync(endpointDoc, 'utf8');
+    const section = requiredSection(content, `<a id="${anchor}"></a>`, '\n<a id="', endpointId);
+    if (!section.includes('| 传输实现 | <code>OkHttp Call.Factory</code> |')) {
+      fail(`${endpointId} 的 Android 传输实现未标记为特殊协议 Call.Factory`);
+    }
+  }
+  const trackedTests = requiredSection(
+    mobileMigration,
+    '## 39 项协议测试追踪',
+    '\n## 实际业务调用变体',
+    '39 项协议测试追踪',
+  );
+  const testSource = sourceFiles(WORKSPACE_ROOT, '.kt')
+    .filter((path) => path.includes('/src/test/'))
+    .map((path) => readFileSync(path, 'utf8'))
+    .join('\n');
+  for (const row of trackedTests.matchAll(/^\| API-[^|]+ \| ([^\n]+)\|$/gm)) {
+    const methodCell = row[1].split('（')[0];
+    for (const match of methodCell.matchAll(/`([^`]+)`/g)) {
+      for (const method of match[1].split('、')) {
+        if (!testSource.includes(`fun ${method}(`)) fail(`迁移追踪引用了不存在的测试方法：${method}`);
+      }
+    }
+  }
+  const recognitionSection = requiredSection(
+    catalog,
+    '  - id: "API-RECOGNITION-001"',
+    '\n  - id:',
+    'catalog API-RECOGNITION-001',
+  );
+  if (!recognitionSection.includes('      - name: "useid"\n        type: "unknown"\n        required: false\n        locations: ["query"]')) {
+    fail('听歌识曲缺少源码确认的上游 Query 字段 useid');
   }
   const fixtureDir = join(DOC_ROOT, 'fixtures');
   const fixtureFiles = readdirSync(fixtureDir).filter((name) => name.endsWith('.json'));
@@ -201,7 +331,7 @@ function main() {
   const sourceFields = [...catalog.matchAll(/^        evidence: "([A-Z_]+)"$/gm)].map((match) => match[1]);
   for (const field of sourceFields) if (!ALLOWED_EVIDENCE.has(field)) fail(`响应字段证据无效：${field}`);
   if (!catalog.includes(`generated_from_api_commit: "${API_COMMIT}"`) || !catalog.includes(`generated_from_app_commit: "${APP_COMMIT}"`)) fail('固定提交记录不正确');
-  process.stdout.write(`Validated 164 modules, ${appRoutes.size} PC routes, ${docs.length} document links, ${schemaEntries} response schemas, ${consumerFields} consumer fields, ${fixtureFiles.length} JSON fixtures.\n`);
+  process.stdout.write(`Validated 164 API modules, 39 Mobile modules, ${appRoutes.size} PC routes, ${docs.length} document links, ${schemaEntries} response schemas, ${consumerFields} consumer fields, ${fixtureFiles.length} JSON fixtures.\n`);
 }
 
 main();

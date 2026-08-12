@@ -157,7 +157,7 @@
 |---|---|
 | DataSource 操作 | <code>userDetail</code> |
 | Request DTO | <code>ApiUserDetailRequest</code> |
-| Response DTO | <code>NetworkApiUserDetailResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
+| Response DTO | <code>NetworkApiUserDetailResponse</code>；名称为静态候选，现行实现由 internal <code>@Serializable</code> 类型化 wire DTO 直接承接 Retrofit 响应 |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code>, <code>ApiResponseDecoder</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiUserDetailResponse |
@@ -430,7 +430,7 @@
 |---|---|
 | DataSource 操作 | <code>userPlaylist</code> |
 | Request DTO | <code>ApiUserPlaylistRequest</code> |
-| Response DTO | <code>NetworkApiUserPlaylistResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
+| Response DTO | <code>NetworkApiUserPlaylistResponse</code>；名称为静态候选，现行实现由 internal <code>@Serializable</code> 类型化 wire DTO 直接承接 Retrofit 响应 |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiUserPlaylistResponse |
@@ -677,7 +677,7 @@
 |---|---|
 | DataSource 操作 | <code>userVipDetail</code> |
 | Request DTO | <code>ApiUserVipDetailRequest</code> |
-| Response DTO | <code>NetworkApiUserVipDetailResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
+| Response DTO | <code>NetworkApiUserVipDetailResponse</code>；名称为静态候选，现行实现由 internal <code>@Serializable</code> 类型化 wire DTO 直接承接 Retrofit 响应 |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiUserVipDetailResponse |

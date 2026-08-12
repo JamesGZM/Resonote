@@ -2,11 +2,13 @@ package com.resonote.core.network.protocol
 
 import com.google.common.truth.Truth.assertThat
 import com.resonote.core.network.ApiRiskException
-import com.resonote.core.network.retrofit.ApiRawResponse
+import com.resonote.core.network.ApiAuthenticationRequiredException
+import com.resonote.core.network.ApiHttpException
 import com.resonote.core.network.risk.ApiRiskChallengeDetector
 import com.resonote.core.network.session.ApiSession
 import com.resonote.core.network.session.ApiSessionManager
 import com.resonote.core.network.session.ApiSessionStore
+import com.resonote.core.network.session.ApiAuthenticationGateReason
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
@@ -72,6 +74,62 @@ class ProtocolTransportTest {
         assertThat(failure.reason).isEqualTo(ApiRiskException.Reason.VerificationUnavailable)
         assertThat(server.requestCount).isEqualTo(1)
     }
+
+    @Test
+    fun fullSessionProtocolHttpUnauthorizedExpiresTheSession() = runTest {
+        server.enqueue(MockResponse().setResponseCode(401))
+        val session = ApiSession("guid", "mid", "dev", dfid = "dfid", token = "token", userId = "42")
+        val executor = transport(session)
+
+        val failure = runCatching {
+            executor.execute { _, _ ->
+                ApiExchange(
+                    ApiEndpointSpec("test-authenticated", origin = server.origin(), path = "/user", method = ApiHttpMethod.Get),
+                    ApiRawResponse::statusCode,
+                )
+            }
+        }.exceptionOrNull() as ApiAuthenticationRequiredException
+
+        assertThat(failure.reason).isEqualTo(ApiAuthenticationGateReason.SessionExpired)
+    }
+
+    @Test
+    fun deviceOnlyProtocolHttpForbiddenRemainsAnOrdinaryHttpFailure() = runTest {
+        server.enqueue(MockResponse().setResponseCode(403))
+        val executor = transport(ApiSession("guid", "mid", "dev", dfid = "dfid"))
+
+        val failure = runCatching {
+            executor.execute { _, _ ->
+                ApiExchange(
+                    ApiEndpointSpec(
+                        "test-login",
+                        origin = server.origin(),
+                        path = "/login",
+                        method = ApiHttpMethod.Get,
+                        sessionPropagation = ApiSessionPropagation.DeviceOnly,
+                    ),
+                    ApiRawResponse::statusCode,
+                )
+            }
+        }.exceptionOrNull() as ApiHttpException
+
+        assertThat(failure.statusCode).isEqualTo(403)
+    }
+
+    private fun transport(session: ApiSession): ProtocolTransport {
+        val sessions = ApiSessionManager(Optional.of(MemoryStore(session)), ApiDeviceIdentityFactory())
+        return ProtocolTransport(
+            { OkHttpClient() },
+            Json { ignoreUnknownKeys = true },
+            StepClock(1_700_000_000_000),
+            ApiRequestSigner(),
+            sessions,
+            ApiRiskChallengeDetector(),
+            ApiOriginPolicy { true },
+        )
+    }
+
+    private fun MockWebServer.origin(): String = url("/").toString().removeSuffix("/")
 
     private fun jsonResponse(body: String) =
         MockResponse().setResponseCode(200).addHeader("Content-Type", "application/json").setBody(body)

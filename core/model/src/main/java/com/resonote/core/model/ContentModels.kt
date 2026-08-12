@@ -1,6 +1,8 @@
 package com.resonote.core.model
 
 sealed interface ContentFailure {
+    data object AuthenticationRequired : ContentFailure
+
     data object Network : ContentFailure
 
     data object ServiceRejected : ContentFailure

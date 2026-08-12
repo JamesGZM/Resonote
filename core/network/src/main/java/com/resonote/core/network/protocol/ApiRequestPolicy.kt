@@ -9,7 +9,7 @@ import retrofit2.Invocation
 internal annotation class ApiRequestPolicy(
     val id: String,
     val signatureMode: ApiSignatureMode = ApiSignatureMode.Android,
-    val sessionMode: ApiSessionMode = ApiSessionMode.Full,
+    val sessionPropagation: ApiSessionPropagation = ApiSessionPropagation.Full,
     val includeDefaultParams: Boolean = true,
 )
 

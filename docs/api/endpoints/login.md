@@ -54,7 +54,7 @@
 | DataSource 操作 | <code>captchaSent</code> |
 | Request DTO | <code>ApiCaptchaSentRequest</code> |
 | Response DTO | <code>NetworkApiCaptchaSentResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
-| 传输实现 | <code>Retrofit</code> |
+| 传输实现 | <code>OkHttp Call.Factory</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code>, <code>ApiDeviceIdentity</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiCaptchaSentResponse |
 
@@ -111,7 +111,7 @@
 | DataSource 操作 | <code>getVerifyInfo</code> |
 | Request DTO | <code>ApiGetVerifyInfoRequest</code> |
 | Response DTO | <code>NetworkApiGetVerifyInfoResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
-| 传输实现 | <code>Retrofit</code> |
+| 传输实现 | <code>OkHttp Call.Factory</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiGetVerifyInfoResponse |
 
@@ -177,7 +177,7 @@
 | DataSource 操作 | <code>login</code> |
 | Request DTO | <code>ApiLoginRequest</code> |
 | Response DTO | <code>NetworkApiLoginResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
-| 传输实现 | <code>Retrofit</code> |
+| 传输实现 | <code>OkHttp Call.Factory</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code>, <code>ApiResponseDecoder</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiLoginResponse |
 
@@ -252,7 +252,7 @@
 | DataSource 操作 | <code>loginCellphone</code> |
 | Request DTO | <code>ApiLoginCellphoneRequest</code> |
 | Response DTO | <code>NetworkApiLoginCellphoneResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
-| 传输实现 | <code>Retrofit</code> |
+| 传输实现 | <code>OkHttp Call.Factory</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code>, <code>ApiDeviceIdentity</code>, <code>ApiResponseDecoder</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiLoginCellphoneResponse |
 
@@ -844,6 +844,6 @@
 | DataSource 操作 | <code>verifyUserInfo</code> |
 | Request DTO | <code>ApiVerifyUserInfoRequest</code> |
 | Response DTO | <code>NetworkApiVerifyUserInfoResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
-| 传输实现 | <code>Retrofit</code> |
+| 传输实现 | <code>OkHttp Call.Factory</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code>, <code>ApiResponseDecoder</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiVerifyUserInfoResponse |

@@ -5,6 +5,7 @@ data class ResolvedSongSource(val uri: String, val durationMillis: Long, val ext
 enum class PlaybackUnavailableReason {
     Copyright,
     Vip,
+    Cloud,
 }
 
 sealed interface ResolveSongSourceResult {

@@ -704,6 +704,10 @@ schemas:
         type: "unknown"
         required: false
         evidence: ["SOURCE_CONFIRMED"]
+      - path: "useid"
+        type: "unknown"
+        required: false
+        evidence: ["SOURCE_CONFIRMED"]
       - path: "user-agent"
         type: "unknown"
         required: false

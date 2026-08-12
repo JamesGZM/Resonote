@@ -1,8 +1,10 @@
 package com.resonote.core.network.protocol
 
 import com.resonote.core.network.ApiProtocolException
+import com.resonote.core.network.ApiAuthenticationRequiredException
 import com.resonote.core.network.ApiServiceException
 import com.resonote.core.network.session.ApiSession
+import com.resonote.core.network.session.ApiAuthenticationGateReason
 import com.resonote.core.network.session.ApiSessionManager
 import java.util.Base64
 import javax.inject.Inject
@@ -33,6 +35,12 @@ internal class DeviceRegistrationCoordinator @Inject constructor(
         val registered = transport.execute { session, _ -> registrationExchange(session) }
         sessions.write(registered)
         registered
+    }
+
+    suspend fun requireAuthenticatedSession(): ApiSession {
+        ensureRegisteredSession()
+        return sessions.authenticatedSessionOrReportRequired()
+            ?: throw ApiAuthenticationRequiredException(ApiAuthenticationGateReason.LoginRequired)
     }
 
     private fun registrationExchange(session: ApiSession): ApiExchange<ApiSession> {

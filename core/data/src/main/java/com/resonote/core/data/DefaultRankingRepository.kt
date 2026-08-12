@@ -4,13 +4,13 @@ import com.resonote.core.model.CollectionLoadResult
 import com.resonote.core.model.Ranking
 import com.resonote.core.model.SongPage
 import com.resonote.core.network.ApiException
-import com.resonote.core.network.ApiNetworkDataSource
+import com.resonote.core.network.RankingNetworkDataSource
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 internal class DefaultRankingRepository @Inject constructor(
-    private val network: ApiNetworkDataSource,
+    private val network: RankingNetworkDataSource,
     private val riskChallenges: RiskChallengeRegistry,
 ) : RankingRepository {
     override suspend fun loadRankings(): CollectionLoadResult<List<Ranking>> =

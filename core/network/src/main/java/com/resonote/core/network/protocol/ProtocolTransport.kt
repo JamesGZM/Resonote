@@ -1,12 +1,13 @@
 package com.resonote.core.network.protocol
 
 import com.resonote.core.network.ApiHttpException
+import com.resonote.core.network.AuthenticationFailureClassifier
 import com.resonote.core.network.ApiNetworkException
 import com.resonote.core.network.ApiProtocolException
 import com.resonote.core.network.ApiRiskException
-import com.resonote.core.network.retrofit.ApiRawResponse
 import com.resonote.core.network.risk.ApiRiskChallengeDetector
 import com.resonote.core.network.session.ApiSession
+import com.resonote.core.network.session.ApiAuthenticationContext
 import com.resonote.core.network.session.ApiSessionManager
 import dagger.Lazy
 import java.io.IOException
@@ -40,15 +41,23 @@ internal class ProtocolTransport @Inject constructor(
 ) {
     suspend fun <T> execute(factory: ApiExchangeFactory<T>): T {
         val session = sessionManager.current()
+        val authenticationContext = sessionManager.authenticationContext()
         val nowMillis = clock.millis()
         val exchange = factory(session, nowMillis)
         val raw = executeRaw(
             prepare(exchange.spec, session, nowMillis / 1_000),
+            exchange.spec,
+            authenticationContext,
             exchange.spec.responseFormat,
         )
         if (exchange.spec.riskPolicy == ApiRiskPolicy.Detect) {
             riskDetector.detect(raw)?.let { challenge ->
                 throw ApiRiskException(challenge, ApiRiskException.Reason.VerificationUnavailable)
+            }
+        }
+        raw.serviceFailureCodeOrNull()?.let { serviceCode ->
+            if (AuthenticationFailureClassifier.capturesServiceFailure(exchange.spec.id, serviceCode)) {
+                AuthenticationFailureClassifier.classify(sessionManager, authenticationContext, serviceCode)?.let { throw it }
             }
         }
         return exchange.decode(raw)
@@ -59,22 +68,14 @@ internal class ProtocolTransport @Inject constructor(
         require(spec.path.startsWith('/') && '?' !in spec.path && '#' !in spec.path) { "Endpoint path must be absolute and query-free" }
         val origin = spec.origin.toHttpUrl()
         require(originPolicy.isAllowed(spec)) { "Only HTTPS or the fixed login mobile-code origin is allowed" }
+        require(
+            spec.sessionPropagation == ApiSessionPropagation.None || ApiSessionOriginPolicy.isAllowed(origin.host),
+        ) { "Session propagation is not allowed for origin ${spec.origin}" }
         require(origin.encodedPath == "/" && origin.query == null && origin.fragment == null) { "Origin must not include path, query, or fragment" }
 
         val query = linkedMapOf<String, String>()
         if (spec.includeDefaultParams) {
-            query += mapOf(
-                "dfid" to session.dfid.orEmpty().ifBlank { "-" },
-                "mid" to session.mid,
-                "uuid" to ApiProtocolConfig.UUID,
-                "appid" to ApiProtocolConfig.APP_ID,
-                "clientver" to ApiProtocolConfig.CLIENT_VERSION,
-                "clienttime" to clientTime.toString(),
-            )
-            if (spec.sessionMode == ApiSessionMode.Full) {
-                session.token?.takeIf(String::isNotBlank)?.let { query["token"] = it }
-                session.userId?.takeIf { it.isNotBlank() && it != "0" }?.let { query["userid"] = it }
-            }
+            query += ApiSessionRequestDecorator.defaultQuery(session, clientTime, spec.sessionPropagation)
         }
         query += spec.query
         if (spec.signatureMode != ApiSignatureMode.None && "signature" !in query) {
@@ -89,35 +90,26 @@ internal class ProtocolTransport @Inject constructor(
         val url = origin.newBuilder().encodedPath(spec.path).apply { query.forEach(::addQueryParameter) }.build()
         val builder = Request.Builder().url(url)
         spec.headers.forEach(builder::header)
-        if (spec.sessionMode != ApiSessionMode.None) {
-            builder.header("dfid", session.dfid.orEmpty().ifBlank { "-" })
-            builder.header("mid", session.mid)
-            builder.header("clienttime", query["clienttime"] ?: clientTime.toString())
-            builder.header("kg-rc", "1")
-            builder.header("kg-thash", "5d816a0")
-            builder.header("kg-rec", "1")
-            builder.header("kg-rf", "B9EDA08A64250DEFFBCADDEE00F8F25F")
-            cookieHeader(spec.sessionMode, session)?.let { builder.header("Cookie", it) }
-        }
+        ApiSessionRequestDecorator.applySessionHeaders(
+            builder,
+            session,
+            query["clienttime"] ?: clientTime.toString(),
+            spec.sessionPropagation,
+        )
         if (builder.build().header("User-Agent") == null) builder.header("User-Agent", ApiProtocolConfig.USER_AGENT)
         when (spec.method) {
             ApiHttpMethod.Get -> builder.get()
-            ApiHttpMethod.Post -> builder.post(spec.body.orEmpty().toRequestBody("application/json".toMediaType()))
+            ApiHttpMethod.Post -> builder.post(spec.body.orEmpty().toRequestBody(spec.contentType.toMediaType()))
         }
         return builder.build()
     }
 
-    private fun cookieHeader(mode: ApiSessionMode, session: ApiSession): String? {
-        val cookies =
-            when (mode) {
-                ApiSessionMode.None -> emptyMap()
-                ApiSessionMode.DeviceOnly -> mapOf("mid" to session.mid)
-                ApiSessionMode.Full -> session.cookies
-            }
-        return cookies.entries.joinToString("; ") { (name, value) -> "$name=$value" }.takeIf(String::isNotEmpty)
-    }
-
-    private suspend fun executeRaw(request: Request, responseFormat: ApiResponseFormat): ApiRawResponse {
+    private suspend fun executeRaw(
+        request: Request,
+        spec: ApiEndpointSpec,
+        authenticationContext: ApiAuthenticationContext,
+        responseFormat: ApiResponseFormat,
+    ): ApiRawResponse {
         val response =
             try {
                 callFactory.get().newCall(request).await()
@@ -132,7 +124,12 @@ internal class ProtocolTransport @Inject constructor(
             }
         response.use {
             val bytes = it.body?.bytes().orEmpty()
-            if (!it.isSuccessful) throw ApiHttpException(it.code)
+            if (!it.isSuccessful) {
+                if (AuthenticationFailureClassifier.capturesHttpFailure(it.code, spec.sessionPropagation)) {
+                    AuthenticationFailureClassifier.classify(sessionManager, authenticationContext)?.let { throw it }
+                }
+                throw ApiHttpException(it.code)
+            }
             val body =
                 bytes.takeIf(ByteArray::isNotEmpty)?.let { payload ->
                     runCatching { json.parseToJsonElement(payload.decodeToString()) as? JsonObject }.getOrNull()
@@ -142,6 +139,14 @@ internal class ProtocolTransport @Inject constructor(
             }
             return ApiRawResponse(it.code, it.headers.toMultimap(), bytes, body)
         }
+    }
+
+    private fun ApiRawResponse.serviceFailureCodeOrNull(): String? {
+        val status = body?.get("status")?.toString()?.trim('"')?.trim()?.takeIf(String::isNotEmpty)
+        val errorCode = body?.get("error_code")?.toString()?.trim('"')?.trim()?.takeIf(String::isNotEmpty)
+        val failedStatus = status?.toDoubleOrNull() == 0.0
+        val failedCode = errorCode != null && errorCode.toDoubleOrNull() != 0.0
+        return (errorCode ?: status).takeIf { failedStatus || failedCode }
     }
 
     private suspend fun Call.await(): Response = suspendCancellableCoroutine { continuation ->
