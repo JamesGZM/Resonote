@@ -1,0 +1,33 @@
+<resources>
+    <string name="my_title">我的</string>
+    <string name="my_refresh">刷新音乐库</string>
+    <string name="my_checking_account">正在检查登录状态</string>
+    <string name="my_anonymous_title">把喜欢的声音带在身边</string>
+    <string name="my_anonymous_body">登录后同步个人资料、喜欢的歌曲，以及创建和收藏的歌单。</string>
+    <string name="my_login">登录账号</string>
+    <string name="my_anonymous_local_note">本地音乐属于此设备，不会因为登录或换号而被清除。</string>
+    <string name="my_unnamed_user">未命名用户</string>
+    <string name="my_vip">VIP</string>
+    <string name="my_user_id">ID %1$s</string>
+    <string name="my_avatar">%1$s的头像</string>
+    <string name="my_follows">关注</string>
+    <string name="my_fans">粉丝</string>
+    <string name="my_listen_time">听歌时长</string>
+    <string name="my_liked">我喜欢</string>
+    <string name="my_created_playlists">我创建的歌单</string>
+    <string name="my_collected_playlists">我收藏的歌单</string>
+    <string name="my_playlist_count">%1$d 个</string>
+    <string name="my_song_count">%1$d 首</string>
+    <string name="my_playlist_artwork">%1$s的歌单封面</string>
+    <string name="my_created_empty">还没有创建歌单。</string>
+    <string name="my_collected_empty">还没有收藏歌单。</string>
+    <string name="my_loading_playlists">正在同步歌单</string>
+    <string name="my_profile_error">个人资料加载失败</string>
+    <string name="my_playlists_error">歌单加载失败</string>
+    <string name="my_retry">重试</string>
+    <string name="my_error_auth">登录状态已失效，请重新登录。</string>
+    <string name="my_error_network">网络连接似乎中断了。</string>
+    <string name="my_error_service">服务暂时无法返回内容。</string>
+    <string name="my_error_risk">服务要求完成安全验证。</string>
+    <string name="my_error_protocol">内容暂时无法解析。</string>
+</resources>

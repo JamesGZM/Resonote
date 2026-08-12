@@ -39,6 +39,11 @@ internal fun ResonoteApp(viewModel: MainActivityViewModel = hiltViewModel()) {
             entry<TabsShellNavKey> {
                 TabsShell(
                     playbackState = playbackState,
+                    onLoginRequest = {
+                        if (backStack.lastOrNull() !is LoginGateNavKey) {
+                            backStack.add(LoginGateNavKey(sessionExpired = false))
+                        }
+                    },
                     onSearchClick = { backStack.add(SearchNavKey()) },
                     onPlaylistClick = { backStack.add(PlaylistNavKey(it)) },
                     onAlbumClick = { album ->

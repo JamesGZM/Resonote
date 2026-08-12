@@ -38,6 +38,7 @@ dependencies {
     implementation(projects.feature.artist.impl)
     implementation(projects.feature.discover.impl)
     implementation(projects.feature.home.impl)
+    implementation(projects.feature.library.impl)
     implementation(projects.feature.player.impl)
     implementation(projects.feature.playlist.api)
     implementation(projects.feature.playlist.impl)

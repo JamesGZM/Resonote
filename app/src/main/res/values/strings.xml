@@ -4,6 +4,5 @@
     <string name="tab_home">Home</string>
     <string name="tab_discover">Discover</string>
     <string name="tab_my">My music</string>
-    <string name="page_in_design">Page design in progress</string>
     <string name="feature_coming_soon">Feature in development</string>
 </resources>

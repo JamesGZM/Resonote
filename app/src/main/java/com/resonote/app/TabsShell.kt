@@ -2,7 +2,6 @@ package com.resonote.app
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -41,6 +40,8 @@ import com.resonote.feature.discover.impl.DiscoverSection
 import com.resonote.feature.discover.impl.DiscoverViewModel
 import com.resonote.feature.home.impl.HomeRoute
 import com.resonote.feature.home.impl.HomeViewModel
+import com.resonote.feature.library.impl.MyRoute
+import com.resonote.feature.library.impl.MyViewModel
 import com.resonote.feature.player.impl.MiniPlayerUiState
 import com.resonote.feature.player.impl.ResonoteMiniPlayer
 import kotlinx.coroutines.launch
@@ -64,6 +65,8 @@ internal fun TabsShell(
     onAlbumClick: (Album) -> Unit = {},
     onRankingClick: (Ranking) -> Unit = {},
     discoverViewModel: DiscoverViewModel? = null,
+    myViewModel: MyViewModel? = null,
+    onLoginRequest: () -> Unit = {},
 ) {
     val tabsShellState = rememberTabsShellState()
     val selectedTab = tabsShellState.selectedTab
@@ -150,7 +153,16 @@ internal fun TabsShell(
                                 viewModel = actualViewModel,
                             )
                         }
-                        ResonoteTab.MY -> PlaceholderPage(stringResource(R.string.tab_my))
+                        ResonoteTab.MY -> {
+                            val bottomContentPadding = if (currentSong == null) 24.dp else 120.dp
+                            val actualViewModel = myViewModel ?: hiltViewModel()
+                            MyRoute(
+                                bottomContentPadding = bottomContentPadding,
+                                onLoginClick = onLoginRequest,
+                                onPlaylistClick = onPlaylistClick,
+                                viewModel = actualViewModel,
+                            )
+                        }
                     }
                 }
 
@@ -183,15 +195,4 @@ private fun AudioQuality.toLabel(): String? = when (this) {
     AudioQuality.HighQuality -> "HQ"
     AudioQuality.HighResolution -> "HI-RES"
     AudioQuality.Lossless -> "LOSSLESS"
-}
-
-@Composable
-private fun PlaceholderPage(title: String) {
-    Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(title, Modifier.padding(top = 72.dp), style = MaterialTheme.typography.headlineMedium)
-        Text(
-            stringResource(R.string.page_in_design), Modifier.padding(top = 12.dp),
-            color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge,
-        )
-    }
 }
