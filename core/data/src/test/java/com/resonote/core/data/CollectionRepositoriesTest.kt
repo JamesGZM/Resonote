@@ -6,8 +6,7 @@ import com.resonote.core.model.CollectionLoadResult
 import com.resonote.core.model.ContentFailure
 import com.resonote.core.network.ApiNetworkDataSource
 import com.resonote.core.network.ApiProtocolException
-import com.resonote.core.network.model.NetworkHomePlaylist
-import com.resonote.core.network.model.NetworkHomeSong
+import com.resonote.core.network.model.NetworkPlaylistSummary
 import com.resonote.core.network.model.NetworkMobileCodeLoginResult
 import com.resonote.core.network.model.NetworkPlaylistInfo
 import com.resonote.core.network.model.NetworkPlaylistPage
@@ -15,6 +14,7 @@ import com.resonote.core.network.model.NetworkRecommendationMode
 import com.resonote.core.network.model.NetworkRanking
 import com.resonote.core.network.model.NetworkSearchPage
 import com.resonote.core.network.model.NetworkSongPage
+import com.resonote.core.network.model.NetworkSong
 import com.resonote.core.network.model.NetworkSongSource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
@@ -109,7 +109,7 @@ class CollectionRepositoriesTest {
         }
 
         private fun song() =
-            NetworkHomeSong(
+            NetworkSong(
                 hash = "hash",
                 title = "歌曲",
                 artist = "歌手",
@@ -125,10 +125,10 @@ class CollectionRepositoriesTest {
                 fileId = "file-1",
             )
 
-        override suspend fun dailyRecommendations(): List<NetworkHomeSong> = error("unused")
-        override suspend fun recommendedPlaylists(page: Int, pageSize: Int): List<NetworkHomePlaylist> = error("unused")
-        override suspend fun newSongs(page: Int, pageSize: Int): List<NetworkHomeSong> = error("unused")
-        override suspend fun radioRecommendations(mode: NetworkRecommendationMode): List<NetworkHomeSong> = error("unused")
+        override suspend fun dailyRecommendations(): List<NetworkSong> = error("unused")
+        override suspend fun recommendedPlaylists(page: Int, pageSize: Int): List<NetworkPlaylistSummary> = error("unused")
+        override suspend fun newSongs(page: Int, pageSize: Int): List<NetworkSong> = error("unused")
+        override suspend fun radioRecommendations(mode: NetworkRecommendationMode): List<NetworkSong> = error("unused")
         override suspend fun resolveSongSource(hash: String, albumId: String?, albumAudioId: String?): NetworkSongSource = error("unused")
         override suspend fun searchSongs(keywords: String, page: Int, pageSize: Int): NetworkSearchPage = error("unused")
         override suspend fun sendMobileCode(mobile: String) = error("unused")

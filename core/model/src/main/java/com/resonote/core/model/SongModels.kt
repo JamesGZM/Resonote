@@ -1,0 +1,23 @@
+package com.resonote.core.model
+
+enum class AudioQuality {
+    Standard,
+    HighQuality,
+    HighResolution,
+    Lossless,
+}
+
+data class OnlineSong(
+    val hash: String,
+    val title: String,
+    val artist: String?,
+    val coverUrl: String?,
+    val albumId: String?,
+    val albumAudioId: String?,
+    val durationMillis: Long,
+    val quality: AudioQuality,
+    val vip: Boolean,
+    val albumTitle: String? = null,
+)
+
+data class SongPage(val songs: List<OnlineSong>, val page: Int, val total: Int?, val hasMore: Boolean)

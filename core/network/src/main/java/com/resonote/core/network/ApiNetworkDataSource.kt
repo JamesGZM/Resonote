@@ -2,30 +2,30 @@ package com.resonote.core.network
 
 import com.resonote.core.network.model.NetworkSearchPage
 import com.resonote.core.network.model.NetworkMobileCodeLoginResult
-import com.resonote.core.network.model.NetworkHomePlaylist
-import com.resonote.core.network.model.NetworkHomeSong
+import com.resonote.core.network.model.NetworkPlaylistSummary
 import com.resonote.core.network.model.NetworkRecommendationMode
 import com.resonote.core.network.model.NetworkRanking
 import com.resonote.core.network.model.NetworkPlaylistPage
 import com.resonote.core.network.model.NetworkSongPage
+import com.resonote.core.network.model.NetworkSong
 import com.resonote.core.network.model.NetworkSongSource
 
 interface ApiNetworkDataSource {
-    suspend fun dailyRecommendations(): List<NetworkHomeSong>
+    suspend fun dailyRecommendations(): List<NetworkSong>
 
     suspend fun recommendedPlaylists(
         page: Int = 1,
         pageSize: Int = 6,
-    ): List<NetworkHomePlaylist>
+    ): List<NetworkPlaylistSummary>
 
     suspend fun newSongs(
         page: Int = 1,
         pageSize: Int = 6,
-    ): List<NetworkHomeSong>
+    ): List<NetworkSong>
 
     suspend fun radioRecommendations(
         mode: NetworkRecommendationMode = NetworkRecommendationMode.Personal,
-    ): List<NetworkHomeSong>
+    ): List<NetworkSong>
 
     suspend fun resolveSongSource(
         hash: String,

@@ -218,18 +218,18 @@ class LiveApiSearchCanaryTest {
     }
 
     private fun roundRobinCandidates(
-        pools: List<List<com.resonote.core.network.model.NetworkHomeSong>>,
+        pools: List<List<com.resonote.core.network.model.NetworkSong>>,
         limit: Int,
-    ): List<com.resonote.core.network.model.NetworkHomeSong> {
+    ): List<com.resonote.core.network.model.NetworkSong> {
         val orderedPools =
             pools.map { pool ->
                 pool.distinctBy { it.hash }
                     .shuffled()
                     .sortedWith(
                         compareBy(
-                            com.resonote.core.network.model.NetworkHomeSong::vip,
-                            com.resonote.core.network.model.NetworkHomeSong::losslessAvailable,
-                            com.resonote.core.network.model.NetworkHomeSong::highQualityAvailable,
+                            com.resonote.core.network.model.NetworkSong::vip,
+                            com.resonote.core.network.model.NetworkSong::losslessAvailable,
+                            com.resonote.core.network.model.NetworkSong::highQualityAvailable,
                         ),
                     )
             }

@@ -726,6 +726,10 @@ function staticDocuments(endpoints, consumerRoutes) {
       '请求签名、公共参数、Session Header 与 Cookie 由 `ApiProtocolInterceptor` 基于 `@Tag` 请求策略统一注入。',
       '方法级 `@ApiRequestPolicy` 声明静态策略；`ApiDefaultsInterceptor` 读取已初始化的 Session 内存快照并注入公共参数/Header/Cookie，`ApiSigningInterceptor` 通过 Retrofit `Invocation` Tag 对最终 Query 与序列化 Body 字节签名。',
     );
+  generatedDocuments['ANDROID_MAPPING.md'] = generatedDocuments['ANDROID_MAPPING.md'].replace(
+    '- Repository 使用 fake DataSource 测试，不以脆弱的调用顺序 mock 为主。',
+    '- Retrofit wire DTO 只描述上游传输结构并保持 internal；Network DataSource 校验必要字段后，将不同端点归一化为按稳定业务概念命名的 Network model；Repository 再映射为 `core:model` 领域模型，三层不得复用同一个类。\n- 首页、搜索、榜单和歌单共享歌曲语义时统一映射到 `NetworkSong`，不复制 `NetworkHomeSong`、`NetworkSearchSong` 等页面所有权类型；传输结构确实不同时可以拆 wire DTO。wire DTO 按协议域拆文件，Network/Domain model 按内聚业务概念拆文件，避免 catch-all 模型文件。\n- Repository 使用 fake DataSource 测试，不以脆弱的调用顺序 mock 为主。',
+  );
   generatedDocuments['VERIFICATION.md'] = generatedDocuments['VERIFICATION.md'].replace(
     '静态源码通常透传上游 Body，`interface.d.ts` 的返回值又多为 `ApiResponse<any>`，因此本基线只能完整证明请求构造，不能完整证明所有响应字段、可空性、枚举全集或当前可用性。未列出字段不代表不存在。',
     '静态源码通常透传上游 Body；`interface.d.ts` 的 `ApiResponse<T = any>` 可以证明 Node 层统一 HTTP 调用结果（`status/body/headers/cookie`），但默认 `any` 不能证明各端点 Body `T` 的完整字段。因此本基线只能完整证明请求构造与外层传输契约，不能完整证明所有服务端 Body 字段、可空性、枚举全集或当前可用性。未列出字段不代表不存在。',

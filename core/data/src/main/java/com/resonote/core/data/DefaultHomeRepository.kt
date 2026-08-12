@@ -2,7 +2,7 @@ package com.resonote.core.data
 
 import com.resonote.core.model.HomeContent
 import com.resonote.core.model.HomeIssue
-import com.resonote.core.model.HomePlaylist
+import com.resonote.core.model.PlaylistSummary
 import com.resonote.core.model.HomeRefreshResult
 import com.resonote.core.model.HomeSection
 import com.resonote.core.model.OnlineSong
@@ -10,7 +10,7 @@ import com.resonote.core.model.RadioRecommendationResult
 import com.resonote.core.model.RecommendationMode
 import com.resonote.core.network.ApiException
 import com.resonote.core.network.ApiNetworkDataSource
-import com.resonote.core.network.model.NetworkHomePlaylist
+import com.resonote.core.network.model.NetworkPlaylistSummary
 import com.resonote.core.network.model.NetworkRecommendationMode
 import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
@@ -108,8 +108,8 @@ internal class DefaultHomeRepository @Inject constructor(
     }
 }
 
-private fun mapPlaylist(playlist: NetworkHomePlaylist): HomePlaylist =
-    HomePlaylist(
+private fun mapPlaylist(playlist: NetworkPlaylistSummary): PlaylistSummary =
+    PlaylistSummary(
         id = playlist.id,
         title = playlist.title,
         coverUrl = playlist.coverUrl?.replace("{size}", "480"),

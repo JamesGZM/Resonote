@@ -14,13 +14,13 @@ import com.resonote.core.network.ApiNetworkException
 import com.resonote.core.network.ApiPlaybackUnavailableException
 import com.resonote.core.network.ApiProtocolException
 import com.resonote.core.network.ApiRiskException
-import com.resonote.core.network.model.NetworkHomePlaylist
-import com.resonote.core.network.model.NetworkHomeSong
+import com.resonote.core.network.model.NetworkPlaylistSummary
 import com.resonote.core.network.model.NetworkMobileCodeLoginResult
 import com.resonote.core.network.model.NetworkRecommendationMode
 import com.resonote.core.network.model.NetworkRanking
 import com.resonote.core.network.model.NetworkPlaylistPage
 import com.resonote.core.network.model.NetworkSongPage
+import com.resonote.core.network.model.NetworkSong
 import com.resonote.core.network.model.NetworkSearchPage
 import com.resonote.core.network.model.NetworkSongSource
 import com.resonote.core.network.risk.ApiRiskChallenge
@@ -262,7 +262,7 @@ class DefaultHomeRepositoryTest {
     }
 
     private fun song(id: String, lossless: Boolean = false, highQuality: Boolean = false) =
-        NetworkHomeSong(
+        NetworkSong(
             hash = id,
             title = "Title $id",
             artist = "Artist",
@@ -276,7 +276,7 @@ class DefaultHomeRepositoryTest {
             highQualityAvailable = highQuality,
         )
 
-    private fun playlist(id: String) = NetworkHomePlaylist(id, "Playlist $id", "https://img/{size}.jpg", 100)
+    private fun playlist(id: String) = NetworkPlaylistSummary(id, "Playlist $id", "https://img/{size}.jpg", 100)
 
     private fun domainSong(durationMillis: Long) =
         OnlineSong("hash", "Title", "Artist", null, "1", "2", durationMillis, AudioQuality.Standard, false)
@@ -287,15 +287,15 @@ class DefaultHomeRepositoryTest {
     ) = DefaultHomeRepository(network, sampler, riskChallenges)
 
     private class FakeNetwork(
-        var daily: suspend () -> List<NetworkHomeSong> = { emptyList() },
-        var playlists: suspend (Int, Int) -> List<NetworkHomePlaylist> = { _, _ -> emptyList() },
-        var newSongLoader: suspend (Int, Int) -> List<NetworkHomeSong> = { _, _ -> emptyList() },
-        var radio: suspend (NetworkRecommendationMode) -> List<NetworkHomeSong> = { emptyList() },
+        var daily: suspend () -> List<NetworkSong> = { emptyList() },
+        var playlists: suspend (Int, Int) -> List<NetworkPlaylistSummary> = { _, _ -> emptyList() },
+        var newSongLoader: suspend (Int, Int) -> List<NetworkSong> = { _, _ -> emptyList() },
+        var radio: suspend (NetworkRecommendationMode) -> List<NetworkSong> = { emptyList() },
         var source: suspend (String, String?, String?) -> NetworkSongSource = { _, _, _ -> error("unused") },
     ) : ApiNetworkDataSource {
         override suspend fun dailyRecommendations() = daily()
         override suspend fun recommendedPlaylists(page: Int, pageSize: Int) = playlists(page, pageSize)
-        override suspend fun newSongs(page: Int, pageSize: Int): List<NetworkHomeSong> = newSongLoader(page, pageSize)
+        override suspend fun newSongs(page: Int, pageSize: Int): List<NetworkSong> = newSongLoader(page, pageSize)
         override suspend fun radioRecommendations(mode: NetworkRecommendationMode) = radio(mode)
         override suspend fun resolveSongSource(hash: String, albumId: String?, albumAudioId: String?) =
             source(hash, albumId, albumAudioId)

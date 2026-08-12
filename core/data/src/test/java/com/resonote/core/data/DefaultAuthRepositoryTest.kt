@@ -9,12 +9,12 @@ import com.resonote.core.network.ApiNetworkDataSource
 import com.resonote.core.network.ApiRiskException
 import com.resonote.core.network.model.NetworkAccountOption
 import com.resonote.core.network.model.NetworkMobileCodeLoginResult
-import com.resonote.core.network.model.NetworkHomePlaylist
-import com.resonote.core.network.model.NetworkHomeSong
+import com.resonote.core.network.model.NetworkPlaylistSummary
 import com.resonote.core.network.model.NetworkRecommendationMode
 import com.resonote.core.network.model.NetworkRanking
 import com.resonote.core.network.model.NetworkPlaylistPage
 import com.resonote.core.network.model.NetworkSongPage
+import com.resonote.core.network.model.NetworkSong
 import com.resonote.core.network.model.NetworkSongSource
 import com.resonote.core.network.model.NetworkSearchPage
 import com.resonote.core.network.session.ApiSession
@@ -100,10 +100,10 @@ class DefaultAuthRepositoryTest {
         private val login: NetworkMobileCodeLoginResult,
         private val failure: Throwable? = null,
     ) : ApiNetworkDataSource {
-        override suspend fun dailyRecommendations(): List<NetworkHomeSong> = error("unused")
-        override suspend fun recommendedPlaylists(page: Int, pageSize: Int): List<NetworkHomePlaylist> = error("unused")
-        override suspend fun newSongs(page: Int, pageSize: Int): List<NetworkHomeSong> = error("unused")
-        override suspend fun radioRecommendations(mode: NetworkRecommendationMode): List<NetworkHomeSong> = error("unused")
+        override suspend fun dailyRecommendations(): List<NetworkSong> = error("unused")
+        override suspend fun recommendedPlaylists(page: Int, pageSize: Int): List<NetworkPlaylistSummary> = error("unused")
+        override suspend fun newSongs(page: Int, pageSize: Int): List<NetworkSong> = error("unused")
+        override suspend fun radioRecommendations(mode: NetworkRecommendationMode): List<NetworkSong> = error("unused")
         override suspend fun resolveSongSource(hash: String, albumId: String?, albumAudioId: String?): NetworkSongSource = error("unused")
         override suspend fun rankings(): List<NetworkRanking> = error("unused")
         override suspend fun rankingSongs(rankId: String, page: Int, pageSize: Int): NetworkSongPage = error("unused")

@@ -493,6 +493,30 @@ class ApiNetworkDataSourceTest {
     }
 
     @Test
+    fun searchSongsDecodeIntoSharedNetworkSong() = runTest {
+        gatewayServer.enqueue(
+            jsonResponse(
+                """{"status":1,"data":{"lists":[{"FileHash":"SEARCH_HASH","OriSongName":"Search Song","SingerName":"Search Artist","Image":"https://example.com/cover.jpg","Duration":245,"HQFileHash":"HQ_HASH","SQFileHash":"SQ_HASH"}],"total":1}}""",
+            ),
+        )
+
+        val page = dataSource().searchSongs("fixture", page = 1, pageSize = 1)
+
+        assertThat(page.total).isEqualTo(1)
+        with(page.items.single()) {
+            assertThat(hash).isEqualTo("SEARCH_HASH")
+            assertThat(title).isEqualTo("Search Song")
+            assertThat(artist).isEqualTo("Search Artist")
+            assertThat(coverUrl).isEqualTo("https://example.com/cover.jpg")
+            assertThat(durationMillis).isEqualTo(245_000)
+            assertThat(highQualityHash).isEqualTo("HQ_HASH")
+            assertThat(losslessHash).isEqualTo("SQ_HASH")
+            assertThat(highQualityAvailable).isTrue()
+            assertThat(losslessAvailable).isTrue()
+        }
+    }
+
+    @Test
     fun missingDfidRegistersAnonymousDeviceBeforeSignedSearch() = runTest {
         val registration = crypto.encryptPlaylist("""{"status":1,"data":{"dfid":"registered-dfid"}}""")
         deviceRegistrationServer.enqueue(MockResponse().setResponseCode(200).setBody(Buffer().write(registration.ciphertext)))

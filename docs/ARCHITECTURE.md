@@ -273,6 +273,9 @@ sequenceDiagram
 - 写入使用 `suspend` API，并明确本地优先、在线优先或排队写入语义；具体策略由 API 与产品需求决定。
 - 同步失败属于同步状态，不把仍可读取的本地数据误报为页面无内容。
 - Network DTO、Database Entity、Proto 类型分别停留在其数据源边界，映射后才能成为 `core:model` 类型。
+- Retrofit wire DTO 只描述服务端传输结构并保持 `internal`；Network DataSource 将其校验、归一化为按稳定业务概念命名的 Network model，Repository 再映射为 `core:model` 领域模型。三者不得复用同一个类。
+- 同一业务概念被首页、搜索、榜单或歌单共同消费时复用同一个规范化 Network model，不按页面复制 `HomeSong`、`SearchSong` 等同义类型；只有传输结构确实不同时才拆分 wire DTO。
+- 模型文件按内聚的业务概念或协议域拆分，避免把所有首页、搜索、播放和分页类型堆进单个 catch-all 文件；文件组织不改变模块依赖方向。
 - ViewModel 通过 `StateFlow` 暴露不可变 UI State，Compose 使用生命周期感知方式收集。
 - Loading、Content、Empty、Error、Offline、Permission denied 必须按 `design/VALIDATION.md` 区分，不能折叠为一个布尔状态。
 
@@ -556,6 +559,7 @@ flowchart LR
 ```
 
 - 单例 `Json` 同时用于 Retrofit converter 和特殊协议显式序列化，仅启用 `ignoreUnknownKeys` 以兼容新增字段，不启用宽松 JSON 语法。标准 HTTP/JSON 接口由 Retrofit 直接反序列化为 internal `@Serializable` wire DTO；已知字段的兼容变体必须显式建模，必要字段仍在 Network DataSource 映射边界校验。原始 `JsonObject` 仅用于加密、二进制或确有多形结构的特殊协议。
+- Wire DTO 按传输协议域组织，规范化 Network model 按稳定业务概念组织；多个端点共享歌曲语义时统一映射到 `NetworkSong`，再由 Repository 映射为领域 `OnlineSong`。API 字段别名、传输层可空性和 Provider 特有字段不得穿透该边界。
 - 单例 `OkHttpClient` 负责连接池和 application interceptor，同时作为 Retrofit 的 `Call.Factory` 与 `ProtocolTransport` 的底层传输；不得创建第二套 REST Client。Retrofit 按固定 NIA 基线通过 `dagger.Lazy<Call.Factory>` 延迟取得 Client，避免 Hilt 构图时在主线程提前初始化 OkHttp。签名 API Client 显式禁用 OkHttp 连接失败重放，业务层也不对 5xx 自动重试。
 - 标准业务端点以方法级 `@ApiRequestPolicy` 声明静态签名和 Session 策略；拦截器通过 Retrofit `Invocation` Tag 读取该注解。`ApiDefaultsInterceptor` 只读取已初始化的内存 Session 快照并注入公共参数/Header/Cookie，`ApiSigningInterceptor` 对最终 Query 和 Retrofit 已序列化的 Body 字节签名，不传递可变请求上下文。
 - `ApiResponseMetadataInterceptor` 仅对带上述策略、携带 `ssa-code` 且大小受限的 JSON 响应归一化 `ssaCode` 字段；`error_code=20028` 才由 Network DataSource 映射为类型化 Challenge。普通成功响应携带该 Header 时不得误判失败。

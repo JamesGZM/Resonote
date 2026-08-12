@@ -6,7 +6,7 @@ import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.ContentFailure
 import com.resonote.core.model.HomeContent
 import com.resonote.core.model.HomeIssue
-import com.resonote.core.model.HomePlaylist
+import com.resonote.core.model.PlaylistSummary
 import com.resonote.core.model.HomeRefreshResult
 import com.resonote.core.model.HomeSection
 import com.resonote.core.model.OnlineSong
@@ -131,7 +131,7 @@ class HomeViewModelTest {
     private companion object {
         fun content() = HomeContent(
             dailyRecommendations = listOf(song("daily-0"), song("daily-1")),
-            recommendedPlaylists = listOf(HomePlaylist("playlist-0", "Playlist", null, 12_000)),
+            recommendedPlaylists = listOf(PlaylistSummary("playlist-0", "Playlist", null, 12_000)),
             newSongs = listOf(song("new-0")),
         )
 

@@ -13,7 +13,7 @@ import com.resonote.core.designsystem.theme.ResonoteTheme
 import com.resonote.core.designsystem.theme.ResonoteThemeMode
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.HomeContent
-import com.resonote.core.model.HomePlaylist
+import com.resonote.core.model.PlaylistSummary
 import com.resonote.core.model.HomeRefreshResult
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.RadioRecommendationResult
@@ -60,7 +60,7 @@ class TabsShellScreenshotTest {
             HomeContent(
                 dailyRecommendations = List(6) { song("daily-$it") },
                 recommendedPlaylists = List(6) {
-                    HomePlaylist("playlist-$it", "推荐歌单 ${it + 1}", null, 12_000L * (it + 1))
+                    PlaylistSummary("playlist-$it", "推荐歌单 ${it + 1}", null, 12_000L * (it + 1))
                 },
                 newSongs = List(6) { song("new-$it") },
             )

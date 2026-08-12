@@ -10,6 +10,8 @@
 - 每个接口章节给出稳定操作名与静态 DTO 命名候选；候选名称不表示对应类已经实现，已迁移状态以本页纵切片记录和代码为准。
 - 固定 API 包的 `ApiResponse<T = any>` 明确定义了泛型响应模式；默认 `any` 只是 TypeScript 对尚未声明端点 Body 类型的退路。Android 的 Retrofit Service 直接返回 internal `ApiResponse<具体 Data DTO>`，对应实测服务端 JSON 的 `status/error_code/data` 信封；没有该信封的播放地址使用独立 DTO。HTTP 状态由 Retrofit 异常映射，`ssa-code` Header 由受限响应拦截器归一化，Cookie 由 Session/特殊协议在内部处理，不向 Service 返回类型或 DataSource 暴露 `retrofit2.Response`。各端点 Data DTO 仍需结合 Mobile 消费模型与字段读取、PC 实际字段访问和脱敏实测来收敛。
 - Retrofit converter 直接把标准 HTTP/JSON 响应反序列化为 internal `@Serializable` wire DTO；`ignoreUnknownKeys` 只用于兼容服务端新增字段，已知的字符串/数字变体由字段 serializer 显式处理。DataSource 校验必要字段后映射 Network model，wire DTO 与 Network model 均不得进入 Compose 或公共领域模型。`JsonObject` 只保留在加密、二进制或确有多形结构的特殊协议边界。
+- Retrofit wire DTO 只描述上游传输结构并保持 internal；Network DataSource 校验必要字段后，将不同端点归一化为按稳定业务概念命名的 Network model；Repository 再映射为 `core:model` 领域模型，三层不得复用同一个类。
+- 首页、搜索、榜单和歌单共享歌曲语义时统一映射到 `NetworkSong`，不复制 `NetworkHomeSong`、`NetworkSearchSong` 等页面所有权类型；传输结构确实不同时可以拆 wire DTO。wire DTO 按协议域拆文件，Network/Domain model 按内聚业务概念拆文件，避免 catch-all 模型文件。
 - Repository 使用 fake DataSource 测试，不以脆弱的调用顺序 mock 为主。
 - 标准 HTTP/JSON 业务接口由内部 `MusicApi` 以 Retrofit 声明；方法级 `@ApiRequestPolicy` 声明静态策略；`ApiDefaultsInterceptor` 读取已初始化的 Session 内存快照并注入公共参数/Header/Cookie，`ApiSigningInterceptor` 通过 Retrofit `Invocation` Tag 对最终 Query 与序列化 Body 字节签名。
 - `Call.Factory` 只作为最底层传输抽象，并由 `ProtocolTransport` 用于设备注册、加密登录和风控验证等二进制、加密或多阶段特殊协议；普通业务接口不得用它重新实现一套 Retrofit。Retrofit 按固定 NIA 基线通过 `dagger.Lazy<Call.Factory>` 延迟取得共享 Client。

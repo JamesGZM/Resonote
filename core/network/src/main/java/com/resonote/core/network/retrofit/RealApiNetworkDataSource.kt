@@ -26,8 +26,7 @@ import com.resonote.core.network.api.model.SongSourceResponse
 import com.resonote.core.network.api.model.SpecialRecommendRequest
 import com.resonote.core.network.protocol.DeviceRegistrationCoordinator
 import com.resonote.core.network.protocol.MobileAuthProtocolClient
-import com.resonote.core.network.model.NetworkHomePlaylist
-import com.resonote.core.network.model.NetworkHomeSong
+import com.resonote.core.network.model.NetworkPlaylistSummary
 import com.resonote.core.network.model.NetworkMobileCodeLoginResult
 import com.resonote.core.network.model.NetworkPlaylistInfo
 import com.resonote.core.network.model.NetworkPlaylistPage
@@ -60,12 +59,12 @@ internal class RealApiNetworkDataSource @Inject constructor(
     private val clock: Clock,
     private val riskDetector: ApiRiskChallengeDetector,
 ) : ApiNetworkDataSource {
-    override suspend fun dailyRecommendations(): List<NetworkHomeSong> {
+    override suspend fun dailyRecommendations(): List<NetworkSong> {
         registration.ensureRegisteredSession()
         return decodeSongList(callApi { musicApi.dailyRecommendations() })
     }
 
-    override suspend fun recommendedPlaylists(page: Int, pageSize: Int): List<NetworkHomePlaylist> {
+    override suspend fun recommendedPlaylists(page: Int, pageSize: Int): List<NetworkPlaylistSummary> {
         validatePage(page, pageSize)
         val session = registration.ensureRegisteredSession()
         val clientTime = (clock.millis() / 1_000).toString()
@@ -97,7 +96,7 @@ internal class RealApiNetworkDataSource @Inject constructor(
         return decodePlaylists(callApi { musicApi.recommendedPlaylists(body) })
     }
 
-    override suspend fun newSongs(page: Int, pageSize: Int): List<NetworkHomeSong> {
+    override suspend fun newSongs(page: Int, pageSize: Int): List<NetworkSong> {
         validatePage(page, pageSize)
         val session = registration.ensureRegisteredSession()
         val body = NewSongsRequest(
@@ -110,7 +109,7 @@ internal class RealApiNetworkDataSource @Inject constructor(
         return decodeNewSongs(callApi { musicApi.newSongs(body) })
     }
 
-    override suspend fun radioRecommendations(mode: NetworkRecommendationMode): List<NetworkHomeSong> {
+    override suspend fun radioRecommendations(mode: NetworkRecommendationMode): List<NetworkSong> {
         val session = registration.ensureRegisteredSession()
         val nowMillis = clock.millis()
         val body = RadioRecommendationsRequest(
@@ -235,29 +234,29 @@ internal class RealApiNetworkDataSource @Inject constructor(
         return NetworkSearchPage(items, total)
     }
 
-    private fun decodeSongList(response: SongListResponse): List<NetworkHomeSong> {
+    private fun decodeSongList(response: SongListResponse): List<NetworkSong> {
         response.requireSuccess()
         val rawItems = response.data?.songs ?: throw missingField()
-        val items = rawItems.mapNotNull { it.toNetworkHomeSongOrNull() }
+        val items = rawItems.mapNotNull { it.toNetworkSongOrNull() }
         requireConsumableItems(rawItems, items)
         return items
     }
 
-    private fun decodeNewSongs(response: NewSongsResponse): List<NetworkHomeSong> {
+    private fun decodeNewSongs(response: NewSongsResponse): List<NetworkSong> {
         response.requireSuccess()
         val rawItems = response.data ?: throw missingField()
-        val items = rawItems.mapNotNull { it.toNetworkHomeSongOrNull() }
+        val items = rawItems.mapNotNull { it.toNetworkSongOrNull() }
         requireConsumableItems(rawItems, items)
         return items
     }
 
-    private fun decodePlaylists(response: PlaylistRecommendationsResponse): List<NetworkHomePlaylist> {
+    private fun decodePlaylists(response: PlaylistRecommendationsResponse): List<NetworkPlaylistSummary> {
         response.requireSuccess()
         val rawItems = response.data?.playlists ?: throw missingField()
         val items = rawItems.mapNotNull { item ->
             val id = (item.globalCollectionId ?: item.specialid)?.takeIf(String::isNotBlank) ?: return@mapNotNull null
             val title = item.specialname?.takeIf(String::isNotBlank) ?: return@mapNotNull null
-            NetworkHomePlaylist(
+            NetworkPlaylistSummary(
                 id = id,
                 title = title,
                 coverUrl = (item.flexibleCover ?: item.cover ?: item.imgurl)?.takeIf(String::isNotBlank),
@@ -288,7 +287,7 @@ internal class RealApiNetworkDataSource @Inject constructor(
         response.requireSuccess()
         val data = response.data ?: throw missingField()
         val rawItems = data.songs ?: throw missingField()
-        val songs = rawItems.mapNotNull { it.toNetworkHomeSongOrNull() }
+        val songs = rawItems.mapNotNull { it.toNetworkSongOrNull() }
         requireConsumableItems(rawItems, songs)
         val total =
             sequenceOf(data.total, data.totalCount, response.total)
@@ -313,7 +312,7 @@ internal class RealApiNetworkDataSource @Inject constructor(
         response.requireSuccess()
         val data = response.data ?: throw missingField()
         val rawItems = data.songs ?: throw missingField()
-        val songs = rawItems.mapNotNull { it.toNetworkHomeSongOrNull() }
+        val songs = rawItems.mapNotNull { it.toNetworkSongOrNull() }
         requireConsumableItems(rawItems, songs)
         val listInfo = data.info
         val count =
@@ -384,7 +383,7 @@ internal class RealApiNetworkDataSource @Inject constructor(
         )
     }
 
-    private fun MusicSongDto.toNetworkHomeSongOrNull(): NetworkHomeSong? {
+    private fun MusicSongDto.toNetworkSongOrNull(): NetworkSong? {
         val hash = hash ?: fileHash ?: deprecated?.hash ?: return null
         val filename = filename ?: fileName ?: name.orEmpty()
         val (filenameArtist, filenameTitle) = splitArtistTitle(filename)
@@ -393,14 +392,14 @@ internal class RealApiNetworkDataSource @Inject constructor(
         val highQualityHash = highQualityFileHash ?: this.highQualityHash
         val losslessHash = losslessFileHash ?: sqhash ?: this.losslessHash
         val relatedGoodsCount = relatedGoods.size
-        return NetworkHomeSong(
+        return NetworkSong(
             hash = hash,
             title = title,
             artist = (authorName ?: singerName ?: filenameArtist).takeIf(String::isNotBlank),
             coverUrl = transform?.unionCover ?: sizableCover ?: albumSizableCover ?: image ?: cover,
             albumId = albumId,
             albumAudioId = albumAudioId ?: audioId ?: mixsongid,
-            durationMillis = normalizeDurationMillis(timeLength ?: duration ?: deprecated?.duration ?: timelength ?: timelen),
+            durationMillis = normalizeDurationMillis(timeLength ?: duration ?: deprecated?.duration ?: timelength ?: timelen ?: searchDuration),
             highQualityHash = highQualityHash,
             losslessHash = losslessHash,
             vip = (privilege ?: deprecated?.payType ?: 0) >= 10,
@@ -422,20 +421,6 @@ internal class RealApiNetworkDataSource @Inject constructor(
     private fun validatePage(page: Int, pageSize: Int) {
         require(page > 0) { "page must be positive" }
         require(pageSize in 1..100) { "pageSize must be between 1 and 100" }
-    }
-
-    private fun MusicSongDto.toNetworkSongOrNull(): NetworkSong? {
-        val hash = fileHash?.takeIf(String::isNotBlank) ?: return null
-        val title = (originalSongName ?: songName ?: fileName)?.takeIf(String::isNotBlank) ?: return null
-        return NetworkSong(
-            hash = hash,
-            title = title,
-            singerName = singerName.orEmpty(),
-            imageUrl = image?.takeIf(String::isNotBlank),
-            durationSeconds = searchDuration?.coerceAtLeast(0) ?: 0,
-            highQualityHash = highQualityFileHash?.takeIf(String::isNotBlank),
-            losslessHash = losslessFileHash?.takeIf(String::isNotBlank),
-        )
     }
 
     private fun validateSearchRequest(keywords: String, page: Int, pageSize: Int) {

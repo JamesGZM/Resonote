@@ -2,9 +2,9 @@ package com.resonote.core.data
 
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.OnlineSong
-import com.resonote.core.network.model.NetworkHomeSong
+import com.resonote.core.network.model.NetworkSong
 
-internal fun NetworkHomeSong.toOnlineSong(): OnlineSong =
+internal fun NetworkSong.toOnlineSong(): OnlineSong =
     OnlineSong(
         hash = hash,
         title = title,

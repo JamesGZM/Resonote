@@ -5,7 +5,7 @@ import androidx.compose.ui.graphics.Color
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.HomeContent
 import com.resonote.core.model.HomeIssue
-import com.resonote.core.model.HomePlaylist
+import com.resonote.core.model.PlaylistSummary
 import com.resonote.core.model.HomeSection
 import com.resonote.core.model.OnlineSong
 
@@ -71,7 +71,7 @@ internal fun HomeContent.toUiState(radioSongs: List<OnlineSong>): HomeContentUiS
     HomeContentUiState(
         radio = radioSongs.firstOrNull()?.toUiModel() ?: dailyRecommendations.firstOrNull()?.toUiModel(),
         dailySongs = dailyRecommendations.map(OnlineSong::toUiModel),
-        recommendedPlaylists = recommendedPlaylists.map(HomePlaylist::toUiModel),
+        recommendedPlaylists = recommendedPlaylists.map(PlaylistSummary::toUiModel),
         newSongs = newSongs.map(OnlineSong::toUiModel),
     )
 
@@ -95,7 +95,7 @@ private fun OnlineSong.toUiModel(): HomeSongUiModel =
         artworkUrl = coverUrl,
     )
 
-private fun HomePlaylist.toUiModel(): HomePlaylistUiModel =
+private fun PlaylistSummary.toUiModel(): HomePlaylistUiModel =
     HomePlaylistUiModel(
         id = id,
         title = title,
