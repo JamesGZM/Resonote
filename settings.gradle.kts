@@ -45,6 +45,8 @@ include(":core:data")
 include(":core:screenshot-testing")
 include(":feature:home:impl")
 include(":feature:player:impl")
+include(":feature:search:api")
+include(":feature:search:impl")
 
 check(JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
     "Resonote requires JDK 17 or newer. Current JDK: ${JavaVersion.current()}"

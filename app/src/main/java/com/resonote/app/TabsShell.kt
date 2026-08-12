@@ -20,12 +20,8 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -33,8 +29,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.resonote.core.designsystem.component.ResonoteNavigationSuiteScaffold
 import com.resonote.core.model.AudioQuality
-import com.resonote.core.model.OnlineSong
-import com.resonote.feature.home.impl.HomePlaybackRequest
 import com.resonote.feature.home.impl.HomeRoute
 import com.resonote.feature.home.impl.HomeViewModel
 import com.resonote.feature.player.impl.MiniPlayerUiState
@@ -52,13 +46,13 @@ internal enum class ResonoteTab(
 }
 
 @Composable
-internal fun TabsShell(homeViewModel: HomeViewModel? = null) {
+internal fun TabsShell(
+    homeViewModel: HomeViewModel? = null,
+    playbackState: PrototypePlaybackState = rememberPrototypePlaybackState(),
+    onSearchClick: () -> Unit = {},
+) {
     val tabsShellState = rememberTabsShellState()
     val selectedTab = tabsShellState.selectedTab
-    var prototypeQueue by remember { mutableStateOf<List<OnlineSong>>(emptyList()) }
-    var currentSongId by rememberSaveable { mutableStateOf<String?>(null) }
-    var isPlaying by rememberSaveable { mutableStateOf(true) }
-    var progress by rememberSaveable { mutableStateOf(0.42f) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val comingSoonMessage = stringResource(R.string.feature_coming_soon)
@@ -67,16 +61,9 @@ internal fun TabsShell(homeViewModel: HomeViewModel? = null) {
         scope.launch { snackbarHostState.showSnackbar(comingSoonMessage) }
     }
 
-    fun play(request: HomePlaybackRequest) {
-        prototypeQueue = request.songs
-        currentSongId = request.songs[request.startIndex].hash
-        isPlaying = true
-        progress = 0f
-    }
-
     BackHandler(enabled = selectedTab != ResonoteTab.HOME) { tabsShellState.handleBack() }
 
-    val currentSong = prototypeQueue.firstOrNull { it.hash == currentSongId }
+    val currentSong = playbackState.currentSong
     ResonoteNavigationSuiteScaffold(
         navigationSuiteItems = {
             ResonoteTab.entries.forEach { tab ->
@@ -103,17 +90,17 @@ internal fun TabsShell(homeViewModel: HomeViewModel? = null) {
                         val common: @Composable (HomeViewModel?) -> Unit = { suppliedViewModel ->
                             if (suppliedViewModel == null) {
                                 HomeRoute(
-                                    playingMediaId = currentSongId, bottomContentPadding = bottomContentPadding,
-                                    onSearchClick = ::showComingSoon, onRecognitionClick = ::showComingSoon,
-                                    onPlay = ::play, onOpenRankings = ::showComingSoon,
+                                    playingMediaId = playbackState.currentSongId, bottomContentPadding = bottomContentPadding,
+                                    onSearchClick = onSearchClick, onRecognitionClick = ::showComingSoon,
+                                    onPlay = playbackState::play, onOpenRankings = ::showComingSoon,
                                     onOpenFeaturedPlaylists = ::showComingSoon,
                                     onSongMoreClick = { showComingSoon() }, onPlaylistClick = { showComingSoon() },
                                 )
                             } else {
                                 HomeRoute(
-                                    playingMediaId = currentSongId, bottomContentPadding = bottomContentPadding,
-                                    onSearchClick = ::showComingSoon, onRecognitionClick = ::showComingSoon,
-                                    onPlay = ::play, onOpenRankings = ::showComingSoon,
+                                    playingMediaId = playbackState.currentSongId, bottomContentPadding = bottomContentPadding,
+                                    onSearchClick = onSearchClick, onRecognitionClick = ::showComingSoon,
+                                    onPlay = playbackState::play, onOpenRankings = ::showComingSoon,
                                     onOpenFeaturedPlaylists = ::showComingSoon,
                                     onSongMoreClick = { showComingSoon() }, onPlaylistClick = { showComingSoon() },
                                     viewModel = suppliedViewModel,
@@ -130,18 +117,11 @@ internal fun TabsShell(homeViewModel: HomeViewModel? = null) {
                     ResonoteMiniPlayer(
                         state = MiniPlayerUiState(
                             song.hash, song.title, song.artist.orEmpty(), song.quality.toLabel(), song.vip,
-                            isPlaying, progress, PrototypeArtworkColors,
+                            playbackState.isPlaying, playbackState.progress, PrototypeArtworkColors,
                         ),
                         onOpenPlayer = ::showComingSoon,
-                        onTogglePlay = { isPlaying = !isPlaying },
-                        onNext = {
-                            val currentIndex = prototypeQueue.indexOfFirst { it.hash == currentSongId }
-                            if (prototypeQueue.isNotEmpty()) {
-                                currentSongId = prototypeQueue[(currentIndex + 1).mod(prototypeQueue.size)].hash
-                                isPlaying = true
-                                progress = 0f
-                            }
-                        },
+                        onTogglePlay = playbackState::togglePlay,
+                        onNext = playbackState::playNext,
                         onOpenQueue = ::showComingSoon,
                         modifier = Modifier.align(Alignment.BottomCenter).padding(horizontal = 16.dp, vertical = 16.dp),
                     )
