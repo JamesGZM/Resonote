@@ -11,4 +11,26 @@
     <string name="playback_error_local">The local audio file is no longer available</string>
     <string name="playback_error_source">Could not resolve the playback source. Try again.</string>
     <string name="playback_error_player">Playback failed. Try another song.</string>
+    <string name="song_action_play">立即播放</string>
+    <string name="song_action_append_queue">加入队尾</string>
+    <string name="song_action_add_playlist">添加到歌单</string>
+    <string name="song_action_info">歌曲信息</string>
+    <string name="song_action_share">分享</string>
+    <string name="song_action_unavailable">暂未开放</string>
+    <string name="song_action_remove_playlist">从当前歌单移除</string>
+    <string name="song_action_added_queue">已加入队尾</string>
+    <string name="song_action_share_unavailable">分享功能暂未开放</string>
+    <string name="song_action_login_required">登录后可以添加到你的歌单</string>
+    <string name="song_action_add_success">已将“%1$s”添加到“%2$s”</string>
+    <string name="song_info_title">歌曲信息</string>
+    <string name="song_info_name">歌曲</string>
+    <string name="song_info_artist">艺人</string>
+    <string name="song_info_album">专辑</string>
+    <string name="song_info_duration">时长</string>
+    <string name="song_info_quality">音质</string>
+    <string name="song_info_quality_standard">标准</string>
+    <string name="song_info_quality_hq">高品质</string>
+    <string name="song_info_quality_hi_res">Hi-Res</string>
+    <string name="song_info_quality_lossless">无损</string>
+    <string name="song_info_close">关闭</string>
 </resources>

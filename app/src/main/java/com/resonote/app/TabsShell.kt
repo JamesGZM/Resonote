@@ -80,6 +80,7 @@ internal fun TabsShell(
     onModeChange: (PlaybackMode) -> Unit = {},
     onSearchClick: () -> Unit = {},
     onRecognitionClick: () -> Unit = {},
+    onSongMoreClick: (OnlineSong) -> Unit = {},
     onPlaylistClick: (String) -> Unit = {},
     onUserPlaylistClick: (UserPlaylist) -> Unit = {},
     onAlbumClick: (Album) -> Unit = {},
@@ -150,7 +151,7 @@ internal fun TabsShell(
                                         onPlay = { onPlaySongs(it.songs, it.startIndex) },
                                         onOpenRankings = { openDiscover(DiscoverSection.RANKINGS) },
                                         onOpenFeaturedPlaylists = ::showComingSoon,
-                                        onSongMoreClick = { showComingSoon() },
+                                        onSongMoreClick = onSongMoreClick,
                                         onPlaylistClick = { onPlaylistClick(it.id) },
                                     )
                                 } else {
@@ -160,7 +161,7 @@ internal fun TabsShell(
                                         onPlay = { onPlaySongs(it.songs, it.startIndex) },
                                         onOpenRankings = { openDiscover(DiscoverSection.RANKINGS) },
                                         onOpenFeaturedPlaylists = ::showComingSoon,
-                                        onSongMoreClick = { showComingSoon() },
+                                        onSongMoreClick = onSongMoreClick,
                                         onPlaylistClick = { onPlaylistClick(it.id) },
                                         viewModel = suppliedViewModel,
                                     )
@@ -181,7 +182,7 @@ internal fun TabsShell(
                                 onAlbumClick = onAlbumClick,
                                 onPlaySongs = { onPlaySongs(it, 0) },
                                 onSongClick = onPlaySong,
-                                onSongMoreClick = { showComingSoon() },
+                                onSongMoreClick = onSongMoreClick,
                                 viewModel = actualViewModel,
                             )
                         }

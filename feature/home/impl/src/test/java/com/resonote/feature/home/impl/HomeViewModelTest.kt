@@ -81,6 +81,18 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun songActionRecoversDomainSongWithPlaylistWriteFields() = runTest(dispatcher) {
+        val viewModel = HomeViewModel(FakeHomeRepository(content()))
+        advanceUntilIdle()
+
+        val song = viewModel.songForAction("daily-1")
+
+        assertThat(song?.hash).isEqualTo("daily-1")
+        assertThat(song?.albumId).isEqualTo("1")
+        assertThat(song?.albumAudioId).isEqualTo("2")
+    }
+
+    @Test
     fun firstLoadFailurePublishesRetryableError() = runTest(dispatcher) {
         val issue = HomeIssue(HomeSection.DailyRecommendations, ContentFailure.Network)
         val repository = FakeHomeRepository(initialContent = null, refreshResult = HomeRefreshResult.Failed(listOf(issue)))

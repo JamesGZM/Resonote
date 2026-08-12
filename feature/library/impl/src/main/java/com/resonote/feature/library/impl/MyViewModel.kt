@@ -7,6 +7,9 @@ import com.resonote.core.data.LibraryRepository
 import com.resonote.core.data.UserProfileRepository
 import com.resonote.core.model.AuthState
 import com.resonote.core.model.CollectionLoadResult
+import com.resonote.core.model.OnlineSong
+import com.resonote.core.model.PlaylistTrackInput
+import com.resonote.core.model.UserPlaylist
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineStart
@@ -31,6 +34,7 @@ class MyViewModel @Inject constructor(
     private var activeUserId: String? = null
     private var refreshJob: Job? = null
     private var createPlaylistJob: Job? = null
+    private var addTrackJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -39,6 +43,8 @@ class MyViewModel @Inject constructor(
                 refreshJob = null
                 createPlaylistJob?.cancel()
                 createPlaylistJob = null
+                addTrackJob?.cancel()
+                addTrackJob = null
                 when (authState) {
                     AuthState.Anonymous, is AuthState.AuthenticationRequired -> {
                         activeUserId = null
@@ -56,7 +62,13 @@ class MyViewModel @Inject constructor(
 
     fun refresh() {
         val userId = activeUserId ?: return
-        if (refreshJob?.isActive == true || createPlaylistJob?.isActive == true) return
+        if (
+            refreshJob?.isActive == true ||
+            createPlaylistJob?.isActive == true ||
+            addTrackJob?.isActive == true
+        ) {
+            return
+        }
         mutableUiState.update { state ->
             (state as? MyUiState.Authenticated)?.copy(isRefreshing = true) ?: state
         }
@@ -84,7 +96,8 @@ class MyViewModel @Inject constructor(
         if (
             normalizedName.isEmpty() ||
             createPlaylistJob?.isActive == true ||
-            refreshJob?.isActive == true
+            refreshJob?.isActive == true ||
+            addTrackJob?.isActive == true
         ) {
             return
         }
@@ -129,6 +142,94 @@ class MyViewModel @Inject constructor(
         updateAuthenticated(userId) { state ->
             if (state.playlistCreation is PlaylistCreationUiState.Created) {
                 state.copy(playlistCreation = PlaylistCreationUiState.Idle)
+            } else {
+                state
+            }
+        }
+    }
+
+    fun preparePlaylistAddition() {
+        val userId = activeUserId ?: return
+        updateAuthenticated(userId) { state ->
+            if (state.playlistAddition is PlaylistAdditionUiState.Submitting) {
+                state
+            } else {
+                state.copy(playlistAddition = PlaylistAdditionUiState.Idle)
+            }
+        }
+    }
+
+    fun addSongToPlaylist(playlist: UserPlaylist, song: OnlineSong) {
+        val userId = activeUserId ?: return
+        if (
+            addTrackJob?.isActive == true ||
+            refreshJob?.isActive == true ||
+            createPlaylistJob?.isActive == true
+        ) {
+            return
+        }
+        val state = mutableUiState.value as? MyUiState.Authenticated ?: return
+        val writablePlaylist = (state.playlists as? MySectionState.Available)
+            ?.value
+            ?.firstOrNull { it.listId == playlist.listId && it.isMine }
+            ?: return
+
+        updateAuthenticated(userId) {
+            it.copy(playlistAddition = PlaylistAdditionUiState.Submitting(writablePlaylist.listId))
+        }
+        lateinit var job: Job
+        job = viewModelScope.launch(start = CoroutineStart.LAZY) {
+            try {
+                val input = PlaylistTrackInput(
+                    hash = song.hash,
+                    title = song.title,
+                    artist = song.artist.orEmpty(),
+                    albumId = song.albumId,
+                    albumAudioId = song.albumAudioId,
+                )
+                when (val result = libraryRepository.addTracks(writablePlaylist.listId, listOf(input))) {
+                    is CollectionLoadResult.Failed -> updateAuthenticated(userId) {
+                        it.copy(
+                            playlistAddition = PlaylistAdditionUiState.Failed(
+                                writablePlaylist.listId,
+                                result.failure,
+                            ),
+                        )
+                    }
+                    is CollectionLoadResult.Available -> updateAuthenticated(userId) { latest ->
+                        latest.copy(
+                            playlists = latest.playlists.incrementPlaylistCount(writablePlaylist.listId),
+                            playlistAddition = PlaylistAdditionUiState.Added(
+                                playlistName = writablePlaylist.name,
+                                songTitle = song.title,
+                            ),
+                        )
+                    }
+                }
+            } finally {
+                if (addTrackJob === job) addTrackJob = null
+            }
+        }
+        addTrackJob = job
+        job.start()
+    }
+
+    fun dismissPlaylistAdditionFailure() {
+        val userId = activeUserId ?: return
+        updateAuthenticated(userId) { state ->
+            if (state.playlistAddition is PlaylistAdditionUiState.Failed) {
+                state.copy(playlistAddition = PlaylistAdditionUiState.Idle)
+            } else {
+                state
+            }
+        }
+    }
+
+    fun acknowledgePlaylistAddition() {
+        val userId = activeUserId ?: return
+        updateAuthenticated(userId) { state ->
+            if (state.playlistAddition is PlaylistAdditionUiState.Added) {
+                state.copy(playlistAddition = PlaylistAdditionUiState.Idle)
             } else {
                 state
             }
@@ -194,4 +295,15 @@ class MyViewModel @Inject constructor(
             transform(authenticated)
         }
     }
+}
+
+private fun MySectionState<List<UserPlaylist>>.incrementPlaylistCount(
+    listId: String,
+): MySectionState<List<UserPlaylist>> = when (this) {
+    is MySectionState.Available -> copy(
+        value = value.map { playlist ->
+            if (playlist.listId == listId) playlist.copy(count = playlist.count + 1) else playlist
+        },
+    )
+    else -> this
 }

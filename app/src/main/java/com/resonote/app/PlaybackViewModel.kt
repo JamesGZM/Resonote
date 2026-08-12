@@ -44,6 +44,10 @@ internal class PlaybackViewModel @Inject constructor(
         )
     }
 
+    fun appendOnline(song: OnlineSong) {
+        playbackController.append(listOf(PlaybackItem(song)))
+    }
+
     fun playLocal(media: LocalMedia) {
         playbackController.play(PlaybackItem(media))
     }

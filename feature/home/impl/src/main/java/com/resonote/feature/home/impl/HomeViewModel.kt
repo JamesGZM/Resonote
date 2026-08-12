@@ -85,6 +85,12 @@ class HomeViewModel @Inject constructor(
         return HomePlaybackRequest(songs, requestedIndex.takeIf { it >= 0 } ?: 0)
     }
 
+    fun songForAction(mediaId: String): OnlineSong? {
+        val content = repository.content.value
+        return (radioSongs.value + content?.dailyRecommendations.orEmpty() + content?.newSongs.orEmpty())
+            .firstOrNull { it.hash == mediaId }
+    }
+
     private sealed interface RefreshState {
         data object Idle : RefreshState
 

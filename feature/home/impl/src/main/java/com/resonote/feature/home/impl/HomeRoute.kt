@@ -14,6 +14,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.resonote.core.model.OnlineSong
 import kotlinx.coroutines.launch
 
 @Composable
@@ -25,7 +26,7 @@ fun HomeRoute(
     onPlay: (HomePlaybackRequest) -> Unit,
     onOpenRankings: () -> Unit,
     onOpenFeaturedPlaylists: () -> Unit,
-    onSongMoreClick: (HomeSongUiModel) -> Unit,
+    onSongMoreClick: (OnlineSong) -> Unit,
     onPlaylistClick: (HomePlaylistUiModel) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
@@ -50,7 +51,9 @@ fun HomeRoute(
                 onSongClick = { collection, song ->
                     viewModel.playbackRequest(collection, song.id)?.let(onPlay)
                 },
-                onSongMoreClick = onSongMoreClick,
+                onSongMoreClick = { song ->
+                    viewModel.songForAction(song.id)?.let(onSongMoreClick)
+                },
                 onPlayAll = { collection ->
                     viewModel.playbackRequest(collection)?.let(onPlay)
                 },

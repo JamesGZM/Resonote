@@ -30,6 +30,17 @@ sealed interface PlaylistCreationUiState {
 }
 
 @Immutable
+sealed interface PlaylistAdditionUiState {
+    data object Idle : PlaylistAdditionUiState
+
+    data class Submitting(val listId: String) : PlaylistAdditionUiState
+
+    data class Failed(val listId: String, val failure: ContentFailure) : PlaylistAdditionUiState
+
+    data class Added(val playlistName: String, val songTitle: String) : PlaylistAdditionUiState
+}
+
+@Immutable
 sealed interface MyUiState {
     data object CheckingAccount : MyUiState
 
@@ -41,5 +52,6 @@ sealed interface MyUiState {
         val playlists: MySectionState<List<UserPlaylist>> = MySectionState.Loading,
         val isRefreshing: Boolean = false,
         val playlistCreation: PlaylistCreationUiState = PlaylistCreationUiState.Idle,
+        val playlistAddition: PlaylistAdditionUiState = PlaylistAdditionUiState.Idle,
     ) : MyUiState
 }

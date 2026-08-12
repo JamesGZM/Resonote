@@ -6,9 +6,11 @@ import com.resonote.core.data.LibraryRepository
 import com.resonote.core.data.UserProfileRepository
 import com.resonote.core.model.AuthFailure
 import com.resonote.core.model.AuthState
+import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.CollectionLoadResult
 import com.resonote.core.model.ContentFailure
 import com.resonote.core.model.MobileCodeLoginResult
+import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.PasswordLoginResult
 import com.resonote.core.model.PlaylistTrackInput
 import com.resonote.core.model.QrLoginCheckResult
@@ -281,6 +283,134 @@ class MyViewModelTest {
         assertThat(library.loadRequests).isEqualTo(2)
     }
 
+    @Test
+    fun addingSongUsesRealTrackFieldsAndUpdatesPlaylistCount() = runTest(dispatcher) {
+        val writable = playlist("夜航收藏")
+        val library = FakeLibraryRepository(CollectionLoadResult.Available(listOf(writable)))
+        val viewModel = MyViewModel(
+            FakeAuthRepository(AuthState.Authenticated("42")),
+            FakeProfileRepository(),
+            library,
+        )
+        advanceUntilIdle()
+
+        viewModel.addSongToPlaylist(writable, song())
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value as MyUiState.Authenticated
+        assertThat(library.addRequests).containsExactly(
+            writable.listId to listOf(
+                PlaylistTrackInput("song-hash", "晚风信号", "林澈", "album-1", "audio-1"),
+            ),
+        )
+        assertThat((state.playlists as MySectionState.Available).value.single().count).isEqualTo(25)
+        assertThat(state.playlistAddition).isEqualTo(
+            PlaylistAdditionUiState.Added("夜航收藏", "晚风信号"),
+        )
+    }
+
+    @Test
+    fun addFailureKeepsPlaylistsAndCanBeDismissed() = runTest(dispatcher) {
+        val writable = playlist("夜航收藏")
+        val library = FakeLibraryRepository(CollectionLoadResult.Available(listOf(writable))).apply {
+            addResult = CollectionLoadResult.Failed(ContentFailure.Network)
+        }
+        val viewModel = MyViewModel(
+            FakeAuthRepository(AuthState.Authenticated("42")),
+            FakeProfileRepository(),
+            library,
+        )
+        advanceUntilIdle()
+
+        viewModel.addSongToPlaylist(writable, song())
+        advanceUntilIdle()
+
+        var state = viewModel.uiState.value as MyUiState.Authenticated
+        assertThat(state.playlists).isEqualTo(MySectionState.Available(listOf(writable)))
+        assertThat(state.playlistAddition).isEqualTo(
+            PlaylistAdditionUiState.Failed(writable.listId, ContentFailure.Network),
+        )
+        viewModel.dismissPlaylistAdditionFailure()
+        state = viewModel.uiState.value as MyUiState.Authenticated
+        assertThat(state.playlistAddition).isEqualTo(PlaylistAdditionUiState.Idle)
+    }
+
+    @Test
+    fun collectedPlaylistCannotBeUsedAsWriteTarget() = runTest(dispatcher) {
+        val collected = playlist("他人的歌单", isMine = false)
+        val library = FakeLibraryRepository(CollectionLoadResult.Available(listOf(collected)))
+        val viewModel = MyViewModel(
+            FakeAuthRepository(AuthState.Authenticated("42")),
+            FakeProfileRepository(),
+            library,
+        )
+        advanceUntilIdle()
+
+        viewModel.addSongToPlaylist(collected, song())
+        advanceUntilIdle()
+
+        assertThat(library.addRequests).isEmpty()
+        assertThat((viewModel.uiState.value as MyUiState.Authenticated).playlistAddition)
+            .isEqualTo(PlaylistAdditionUiState.Idle)
+    }
+
+    @Test
+    fun duplicateAddIsIgnoredWhileRequestIsRunning() = runTest(dispatcher) {
+        val writable = playlist("夜航收藏")
+        val gate = CompletableDeferred<Unit>()
+        val library = FakeLibraryRepository(CollectionLoadResult.Available(listOf(writable))).apply {
+            addGate = gate
+        }
+        val viewModel = MyViewModel(
+            FakeAuthRepository(AuthState.Authenticated("42")),
+            FakeProfileRepository(),
+            library,
+        )
+        advanceUntilIdle()
+
+        viewModel.addSongToPlaylist(writable, song())
+        viewModel.addSongToPlaylist(writable, song().copy(hash = "other"))
+        runCurrent()
+
+        assertThat(library.addRequests).hasSize(1)
+        gate.complete(Unit)
+        advanceUntilIdle()
+    }
+
+    @Test
+    fun accountSwitchCancelsAddAndDropsLateResult() = runTest(dispatcher) {
+        val auth = FakeAuthRepository(AuthState.Authenticated("account-a"))
+        val accountA = playlist("A 的歌单")
+        val accountB = playlist("B 的歌单")
+        val gate = CompletableDeferred<Unit>()
+        val library = FakeLibraryRepository(
+            CollectionLoadResult.Available(listOf(accountA)),
+            CollectionLoadResult.Available(listOf(accountB)),
+        ).apply { addGate = gate }
+        val viewModel = MyViewModel(
+            auth,
+            FakeProfileRepository(
+                CollectionLoadResult.Available(profile("账号 A")),
+                CollectionLoadResult.Available(profile("账号 B")),
+            ),
+            library,
+        )
+        advanceUntilIdle()
+        viewModel.addSongToPlaylist(accountA, song())
+        runCurrent()
+
+        auth.state.value = AuthState.Authenticated("account-b")
+        advanceUntilIdle()
+
+        val switched = viewModel.uiState.value as MyUiState.Authenticated
+        assertThat(switched.userId).isEqualTo("account-b")
+        assertThat(switched.playlistAddition).isEqualTo(PlaylistAdditionUiState.Idle)
+        assertThat((switched.playlists as MySectionState.Available).value).containsExactly(accountB)
+        gate.complete(Unit)
+        advanceUntilIdle()
+        assertThat((viewModel.uiState.value as MyUiState.Authenticated).userId).isEqualTo("account-b")
+    }
+
     private class FakeAuthRepository(initial: AuthState) : AuthRepository {
         val state = MutableStateFlow(initial)
         override val authState = state
@@ -308,8 +438,11 @@ class MyViewModelTest {
         )
         var loadRequests = 0
         val createdNames = mutableListOf<String>()
+        val addRequests = mutableListOf<Pair<String, List<PlaylistTrackInput>>>()
         var createResult: CollectionLoadResult<String> = CollectionLoadResult.Available("unused-list")
         var createGate: CompletableDeferred<Unit>? = null
+        var addResult: CollectionLoadResult<Unit> = CollectionLoadResult.Available(Unit)
+        var addGate: CompletableDeferred<Unit>? = null
 
         override suspend fun loadPlaylists(page: Int, pageSize: Int): CollectionLoadResult<List<UserPlaylist>> {
             loadRequests++
@@ -321,7 +454,14 @@ class MyViewModelTest {
             createGate?.await()
             return createResult
         }
-        override suspend fun addTracks(listId: String, tracks: List<PlaylistTrackInput>): CollectionLoadResult<Unit> = unused()
+        override suspend fun addTracks(
+            listId: String,
+            tracks: List<PlaylistTrackInput>,
+        ): CollectionLoadResult<Unit> {
+            addRequests += listId to tracks
+            addGate?.await()
+            return addResult
+        }
         override suspend fun removeTracks(listId: String, fileIds: List<String>): CollectionLoadResult<Unit> = unused()
     }
 
@@ -347,6 +487,18 @@ class MyViewModelTest {
             count = 24,
             isMine = isMine,
             isLike = isLike,
+        )
+
+        fun song() = OnlineSong(
+            hash = "song-hash",
+            title = "晚风信号",
+            artist = "林澈",
+            coverUrl = null,
+            albumId = "album-1",
+            albumAudioId = "audio-1",
+            durationMillis = 240_000,
+            quality = AudioQuality.Lossless,
+            vip = false,
         )
 
         fun <T> unused(): T = error("unused")

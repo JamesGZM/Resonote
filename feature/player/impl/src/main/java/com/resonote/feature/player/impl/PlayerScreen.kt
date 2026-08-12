@@ -81,8 +81,10 @@ import com.resonote.core.designsystem.component.ResonoteQualityBadge
 import com.resonote.core.designsystem.component.ResonoteVipBadge
 import com.resonote.core.model.ContentFailure
 import com.resonote.core.model.LyricLine
+import com.resonote.core.model.OnlineSong
 import com.resonote.core.playback.PlaybackMetadata
 import com.resonote.core.playback.PlaybackMode
+import com.resonote.core.playback.PlaybackOrigin
 import com.resonote.core.playback.PlaybackStatus
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -90,6 +92,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun PlayerRoute(
     onBack: () -> Unit,
+    onSongMoreClick: (OnlineSong) -> Unit,
     viewModel: PlayerViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -106,6 +109,9 @@ fun PlayerRoute(
         onRemoveQueueItem = viewModel::removeQueueItem,
         onMoveQueueItem = viewModel::moveQueueItem,
         onClearQueue = viewModel::clearQueue,
+        onSongMoreClick = (state.playback.currentItem?.origin as? PlaybackOrigin.Online)?.song?.let { song ->
+            { onSongMoreClick(song) }
+        },
     )
 }
 
@@ -126,6 +132,7 @@ fun PlayerScreen(
     onClearQueue: () -> Unit,
     modifier: Modifier = Modifier,
     initialPage: Int = 0,
+    onSongMoreClick: (() -> Unit)? = null,
 ) {
     val song = state.playback.currentMetadata
     val snackbar = remember { SnackbarHostState() }
@@ -153,6 +160,7 @@ fun PlayerScreen(
                         onBack = onBack,
                         menuOpen = menuOpen,
                         onMenuChange = { menuOpen = it },
+                        onSongMoreClick = onSongMoreClick,
                         onShare = {
                             menuOpen = false
                             scope.launch { snackbar.showSnackbar(unavailable) }
@@ -215,6 +223,7 @@ private fun PlayerTopBar(
     onBack: () -> Unit,
     menuOpen: Boolean,
     onMenuChange: (Boolean) -> Unit,
+    onSongMoreClick: (() -> Unit)?,
     onShare: () -> Unit,
 ) {
     Row(
@@ -241,10 +250,13 @@ private fun PlayerTopBar(
             )
         }
         Box {
-            IconButton(onClick = { onMenuChange(true) }) {
+            IconButton(onClick = onSongMoreClick ?: { onMenuChange(true) }) {
                 Icon(Icons.Rounded.MoreVert, stringResource(R.string.feature_player_impl_more))
             }
-            DropdownMenu(expanded = menuOpen, onDismissRequest = { onMenuChange(false) }) {
+            DropdownMenu(
+                expanded = menuOpen && onSongMoreClick == null,
+                onDismissRequest = { onMenuChange(false) },
+            ) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.feature_player_impl_share)) },
                     leadingIcon = { Icon(Icons.Rounded.Share, contentDescription = null) },

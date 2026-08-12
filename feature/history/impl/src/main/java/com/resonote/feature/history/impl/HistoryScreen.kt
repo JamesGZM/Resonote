@@ -74,6 +74,7 @@ fun HistoryRoute(
     onBack: () -> Unit,
     onLoginRequest: () -> Unit,
     onPlayOnline: (List<OnlineSong>, Int) -> Unit,
+    onSongMoreClick: (OnlineSong) -> Unit,
     onPlayDevice: (List<DeviceHistoryItem>, Int) -> Unit,
     viewModel: HistoryViewModel = hiltViewModel(),
 ) {
@@ -89,6 +90,7 @@ fun HistoryRoute(
         onSelectTab = viewModel::selectTab,
         onRefreshOnline = viewModel::refreshOnline,
         onPlayOnline = onPlayOnline,
+        onSongMoreClick = onSongMoreClick,
         onPlayDevice = { items, startIndex ->
             if (requiresLoginForDevicePlayback(state, items, startIndex)) {
                 onLoginRequest()
@@ -125,6 +127,7 @@ internal fun HistoryScreen(
     onClearDevice: () -> Unit,
     onDismissMutationFailure: () -> Unit,
     modifier: Modifier = Modifier,
+    onSongMoreClick: ((OnlineSong) -> Unit)? = null,
 ) {
     var pendingDelete by remember { mutableStateOf<DeviceHistoryItem?>(null) }
     var confirmClear by remember { mutableStateOf(false) }
@@ -226,6 +229,7 @@ internal fun HistoryScreen(
                     onLoginRequest = onLoginRequest,
                     onRetry = onRefreshOnline,
                     onPlay = onPlayOnline,
+                    onSongMoreClick = onSongMoreClick,
                 )
                 HistoryTab.Device -> deviceContent(
                     state = state,
@@ -366,6 +370,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.onlineContent(
     onLoginRequest: () -> Unit,
     onRetry: () -> Unit,
     onPlay: (List<OnlineSong>, Int) -> Unit,
+    onSongMoreClick: ((OnlineSong) -> Unit)?,
 ) {
     when (val section = state.online) {
         OnlineHistoryUiState.NotLoaded -> item(key = "online-signed-out") {
@@ -394,6 +399,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.onlineContent(
                     song = song,
                     isPlaying = playingMediaId == song.hash,
                     onClick = { onPlay(section.songs, index) },
+                    onMoreClick = onSongMoreClick?.let { callback -> { callback(song) } },
                     modifier = Modifier.padding(horizontal = 8.dp),
                 )
             }
@@ -440,6 +446,7 @@ private fun OnlineHistoryRow(
     song: OnlineSong,
     isPlaying: Boolean,
     onClick: () -> Unit,
+    onMoreClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     val artist = song.artist.orEmpty().ifBlank { stringResource(R.string.feature_history_impl_unknown_artist) }
@@ -451,7 +458,7 @@ private fun OnlineHistoryRow(
         supportingText = stringResource(R.string.feature_history_impl_online_supporting, artist, album),
         duration = song.durationMillis.durationLabel(),
         onClick = onClick,
-        onMoreClick = null,
+        onMoreClick = onMoreClick,
         modifier = modifier,
         qualityLabel = song.quality.label(),
         isVip = song.vip,

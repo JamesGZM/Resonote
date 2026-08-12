@@ -1,8 +1,20 @@
 package com.resonote.app
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -13,6 +25,7 @@ import androidx.navigation3.ui.NavDisplay
 import com.resonote.core.navigation.LoginGateNavKey
 import com.resonote.core.navigation.TabsShellNavKey
 import com.resonote.core.model.AuthState
+import com.resonote.core.model.OnlineSong
 import com.resonote.feature.album.api.AlbumNavKey
 import com.resonote.feature.album.impl.AlbumRoute
 import com.resonote.feature.artist.api.ArtistNavKey
@@ -24,6 +37,9 @@ import com.resonote.feature.history.api.HistoryNavKey
 import com.resonote.feature.history.api.HistoryTab
 import com.resonote.feature.history.impl.HistoryRoute
 import com.resonote.feature.library.impl.MyViewModel
+import com.resonote.feature.library.impl.MyUiState
+import com.resonote.feature.library.impl.PlaylistAdditionUiState
+import com.resonote.feature.library.impl.PlaylistPickerSheet
 import com.resonote.feature.local.api.LocalMusicNavKey
 import com.resonote.feature.local.impl.LocalMusicRoute
 import com.resonote.feature.playlist.api.PlaylistNavKey
@@ -40,6 +56,7 @@ import com.resonote.feature.vip.api.DailyVipNavKey
 import com.resonote.feature.vip.impl.DailyVipRoute
 import com.resonote.feature.video.api.VideoNavKey
 import com.resonote.feature.video.impl.VideoRoute
+import kotlinx.coroutines.launch
 
 @Composable
 internal fun ResonoteApp(
@@ -53,10 +70,37 @@ internal fun ResonoteApp(
     val externalImportRequests by viewModel.externalImportRequests.collectAsStateWithLifecycle()
     val externalImportRequest = externalImportRequests.firstOrNull()
     val myViewModel: MyViewModel = hiltViewModel()
+    val myState by myViewModel.uiState.collectAsStateWithLifecycle()
     val setVideoFullscreen = rememberVideoFullscreenController()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    var songActionRequest by remember { mutableStateOf<OnlineSongActionRequest?>(null) }
+    var playlistPickerSong by remember { mutableStateOf<OnlineSong?>(null) }
+    var infoSong by remember { mutableStateOf<OnlineSong?>(null) }
+    val addResult = (myState as? MyUiState.Authenticated)?.playlistAddition
+    val addSuccessMessage = (addResult as? PlaylistAdditionUiState.Added)?.let {
+        stringResource(R.string.song_action_add_success, it.songTitle, it.playlistName)
+    }
+    val queueAddedMessage = stringResource(R.string.song_action_added_queue)
+    val shareUnavailableMessage = stringResource(R.string.song_action_share_unavailable)
+
+    fun openSongActions(
+        song: OnlineSong,
+        onRemoveRequest: (() -> Unit)? = null,
+    ) {
+        songActionRequest = OnlineSongActionRequest(song, onRemoveRequest)
+    }
 
     LaunchedEffect(authState) {
         backStack.synchronizeAuthenticationGate(authState)
+        if (authState !is AuthState.Authenticated) playlistPickerSong = null
+    }
+
+    LaunchedEffect(addSuccessMessage) {
+        val message = addSuccessMessage ?: return@LaunchedEffect
+        playlistPickerSong = null
+        snackbarHostState.showSnackbar(message)
+        myViewModel.acknowledgePlaylistAddition()
     }
 
     LaunchedEffect(externalImportRequest?.id) {
@@ -66,9 +110,10 @@ internal fun ResonoteApp(
         }
     }
 
-    NavDisplay(
-        backStack = backStack,
-        entryProvider = entryProvider {
+    Box(Modifier.fillMaxSize()) {
+        NavDisplay(
+            backStack = backStack,
+            entryProvider = entryProvider {
             entry<TabsShellNavKey> {
                 TabsShell(
                     playbackState = playbackState,
@@ -92,6 +137,7 @@ internal fun ResonoteApp(
                     },
                     onSearchClick = { backStack.add(SearchNavKey()) },
                     onRecognitionClick = { backStack.add(RecognitionNavKey) },
+                    onSongMoreClick = { openSongActions(it) },
                     onDailyVipClick = { backStack.navigateToDailyVip(authState) },
                     onHistoryClick = {
                         backStack.add(
@@ -141,7 +187,7 @@ internal fun ResonoteApp(
                     onBack = { backStack.removeAt(backStack.lastIndex) },
                     onRecognitionClick = { backStack.add(RecognitionNavKey) },
                     onSongClick = playbackViewModel::play,
-                    onSongMoreClick = null,
+                    onSongMoreClick = { openSongActions(it) },
                     onPlaylistClick = { backStack.add(PlaylistNavKey(it)) },
                     onAlbumClick = { album ->
                         backStack.add(
@@ -181,7 +227,10 @@ internal fun ResonoteApp(
                 )
             }
             entry<PlayerNavKey> {
-                PlayerRoute(onBack = { backStack.removeAt(backStack.lastIndex) })
+                PlayerRoute(
+                    onBack = { backStack.removeAt(backStack.lastIndex) },
+                    onSongMoreClick = { openSongActions(it) },
+                )
             }
             entry<PlaylistNavKey> { key ->
                 PlaylistRoute(
@@ -191,7 +240,7 @@ internal fun ResonoteApp(
                     onBack = { backStack.removeAt(backStack.lastIndex) },
                     onPlayAll = { playbackViewModel.playAll(it) },
                     onSongClick = playbackViewModel::play,
-                    onSongMoreClick = null,
+                    onSongMoreClick = { song, onRemove -> openSongActions(song, onRemove) },
                 )
             }
             entry<AlbumNavKey> { key ->
@@ -201,7 +250,7 @@ internal fun ResonoteApp(
                     onBack = { backStack.removeAt(backStack.lastIndex) },
                     onPlayAll = playbackViewModel::playAll,
                     onSongClick = playbackViewModel::play,
-                    onSongMoreClick = null,
+                    onSongMoreClick = { openSongActions(it) },
                 )
             }
             entry<ArtistNavKey> { key ->
@@ -211,7 +260,7 @@ internal fun ResonoteApp(
                     onBack = { backStack.removeAt(backStack.lastIndex) },
                     onPlayAll = playbackViewModel::playAll,
                     onSongClick = playbackViewModel::play,
-                    onSongMoreClick = null,
+                    onSongMoreClick = { openSongActions(it) },
                 )
             }
             entry<RankingNavKey> { key ->
@@ -221,7 +270,7 @@ internal fun ResonoteApp(
                     onBack = { backStack.removeAt(backStack.lastIndex) },
                     onPlayAll = playbackViewModel::playAll,
                     onSongClick = playbackViewModel::play,
-                    onSongMoreClick = null,
+                    onSongMoreClick = { openSongActions(it) },
                 )
             }
             entry<DailyVipNavKey> {
@@ -253,6 +302,7 @@ internal fun ResonoteApp(
                         }
                     },
                     onPlayOnline = playbackViewModel::playAll,
+                    onSongMoreClick = { openSongActions(it) },
                     onPlayDevice = playbackViewModel::playDeviceHistory,
                 )
             }
@@ -300,7 +350,63 @@ internal fun ResonoteApp(
                 )
             }
         },
-    )
+        )
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter).padding(20.dp),
+        )
+    }
+
+    songActionRequest?.let { request ->
+        OnlineSongActionsSheet(
+            request = request,
+            onDismiss = { songActionRequest = null },
+            onPlay = {
+                songActionRequest = null
+                playbackViewModel.play(request.song)
+            },
+            onAppendToQueue = {
+                songActionRequest = null
+                playbackViewModel.appendOnline(request.song)
+                scope.launch { snackbarHostState.showSnackbar(queueAddedMessage) }
+            },
+            onAddToPlaylist = {
+                songActionRequest = null
+                if (authState is AuthState.Authenticated) {
+                    myViewModel.preparePlaylistAddition()
+                    playlistPickerSong = request.song
+                } else if (backStack.lastOrNull() !is LoginGateNavKey) {
+                    backStack.add(LoginGateNavKey(sessionExpired = false))
+                }
+            },
+            onShowInfo = {
+                songActionRequest = null
+                infoSong = request.song
+            },
+            onShareUnavailable = {
+                songActionRequest = null
+                scope.launch { snackbarHostState.showSnackbar(shareUnavailableMessage) }
+            },
+        )
+    }
+
+    playlistPickerSong?.let { song ->
+        PlaylistPickerSheet(
+            state = myState,
+            song = song,
+            onDismiss = {
+                playlistPickerSong = null
+                myViewModel.dismissPlaylistAdditionFailure()
+            },
+            onRetryPlaylists = myViewModel::retryPlaylists,
+            onPlaylistClick = { myViewModel.addSongToPlaylist(it, song) },
+            onDismissFailure = myViewModel::dismissPlaylistAdditionFailure,
+        )
+    }
+
+    infoSong?.let { song ->
+        OnlineSongInfoDialog(song = song, onDismiss = { infoSong = null })
+    }
 }
 
 internal fun MutableList<NavKey>.leaveLocalMusic(key: LocalMusicNavKey): Boolean {

@@ -62,6 +62,18 @@ class PlaybackViewModelTest {
     }
 
     @Test
+    fun onlineAppendKeepsOnlineOriginForQueueResolution() {
+        val controller = FakePlaybackController()
+        val viewModel = PlaybackViewModel(controller)
+
+        viewModel.appendOnline(song("queue-song"))
+
+        val item = controller.appendedItems.single()
+        assertThat(item.queueKey).isEqualTo("online:queue-song")
+        assertThat((item.origin as PlaybackOrigin.Online).song.hash).isEqualTo("queue-song")
+    }
+
+    @Test
     fun localPlaybackKeepsActualFormatAndStableLocalIdentity() {
         val controller = FakePlaybackController()
         val viewModel = PlaybackViewModel(controller)

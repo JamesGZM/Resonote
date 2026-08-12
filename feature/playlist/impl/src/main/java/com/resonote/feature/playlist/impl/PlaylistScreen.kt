@@ -67,6 +67,8 @@ import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.PlaylistDetails
 import com.resonote.feature.playlist.api.PlaylistNavKey
 
+typealias PlaylistSongMoreAction = (OnlineSong, (() -> Unit)?) -> Unit
+
 @Composable
 fun PlaylistRoute(
     key: PlaylistNavKey,
@@ -75,7 +77,7 @@ fun PlaylistRoute(
     onBack: () -> Unit,
     onPlayAll: (List<OnlineSong>) -> Unit,
     onSongClick: (OnlineSong) -> Unit,
-    onSongMoreClick: ((OnlineSong) -> Unit)?,
+    onSongMoreClick: PlaylistSongMoreAction?,
     viewModel: PlaylistViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -111,7 +113,7 @@ fun PlaylistScreen(
     onLoadMore: () -> Unit,
     onPlayAll: (List<OnlineSong>) -> Unit,
     onSongClick: (OnlineSong) -> Unit,
-    onSongMoreClick: ((OnlineSong) -> Unit)?,
+    onSongMoreClick: PlaylistSongMoreAction?,
     modifier: Modifier = Modifier,
     onRemoveSong: (OnlineSong) -> Unit = {},
     onDismissRemovalFailure: () -> Unit = {},
@@ -208,7 +210,7 @@ private fun PlaylistContent(
     onLoadMore: () -> Unit,
     onPlayAll: (List<OnlineSong>) -> Unit,
     onSongClick: (OnlineSong) -> Unit,
-    onSongMoreClick: ((OnlineSong) -> Unit)?,
+    onSongMoreClick: PlaylistSongMoreAction?,
     onRemoveRequest: (OnlineSong) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -229,6 +231,11 @@ private fun PlaylistContent(
                 !song.fileId.isNullOrBlank() &&
                 !state.isLoadingMore &&
                 state.removal !is PlaylistRemovalUiState.Removing
+            val removeRequest: (() -> Unit)? = if (canRemove) {
+                { onRemoveRequest(song) }
+            } else {
+                null
+            }
             ResonoteMusicItem(
                 title = song.title,
                 supportingText = song.artist.orEmpty(),
@@ -239,8 +246,8 @@ private fun PlaylistContent(
                 artworkState = ResonoteArtworkState.MISSING,
                 onClick = { onSongClick(song) },
                 onMoreClick = when {
-                    canRemove -> ({ onRemoveRequest(song) })
-                    onSongMoreClick != null -> ({ onSongMoreClick(song) })
+                    onSongMoreClick != null -> ({ onSongMoreClick(song, removeRequest) })
+                    removeRequest != null -> removeRequest
                     else -> null
                 },
             )
