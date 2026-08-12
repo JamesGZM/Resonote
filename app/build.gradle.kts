@@ -46,6 +46,8 @@ dependencies {
     implementation(projects.feature.ranking.impl)
     implementation(projects.feature.search.api)
     implementation(projects.feature.search.impl)
+    implementation(projects.feature.vip.api)
+    implementation(projects.feature.vip.impl)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material.icons.extended)

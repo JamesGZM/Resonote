@@ -9,6 +9,8 @@ sealed interface ContentFailure {
 
     data class RiskVerificationRequired(val challenge: RiskChallengeHandle) : ContentFailure
 
+    data object RiskBlocked : ContentFailure
+
     data object Protocol : ContentFailure
 }
 

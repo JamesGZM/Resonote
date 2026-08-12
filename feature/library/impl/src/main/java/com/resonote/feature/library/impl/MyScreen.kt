@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.CloudOff
+import androidx.compose.material.icons.rounded.CardGiftcard
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.Refresh
@@ -64,6 +65,7 @@ import com.resonote.core.model.UserProfile
 fun MyRoute(
     bottomContentPadding: Dp,
     onLoginClick: () -> Unit,
+    onDailyVipClick: () -> Unit,
     onPlaylistClick: (String) -> Unit,
     viewModel: MyViewModel = hiltViewModel(),
 ) {
@@ -72,6 +74,7 @@ fun MyRoute(
         state = state,
         bottomContentPadding = bottomContentPadding,
         onLoginClick = onLoginClick,
+        onDailyVipClick = onDailyVipClick,
         onRefresh = viewModel::refresh,
         onRetryProfile = viewModel::retryProfile,
         onRetryPlaylists = viewModel::retryPlaylists,
@@ -84,6 +87,7 @@ internal fun MyScreen(
     state: MyUiState,
     bottomContentPadding: Dp,
     onLoginClick: () -> Unit,
+    onDailyVipClick: () -> Unit,
     onRefresh: () -> Unit,
     onRetryProfile: () -> Unit,
     onRetryPlaylists: () -> Unit,
@@ -122,11 +126,12 @@ internal fun MyScreen(
         ) {
             when (state) {
                 MyUiState.CheckingAccount -> checkingAccount()
-                MyUiState.Anonymous -> anonymousAccount(onLoginClick)
+                MyUiState.Anonymous -> anonymousAccount(onLoginClick, onDailyVipClick)
                 is MyUiState.Authenticated -> authenticatedAccount(
                     state = state,
                     onRetryProfile = onRetryProfile,
                     onRetryPlaylists = onRetryPlaylists,
+                    onDailyVipClick = onDailyVipClick,
                     onPlaylistClick = onPlaylistClick,
                 )
             }
@@ -151,7 +156,10 @@ private fun LazyListScope.checkingAccount() {
     }
 }
 
-private fun LazyListScope.anonymousAccount(onLoginClick: () -> Unit) {
+private fun LazyListScope.anonymousAccount(
+    onLoginClick: () -> Unit,
+    onDailyVipClick: () -> Unit,
+) {
     item(key = "anonymous-hero") {
         Card(
             modifier = Modifier.fillMaxWidth().testTag("my-anonymous"),
@@ -209,6 +217,9 @@ private fun LazyListScope.anonymousAccount(onLoginClick: () -> Unit) {
             }
         }
     }
+    item(key = "daily-vip") {
+        DailyVipEntryCard(onClick = onDailyVipClick, requiresLogin = true)
+    }
     item(key = "anonymous-note") {
         Text(
             text = stringResource(R.string.my_anonymous_local_note),
@@ -223,6 +234,7 @@ private fun LazyListScope.authenticatedAccount(
     state: MyUiState.Authenticated,
     onRetryProfile: () -> Unit,
     onRetryPlaylists: () -> Unit,
+    onDailyVipClick: () -> Unit,
     onPlaylistClick: (String) -> Unit,
 ) {
     item(key = "profile") {
@@ -238,6 +250,10 @@ private fun LazyListScope.authenticatedAccount(
         }
     }
 
+    item(key = "daily-vip") {
+        DailyVipEntryCard(onClick = onDailyVipClick, requiresLogin = false)
+    }
+
     when (val playlists = state.playlists) {
         MySectionState.Loading -> item(key = "playlists-loading") { PlaylistsLoadingCard() }
         is MySectionState.Failed -> item(key = "playlists-error") {
@@ -249,6 +265,47 @@ private fun LazyListScope.authenticatedAccount(
             )
         }
         is MySectionState.Available -> playlistSections(playlists.value, onPlaylistClick)
+    }
+}
+
+@Composable
+private fun DailyVipEntryCard(
+    onClick: () -> Unit,
+    requiresLogin: Boolean,
+) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().testTag("my-daily-vip"),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
+        shape = MaterialTheme.shapes.extraLarge,
+    ) {
+        Row(modifier = Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+            Surface(
+                modifier = Modifier.size(52.dp),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.tertiary,
+                contentColor = MaterialTheme.colorScheme.onTertiary,
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(Icons.Rounded.CardGiftcard, contentDescription = null, modifier = Modifier.size(25.dp))
+                }
+            }
+            Column(modifier = Modifier.weight(1f).padding(start = 14.dp)) {
+                Text(
+                    stringResource(R.string.my_daily_vip),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    stringResource(
+                        if (requiresLogin) R.string.my_daily_vip_login else R.string.my_daily_vip_body,
+                    ),
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+            Icon(Icons.Rounded.ChevronRight, contentDescription = null)
+        }
     }
 }
 
@@ -608,6 +665,7 @@ private fun ContentFailure.message(): String = stringResource(
         ContentFailure.Network -> R.string.my_error_network
         ContentFailure.ServiceRejected -> R.string.my_error_service
         is ContentFailure.RiskVerificationRequired -> R.string.my_error_risk
+        ContentFailure.RiskBlocked -> R.string.my_error_risk
         ContentFailure.Protocol -> R.string.my_error_protocol
     },
 )

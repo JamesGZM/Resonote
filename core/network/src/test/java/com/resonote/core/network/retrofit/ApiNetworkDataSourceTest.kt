@@ -7,6 +7,7 @@ import com.resonote.core.network.ApiNetworkException
 import com.resonote.core.network.ApiPlaybackUnavailableException
 import com.resonote.core.network.ApiProtocolException
 import com.resonote.core.network.ApiRiskException
+import com.resonote.core.network.ApiRiskBlockedException
 import com.resonote.core.network.ApiServiceException
 import com.resonote.core.network.AuthNetworkDataSource
 import com.resonote.core.network.CatalogNetworkDataSource
@@ -1390,6 +1391,18 @@ class ApiNetworkDataSourceTest {
         assertThat(upgrade.requestUrl?.queryParameter("ad_type")).isEqualTo("1")
         val anonymous = session.copy(token = null, userId = null, cookies = emptyMap())
         assertThat(runCatching { dataSource(anonymous).upgradeDailyVip() }.exceptionOrNull()).isInstanceOf(ApiAuthenticationRequiredException::class.java)
+    }
+
+    @Test
+    fun dailyVipRiskCodeWithoutChallengeRemainsBlocked() = runTest {
+        gatewayServer.enqueue(jsonResponse("""{"status":0,"error_code":20028}"""))
+        gatewayServer.enqueue(jsonResponse("""{"status":0,"error_code":"20028"}"""))
+
+        val claim = runCatching { dataSource().claimDailyVip("2026-08-12") }.exceptionOrNull()
+        val upgrade = runCatching { dataSource().upgradeDailyVip() }.exceptionOrNull()
+
+        assertThat(claim).isInstanceOf(ApiRiskBlockedException::class.java)
+        assertThat(upgrade).isInstanceOf(ApiRiskBlockedException::class.java)
     }
 
     @Test

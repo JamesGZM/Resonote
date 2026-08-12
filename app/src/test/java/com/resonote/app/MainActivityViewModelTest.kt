@@ -12,6 +12,7 @@ import com.resonote.core.model.QrLoginKeyResult
 import com.resonote.core.model.SendMobileCodeResult
 import com.resonote.core.navigation.LoginGateNavKey
 import com.resonote.core.navigation.TabsShellNavKey
+import com.resonote.feature.vip.api.DailyVipNavKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -69,6 +70,22 @@ class MainActivityViewModelTest {
         backStack.synchronizeAuthenticationGate(AuthState.AuthenticationRequired(AuthGateReason.Required))
         backStack.synchronizeAuthenticationGate(AuthState.Authenticated("42"))
         assertThat(backStack.filterIsInstance<LoginGateNavKey>()).isEmpty()
+    }
+
+    @Test
+    fun dailyVipNavigationRequiresLoginAndDoesNotReplayAfterAuthentication() {
+        val backStack = mutableListOf<NavKey>(TabsShellNavKey)
+
+        backStack.navigateToDailyVip(AuthState.Anonymous)
+        assertThat(backStack.last()).isEqualTo(LoginGateNavKey(false))
+
+        backStack.synchronizeAuthenticationGate(AuthState.Authenticated("42"))
+        assertThat(backStack).containsExactly(TabsShellNavKey)
+
+        backStack.navigateToDailyVip(AuthState.Authenticated("42"))
+        backStack.navigateToDailyVip(AuthState.Authenticated("42"))
+        assertThat(backStack.filterIsInstance<DailyVipNavKey>()).hasSize(1)
+        assertThat(backStack.last()).isEqualTo(DailyVipNavKey)
     }
 
     private class FakeAuthRepository : AuthRepository {

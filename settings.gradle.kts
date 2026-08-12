@@ -58,6 +58,8 @@ include(":feature:ranking:api")
 include(":feature:ranking:impl")
 include(":feature:search:api")
 include(":feature:search:impl")
+include(":feature:vip:api")
+include(":feature:vip:impl")
 
 check(JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
     "Resonote requires JDK 17 or newer. Current JDK: ${JavaVersion.current()}"

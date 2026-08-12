@@ -55,3 +55,6 @@ class ApiRiskException(
         VerificationUnavailable,
     }
 }
+
+class ApiRiskBlockedException(val serviceCode: String?) :
+    ApiException("API operation blocked by account risk control${serviceCode?.let { " (code=$it)" }.orEmpty()}")

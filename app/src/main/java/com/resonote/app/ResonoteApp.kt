@@ -16,18 +16,22 @@ import com.resonote.feature.album.impl.AlbumRoute
 import com.resonote.feature.artist.api.ArtistNavKey
 import com.resonote.feature.artist.impl.ArtistRoute
 import com.resonote.feature.auth.impl.LoginRoute
+import com.resonote.feature.library.impl.MyViewModel
 import com.resonote.feature.playlist.api.PlaylistNavKey
 import com.resonote.feature.playlist.impl.PlaylistRoute
 import com.resonote.feature.ranking.api.RankingNavKey
 import com.resonote.feature.ranking.impl.RankingRoute
 import com.resonote.feature.search.api.SearchNavKey
 import com.resonote.feature.search.impl.SearchRoute
+import com.resonote.feature.vip.api.DailyVipNavKey
+import com.resonote.feature.vip.impl.DailyVipRoute
 
 @Composable
 internal fun ResonoteApp(viewModel: MainActivityViewModel = hiltViewModel()) {
     val backStack = rememberNavBackStack(TabsShellNavKey)
     val playbackState = rememberPrototypePlaybackState()
     val authState by viewModel.authState.collectAsStateWithLifecycle()
+    val myViewModel: MyViewModel = hiltViewModel()
 
     LaunchedEffect(authState) {
         backStack.synchronizeAuthenticationGate(authState)
@@ -39,12 +43,14 @@ internal fun ResonoteApp(viewModel: MainActivityViewModel = hiltViewModel()) {
             entry<TabsShellNavKey> {
                 TabsShell(
                     playbackState = playbackState,
+                    myViewModel = myViewModel,
                     onLoginRequest = {
                         if (backStack.lastOrNull() !is LoginGateNavKey) {
                             backStack.add(LoginGateNavKey(sessionExpired = false))
                         }
                     },
                     onSearchClick = { backStack.add(SearchNavKey()) },
+                    onDailyVipClick = { backStack.navigateToDailyVip(authState) },
                     onPlaylistClick = { backStack.add(PlaylistNavKey(it)) },
                     onAlbumClick = { album ->
                         backStack.add(
@@ -136,6 +142,12 @@ internal fun ResonoteApp(viewModel: MainActivityViewModel = hiltViewModel()) {
                     onPlayAll = playbackState::playAll,
                     onSongClick = playbackState::play,
                     onSongMoreClick = null,
+                )
+            }
+            entry<DailyVipNavKey> {
+                DailyVipRoute(
+                    onBack = { backStack.removeAt(backStack.lastIndex) },
+                    onRewardApplied = myViewModel::refresh,
                 )
             }
             entry<LoginGateNavKey> { key ->

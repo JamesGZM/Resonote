@@ -10,6 +10,7 @@ import com.resonote.core.model.ResolveSongSourceResult
 import com.resonote.core.network.ApiAuthenticationRequiredException
 import com.resonote.core.network.ApiNetworkException
 import com.resonote.core.network.ApiPlaybackUnavailableException
+import com.resonote.core.network.ApiRiskBlockedException
 import com.resonote.core.network.model.NetworkCloudPage
 import com.resonote.core.network.model.NetworkCloudStorage
 import com.resonote.core.network.model.NetworkCloudTrack
@@ -163,11 +164,24 @@ class UserRepositoriesTest {
         assertThat(upgraded.value.canUpgrade).isFalse()
     }
 
+    @Test
+    fun vipRewardRiskBlockRemainsTyped() = runTest {
+        val repository = DefaultVipRewardRepository(
+            FakeNetwork(rewardFailure = ApiRiskBlockedException("20028")),
+            RiskChallengeRegistry(),
+        )
+
+        val result = repository.claimDaily("2026-08-12") as CollectionLoadResult.Failed
+
+        assertThat(result.failure).isEqualTo(ContentFailure.RiskBlocked)
+    }
+
     private class FakeNetwork(
         private val detailFailure: Throwable? = null,
         private val vipFailure: Throwable? = null,
         private val mutationFailure: Throwable? = null,
         private val cloudSourceFailure: Throwable? = null,
+        private val rewardFailure: Throwable? = null,
     ) : TestApiNetworkDataSource() {
         var detailCalls = 0
         var vipCalls = 0
@@ -253,7 +267,13 @@ class UserRepositoriesTest {
         override suspend fun recognizeAudio(pcm: ByteArray): List<com.resonote.core.network.model.NetworkRecognitionMatch> = error("unused")
         override suspend fun createQrLoginKey(): String = error("unused")
         override suspend fun checkQrLogin(key: String): com.resonote.core.network.model.NetworkQrLoginStatus = error("unused")
-        override suspend fun claimDailyVip(receiveDay: String): NetworkVipRewardResult = NetworkVipRewardResult(true, true)
-        override suspend fun upgradeDailyVip(): NetworkVipRewardResult = NetworkVipRewardResult(false, false)
+        override suspend fun claimDailyVip(receiveDay: String): NetworkVipRewardResult {
+            rewardFailure?.let { throw it }
+            return NetworkVipRewardResult(true, true)
+        }
+        override suspend fun upgradeDailyVip(): NetworkVipRewardResult {
+            rewardFailure?.let { throw it }
+            return NetworkVipRewardResult(false, false)
+        }
     }
 }
