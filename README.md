@@ -14,9 +14,27 @@ must not be used as the only implementation source.
 - [ADR-0001: Now in Android reference baseline](docs/adr/0001-now-in-android-reference-baseline.md)
 - [ADR-0002: MoeKoe functional reference](docs/adr/0002-moekoe-functional-reference.md)
 - [Design system plan](design/DESIGN_SYSTEM_PLAN.md)
+- [Product requirements and page design contracts](design/PRODUCT_REQUIREMENTS.md)
+- [Home implementation baseline](design/HOME_IMPLEMENTATION_BASELINE.md)
 - [Foundation](design/FOUNDATION.md)
 - [Component system](design/COMPONENT_SYSTEM.md)
 - [Validation matrix](design/VALIDATION.md)
+
+Before creating or revising a product page, read the page contract in
+`design/PRODUCT_REQUIREMENTS.md` and the Compact canvas, layout, and Insets
+rules in `design/FOUNDATION.md` section 03D. Markdown is normative; approved
+PNG/SVG files are supporting review evidence only.
+
+Before reusing the frozen Music Item, Playlist Item, Mini Player, or Bottom
+Navigation, read `design/COMPONENT_SYSTEM.md` sections 08B, 08C, 09A, and 09B,
+including the frozen-component quick index. Those sections define measurement,
+single-line truncation, trailing-space reservation, loading/missing artwork,
+spacing, actions, and accessibility; screenshots must not be reinterpreted.
+
+Before implementing Home, also read `design/HOME_IMPLEMENTATION_BASELINE.md`.
+Its three screenshots are scroll states of one page and freeze structure and
+density only; the component Markdown and 08/09 baselines remain authoritative
+for pixel-level behavior.
 
 ## Scope
 
@@ -33,7 +51,7 @@ System specification.
 
 ## Status
 
-Foundation 00–05, Component System 06–08, and the Validation specification are
+Foundation 00–05, Component System 06–09, and the Validation specification are
 frozen. The Android foundation now includes the Gradle build, Material3 1.4.0
 theme tokens, a minimal app, and the standalone Catalog. Component System 06A
 Buttons & Actions and 06B-1 Text Field are implemented with behavior tests and

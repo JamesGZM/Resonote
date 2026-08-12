@@ -454,6 +454,23 @@ Resonote Grid：
 - Primary Navigation 的目的地、选中状态和语义在模式切换前后保持一致。
 - 折叠设备存在遮挡式 Hinge/Fold 时，不让文字、触控目标或单个内容 Pane 跨越遮挡区域；可将 Hinge 作为 Pane 分隔。
 
+Compact 竖屏页面设计稿画板：
+
+| Item | Design evidence value | 规则 |
+|---|---:|---|
+| Canvas width | `390dp` | V1 Compact 竖屏页面设计稿固定宽度；不得为容纳内容改变画板宽度 |
+| Fixed-page canvas | `390 × 844dp` | 仅用于内容本身不滚动且能够完整容纳的页面 |
+| Scroll-page canvas | `390 × Auto` | 最小高度 `844dp`；内容按真实区块和间距向下完整展开，不压缩、不裁切、不为凑齐一屏删减内容 |
+| Status-bar evidence region | `44dp` | 设计稿顶部必须包含完整系统状态栏区域；它不属于 Top App Bar |
+| Bottom gesture-safe evidence region | `34dp` | 设计稿底部必须包含完整手势安全区 |
+| Gesture indicator | `134 × 5dp` | 水平居中、距底部 `8dp`、使用 `shapeFull`；Dark/AMOLED 或图片背景使用白色，Light 使用 `onSurface` |
+
+- `design/approved/player/player-cover-page.png` 是上述系统区域与完整画板构成的评审参考；它不冻结 Player 的视觉、内容层级或组件实现。
+- 固定页面以 `390 × 844dp` 交付；滚动页面使用 `390 × Auto` 长画板，直到全部设计内容、页面底部固定区域与手势安全区完整结束。
+- 滚动长图只在顶部展示一次 Status Bar，只在末尾展示一次底部 App Chrome 与手势安全区，避免用重复系统栏污染页面评审。
+- 长图中的单次展示只是设计交付表达；运行时 Status Bar、Navigation Suite、Mini Player 等固定区域仍按各自产品合同固定在 Window。Compact Mini Player 按 09A 作为滚动内容上方的悬浮 Overlay，中间滚动状态允许内容从其后方经过；滚动容器通过末尾 Content Padding 保证最后一个可聚焦 Item 能完整滚动到 Mini Player 上方，并继续避让 Navigation Suite 与系统 Insets。
+- `44dp`、`34dp` 与 `134 × 5dp` 只规范 Compact 设计证据的统一画板，不得作为 Android 运行时系统 Insets 常量。实现必须继续读取真实 `WindowInsets`。
+
 Edge-to-edge 与 Insets：
 
 | Insets | 使用范围 |
@@ -552,6 +569,7 @@ Album Artwork 规范图片容器与媒体处理，不规定 Album Tile、Song Ro
 | `artworkAlignment` | `Center` | 无焦点元数据时默认中心裁切 |
 | `artworkFocalAlignment` | Optional | 数据源提供可信焦点时才覆盖默认对齐 |
 | `artworkOverlayInset` | `space8 / 8dp` | 必须叠加状态或 Badge 时与边缘保持距离 |
+| `artworkPlaceholder` | 中性底色 + 两条低对比度水平标记 | Loading、Missing、Error 与 Unavailable 共用同一确定性封面占位，不因状态更换图形 |
 
 比例与裁切：
 
@@ -571,15 +589,16 @@ Album Artwork 规范图片容器与媒体处理，不规定 Album Tile、Song Ro
 
 | State | Visual | 行为 |
 |---|---|---|
-| `Loading` | `surfaceContainerHigh` 中性底色，可使用低对比度静态占位 | 保持 1:1 与最终 Shape；不得显示破图图标 |
+| `Loading` | `artworkPlaceholder` | 保持 1:1 与最终 Shape；加载语义和相邻内容骨架由所属组件表达，不在封面内显示旋转、破图或错误图标 |
 | `Loaded` | 原始封面 | 仅执行等比裁切和必要的色彩空间转换，不叠加默认品牌滤镜 |
-| `Missing` | `surfaceContainerHighest` + `onSurfaceVariant` 官方 `album` Symbol | 确定性占位；同一主题下不随机配色 |
-| `Error` | 与 Missing 相同的用户可理解占位 | 可在数据层重试；不在封面内暴露 URL、异常码或技术文案 |
-| `Unavailable` | Missing 占位，可由相邻文本说明不可用原因 | 不只依赖降低透明度表达状态 |
+| `Missing` | `artworkPlaceholder` | 使用与 Loading 完全相同的封面占位；相邻标题与元数据正常显示 |
+| `Error` | `artworkPlaceholder` | 可在数据层重试；不在封面内暴露 URL、异常码或技术文案 |
+| `Unavailable` | `artworkPlaceholder` | 可由相邻文本说明不可用原因；不只依赖降低透明度表达状态 |
 
 - Loading → Loaded 的过渡遵循 05A Motion Tokens；在 05A 冻结前不在本节重复定义时长。
 - Reduced Motion 下不使用 Shimmer、扫光或循环缩放；静态占位必须能够独立表达加载中。
 - 加载失败不得导致容器消失、列表重排或点击目标缩小。
+- Loading 与 Missing 共用封面占位图；两者由相邻内容和 Semantics 区分，禁止再增加唱片、山景、破图等第二套缺省封面图形。
 
 叠加内容与颜色：
 

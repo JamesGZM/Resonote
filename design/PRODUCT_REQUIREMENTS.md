@@ -196,8 +196,19 @@ Resonote 使用页面导航模式，不采用 NIA 当前 `topLevelStack + 每个
 - 精选歌单快捷入口。
 - 每日推荐歌曲，支持播放单曲、播放全部和通用歌曲操作。
 - 推荐歌单，并进入歌单详情。
+- 新歌速递：首页展示 6 首歌曲的无分类预览，支持播放单曲、播放全部和通用歌曲操作；完整分页浏览仍属于发现页职责。
 - 页面只在首页提供搜索入口；点击进入独立搜索页，入口右侧话筒进入独立听歌识曲页。
 - 每个区块分别处理 Loading、Empty、Error、需要登录和部分数据可用状态；单一区块失败不应阻断整个首页。
+
+Compact 首页实现基准已冻结：
+
+- 内容顺序为推荐区域 → 每日推荐 → 推荐歌单 → 新歌速递。
+- 每日推荐固定 6 个 Music Item，并共用一个外层卡片容器；Section Action 为“播放全部”。
+- 推荐歌单固定 6 个 Playlist Item，Compact 固定两列；标题右侧无 Action。
+- 新歌速递固定 6 个 Music Item，并共用一个外层卡片容器；不显示分类筛选，Section Action 为“播放全部”。
+- Top App Bar 与 Bottom Navigation 固定；Mini Player 是高于滚动内容的悬浮 Overlay。Item 可以在滚动过程中从其后方经过，但列表末尾必须有足够 Content Padding，保证最后一个 Item 可完整滚动到悬浮层上方。
+- `design/approved/home/10-home-scroll-top.png`、`10-home-scroll-middle.png`、`10-home-scroll-bottom.png` 是同一首页的顶部、中段、底部滚动状态，不是不同页面或备选方案。
+- 页面结构、滚动层级和信息密度以 `design/HOME_IMPLEMENTATION_BASELINE.md` 为实现交接；组件细节仍以 08/09 Markdown 与冻结组件 PNG 为准。
 
 PC 的卡片样式切换、装饰图片、彩蛋、桌面 Hover 和具体栅格不属于功能合同，不直接迁移。
 
@@ -269,6 +280,8 @@ PC 的四段式切换器、卡片布局和滚动表现只是行为证据，不�
 - Mini Player 是 App Scaffold 的常驻产品区域，在首页、发现、我的及其子页面间保持同一播放状态。
 - 尚无当前媒体时不展示空白 Mini Player；首次形成 Queue 后出现，并在切换 Tab、进入详情和返回时持续存在。
 - Compact 布局中 Mini Player 位于页面内容与 Navigation Bar 之间；Rail 布局中与内容区组合，不遮挡系统 Insets、导航或页面操作。
+- Compact Mini Player 使用已冻结的独立悬浮卡片：Start、End 以及与 Navigation Bar 顶部的间距均为 16dp；卡片与 Navigation Bar 使用相同 Container Semantic Color，但不得贴合、共边、融合或重叠。
+- Mini Player 的歌曲信息复用 Music Item 层级：Title、Quality Badge 与 VIP Badge 位于同一首行，Title 空间不足时优先省略；Artist 位于第二行。播放控制与 Queue 入口保持独立 Touch Target。
 - 点击 Mini Player 的歌曲主体区域直接展开 Full Player，不经过 Modal Bottom Sheet 或中间预览层。
 - Mini Player 同时提供当前播放列表/Queue 入口；用户可以不进入 Full Player 就直接查看和管理同一 Queue。Queue 最终使用 Sheet、Pane 还是独立页面在 Player 页面设计阶段决定，不改变入口能力。
 - Full Player 与 Mini Player 观察同一个 Playback Controller、当前歌曲、进度和 Queue，不复制播放状态。
@@ -508,14 +521,27 @@ Player 的功能合同与具体布局分开冻结：
 - 键盘、D-pad、TalkBack、RTL、200% 字号和系统 Insets 要求。
 - 返回、Deep Link、状态恢复和与播放状态的关系。
 
-### 10.1 V1 页面清单
+### 10.1 Compact 页面设计稿交付规范
+
+V1 页面设计稿必须消费 `FOUNDATION.md` 03D 的 Compact 画板规范：
+
+- 固定宽度为 `390dp`；固定页面使用 `390 × 844dp`，可滚动页面使用最小高度 `844dp` 的 `390 × Auto` 长画板。
+- 页面顶部必须包含 `44dp` Status Bar 设计证据区域；页面底部必须包含 `34dp` 手势安全区和居中的 `134 × 5dp` Gesture Indicator。
+- 首页、发现、我的等滚动根页面必须完整展示已确认区块，画板随内容向下延伸；不得为适配单屏而压缩间距、缩小组件、裁掉区块或隐藏后续内容。
+- 长图顶部只出现一次 Status Bar，末尾只出现一次 Mini Player（存在当前媒体时）、Navigation Bar 与手势安全区；这是设计稿交付表达，不改变它们在真实 Window 中的固定行为。
+- 运行时滚动内容必须以末尾 Content Padding 为 Mini Player、Navigation Suite 和系统 Insets 保留最终可达空间；中间滚动状态允许内容从悬浮 Mini Player 后方经过，不得把该 Padding 实现为始终位于 Mini Player 上方的永久空白带。无当前媒体时不保留空的 Mini Player 占位。
+- 系统区域的背景与前景对比必须跟随页面主题和底图；Player 的深色参考使用白色系统前景，Light 页面使用对应 `onSurface` 前景。
+
+评审参考：`design/approved/player/player-cover-page.png`。该图只用于确认 `390dp` 画板比例、顶部 Status Bar 与底部手势安全区的完整呈现，不恢复其历史 Player 视觉方案。
+
+### 10.2 V1 页面清单
 
 该清单冻结页面职责和导航层级，不冻结视觉布局。V1 页面设计只验收 Compact 竖屏；MV 的显式横屏全屏复用同一个 Video Player，不单独出页面设计稿，但必须验收播放器全屏行为与方向恢复。“未来约束”用于避免当前 IA 阻断后续 Adaptive 扩展，不代表首版需要交付宽屏稿。
 
 | ID | 页面 / 类型 | 入口与职责 | V1 Compact 合同 | 未来约束 | 设计状态 |
 |---|---|---|---|---|---|
 | S-001 | Tabs Shell / 全局容器 | 承载首页、发现、我的、Navigation Suite 与 Mini Player | 保存三个根页面状态；二级页面在其上方 | 同一目的地集合可改用 Rail | IA 已确认；视觉待设计 |
-| S-002 | 首页 / 根页面 | 默认入口；推荐电台、榜单、精选歌单、每日推荐、推荐歌单、搜索与识曲入口 | 分区独立加载和恢复，单区失败不阻断全页 | 分区关系与优先级不变 | 功能已确认；字段待验证 |
+| S-002 | 首页 / 根页面 | 默认入口；推荐电台、榜单、精选歌单、每日推荐、推荐歌单、新歌速递、搜索与识曲入口 | 分区独立加载和恢复；Compact 结构与三段滚动基准已锁定 | 分区关系与优先级不变 | 视觉基准已锁定；字段/API 待验证 |
 | S-003 | 发现 / 根页面 | 分类歌单、榜单、新碟、新歌 | 保留子分类、分页、筛选和滚动 | 可调整分栏，不拆成不同目的地集合 | 功能已确认；视觉待设计 |
 | S-004 | 我的 / 根页面 | 匿名/登录资料、VIP、音乐库、云盘、本地音乐、设置入口 | 好友资料只读不可点击；账号内容按 Session 切换 | 信息分组不因窗口删除 | 功能已确认；视觉待设计 |
 | S-005 | 搜索 / 二级页面 | 仅从首页进入；综合、单曲、歌单、专辑、MV、歌手 | 保留查询、分类、分页与滚动 | 结果类型与操作不变 | 功能已确认；Android 搜索切片已有 |
@@ -538,11 +564,11 @@ Player 的功能合同与具体布局分开冻结：
 | S-022 | 关于 / 设置子页面 | 设置 | 版本、许可、隐私与项目链接 | 内容可重排但不可缺失 | 功能已确认；视觉待设计 |
 | S-023 | 完整错误页 / 通用兜底 | 已进入详情后发现参数缺失、ID 失效、删除或无法解析 | 返回始终可用；仅可恢复错误显示重试 | 可复用但保留具体错误语义 | 合同已确认；视觉待设计 |
 
-### 10.2 全局与临时界面
+### 10.3 全局与临时界面
 
 | ID | 界面 | 触发与合同 | 尚待设计决策 |
 |---|---|---|---|
-| O-001 | Mini Player | Tabs Shell 有当前媒体时常驻；歌曲主体进 Full Player，独立操作打开 Queue | 视觉层级与 Queue 入口形式 |
+| O-001 | Mini Player | Tabs Shell 有当前媒体时常驻；歌曲主体进 Full Player，独立操作打开 Queue | Compact Mini Player + Bottom Navigation 已冻结；Medium/Expanded 形态待未来设计 |
 | O-002 | Queue | Mini Player、Full Player 与歌曲操作共享同一队列；支持跳转、移除、清空、重排、下一首和队尾追加 | Sheet 还是全局页面 |
 | O-003 | 歌曲操作菜单 | 承载播放、下一首、队尾、收藏、歌曲信息与暂未开放的分享等上下文操作 | Menu/Sheet 的场景映射 |
 | O-004 | 歌曲信息 | Sheet 或 Dialog；只显示真实元数据 | 最终容器与字段分组 |
@@ -553,7 +579,7 @@ Player 的功能合同与具体布局分开冻结：
 | O-009 | 新建/编辑歌单 | 新建歌单；自建歌单编辑名称、简介、封面或确认删除 | Dialog、Sheet 或页面及字段分步方式 |
 | O-010 | 歌单选择器 | 收藏到歌单、添加到其他歌单；只展示当前账号可写入的歌单 | 单选/批量入口与新建歌单的衔接 |
 
-### 10.3 页面状态矩阵
+### 10.4 页面状态矩阵
 
 | 页面族 | Loading | Empty | Error / Offline | Auth / Permission | 局部操作与恢复 |
 |---|---|---|---|---|---|
@@ -712,6 +738,10 @@ Kotlin 协议层直接请求上游接口；签名、加密、设备注册、Sess
 | 2026-08-11 | P-077 | 外部文件冷启动完成后 Back 返回文件管理器，前台导入 Back 恢复原 App 页面；Deep Link/系统媒体详情 Back 返回归属 Tab 根页面 | 已确认的移动端页面导航与来源恢复语义 | Intents、Deep Links、Navigation 和 Task Restore | 已确认 |
 | 2026-08-11 | P-078 | MV 横屏是同一 Video Player 的显式全屏状态，不建立独立横屏页面或单独视觉稿；播放器功能负责发起全屏，App 统一协调方向并保证恢复 | 用户明确要求依靠 Video Player 能力 | Video UI、Orientation、Lifecycle 和 Design Deliverables | 已确认 |
 | 2026-08-11 | P-079 | Full Player 的封面页与歌词页固定使用横向 Pager；旧图只保留该交互方向，视觉、内容层级和组件必须重新设计 | 用户确认既有产品决策 | Player IA、Navigation、Gestures 和 Design Deliverables | 已确认 |
+| 2026-08-11 | P-080 | V1 Compact 页面设计稿固定 `390dp` 宽；固定页面使用 `390 × 844dp`，滚动页面使用 `390 × Auto` 长画板；设计证据完整保留顶部 Status Bar 与底部手势安全区，系统区域构成参考 `player-cover-page.png` | 用户确认页面设计交付规范 | Foundation、Page Design、Home、Insets 和 Design Deliverables | 已确认 |
+| 2026-08-12 | P-081 | Music Item 首行固定为 Title → Quality → VIP，尾部 Duration 与 More 先保留；长标题只做单行末尾省略，Quality/VIP 不得侵入或越过 Duration。Playlist Item 固定 1:1 Artwork 与单行标题；Mini Player 复用同一信息优先级，并与同色 Bottom Navigation 保持 16dp 分隔及独立 Queue 入口 | 用户明确要求将已冻结组件写成可跨线程执行的文档合同 | Component System、Home、Lists、Tabs Shell、Player 和 QA | 已确认 |
+| 2026-08-12 | P-082 | Music Item 的 Playing Indicator 与 Duration 共用固定 Trailing Status Slot 且互斥；播放中以均衡器直接替换时长，More 继续保留 | 用户修正冻结视觉的播放中状态 | Component System、Song Lists、Playback State 和 QA | 已确认 |
+| 2026-08-12 | P-083 | Compact 首页锁定为同一页面的三段滚动状态：推荐区域、6 首每日推荐、6 个推荐歌单、6 首无分类新歌速递；Top App Bar 与 Bottom Navigation 固定，Mini Player 以 Overlay 覆盖滚动内容，末尾 Content Padding 保证最后一项可完整滚出遮挡 | 用户确认先锁定设计并进入代码实现；ImageGen 细节留待真实组件校正 | Home、Tabs Shell、Lists、Design QA 和 Implementation | 已确认 |
 
 ## 13. 首轮讨论议题
 

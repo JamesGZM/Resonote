@@ -1,8 +1,8 @@
 # Resonote Component System
 
-> 状态：执行基线；06–08 已冻结  
-> 更新日期：2026-08-10  
-> 规范范围：06 Core Components、07 Navigation & Feedback、08 Music Components  
+> 状态：执行基线；06–09 已冻结
+> 更新日期：2026-08-12
+> 规范范围：06 Core Components、07 Navigation & Feedback、08 Music Components、09 Tabs Shell Bottom Chrome
 > Foundation 依赖：[FOUNDATION.md](./FOUNDATION.md)  
 > Material 基线：`androidx.compose.material3:material3:1.4.0` 稳定版 Baseline
 
@@ -12,7 +12,7 @@
 - 颜色只引用 Foundation Semantic Role，字号只引用 Type Token，圆角、间距、Elevation、Motion 与 State Layer 不在本文另造同义 Token。
 - Material 3 原生组件能够满足规范时优先使用；自定义封装只能增加 Resonote 语义与一致默认值，不能破坏 Compose 原生 Semantics。
 - 所有交互组件最小 Touch Target 为 48dp，200% 字号下允许高度增长，不得裁切或强制缩字。
-- Player 专属的 MiniPlayer、Queue、Playback Progress、Pager、歌词高亮和播放页布局不属于本文范围。
+- Queue、Full Player、Pager、歌词高亮和播放页布局不属于本文范围；Tabs Shell 使用的 Mini Player 与 Bottom Navigation 组合由 09 定义。
 
 ## 1. 通用组件合同
 
@@ -302,7 +302,7 @@ Resonote 使用 Material3 Adaptive Navigation Suite 1.4.0 稳定版作为 Primar
 
 ## 08 — Music Components / Resonote Extension
 
-本节是基于 Material3 Color、Typography、Shape、State 与 Accessibility Token 构建的 Resonote 产品扩展，不宣称为 Material3 官方组件。本节只定义音乐资料浏览组件，不定义播放控制、进度、队列、歌词或 Player 页面。
+本节是基于 Material3 Color、Typography、Shape、State 与 Accessibility Token 构建的 Resonote 产品扩展，不宣称为 Material3 官方组件。本节定义音乐资料浏览组件及当前播放项的列表态提示，不定义播放控制、进度、队列、歌词或 Player 页面。
 
 ### 08A — Album Tile
 
@@ -320,7 +320,33 @@ Resonote 使用 Material3 Adaptive Navigation Suite 1.4.0 稳定版作为 Primar
 - Tile 主 Action 打开 Album Detail；More Action 不嵌套在同一个 Clickable Semantics 中。
 - Missing/Loading Artwork 继承 04B；长标题不覆盖 Artwork，不把 Dynamic Artwork Color 用作 Tile 背景。
 
-### 08B — Song Row
+### 08B — Playlist Item
+
+| Property | Value |
+|---|---:|
+| Compact grid | 2 列；外边距 16dp；列间距 16dp |
+| Artwork | `1:1`；填满 Tile 宽度；网络图片 `Crop`；引用 04B |
+| Artwork shape | `artworkShape / 12dp` |
+| Artwork → Title gap | 8dp |
+| Title | `bodyLarge`；严格 1 行；超出后 End Ellipsis |
+| Play-count overlay | 左下 8dp；深色半透明容器；播放图标 + 数量 |
+| Touch target | 整个 Tile |
+
+- Loaded 封面从网络加载，容器先按 `1:1` 占位，加载完成不得引发布局跳动；图片等比居中裁切，不拉伸。
+- `Loading` 与 `Missing` 使用 04B 的同一 `artworkPlaceholder`：中性正方形底色与两条低对比度水平标记，不再提供唱片、山景或破图变体。
+- `Loading` 的标题区域使用一条静态骨架；`Missing` 保留正常标题和交互，视觉证据使用“未收录封面”。两种状态通过相邻内容与 Semantics 区分。
+- 标题不得换行；长标题只能在单行末尾省略。播放量覆盖层只在 Loaded 且数据可用时出现。
+- Tile 主 Action 打开 Playlist Detail；播放量只是元数据，不建立独立点击目标。
+
+#### Compact 布局与截断合同
+
+1. 页面先扣除 Start/End 各 16dp，再以固定 2 列和 16dp 列间距计算 Tile 宽度；不得因单页数据量或长标题临时改成 3 列。
+2. Artwork 的宽和高都等于 Tile 宽度，先建立 `1:1` 容器再发起网络图片请求；Loaded、Loading、Missing 三种状态不得改变 Tile 宽高。
+3. Title 位于 Artwork 下方 8dp，使用单个文本测量区域：`maxLines = 1`、`softWrap = false`、`overflow = TextOverflow.Ellipsis`。
+4. Title 不得通过减小字号、压缩字距、缩小 Artwork 或扩展到第二行来容纳长文本。
+5. Play-count Overlay 只占 Artwork 内部空间，不参与 Title 测量，也不得伸出 Artwork 边界。
+
+### 08C — Music Item / Song Row
 
 | Property | Value |
 |---|---:|
@@ -329,16 +355,42 @@ Resonote 使用 Material3 Adaptive Navigation Suite 1.4.0 稳定版作为 Primar
 | Horizontal padding | 16dp |
 | Artwork | 56dp × 56dp；`artworkShapeCompact / 8dp` |
 | Artwork → Text gap | 12dp |
-| Title | `bodyLarge` |
+| Title | `bodyLarge`；严格 1 行；End Ellipsis |
 | Supporting | `bodyMedium` / `onSurfaceVariant` |
-| Trailing Action | 48dp Target / 24dp Icon |
+| Trailing metadata | Duration 固定宽度；不参与标题测量 |
+| Trailing Action | More：48dp Target / 24dp Icon |
 
 - Row 主 Action 打开 Song Detail 或执行产品定义的非播放浏览操作；本文不预设 Tap 即播放。
-- Title、Artist、Album、Duration 等信息按任务优先级显示；Duration 不进入可点击 More Action Target。
-- Selected 仅表示列表选择/当前上下文，不等同 Playing；禁止用均衡器动画或播放进度暗示 Foundation 状态。
+- Title、Quality Badge 与 VIP Badge 处于同一首行；Duration 和 More 固定在尾部。空间不足时 Title 先执行 End Ellipsis，Badge、Duration 与 More 不换行、不越界且不互相覆盖。
+- Artist/Supporting 独占第二行并允许单行省略；Duration 不进入可点击 More Action Target。
+- Loaded 封面从网络加载并按 04B `Crop`。`Loading` 与 `Missing` 使用完全相同的 `artworkPlaceholder` 封面；`Loading` 同时以静态骨架替代 Title/Supporting，`Missing` 显示正常歌曲信息和时长。
+- Playing 与 Selected 是不同状态。Playing 使用 `primaryContainer` 低强调背景、`primary` 标题与均衡器状态标记，但不显示播放进度；Reduced Motion 下均衡器静止。
+- Playing 时均衡器状态标记直接替换固定 Duration Slot；当前播放行不得同时显示均衡器和时长。More 仍保留在原固定尾部 Target，均衡器不得移动到 Title/Badge 区。
+- Selected 仅表示列表选择/当前上下文，不得复用 Playing 的均衡器或播放语义。
 - 批量选择模式暴露 Checkbox/Selected Semantics，不能同时保留与选择冲突的 Row 主 Action。
 
-### 08C — Section Header
+#### Compact 首行宽度与省略合同
+
+首行逻辑顺序固定为：
+
+`Title（弹性） → Quality Badge（可选） → VIP Badge（可选） || Duration（固定尾部） → More（固定尾部）`
+
+其中 `||` 表示中央文字区与尾部保留区的硬边界。实现必须遵循以下测量顺序：
+
+1. 先为 More 保留完整 48dp Touch Target，再为 Trailing Status Slot 保留固定宽度及规定间距；普通行在该 Slot 显示 Duration，Playing 行在同一 Slot 显示均衡器，二者互斥且不参与 Title 的宽度竞争。
+2. 在剩余的中央文字区内，先测量存在的 Quality Badge、VIP Badge 及 Badge 间距；Badge 使用固有宽度，`wrapContentWidth`，不可压缩、不可换行、不可覆盖。
+3. Title 只获得扣除 Badge 后的剩余宽度，并使用 `weight(1f, fill = true)` 或等价的有界弹性布局。
+4. Title 固定 `maxLines = 1`、`softWrap = false`、`overflow = TextOverflow.Ellipsis`。空间不足时只截断 Title；不得把 Quality/VIP 推入 Duration 区，不得让 VIP 越过或覆盖 Duration。
+5. Quality Badge 与 VIP Badge 的顺序固定；二者都存在时不能通过交换顺序规避截断。默认 Compact 视觉不隐藏 Badge。
+6. Artist/Supporting 位于独立第二行，宽度只取中央文字区；不得延伸到 Duration 或 More 下方，过长时同样单行 End Ellipsis。
+
+以 Layout Constraint 表达：
+
+`Title.maxEnd ≤ Quality.start ≤ VIP.start < TrailingBoundary ≤ TrailingStatus.start < More.start`
+
+不存在的可选 Badge 从约束链中移除，但 `TrailingBoundary` 始终保留。`TrailingStatus = Duration XOR PlayingIndicator`。设计评审中出现 Title 换行、Badge 进入尾部状态列、VIP 位于尾部状态右侧、Duration 被挤压，或 Playing 行同时出现均衡器与 Duration，均直接判定为不符合冻结合同。
+
+### 08D — Section Header
 
 | Property | Value |
 |---|---:|
@@ -351,7 +403,7 @@ Resonote 使用 Material3 Adaptive Navigation Suite 1.4.0 稳定版作为 Primar
 - Header 描述后续内容分组，不伪装成可点击 Row。存在“查看全部”时使用明确文字 Action。
 - 作为无障碍 Heading 暴露；Sticky Header 不能重复朗读或遮挡焦点内容。
 
-### 08D — Quality Badge
+### 08E — Quality Badge
 
 | Property | Value |
 |---|---:|
@@ -369,10 +421,77 @@ Resonote 使用 Material3 Adaptive Navigation Suite 1.4.0 稳定版作为 Primar
 辅助视觉证据：`design/approved/components/08-music-components.png`  
 矢量源：`design/approved/components/08-music-components-source.svg`
 
+用户确认的冻结视觉基线：
+
+- Music Item / Song Row：`design/approved/components/08-song-item.png`
+- Playlist Item：`design/approved/components/08-playlist-item.png`
+- 上述两张 PNG 固定 Compact 390dp 设计证据；实现数值、状态和可访问性仍以本文 Markdown 合同为准。
+
+## 09 — Mini Player & Bottom Navigation Shell
+
+本节只冻结 Tabs Shell 底部区域，不冻结视觉证据中用于承载它的首页示例内容。
+
+### 09A — Compact Mini Player
+
+| Property | Value |
+|---|---:|
+| Container | 悬浮卡片；`surfaceContainer`；与 Bottom Navigation 使用同一 Semantic Color |
+| Outer spacing | Start 16dp / End 16dp / 到 Bottom Navigation 顶部 16dp |
+| Min height | 72dp；200% 字号下弹性增长 |
+| Shape | `shapeExtraLarge / 28dp` |
+| Elevation | Level 3；Shadow 不得侵入与 Bottom Navigation 之间的 16dp 可见间距 |
+| Artwork | 56dp × 56dp；`artworkShapeCompact / 8dp`；引用 04B |
+| Artwork → Text gap | 12dp |
+| Title | `bodyLarge`；严格 1 行；End Ellipsis |
+| Supporting | `bodyMedium`；严格 1 行；End Ellipsis |
+| Quality / VIP | 复用 08E；与 Title 同一首行；Title 先省略，Badge 不换行 |
+| Playback actions | Pause/Play、Next、Queue；各自 48dp Touch Target |
+| Progress | 2dp；位于卡片内部底边，不越出 Container |
+
+- Mini Player 是独立悬浮卡片，不能与 Bottom Navigation 贴合、共边、融合或重叠。左右与下方三处 16dp 间距必须在 Compact 视觉和实现中同时成立。
+- 卡片与 Bottom Navigation 使用相同 Container Semantic Color 只表达同属 Bottom Shell；二者仍由 16dp 页面背景带明确分隔。
+- Compact Tabs Shell 中 Mini Player 位于滚动内容之上的独立 Overlay 层。列表内容在滚动过程中可以从卡片后方经过；Mini Player 不结束列表、不切断外层容器，也不要求内容层在卡片上方保留永久空白带。
+- 滚动容器末尾必须提供足够的 Bottom Content Padding，使最后一个可聚焦 Item 能完整滚动到 Mini Player 上方。该 Padding 只保证末项可达，不改变中间滚动状态允许内容位于悬浮层后方的层级合同。
+- Artwork、Title 与 Supporting 组成主体 Action，点击直接打开 Full Player；内部播放控制不得触发主体 Action。
+- `queue_music` 是独立 Queue Action，直接打开当前 Queue 的 Modal Bottom Sheet，不要求先进入 Full Player。
+- 首行顺序为 Title → Quality Badge → VIP Badge。可用宽度不足时 Title 先 End Ellipsis；Badge、播放控制和 Queue 入口不得换行、隐藏或越界。
+- 尚无当前媒体时整个 Mini Player 不显示，Bottom Navigation 保持原位置且不保留空占位。
+
+#### Compact 信息行宽度合同
+
+- Mini Player 的信息列与 08C 使用同一优先级：先保留 Pause/Play、Next、Queue 三个独立 Touch Target，再测量 Quality/VIP，最后把剩余宽度交给 Title。
+- Title、Quality Badge、VIP Badge 必须处于同一首行；Title 使用单行 End Ellipsis，Badge 使用固有宽度且不可被压缩到操作区。
+- Artist 独占第二行并单行 End Ellipsis。Title 或 Artist 变长不得移动、隐藏或缩小右侧三个播放操作。
+- Queue 必须使用明确的播放列表图标与本地化 `contentDescription`，点击打开当前 Queue；不得用 More 菜单代替该入口。
+
+### 09B — Compact Bottom Navigation
+
+- 使用 07A Material3 Navigation Bar 合同，目的地固定为“首页、发现、我的”，首页为 App 默认选中项。
+- Navigation Bar 消费底部系统 Insets；其 Container 延伸覆盖手势安全区，Gesture Indicator 使用 03D 设计证据规则。
+- Mini Player 出现或消失不得改变三个 Destination 的尺寸、选中状态、Tab 状态或 Back Stack。
+- Mini Player 与 Navigation Bar 都映射 `surfaceContainer`，但二者之间必须露出 16dp 页面 `background`；颜色相同不代表可以合并为同一个 Container。
+- 三个 Destination 等分可用宽度；Icon、Active Indicator 与 Label 使用 Material3 Navigation Bar 的内部 Token，不因 Mini Player 出现而上移、压缩或改变选中态。
+
+09 状态：**已冻结**。
+用户确认的冻结视觉基线：`design/approved/components/09-miniplayer-bottom-navigation.png`
+该 PNG 仅冻结 Mini Player、Bottom Navigation、系统手势区及其相互间距；图中上方首页内容不是首页视觉基线。
+首页对 Overlay 层级的页面级证据见 `design/HOME_IMPLEMENTATION_BASELINE.md`。
+
+## 冻结组件快速索引
+
+| 组件 | 规范性合同 | 冻结视觉证据 | 不得回归 |
+|---|---|---|---|
+| Music Item / Song Row | 08C | `design/approved/components/08-song-item.png` | Title 换行；Badge 挤入/越过 Trailing Status；Playing 同时显示均衡器和 Duration；Artwork 不是 56dp；Loading 与 Missing 使用不同 Placeholder |
+| Playlist Item | 08B | `design/approved/components/08-playlist-item.png` | Compact 改为 3 列；Artwork 不是 1:1；Title 换行；Loaded/Loading/Missing 导致布局跳动 |
+| Compact Mini Player | 09A | `design/approved/components/09-miniplayer-bottom-navigation.png` | 与 Navigation Bar 贴合；缺少 Quality/VIP；长标题挤压播放操作；缺少 Queue 入口 |
+| Compact Bottom Navigation | 09B、07A | `design/approved/components/09-miniplayer-bottom-navigation.png` | 与 Mini Player 融合；缺少 16dp 间距；Container 颜色不一致；目的地不是首页/发现/我的 |
+
+后续线程开始页面设计或 Android 实现前，必须先读取本索引对应章节；不能仅凭 PNG 重新推断布局规则。PNG 与 Markdown 不一致时，以本文的尺寸、测量、截断、状态和可访问性合同为准，并提请重新评审视觉证据。
+
 ## 9. Component System 验收
 
 - 每个组件在 Light、Dark、AMOLED，1.0×/2.0× 字号，Compact/Medium/Expanded/Large/Extra-large 下验证。
 - Enabled、Pressed、Focused、Disabled 以及组件声明的 Selected/Loading/Error 均与 05B 一致。
 - TalkBack、Keyboard/D-pad、Switch Access 能完成所有 Action；Modal Focus、Back 与恢复路径正确。
-- 文档中不存在 Player 专属布局、播放进度、Queue、Pager 或歌词高亮 Token。
-- 06–08 状态：**已冻结**；08 的“通过”表示符合 Resonote Extension 合同，不表示其为 Material3 官方组件。
+- 文档中不存在 Full Player 专属布局、Queue 内容布局、Pager 或歌词高亮 Token；Mini Player 只使用 09 声明的列表级播放进度与 Queue 入口。
+- 06–09 状态：**已冻结**；08–09 的“通过”表示符合 Resonote Extension 合同，不表示其为 Material3 官方组件。
