@@ -26,6 +26,7 @@ import androidx.compose.material.icons.rounded.Cloud
 import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.GraphicEq
+import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Card
@@ -68,6 +69,7 @@ fun MyRoute(
     bottomContentPadding: Dp,
     onLoginClick: () -> Unit,
     onDailyVipClick: () -> Unit,
+    onHistoryClick: () -> Unit,
     onCloudClick: () -> Unit,
     onLocalMusicClick: () -> Unit,
     onPlaylistClick: (String) -> Unit,
@@ -79,6 +81,7 @@ fun MyRoute(
         bottomContentPadding = bottomContentPadding,
         onLoginClick = onLoginClick,
         onDailyVipClick = onDailyVipClick,
+        onHistoryClick = onHistoryClick,
         onCloudClick = onCloudClick,
         onLocalMusicClick = onLocalMusicClick,
         onRefresh = viewModel::refresh,
@@ -94,6 +97,7 @@ internal fun MyScreen(
     bottomContentPadding: Dp,
     onLoginClick: () -> Unit,
     onDailyVipClick: () -> Unit,
+    onHistoryClick: () -> Unit,
     onCloudClick: () -> Unit,
     onLocalMusicClick: () -> Unit,
     onRefresh: () -> Unit,
@@ -137,6 +141,7 @@ internal fun MyScreen(
                 MyUiState.Anonymous -> anonymousAccount(
                     onLoginClick,
                     onDailyVipClick,
+                    onHistoryClick,
                     onCloudClick,
                     onLocalMusicClick,
                 )
@@ -145,6 +150,7 @@ internal fun MyScreen(
                     onRetryProfile = onRetryProfile,
                     onRetryPlaylists = onRetryPlaylists,
                     onDailyVipClick = onDailyVipClick,
+                    onHistoryClick = onHistoryClick,
                     onCloudClick = onCloudClick,
                     onLocalMusicClick = onLocalMusicClick,
                     onPlaylistClick = onPlaylistClick,
@@ -174,6 +180,7 @@ private fun LazyListScope.checkingAccount() {
 private fun LazyListScope.anonymousAccount(
     onLoginClick: () -> Unit,
     onDailyVipClick: () -> Unit,
+    onHistoryClick: () -> Unit,
     onCloudClick: () -> Unit,
     onLocalMusicClick: () -> Unit,
 ) {
@@ -237,6 +244,9 @@ private fun LazyListScope.anonymousAccount(
     item(key = "daily-vip") {
         DailyVipEntryCard(onClick = onDailyVipClick, requiresLogin = true)
     }
+    item(key = "history") {
+        HistoryEntryCard(onClick = onHistoryClick)
+    }
     item(key = "cloud") {
         CloudEntryCard(onClick = onCloudClick, requiresLogin = true)
     }
@@ -258,6 +268,7 @@ private fun LazyListScope.authenticatedAccount(
     onRetryProfile: () -> Unit,
     onRetryPlaylists: () -> Unit,
     onDailyVipClick: () -> Unit,
+    onHistoryClick: () -> Unit,
     onCloudClick: () -> Unit,
     onLocalMusicClick: () -> Unit,
     onPlaylistClick: (String) -> Unit,
@@ -278,6 +289,9 @@ private fun LazyListScope.authenticatedAccount(
     item(key = "daily-vip") {
         DailyVipEntryCard(onClick = onDailyVipClick, requiresLogin = false)
     }
+    item(key = "history") {
+        HistoryEntryCard(onClick = onHistoryClick)
+    }
     item(key = "cloud") {
         CloudEntryCard(onClick = onCloudClick, requiresLogin = false)
     }
@@ -296,6 +310,42 @@ private fun LazyListScope.authenticatedAccount(
             )
         }
         is MySectionState.Available -> playlistSections(playlists.value, onPlaylistClick)
+    }
+}
+
+@Composable
+private fun HistoryEntryCard(onClick: () -> Unit) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().testTag("my-history"),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        shape = MaterialTheme.shapes.extraLarge,
+    ) {
+        Row(modifier = Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+            Surface(
+                modifier = Modifier.size(52.dp),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.inverseSurface,
+                contentColor = MaterialTheme.colorScheme.inverseOnSurface,
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(Icons.Rounded.History, contentDescription = null, modifier = Modifier.size(25.dp))
+                }
+            }
+            Column(modifier = Modifier.weight(1f).padding(start = 14.dp)) {
+                Text(
+                    stringResource(R.string.feature_library_impl_recent_playback),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    stringResource(R.string.feature_library_impl_recent_playback_body),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+            Icon(Icons.Rounded.ChevronRight, contentDescription = null)
+        }
     }
 }
 

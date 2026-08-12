@@ -2,6 +2,7 @@ package com.resonote.app
 
 import androidx.lifecycle.ViewModel
 import com.resonote.core.model.CloudTrack
+import com.resonote.core.model.DeviceHistoryItem
 import com.resonote.core.model.LocalMedia
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.ResolvedSongSource
@@ -49,6 +50,10 @@ internal class PlaybackViewModel @Inject constructor(
 
     fun playAllLocal(media: List<LocalMedia>, startIndex: Int = 0) {
         playbackController.playAll(media.map(::PlaybackItem), startIndex)
+    }
+
+    fun playDeviceHistory(items: List<DeviceHistoryItem>, startIndex: Int = 0) {
+        playbackController.playAll(items.map { PlaybackItem(it.record) }, startIndex)
     }
 
     fun togglePlayPause() = playbackController.togglePlayPause()

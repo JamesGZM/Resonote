@@ -3,6 +3,8 @@ package com.resonote.core.playback
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.CloudTrack
 import com.resonote.core.model.ContentFailure
+import com.resonote.core.model.DeviceHistoryRecord
+import com.resonote.core.model.DeviceHistorySource
 import com.resonote.core.model.LocalMedia
 import com.resonote.core.model.LocalMediaId
 import com.resonote.core.model.OnlineSong
@@ -75,6 +77,14 @@ data class PlaybackItem(
     constructor(media: LocalMedia) : this(
         metadata = media.toPlaybackMetadata(),
         origin = PlaybackOrigin.Local(media.id),
+    )
+
+    constructor(record: DeviceHistoryRecord) : this(
+        metadata = record.toPlaybackMetadata(),
+        origin = when (record.source) {
+            DeviceHistorySource.Local -> PlaybackOrigin.Local(LocalMediaId(record.mediaId))
+            DeviceHistorySource.Cloud -> PlaybackOrigin.Cloud(record.toCloudTrack())
+        },
     )
 
     val queueKey: String
@@ -212,4 +222,34 @@ private fun LocalMedia.toPlaybackMetadata() = PlaybackMetadata(
         bitrateBitsPerSecond = bitrateBitsPerSecond,
     ),
     isVip = false,
+)
+
+private fun DeviceHistoryRecord.toPlaybackMetadata() = PlaybackMetadata(
+    mediaId = mediaId,
+    title = title,
+    artist = artist,
+    albumTitle = albumTitle,
+    artworkUri = artworkUri,
+    durationMillis = durationMillis,
+    format = when (source) {
+        DeviceHistorySource.Local -> PlaybackFormat.Local(
+            mimeType = null,
+            extension = null,
+            sampleRateHz = null,
+            bitDepth = null,
+            bitrateBitsPerSecond = null,
+        )
+        DeviceHistorySource.Cloud -> PlaybackFormat.Cloud(extension = null)
+    },
+    isVip = false,
+)
+
+private fun DeviceHistoryRecord.toCloudTrack() = CloudTrack(
+    hash = mediaId,
+    title = title,
+    artist = artist,
+    album = albumTitle,
+    coverUrl = artworkUri,
+    durationMillis = durationMillis,
+    albumAudioId = albumAudioId,
 )

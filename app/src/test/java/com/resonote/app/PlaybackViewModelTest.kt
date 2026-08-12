@@ -3,6 +3,9 @@ package com.resonote.app
 import com.google.common.truth.Truth.assertThat
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.CloudTrack
+import com.resonote.core.model.DeviceHistoryItem
+import com.resonote.core.model.DeviceHistoryRecord
+import com.resonote.core.model.DeviceHistorySource
 import com.resonote.core.model.LocalMedia
 import com.resonote.core.model.LocalMediaId
 import com.resonote.core.model.OnlineSong
@@ -71,6 +74,27 @@ class PlaybackViewModelTest {
         assertThat(item.metadata.format).isEqualTo(
             PlaybackFormat.Local("audio/flac", "flac", 96_000, 24, 2_304_000),
         )
+    }
+
+    @Test
+    fun deviceHistoryRebuildsMixedOriginsAndKeepsSelectedIndex() {
+        val controller = FakePlaybackController()
+        val viewModel = PlaybackViewModel(controller)
+        val items = listOf(
+            history(DeviceHistorySource.Local, "local-history"),
+            history(DeviceHistorySource.Cloud, "cloud-history"),
+        )
+
+        viewModel.playDeviceHistory(items, startIndex = 1)
+
+        assertThat(controller.playedIndex).isEqualTo(1)
+        assertThat(controller.playedItems.map(PlaybackItem::queueKey))
+            .containsExactly("local:local-history", "cloud:cloud-history")
+            .inOrder()
+        assertThat((controller.playedItems[0].origin as PlaybackOrigin.Local).id.value)
+            .isEqualTo("local-history")
+        assertThat((controller.playedItems[1].origin as PlaybackOrigin.Cloud).track.albumAudioId)
+            .isEqualTo("audio-cloud-history")
     }
 
     private class FakePlaybackController : PlaybackController {
@@ -155,6 +179,21 @@ class PlaybackViewModelTest {
             bitDepth = 24,
             bitrateBitsPerSecond = 2_304_000,
             importedAtEpochMillis = 1_000,
+        )
+
+        fun history(source: DeviceHistorySource, mediaId: String) = DeviceHistoryItem(
+            record = DeviceHistoryRecord(
+                source = source,
+                mediaId = mediaId,
+                title = mediaId,
+                artist = "artist",
+                albumTitle = "album",
+                artworkUri = null,
+                durationMillis = 180_000,
+                albumAudioId = "audio-$mediaId",
+            ),
+            lastPlayedAtEpochMillis = 2_000,
+            playCount = 2,
         )
     }
 }

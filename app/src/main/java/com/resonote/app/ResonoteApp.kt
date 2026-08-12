@@ -20,6 +20,9 @@ import com.resonote.feature.artist.impl.ArtistRoute
 import com.resonote.feature.auth.impl.LoginRoute
 import com.resonote.feature.cloud.api.CloudNavKey
 import com.resonote.feature.cloud.impl.CloudRoute
+import com.resonote.feature.history.api.HistoryNavKey
+import com.resonote.feature.history.api.HistoryTab
+import com.resonote.feature.history.impl.HistoryRoute
 import com.resonote.feature.library.impl.MyViewModel
 import com.resonote.feature.local.api.LocalMusicNavKey
 import com.resonote.feature.local.impl.LocalMusicRoute
@@ -90,6 +93,17 @@ internal fun ResonoteApp(
                     onSearchClick = { backStack.add(SearchNavKey()) },
                     onRecognitionClick = { backStack.add(RecognitionNavKey) },
                     onDailyVipClick = { backStack.navigateToDailyVip(authState) },
+                    onHistoryClick = {
+                        backStack.add(
+                            HistoryNavKey(
+                                initialTab = if (authState is AuthState.Authenticated) {
+                                    HistoryTab.Online
+                                } else {
+                                    HistoryTab.Device
+                                },
+                            ),
+                        )
+                    },
                     onCloudClick = { backStack.navigateToCloud(authState) },
                     onLocalMusicClick = { backStack.add(LocalMusicNavKey()) },
                     onPlaylistClick = { backStack.add(PlaylistNavKey(it)) },
@@ -214,6 +228,21 @@ internal fun ResonoteApp(
                         playbackViewModel.playCloud(request.tracks, request.startIndex, request.source)
                     },
                     onAppendTracks = playbackViewModel::appendCloud,
+                )
+            }
+            entry<HistoryNavKey> { key ->
+                HistoryRoute(
+                    initialTab = key.initialTab,
+                    playingMediaId = playbackState.currentMetadata?.mediaId,
+                    bottomContentPadding = if (playbackState.currentMetadata == null) 32.dp else 120.dp,
+                    onBack = { backStack.removeAt(backStack.lastIndex) },
+                    onLoginRequest = {
+                        if (backStack.lastOrNull() !is LoginGateNavKey) {
+                            backStack.add(LoginGateNavKey(sessionExpired = false))
+                        }
+                    },
+                    onPlayOnline = playbackViewModel::playAll,
+                    onPlayDevice = playbackViewModel::playDeviceHistory,
                 )
             }
             entry<LocalMusicNavKey> { key ->

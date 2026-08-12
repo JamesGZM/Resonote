@@ -86,6 +86,7 @@ internal fun TabsShell(
     myViewModel: MyViewModel? = null,
     onLoginRequest: () -> Unit = {},
     onDailyVipClick: () -> Unit = {},
+    onHistoryClick: () -> Unit = {},
     onCloudClick: () -> Unit = {},
     onLocalMusicClick: () -> Unit = {},
 ) {
@@ -189,6 +190,7 @@ internal fun TabsShell(
                                 bottomContentPadding = bottomContentPadding,
                                 onLoginClick = onLoginRequest,
                                 onDailyVipClick = onDailyVipClick,
+                                onHistoryClick = onHistoryClick,
                                 onCloudClick = onCloudClick,
                                 onLocalMusicClick = onLocalMusicClick,
                                 onPlaylistClick = onPlaylistClick,

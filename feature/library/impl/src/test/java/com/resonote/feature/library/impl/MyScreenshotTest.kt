@@ -49,11 +49,11 @@ class MyScreenshotTest {
         setScreen(state)
 
         composeRule.onNodeWithTag("my-profile").assertIsDisplayed()
-        composeRule.onNodeWithText("我喜欢").assertExists()
         capture("profile")
 
-        composeRule.onNodeWithTag("my-list").performScrollToIndex(4)
+        composeRule.onNodeWithTag("my-list").performScrollToIndex(5)
         composeRule.waitForIdle()
+        composeRule.onNodeWithText("我喜欢").assertIsDisplayed()
         capture("playlists")
     }
 
@@ -68,6 +68,7 @@ class MyScreenshotTest {
                         bottomContentPadding = 24.dp,
                         onLoginClick = onLoginClick,
                         onDailyVipClick = {},
+                        onHistoryClick = {},
                         onCloudClick = {},
                         onLocalMusicClick = {},
                         onRefresh = {},
