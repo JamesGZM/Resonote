@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="core_designsystem_more_actions">%1$s 的更多操作</string>
+    <string name="core_designsystem_playing">正在播放</string>
+    <string name="core_designsystem_song_artwork">%1$s 的歌曲封面</string>
+    <string name="core_designsystem_playlist_artwork">%1$s 的歌单封面</string>
     <plurals name="core_designsystem_text_field_character_limit_exceeded">
         <item quantity="other">最多可输入 %1$d 个字符。</item>
     </plurals>

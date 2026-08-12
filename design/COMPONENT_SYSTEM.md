@@ -468,6 +468,7 @@ Resonote 使用 Material3 Adaptive Navigation Suite 1.4.0 稳定版作为 Primar
 
 - 使用 07A Material3 Navigation Bar 合同，目的地固定为“首页、发现、我的”，首页为 App 默认选中项。
 - Navigation Bar 消费底部系统 Insets；其 Container 延伸覆盖手势安全区，Gesture Indicator 使用 03D 设计证据规则。
+- 三键/两键虚拟系统导航启用时，System Navigation Bar 使用同一 `surfaceContainer` 实色与匹配的图标明暗，不允许平台默认对比遮罩在底部产生第二条异色容器。
 - Mini Player 出现或消失不得改变三个 Destination 的尺寸、选中状态、Tab 状态或 Back Stack。
 - Mini Player 与 Navigation Bar 都映射 `surfaceContainer`，但二者之间必须露出 16dp 页面 `background`；颜色相同不代表可以合并为同一个 Container。
 - 三个 Destination 等分可用宽度；Icon、Active Indicator 与 Label 使用 Material3 Navigation Bar 的内部 Token，不因 Mini Player 出现而上移、压缩或改变选中态。

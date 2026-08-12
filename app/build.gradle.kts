@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.resonote.android.application)
     alias(libs.plugins.resonote.android.application.compose)
     alias(libs.plugins.resonote.hilt)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.roborazzi)
 }
 
 android {
@@ -27,14 +29,23 @@ android {
 
 dependencies {
     implementation(projects.core.designsystem)
+    implementation(projects.core.navigation)
     implementation(projects.core.data)
+    implementation(projects.feature.home.impl)
+    implementation(projects.feature.player.impl)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.navigation3.runtime)
+    implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)
 
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)
     testImplementation(libs.truth)
+    testImplementation(projects.core.screenshotTesting)
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

@@ -337,7 +337,7 @@ NIA 没有音乐播放实现，以下模块是 Resonote 的扩展架构。Androi
 
 | 旧产品能力 | 参考源码 | Resonote 架构处理 | 主要依赖/边界 | 状态 |
 |---|---|---|---|---|
-| 首页推荐 | `src/views/Home.vue`、`src/components/home/` | 单一 `:feature:home`；Repository 提供分区内容，歌曲操作通过 playback api；Tabs Shell 直接组合，不建立空 `api` 模块 | data、model、ui/designsystem、Coil | 页面合同与首批 API/Data 已完成；Compose、导航和播放待实现 |
+| 首页推荐 | `src/views/Home.vue`、`src/components/home/` | 单一 `:feature:home`；Repository → ViewModel `StateFlow` → lifecycle-aware Route → stateless Screen；歌曲操作携带有序领域歌曲列表与起始下标；Tabs Shell 直接组合，不建立空 `api` 模块 | data、model、ui/designsystem、Coil | 页面、首批 API/Data、Compose 与 Route/ViewModel 已实现；当前由 App Prototype Adapter 演示播放，待 playback api/service 替换 |
 | 发现、排行榜、新歌、新专辑、推荐歌单 | `src/views/Discover.vue`、`src/components/discover/`、`src/views/Ranking.vue` | `:feature:discover:api/impl`；排行榜先作为 Discover 子目的地，不单独建模块 | data/domain、model、ui、Coil | 榜单列表/歌曲与公开歌单详情 Data 已实现；其余发现切片和页面设计待完成 |
 | 我的/资料库 | `src/views/Library.vue` | “我的”聚合 profile、account、playlist、cloud、local music 等 feature API，不直接拥有各 Repository 实现 | auth/library/local/cloud repositories、feature api | 产品范围已确认；待 API/页面设计 |
 | 搜索与建议 | `src/views/Search.vue`、`RecommendedSearch.vue`、`components/search/`；Mobile `src/app/search.tsx` | `:feature:search:api/impl`；只从首页进入独立页面；综合/单曲/歌单/专辑/MV/歌手为内部结果类型 | data/domain、model、ui；分页库按 API 决定 | 产品范围与入口已确认；待完整 API |

@@ -38,6 +38,7 @@
 - Signal Signature：以 `R + 波形` 为核心识别，不使用普通音符作为 Logo。
 - 视觉证据覆盖字标、单色、小尺寸、App Icon 和品牌图形边界。
 - 状态：**已冻结**。
+- Wordmark Source：`design/approved/foundation/00-resonote-wordmark-source.svg`
 - 辅助视觉证据：`design/approved/foundation/00-design-principles.png`
 
 #### 00B — Launcher & Startup Identity

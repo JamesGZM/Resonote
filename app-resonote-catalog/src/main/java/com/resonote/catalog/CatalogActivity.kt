@@ -5,7 +5,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -20,16 +19,8 @@ class CatalogActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             var themeMode by rememberSaveable { mutableStateOf(ResonoteThemeMode.SYSTEM) }
-            val systemDark = isSystemInDarkTheme()
-            val darkTheme = when (themeMode) {
-                ResonoteThemeMode.SYSTEM -> systemDark
-                ResonoteThemeMode.LIGHT -> false
-                ResonoteThemeMode.DARK,
-                ResonoteThemeMode.AMOLED,
-                -> true
-            }
-            SyncSystemBars(darkTheme = darkTheme)
             ResonoteTheme(themeMode = themeMode) {
+                SyncSystemBars()
                 AdaptiveCatalogScreen(
                     themeMode = themeMode,
                     onThemeModeChange = { themeMode = it },

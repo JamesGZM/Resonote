@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feature_player_impl_artwork">%1$s 的歌曲封面</string>
+    <string name="feature_player_impl_play">播放</string>
+    <string name="feature_player_impl_pause">暂停</string>
+    <string name="feature_player_impl_next">下一首</string>
+    <string name="feature_player_impl_queue">播放队列</string>
+</resources>

@@ -83,3 +83,13 @@
 完成真实 Compose 页面后，以运行时截图替换或补充本组 ImageGen 状态图，再做像素级设计 QA。
 
 模块边界采用单一 `:feature:home`。Feature `api` 表示跨功能公共导航/调用合同，并非首页网络接口集合；首页作为 Tabs Shell 根页面没有独立外部入口，因此当前不建立 `:feature:home:api`。排行榜、推荐歌单和歌单详情的共享目标由发现/歌单领域拥有，首页只发出类型安全导航意图。
+
+## 7. 代码架构基准
+
+- `HomeViewModel` 只依赖 `HomeRepository`，把领域模型映射为不可变 `HomeUiState`，并通过 `StateFlow` 暴露 Loading、Content 和 Error；它不依赖 Retrofit、DAO、Media3、Composable 或 App Shell。
+- `HomeRoute` 负责通过 Hilt 获取 ViewModel、使用生命周期感知方式收集状态，并把页面事件连接到 ViewModel；`HomeScreen` 保持无状态，只接收 UI State、当前播放歌曲 ID 和事件回调。
+- 首页首屏内容由 `HomeRepository.refresh()` 提供。推荐电台严格在用户点击后调用 `loadRadio()`，不得在首屏初始化时预取。
+- 歌曲点击和“播放全部”必须生成“有序 `OnlineSong` 列表 + 起始下标”的播放请求，不能只传单个 URL 或把 UI Model 当作播放领域模型。这样 Queue 的顺序和用户点击位置在进入播放域之前已经明确。
+- 完整 Playback 尚未接入时，App 只能以明确的 Prototype Adapter 暂存上述播放请求并驱动 Mini Player。未来用 `:core:playback:api` 的 Controller 替换该适配层；首页的 Repository、ViewModel、Route、Screen 和视觉组件接口不随之重写。
+- 当前播放媒体 ID 由播放状态的所有者向下传入首页，用于 Music Item 的 Playing 状态。首页不得自行维护第二份“正在播放”事实源。
+- Fixture 只允许存在于测试或 Catalog；生产首页不得用 Fixture 覆盖 Repository 状态。

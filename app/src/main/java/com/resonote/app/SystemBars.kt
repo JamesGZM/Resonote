@@ -2,37 +2,46 @@ package com.resonote.app
 
 import android.content.Context
 import android.content.ContextWrapper
-import android.graphics.Color
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 
 @Composable
-internal fun SyncSystemBars(darkTheme: Boolean) {
+internal fun SyncSystemBars() {
     val view = LocalView.current
     val activity = LocalContext.current.findComponentActivity()
+    val statusBarIsDark = MaterialTheme.colorScheme.background.luminance() < DarkSurfaceLuminanceThreshold
+    val navigationBarColor = MaterialTheme.colorScheme.surfaceContainer
+    val navigationBarIsDark = navigationBarColor.luminance() < DarkSurfaceLuminanceThreshold
     if (!view.isInEditMode && activity != null) {
         SideEffect {
             activity.enableEdgeToEdge(
                 statusBarStyle = SystemBarStyle.auto(
-                    lightScrim = Color.TRANSPARENT,
-                    darkScrim = Color.TRANSPARENT,
-                ) { darkTheme },
-                navigationBarStyle = SystemBarStyle.auto(
-                    lightScrim = LightNavigationBarScrim,
-                    darkScrim = DarkNavigationBarScrim,
-                ) { darkTheme },
+                    lightScrim = android.graphics.Color.TRANSPARENT,
+                    darkScrim = android.graphics.Color.TRANSPARENT,
+                ) { statusBarIsDark },
+                navigationBarStyle = navigationBarColor.toSystemBarStyle(navigationBarIsDark),
             )
         }
     }
 }
 
-private val LightNavigationBarScrim = Color.argb(0xE6, 0xFF, 0xFF, 0xFF)
-private val DarkNavigationBarScrim = Color.argb(0x80, 0x1B, 0x1B, 0x1B)
+private fun Color.toSystemBarStyle(isDark: Boolean): SystemBarStyle =
+    if (isDark) {
+        SystemBarStyle.dark(toArgb())
+    } else {
+        SystemBarStyle.light(scrim = toArgb(), darkScrim = toArgb())
+    }
+
+private const val DarkSurfaceLuminanceThreshold = 0.5f
 
 private tailrec fun Context.findComponentActivity(): ComponentActivity? = when (this) {
     is ComponentActivity -> this

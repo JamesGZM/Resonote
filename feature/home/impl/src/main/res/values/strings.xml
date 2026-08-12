@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feature_home_impl_brand">Resonote</string>
+    <string name="feature_home_impl_search">Search</string>
+    <string name="feature_home_impl_recognize">Recognize music</string>
+    <string name="feature_home_impl_play_radio">Play radio</string>
+    <string name="feature_home_impl_rankings">Rankings</string>
+    <string name="feature_home_impl_popular_rankings">Popular charts</string>
+    <string name="feature_home_impl_featured_playlists">Featured playlists</string>
+    <string name="feature_home_impl_selected_for_you">Selected for you</string>
+    <string name="feature_home_impl_daily">Daily recommendations</string>
+    <string name="feature_home_impl_playlists">Recommended playlists</string>
+    <string name="feature_home_impl_new_releases">New releases</string>
+    <string name="feature_home_impl_play_all">Play all</string>
+    <string name="feature_home_impl_retry">Retry</string>
+</resources>
