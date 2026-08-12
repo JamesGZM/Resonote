@@ -2,6 +2,7 @@ package com.resonote.core.playback.service
 
 import android.content.ComponentName
 import android.content.Context
+import android.os.SystemClock
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.media3.common.C
@@ -11,6 +12,7 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import com.resonote.core.data.ListeningHistoryRepository
 import com.resonote.core.model.ResolveSongSourceResult
 import com.resonote.core.model.ResolvedSongSource
 import com.resonote.core.playback.PlaybackController
@@ -35,10 +37,19 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 @Singleton
-internal class DefaultPlaybackController @Inject constructor(
+internal class DefaultPlaybackController internal constructor(
     @param:ApplicationContext private val context: Context,
     private val sourceResolver: PlaybackSourceResolver,
+    private val historyRepository: ListeningHistoryRepository,
+    private val elapsedRealtime: () -> Long,
 ) : PlaybackController, Player.Listener {
+    @Inject
+    constructor(
+        @ApplicationContext context: Context,
+        sourceResolver: PlaybackSourceResolver,
+        historyRepository: ListeningHistoryRepository,
+    ) : this(context, sourceResolver, historyRepository, SystemClock::elapsedRealtime)
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val queue = PlaybackQueue()
     private val mutableState = MutableStateFlow(PlaybackState())
@@ -53,6 +64,7 @@ internal class DefaultPlaybackController @Inject constructor(
     private var handledEndedGeneration = -1L
     private var isResolving = false
     private var positionUpdates: Job? = null
+    private val historyEligibility = PlaybackHistoryEligibilityTracker()
 
     override val state: StateFlow<PlaybackState> = mutableState.asStateFlow()
 
@@ -124,6 +136,8 @@ internal class DefaultPlaybackController @Inject constructor(
                 return@launch
             }
 
+            sampleHistory(controller?.isPlaying == true, endedNaturally = false)
+            historyEligibility.reset()
             loadGeneration++
             isResolving = false
             pendingControllerAction = null
@@ -166,6 +180,7 @@ internal class DefaultPlaybackController @Inject constructor(
     }
 
     override fun pause() {
+        sampleHistory(controller?.isPlaying == true, endedNaturally = false)
         loadGeneration++
         isResolving = false
         pendingControllerAction = null
@@ -206,6 +221,8 @@ internal class DefaultPlaybackController @Inject constructor(
 
     override fun clear() {
         scope.launch {
+            sampleHistory(controller?.isPlaying == true, endedNaturally = false)
+            historyEligibility.reset()
             loadGeneration++
             isResolving = false
             pendingControllerAction = null
@@ -225,6 +242,8 @@ internal class DefaultPlaybackController @Inject constructor(
     }
 
     override fun onPlayerError(error: PlaybackException) {
+        sampleHistory(isPlaying = false, endedNaturally = false)
+        historyEligibility.reset()
         isResolving = false
         mutableState.value = mutableState.value.copy(
             status = PlaybackStatus.Failed,
@@ -233,6 +252,8 @@ internal class DefaultPlaybackController @Inject constructor(
     }
 
     private suspend fun resolveAndLoad(item: PlaybackItem) {
+        sampleHistory(controller?.isPlaying == true, endedNaturally = false)
+        historyEligibility.reset()
         val generation = ++loadGeneration
         handledEndedGeneration = -1L
         isResolving = true
@@ -261,6 +282,12 @@ internal class DefaultPlaybackController @Inject constructor(
         runWithController { player ->
             if (generation != loadGeneration) return@runWithController
             isResolving = false
+            val resolvedDuration = source.durationMillis.takeIf { it > 0 } ?: item.metadata.durationMillis
+            historyEligibility.start(
+                record = item.toDeviceHistoryRecordOrNull()?.copy(durationMillis = resolvedDuration),
+                durationMillis = resolvedDuration,
+                elapsedRealtimeMillis = elapsedRealtime(),
+            )
             player.setMediaItem(item.toMediaItem(source))
             player.prepare()
             player.play()
@@ -270,6 +297,7 @@ internal class DefaultPlaybackController @Inject constructor(
 
     private fun failResolution(generation: Long, issue: PlaybackIssue) {
         if (generation != loadGeneration) return
+        historyEligibility.reset()
         isResolving = false
         pendingControllerAction = null
         controller?.stop()
@@ -351,6 +379,23 @@ internal class DefaultPlaybackController @Inject constructor(
             bufferedPositionMillis = player.bufferedPosition.coerceAtLeast(0),
             issue = player.playerError?.let { PlaybackIssue.PlayerFailure(it.message) },
         )
+        sampleHistory(
+            isPlaying = status == PlaybackStatus.Playing,
+            endedNaturally = status == PlaybackStatus.Ended,
+        )
+    }
+
+    private fun sampleHistory(isPlaying: Boolean, endedNaturally: Boolean) {
+        val qualification =
+            historyEligibility.sample(
+                isPlaying = isPlaying,
+                endedNaturally = endedNaturally,
+                elapsedRealtimeMillis = elapsedRealtime(),
+            ) ?: return
+        scope.launch {
+            val persisted = historyRepository.recordDevicePlayback(qualification.record)
+            historyEligibility.onPersistenceResult(qualification, persisted)
+        }
     }
 
     private fun startPositionUpdates() {
