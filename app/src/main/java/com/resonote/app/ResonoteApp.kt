@@ -13,6 +13,8 @@ import com.resonote.core.navigation.TabsShellNavKey
 import com.resonote.core.model.AuthState
 import com.resonote.feature.album.api.AlbumNavKey
 import com.resonote.feature.album.impl.AlbumRoute
+import com.resonote.feature.artist.api.ArtistNavKey
+import com.resonote.feature.artist.impl.ArtistRoute
 import com.resonote.feature.playlist.api.PlaylistNavKey
 import com.resonote.feature.playlist.impl.PlaylistRoute
 import com.resonote.feature.search.api.SearchNavKey
@@ -58,7 +60,17 @@ internal fun ResonoteApp(viewModel: MainActivityViewModel = hiltViewModel()) {
                             ),
                         )
                     },
-                    onArtistClick = null,
+                    onArtistClick = { artist ->
+                        backStack.add(
+                            ArtistNavKey(
+                                artistId = artist.id,
+                                name = artist.name,
+                                avatarUrl = artist.avatarUrl,
+                                songCount = artist.songCount,
+                                albumCount = artist.albumCount,
+                            ),
+                        )
+                    },
                     onMvClick = null,
                 )
             }
@@ -75,6 +87,16 @@ internal fun ResonoteApp(viewModel: MainActivityViewModel = hiltViewModel()) {
             }
             entry<AlbumNavKey> { key ->
                 AlbumRoute(
+                    key = key,
+                    playingMediaId = playbackState.currentSongId,
+                    onBack = { backStack.removeAt(backStack.lastIndex) },
+                    onPlayAll = playbackState::playAll,
+                    onSongClick = playbackState::play,
+                    onSongMoreClick = null,
+                )
+            }
+            entry<ArtistNavKey> { key ->
+                ArtistRoute(
                     key = key,
                     playingMediaId = playbackState.currentSongId,
                     onBack = { backStack.removeAt(backStack.lastIndex) },

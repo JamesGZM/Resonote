@@ -1,0 +1,21 @@
+<resources>
+    <string name="artist_title_fallback">歌手</string>
+    <string name="artist_back">返回</string>
+    <string name="artist_portrait">%1$s的歌手头像</string>
+    <string name="artist_fans">%1$s 位关注者</string>
+    <string name="artist_songs">歌曲</string>
+    <string name="artist_albums">专辑</string>
+    <string name="artist_mvs">MV</string>
+    <string name="artist_popular">热门</string>
+    <string name="artist_latest">最新</string>
+    <string name="artist_play_all">播放全部</string>
+    <string name="artist_empty_title">还没有歌曲</string>
+    <string name="artist_empty_body">这个分类暂时没有可播放的歌曲。</string>
+    <string name="artist_error_title">无法加载歌曲</string>
+    <string name="artist_error_network">网络连接似乎中断了，请稍后重试。</string>
+    <string name="artist_error_auth">登录状态已失效，请重新登录后再试。</string>
+    <string name="artist_error_generic">歌手内容可能已失效，或暂时无法解析。</string>
+    <string name="artist_retry">重试</string>
+    <string name="artist_load_more">加载更多</string>
+    <string name="artist_load_more_retry">加载失败，点按重试</string>
+</resources>

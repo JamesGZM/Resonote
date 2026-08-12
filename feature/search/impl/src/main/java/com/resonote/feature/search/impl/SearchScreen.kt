@@ -86,7 +86,7 @@ fun SearchRoute(
     onSongMoreClick: ((OnlineSong) -> Unit)?,
     onPlaylistClick: ((String) -> Unit)?,
     onAlbumClick: ((SearchAlbum) -> Unit)?,
-    onArtistClick: ((String) -> Unit)?,
+    onArtistClick: ((SearchArtist) -> Unit)?,
     onMvClick: ((String) -> Unit)?,
     viewModel: SearchViewModel = hiltViewModel(),
 ) {
@@ -133,7 +133,7 @@ fun SearchScreen(
     onSongMoreClick: ((OnlineSong) -> Unit)?,
     onPlaylistClick: ((String) -> Unit)?,
     onAlbumClick: ((SearchAlbum) -> Unit)?,
-    onArtistClick: ((String) -> Unit)?,
+    onArtistClick: ((SearchArtist) -> Unit)?,
     onMvClick: ((String) -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
@@ -382,7 +382,7 @@ private fun SearchResults(
     onSongMoreClick: ((OnlineSong) -> Unit)?,
     onPlaylistClick: ((String) -> Unit)?,
     onAlbumClick: ((SearchAlbum) -> Unit)?,
-    onArtistClick: ((String) -> Unit)?,
+    onArtistClick: ((SearchArtist) -> Unit)?,
     onMvClick: ((String) -> Unit)?,
 ) {
     when (result) {
@@ -417,7 +417,7 @@ private fun AggregateSearchResults(
     onSongMoreClick: ((OnlineSong) -> Unit)?,
     onPlaylistClick: ((String) -> Unit)?,
     onAlbumClick: ((SearchAlbum) -> Unit)?,
-    onArtistClick: ((String) -> Unit)?,
+    onArtistClick: ((SearchArtist) -> Unit)?,
     onMvClick: ((String) -> Unit)?,
 ) {
     LazyColumn(
@@ -458,7 +458,7 @@ private fun AggregateSearchResults(
                     title = artist.name,
                     supporting = stringResource(R.string.search_artist_metadata, artist.songCount, artist.albumCount),
                     icon = Icons.Rounded.Person,
-                    onClick = onArtistClick?.let { callback -> { callback(artist.id) } },
+                    onClick = onArtistClick?.let { callback -> { callback(artist) } },
                 )
             }
         }
@@ -509,7 +509,7 @@ private fun PagedSearchResults(
     onSongMoreClick: ((OnlineSong) -> Unit)?,
     onPlaylistClick: ((String) -> Unit)?,
     onAlbumClick: ((SearchAlbum) -> Unit)?,
-    onArtistClick: ((String) -> Unit)?,
+    onArtistClick: ((SearchArtist) -> Unit)?,
     onMvClick: ((String) -> Unit)?,
 ) {
     LazyColumn(
@@ -544,7 +544,7 @@ private fun PagedSearchResults(
                         item.value.albumCount,
                     ),
                     icon = Icons.Rounded.Person,
-                    onClick = onArtistClick?.let { callback -> { callback(item.value.id) } },
+                    onClick = onArtistClick?.let { callback -> { callback(item.value) } },
                 )
                 is SearchResultItem.Mv -> MvRow(
                     item.value,
