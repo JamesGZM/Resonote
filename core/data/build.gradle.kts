@@ -10,6 +10,8 @@ android {
 
 dependencies {
     api(projects.core.model)
+    implementation(projects.core.database)
+    implementation(projects.core.media.local)
     implementation(projects.core.network)
     implementation(projects.core.datastore)
     implementation(libs.kotlinx.coroutines.core)

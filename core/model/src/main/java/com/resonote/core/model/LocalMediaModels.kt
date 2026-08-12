@@ -36,3 +36,54 @@ data class LocalMedia(
         require(importedAtEpochMillis >= 0) { "importedAtEpochMillis must not be negative" }
     }
 }
+
+enum class LocalMediaDuplicateAction {
+    RequireConfirmation,
+    ImportCopy,
+}
+
+data class LocalMediaImportCandidate(
+    val displayName: String,
+    val title: String,
+    val artist: String?,
+    val sizeBytes: Long,
+    val mimeType: String?,
+)
+
+sealed interface LocalMediaImportResult {
+    data class Imported(val media: LocalMedia) : LocalMediaImportResult
+
+    data class DuplicateConfirmationRequired(
+        val candidate: LocalMediaImportCandidate,
+        val existing: List<LocalMedia>,
+    ) : LocalMediaImportResult
+
+    data class Failed(val reason: LocalMediaImportFailure) : LocalMediaImportResult
+}
+
+enum class LocalMediaImportFailure {
+    InvalidSource,
+    PermissionDenied,
+    SourceUnavailable,
+    EmptyFile,
+    UnsupportedFormat,
+    MetadataUnavailable,
+    InsufficientStorage,
+    HashFailed,
+    SourceChanged,
+    StorageUnavailable,
+    IndexUnavailable,
+}
+
+sealed interface LocalMediaDeleteResult {
+    data object Deleted : LocalMediaDeleteResult
+
+    data object NotFound : LocalMediaDeleteResult
+
+    data object Failed : LocalMediaDeleteResult
+}
+
+data class LocalMediaPlaybackSource(
+    val uri: String,
+    val media: LocalMedia,
+)

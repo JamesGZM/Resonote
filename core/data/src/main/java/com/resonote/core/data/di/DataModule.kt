@@ -33,8 +33,10 @@ import com.resonote.core.data.RiskVerificationRepository
 import com.resonote.core.data.SongPlaybackRepository
 import com.resonote.core.data.DefaultUserProfileRepository
 import com.resonote.core.data.DefaultLibraryRepository
+import com.resonote.core.data.DefaultLocalMediaRepository
 import com.resonote.core.data.UserProfileRepository
 import com.resonote.core.data.LibraryRepository
+import com.resonote.core.data.LocalMediaRepository
 import com.resonote.core.network.session.ApiSessionStore
 import dagger.Binds
 import dagger.Module
@@ -67,6 +69,9 @@ internal abstract class DataBindings {
 
     @Binds
     abstract fun bindLibraryRepository(implementation: DefaultLibraryRepository): LibraryRepository
+
+    @Binds
+    abstract fun bindLocalMediaRepository(implementation: DefaultLocalMediaRepository): LocalMediaRepository
 
     @Binds
     abstract fun bindCloudRepository(implementation: DefaultCloudRepository): CloudRepository
