@@ -43,7 +43,7 @@ class LocalMusicViewModelTest {
                 media("two", title = "岸线", artist = "Alpha", importedAt = 200),
             ),
         )
-        val viewModel = LocalMusicViewModel(repository)
+        val viewModel = LocalMusicViewModel(repository, FakeLocalMediaTreeSource())
         advanceUntilIdle()
 
         assertThat(viewModel.uiState.value.isLoading).isFalse()
@@ -69,7 +69,7 @@ class LocalMusicViewModelTest {
                     LocalMediaImportResult.Failed(LocalMediaImportFailure.UnsupportedFormat),
             ),
         )
-        val viewModel = LocalMusicViewModel(repository)
+        val viewModel = LocalMusicViewModel(repository, FakeLocalMediaTreeSource())
 
         viewModel.importUris(listOf("content://one", "content://two"))
         advanceUntilIdle()
@@ -99,7 +99,7 @@ class LocalMusicViewModelTest {
                     LocalMediaImportResult.Imported(media("next")),
             ),
         )
-        val viewModel = LocalMusicViewModel(repository)
+        val viewModel = LocalMusicViewModel(repository, FakeLocalMediaTreeSource())
 
         viewModel.importUris(listOf("content://duplicate", "content://next"))
         advanceUntilIdle()
@@ -125,7 +125,7 @@ class LocalMusicViewModelTest {
                     LocalMediaImportResult.Imported(copy),
             ),
         )
-        val viewModel = LocalMusicViewModel(repository)
+        val viewModel = LocalMusicViewModel(repository, FakeLocalMediaTreeSource())
 
         viewModel.importUris(listOf("content://duplicate"))
         advanceUntilIdle()
@@ -143,7 +143,7 @@ class LocalMusicViewModelTest {
     @Test
     fun cancellingActiveImportMarksOnlyRemainingItemsSkipped() = runTest(dispatcher) {
         val repository = FakeLocalMediaRepository(blockImports = true)
-        val viewModel = LocalMusicViewModel(repository)
+        val viewModel = LocalMusicViewModel(repository, FakeLocalMediaTreeSource())
 
         viewModel.importUris(listOf("content://one", "content://two"))
         runCurrent()
@@ -162,7 +162,7 @@ class LocalMusicViewModelTest {
     @Test
     fun busyImporterRejectsHandoffUntilCurrentBatchIsCancelled() = runTest(dispatcher) {
         val repository = FakeLocalMediaRepository(blockImports = true)
-        val viewModel = LocalMusicViewModel(repository)
+        val viewModel = LocalMusicViewModel(repository, FakeLocalMediaTreeSource())
 
         assertThat(viewModel.importUris(listOf("content://one"))).isTrue()
         runCurrent()
@@ -176,10 +176,62 @@ class LocalMusicViewModelTest {
     }
 
     @Test
+    fun directoryScanFeedsEveryDocumentIntoTheExistingImportPipeline() = runTest(dispatcher) {
+        val repository = FakeLocalMediaRepository(
+            importResults = mutableMapOf(
+                ImportRequest("content://tree/one", LocalMediaDuplicateAction.RequireConfirmation) to
+                    LocalMediaImportResult.Imported(media("one")),
+                ImportRequest("content://tree/two", LocalMediaDuplicateAction.RequireConfirmation) to
+                    LocalMediaImportResult.Failed(LocalMediaImportFailure.UnsupportedFormat),
+            ),
+        )
+        val treeSource = FakeLocalMediaTreeSource(
+            LocalMediaTreeScanResult.Available(listOf("content://tree/one", "content://tree/two")),
+        )
+        val viewModel = LocalMusicViewModel(repository, treeSource)
+
+        assertThat(viewModel.importDirectory("content://provider/tree/root")).isTrue()
+        advanceUntilIdle()
+
+        assertThat(treeSource.scannedUris).containsExactly("content://provider/tree/root")
+        assertThat(repository.importRequests.map(ImportRequest::uri))
+            .containsExactly("content://tree/one", "content://tree/two").inOrder()
+        assertThat(viewModel.uiState.value.importState).isEqualTo(
+            LocalImportUiState.Completed(
+                total = 2,
+                imported = 1,
+                skipped = 0,
+                failures = listOf(LocalMediaImportFailure.UnsupportedFormat),
+            ),
+        )
+    }
+
+    @Test
+    fun emptyAndDeniedDirectoriesRemainTypedUiResults() = runTest(dispatcher) {
+        val repository = FakeLocalMediaRepository()
+        val treeSource = FakeLocalMediaTreeSource(LocalMediaTreeScanResult.Available(emptyList()))
+        val viewModel = LocalMusicViewModel(repository, treeSource)
+
+        viewModel.importDirectory("content://provider/tree/empty")
+        advanceUntilIdle()
+        assertThat(viewModel.uiState.value.importState).isEqualTo(
+            LocalImportUiState.DirectoryFailed(LocalDirectoryImportFailure.NoFiles),
+        )
+
+        treeSource.result = LocalMediaTreeScanResult.Failed(LocalMediaTreeScanFailure.PermissionDenied)
+        viewModel.dismissImportResult()
+        viewModel.importDirectory("content://provider/tree/denied")
+        advanceUntilIdle()
+        assertThat(viewModel.uiState.value.importState).isEqualTo(
+            LocalImportUiState.DirectoryFailed(LocalDirectoryImportFailure.PermissionDenied),
+        )
+    }
+
+    @Test
     fun deleteFailureIsVisibleAndSuccessClearsIt() = runTest(dispatcher) {
         val target = media("one")
         val repository = FakeLocalMediaRepository(initialMedia = listOf(target))
-        val viewModel = LocalMusicViewModel(repository)
+        val viewModel = LocalMusicViewModel(repository, FakeLocalMediaTreeSource())
         advanceUntilIdle()
 
         repository.deleteResult = LocalMediaDeleteResult.Failed
@@ -224,6 +276,17 @@ class LocalMusicViewModelTest {
         }
 
         override suspend fun resolvePlaybackSource(id: LocalMediaId): LocalMediaPlaybackSource? = null
+    }
+
+    private class FakeLocalMediaTreeSource(
+        var result: LocalMediaTreeScanResult = LocalMediaTreeScanResult.Available(emptyList()),
+    ) : LocalMediaTreeSource {
+        val scannedUris = mutableListOf<String>()
+
+        override suspend fun scan(treeUri: String): LocalMediaTreeScanResult {
+            scannedUris += treeUri
+            return result
+        }
     }
 
     private data class ImportRequest(

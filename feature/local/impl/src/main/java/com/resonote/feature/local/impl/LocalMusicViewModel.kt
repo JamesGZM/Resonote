@@ -22,11 +22,13 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class LocalMusicViewModel @Inject constructor(
     private val repository: LocalMediaRepository,
+    private val treeSource: LocalMediaTreeSource,
 ) : ViewModel() {
     private val mutableUiState = MutableStateFlow(LocalMusicUiState())
     val uiState: StateFlow<LocalMusicUiState> = mutableUiState.asStateFlow()
 
     private var importJob: Job? = null
+    private var scanJob: Job? = null
     private var pendingUris = ArrayDeque<String>()
     private var pendingDuplicateUri: String? = null
     private var batchTotal = 0
@@ -52,7 +54,7 @@ class LocalMusicViewModel @Inject constructor(
     }
 
     fun importUris(uris: List<String>): Boolean {
-        if (importJob?.isActive == true || pendingDuplicateUri != null) return false
+        if (importJob?.isActive == true || scanJob?.isActive == true || pendingDuplicateUri != null) return false
         val uniqueUris = uris.filter(String::isNotBlank).distinct()
         if (uniqueUris.isEmpty()) return false
         pendingUris = ArrayDeque(uniqueUris)
@@ -62,6 +64,43 @@ class LocalMusicViewModel @Inject constructor(
         skipped = 0
         failures.clear()
         continueImport()
+        return true
+    }
+
+    fun importDirectory(treeUri: String): Boolean {
+        if (treeUri.isBlank() || importJob?.isActive == true || scanJob?.isActive == true || pendingDuplicateUri != null) {
+            return false
+        }
+        scanJob = viewModelScope.launch {
+            mutableUiState.update { it.copy(importState = LocalImportUiState.ScanningDirectory) }
+            try {
+                when (val result = treeSource.scan(treeUri)) {
+                    is LocalMediaTreeScanResult.Available -> {
+                        scanJob = null
+                        if (result.documentUris.isEmpty()) {
+                            mutableUiState.update {
+                                it.copy(
+                                    importState = LocalImportUiState.DirectoryFailed(
+                                        LocalDirectoryImportFailure.NoFiles,
+                                    ),
+                                )
+                            }
+                        } else {
+                            importUris(result.documentUris)
+                        }
+                    }
+                    is LocalMediaTreeScanResult.Failed -> {
+                        scanJob = null
+                        mutableUiState.update {
+                            it.copy(importState = LocalImportUiState.DirectoryFailed(result.reason.asUiFailure()))
+                        }
+                    }
+                }
+            } catch (cancelled: CancellationException) {
+                mutableUiState.update { it.copy(importState = LocalImportUiState.Idle) }
+                throw cancelled
+            }
+        }
         return true
     }
 
@@ -98,6 +137,12 @@ class LocalMusicViewModel @Inject constructor(
     }
 
     fun cancelImport() {
+        if (scanJob?.isActive == true) {
+            scanJob?.cancel()
+            scanJob = null
+            mutableUiState.update { it.copy(importState = LocalImportUiState.Idle) }
+            return
+        }
         if (importJob?.isActive != true && pendingDuplicateUri == null) return
         importJob?.cancel()
         pendingDuplicateUri = null
@@ -106,7 +151,10 @@ class LocalMusicViewModel @Inject constructor(
     }
 
     fun dismissImportResult() {
-        if (mutableUiState.value.importState is LocalImportUiState.Completed) {
+        if (
+            mutableUiState.value.importState is LocalImportUiState.Completed ||
+            mutableUiState.value.importState is LocalImportUiState.DirectoryFailed
+        ) {
             mutableUiState.update { it.copy(importState = LocalImportUiState.Idle) }
         }
     }
@@ -216,5 +264,11 @@ class LocalMusicViewModel @Inject constructor(
                 ),
             )
         }
+    }
+
+    private fun LocalMediaTreeScanFailure.asUiFailure() = when (this) {
+        LocalMediaTreeScanFailure.InvalidTree -> LocalDirectoryImportFailure.InvalidTree
+        LocalMediaTreeScanFailure.PermissionDenied -> LocalDirectoryImportFailure.PermissionDenied
+        LocalMediaTreeScanFailure.Unavailable -> LocalDirectoryImportFailure.Unavailable
     }
 }

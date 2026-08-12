@@ -47,6 +47,8 @@ enum class LocalMusicSort { ImportedNewest, Title, Artist, Duration }
 sealed interface LocalImportUiState {
     data object Idle : LocalImportUiState
 
+    data object ScanningDirectory : LocalImportUiState
+
     data class Running(
         val completed: Int,
         val total: Int,
@@ -69,4 +71,13 @@ sealed interface LocalImportUiState {
         val skipped: Int,
         val failures: List<LocalMediaImportFailure>,
     ) : LocalImportUiState
+
+    data class DirectoryFailed(val reason: LocalDirectoryImportFailure) : LocalImportUiState
+}
+
+enum class LocalDirectoryImportFailure {
+    NoFiles,
+    InvalidTree,
+    PermissionDenied,
+    Unavailable,
 }

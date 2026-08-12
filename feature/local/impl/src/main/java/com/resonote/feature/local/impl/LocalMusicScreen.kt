@@ -95,12 +95,16 @@ fun LocalMusicRoute(
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
         viewModel.importUris(uris.map { it.toString() })
     }
+    val directoryPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+        uri?.let { viewModel.importDirectory(it.toString()) }
+    }
     LocalMusicScreen(
         state = state,
         playingMediaId = playingMediaId,
         bottomContentPadding = bottomContentPadding,
         onBack = onBack,
         onPickFiles = { picker.launch(arrayOf("audio/*")) },
+        onPickDirectory = { directoryPicker.launch(null) },
         onQueryChange = viewModel::updateQuery,
         onSortChange = viewModel::updateSort,
         onPlayAll = { onPlayAll(state.visibleMedia) },
@@ -122,6 +126,7 @@ internal fun LocalMusicScreen(
     bottomContentPadding: Dp,
     onBack: () -> Unit,
     onPickFiles: () -> Unit,
+    onPickDirectory: () -> Unit,
     onQueryChange: (String) -> Unit,
     onSortChange: (LocalMusicSort) -> Unit,
     onPlayAll: () -> Unit,
@@ -151,9 +156,14 @@ internal fun LocalMusicScreen(
                 },
                 actions = {
                     IconButton(
+                        onClick = onPickDirectory,
+                        enabled = !state.importState.isBusy(),
+                    ) {
+                        Icon(Icons.Rounded.FolderOpen, stringResource(R.string.feature_local_impl_import_directory))
+                    }
+                    IconButton(
                         onClick = onPickFiles,
-                        enabled = state.importState !is LocalImportUiState.Running &&
-                            state.importState !is LocalImportUiState.AwaitingDuplicate,
+                        enabled = !state.importState.isBusy(),
                     ) {
                         Icon(Icons.Rounded.Add, stringResource(R.string.feature_local_impl_import))
                     }
@@ -175,12 +185,18 @@ internal fun LocalMusicScreen(
 
             when (val importState = state.importState) {
                 LocalImportUiState.Idle -> Unit
+                LocalImportUiState.ScanningDirectory -> item(key = "directory-scan") {
+                    DirectoryScanCard(onCancelImport)
+                }
                 is LocalImportUiState.Running -> item(key = "import-progress") {
                     ImportProgressCard(importState, onCancelImport)
                 }
                 is LocalImportUiState.AwaitingDuplicate -> Unit
                 is LocalImportUiState.Completed -> item(key = "import-result") {
                     ImportResultCard(importState, onDismissImportResult)
+                }
+                is LocalImportUiState.DirectoryFailed -> item(key = "directory-error") {
+                    DirectoryFailureCard(importState.reason, onDismissImportResult)
                 }
             }
 
@@ -209,7 +225,7 @@ internal fun LocalMusicScreen(
 
             when {
                 state.isLoading -> item(key = "loading") { LoadingState() }
-                state.media.isEmpty() -> item(key = "empty") { EmptyState(onPickFiles) }
+                state.media.isEmpty() -> item(key = "empty") { EmptyState(onPickFiles, onPickDirectory) }
                 state.visibleMedia.isEmpty() -> item(key = "no-results") {
                     NoResultsState(state.query)
                 }
@@ -538,7 +554,7 @@ private fun LoadingState() {
 }
 
 @Composable
-private fun EmptyState(onPickFiles: () -> Unit) {
+private fun EmptyState(onPickFiles: () -> Unit, onPickDirectory: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 40.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -570,6 +586,64 @@ private fun EmptyState(onPickFiles: () -> Unit) {
             modifier = Modifier.padding(top = 22.dp),
             leadingIcon = { Icon(Icons.Rounded.Add, contentDescription = null) },
         )
+        ResonoteOutlinedButton(
+            label = stringResource(R.string.feature_local_impl_choose_directory),
+            onClick = onPickDirectory,
+            modifier = Modifier.padding(top = 10.dp),
+            leadingIcon = { Icon(Icons.Rounded.FolderOpen, contentDescription = null) },
+        )
+    }
+}
+
+@Composable
+private fun DirectoryScanCard(onCancel: () -> Unit) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+        modifier = Modifier.fillMaxWidth().testTag("local-directory-scan"),
+    ) {
+        Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+            CircularProgressIndicator(modifier = Modifier.size(28.dp), strokeWidth = 3.dp)
+            Column(modifier = Modifier.weight(1f).padding(horizontal = 14.dp)) {
+                Text(
+                    stringResource(R.string.feature_local_impl_scanning_directory),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    stringResource(R.string.feature_local_impl_scanning_directory_body),
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+            TextButton(onClick = onCancel) { Text(stringResource(R.string.feature_local_impl_cancel)) }
+        }
+    }
+}
+
+@Composable
+private fun DirectoryFailureCard(reason: LocalDirectoryImportFailure, onDismiss: () -> Unit) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+        modifier = Modifier.fillMaxWidth().testTag("local-directory-error"),
+    ) {
+        Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Rounded.FolderOpen, contentDescription = null)
+            Column(modifier = Modifier.weight(1f).padding(horizontal = 14.dp)) {
+                Text(
+                    stringResource(R.string.feature_local_impl_directory_failed),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    reason.label(),
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+            IconButton(onClick = onDismiss) {
+                Icon(Icons.Rounded.Close, stringResource(R.string.feature_local_impl_dismiss))
+            }
+        }
     }
 }
 
@@ -614,6 +688,21 @@ private fun LocalMusicSort.label(): String = stringResource(
         LocalMusicSort.Duration -> R.string.feature_local_impl_sort_duration
     },
 )
+
+@Composable
+private fun LocalDirectoryImportFailure.label(): String = stringResource(
+    when (this) {
+        LocalDirectoryImportFailure.NoFiles -> R.string.feature_local_impl_directory_empty
+        LocalDirectoryImportFailure.InvalidTree -> R.string.feature_local_impl_directory_invalid
+        LocalDirectoryImportFailure.PermissionDenied -> R.string.feature_local_impl_directory_permission
+        LocalDirectoryImportFailure.Unavailable -> R.string.feature_local_impl_directory_unavailable
+    },
+)
+
+private fun LocalImportUiState.isBusy(): Boolean =
+    this is LocalImportUiState.ScanningDirectory ||
+        this is LocalImportUiState.Running ||
+        this is LocalImportUiState.AwaitingDuplicate
 
 @Composable
 private fun LocalMediaImportFailure.label(): String = stringResource(

@@ -66,6 +66,7 @@ class LocalMusicScreenshotTest {
                         bottomContentPadding = 24.dp,
                         onBack = {},
                         onPickFiles = {},
+                        onPickDirectory = {},
                         onQueryChange = {},
                         onSortChange = {},
                         onPlayAll = {},

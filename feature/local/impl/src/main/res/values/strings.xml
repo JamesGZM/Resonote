@@ -2,6 +2,7 @@
     <string name="feature_local_impl_title">本地音乐</string>
     <string name="feature_local_impl_back">返回</string>
     <string name="feature_local_impl_import">导入音乐</string>
+    <string name="feature_local_impl_import_directory">从文件夹导入</string>
     <string name="feature_local_impl_on_device">仅保存在此设备</string>
     <string name="feature_local_impl_summary">%1$d 首 · %2$s</string>
     <string name="feature_local_impl_private_copy">导入后使用 App 私有副本，原文件移动或删除也不受影响</string>
@@ -18,6 +19,7 @@
     <string name="feature_local_impl_empty_title">把音乐带进 Resonote</string>
     <string name="feature_local_impl_empty_body">选择一个或多个音频文件。验证成功后会复制到 App 私有目录并长期保留。</string>
     <string name="feature_local_impl_choose_files">选择音频文件</string>
+    <string name="feature_local_impl_choose_directory">选择文件夹</string>
     <string name="feature_local_impl_no_results">没有找到“%1$s”</string>
     <string name="feature_local_impl_delete">删除本地副本</string>
     <string name="feature_local_impl_delete_title">删除这首本地音乐？</string>
@@ -37,6 +39,13 @@
     <string name="feature_local_impl_unknown_artist">未知艺人</string>
     <string name="feature_local_impl_skip">跳过</string>
     <string name="feature_local_impl_import_copy">仍然导入</string>
+    <string name="feature_local_impl_scanning_directory">正在扫描文件夹</string>
+    <string name="feature_local_impl_scanning_directory_body">正在递归查找文件，后续会逐项验证真实音频格式。</string>
+    <string name="feature_local_impl_directory_failed">无法导入这个文件夹</string>
+    <string name="feature_local_impl_directory_empty">文件夹中没有可处理的文件。</string>
+    <string name="feature_local_impl_directory_invalid">系统没有返回有效的文件夹授权。</string>
+    <string name="feature_local_impl_directory_permission">文件夹读取权限已失效，请重新选择。</string>
+    <string name="feature_local_impl_directory_unavailable">暂时无法读取这个文件夹。</string>
     <string name="feature_local_impl_failure_invalid">无效来源</string>
     <string name="feature_local_impl_failure_permission">没有读取权限</string>
     <string name="feature_local_impl_failure_unavailable">文件不可用</string>
