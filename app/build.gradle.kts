@@ -39,6 +39,8 @@ dependencies {
     implementation(projects.feature.player.impl)
     implementation(projects.feature.playlist.api)
     implementation(projects.feature.playlist.impl)
+    implementation(projects.feature.ranking.api)
+    implementation(projects.feature.ranking.impl)
     implementation(projects.feature.search.api)
     implementation(projects.feature.search.impl)
     implementation(libs.androidx.activity.compose)

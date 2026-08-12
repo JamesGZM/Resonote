@@ -51,6 +51,8 @@ include(":feature:home:impl")
 include(":feature:player:impl")
 include(":feature:playlist:api")
 include(":feature:playlist:impl")
+include(":feature:ranking:api")
+include(":feature:ranking:impl")
 include(":feature:search:api")
 include(":feature:search:impl")
 

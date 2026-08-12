@@ -17,6 +17,8 @@ import com.resonote.feature.artist.api.ArtistNavKey
 import com.resonote.feature.artist.impl.ArtistRoute
 import com.resonote.feature.playlist.api.PlaylistNavKey
 import com.resonote.feature.playlist.impl.PlaylistRoute
+import com.resonote.feature.ranking.api.RankingNavKey
+import com.resonote.feature.ranking.impl.RankingRoute
 import com.resonote.feature.search.api.SearchNavKey
 import com.resonote.feature.search.impl.SearchRoute
 
@@ -97,6 +99,16 @@ internal fun ResonoteApp(viewModel: MainActivityViewModel = hiltViewModel()) {
             }
             entry<ArtistNavKey> { key ->
                 ArtistRoute(
+                    key = key,
+                    playingMediaId = playbackState.currentSongId,
+                    onBack = { backStack.removeAt(backStack.lastIndex) },
+                    onPlayAll = playbackState::playAll,
+                    onSongClick = playbackState::play,
+                    onSongMoreClick = null,
+                )
+            }
+            entry<RankingNavKey> { key ->
+                RankingRoute(
                     key = key,
                     playingMediaId = playbackState.currentSongId,
                     onBack = { backStack.removeAt(backStack.lastIndex) },
