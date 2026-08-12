@@ -89,11 +89,11 @@ fun PlaybackQueueSheet(
                 )
             } else {
                 LazyColumn {
-                    itemsIndexed(playback.queue, key = { _, item -> item.song.hash }) { index, item ->
+                    itemsIndexed(playback.queue, key = { _, item -> item.queueKey }) { index, item ->
                         val selected = index == playback.currentIndex
                         QueueItem(
-                            title = item.song.title,
-                            artist = item.song.artist.orEmpty(),
+                            title = item.metadata.title,
+                            artist = item.metadata.artist.orEmpty(),
                             selected = selected,
                             index = index,
                             lastIndex = playback.queue.lastIndex,

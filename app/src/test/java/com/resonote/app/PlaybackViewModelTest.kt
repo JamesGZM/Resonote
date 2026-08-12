@@ -3,10 +3,13 @@ package com.resonote.app
 import com.google.common.truth.Truth.assertThat
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.CloudTrack
+import com.resonote.core.model.LocalMedia
+import com.resonote.core.model.LocalMediaId
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.ResolvedSongSource
 import com.resonote.core.playback.PlaybackController
 import com.resonote.core.playback.PlaybackItem
+import com.resonote.core.playback.PlaybackFormat
 import com.resonote.core.playback.PlaybackMode
 import com.resonote.core.playback.PlaybackOrigin
 import com.resonote.core.playback.PlaybackState
@@ -21,7 +24,7 @@ class PlaybackViewModelTest {
 
         viewModel.playAll(listOf(song("first"), song("second")), startIndex = 1)
 
-        assertThat(controller.playedItems.map { it.song.hash }).containsExactly("first", "second").inOrder()
+        assertThat(controller.playedItems.map { it.metadata.mediaId }).containsExactly("first", "second").inOrder()
         assertThat(controller.playedIndex).isEqualTo(1)
     }
 
@@ -33,7 +36,7 @@ class PlaybackViewModelTest {
 
         viewModel.playCloud(listOf(cloud("first"), cloud("second")), startIndex = 1, source = source)
 
-        assertThat(controller.playedItems.map { it.song.hash }).containsExactly("first", "second").inOrder()
+        assertThat(controller.playedItems.map { it.metadata.mediaId }).containsExactly("first", "second").inOrder()
         assertThat(controller.playedItems[0].resolvedSource).isNull()
         assertThat(controller.playedItems[1].resolvedSource).isEqualTo(source)
         assertThat((controller.playedItems[0].origin as PlaybackOrigin.Cloud).track.hash).isEqualTo("first")
@@ -47,12 +50,27 @@ class PlaybackViewModelTest {
         viewModel.appendCloud(listOf(cloud("first"), cloud("second")))
         viewModel.pause()
 
-        assertThat(controller.appendedItems.map { it.song.hash }).containsExactly("first", "second").inOrder()
+        assertThat(controller.appendedItems.map { it.metadata.mediaId }).containsExactly("first", "second").inOrder()
         assertThat(controller.appendedItems.map { (it.origin as PlaybackOrigin.Cloud).track.hash })
             .containsExactly("first", "second")
             .inOrder()
         assertThat(controller.pauseCalls).isEqualTo(1)
         assertThat(controller.playedItems).isEmpty()
+    }
+
+    @Test
+    fun localPlaybackKeepsActualFormatAndStableLocalIdentity() {
+        val controller = FakePlaybackController()
+        val viewModel = PlaybackViewModel(controller)
+
+        viewModel.playLocal(localMedia())
+
+        val item = controller.playedItems.single()
+        assertThat(item.queueKey).isEqualTo("local:local-id")
+        assertThat((item.origin as PlaybackOrigin.Local).id).isEqualTo(LocalMediaId("local-id"))
+        assertThat(item.metadata.format).isEqualTo(
+            PlaybackFormat.Local("audio/flac", "flac", 96_000, 24, 2_304_000),
+        )
     }
 
     private class FakePlaybackController : PlaybackController {
@@ -120,6 +138,23 @@ class PlaybackViewModelTest {
             coverUrl = null,
             durationMillis = 180_000,
             albumAudioId = "audio-$hash",
+        )
+
+        fun localMedia() = LocalMedia(
+            id = LocalMediaId("local-id"),
+            displayName = "signals.flac",
+            title = "Signals",
+            artist = "artist",
+            albumTitle = "album",
+            artworkUri = null,
+            durationMillis = 180_000,
+            mimeType = "audio/flac",
+            fileExtension = "flac",
+            sizeBytes = 4_096,
+            sampleRateHz = 96_000,
+            bitDepth = 24,
+            bitrateBitsPerSecond = 2_304_000,
+            importedAtEpochMillis = 1_000,
         )
     }
 }

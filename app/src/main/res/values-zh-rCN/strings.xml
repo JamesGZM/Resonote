@@ -8,6 +8,7 @@
     <string name="playback_error_copyright">这首歌因版权限制暂时无法播放</string>
     <string name="playback_error_vip">播放这首歌需要 VIP 权限</string>
     <string name="playback_error_cloud">这首云盘歌曲暂无可用播放地址</string>
+    <string name="playback_error_local">本地音乐文件已不可用</string>
     <string name="playback_error_source">播放地址解析失败，请稍后重试</string>
     <string name="playback_error_player">播放失败，请尝试其他歌曲</string>
 </resources>

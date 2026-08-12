@@ -1,13 +1,12 @@
 package com.resonote.app
 
 import androidx.lifecycle.ViewModel
-import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.CloudTrack
+import com.resonote.core.model.LocalMedia
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.ResolvedSongSource
 import com.resonote.core.playback.PlaybackController
 import com.resonote.core.playback.PlaybackItem
-import com.resonote.core.playback.PlaybackOrigin
 import com.resonote.core.playback.PlaybackMode
 import com.resonote.core.playback.PlaybackState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -31,8 +30,7 @@ internal class PlaybackViewModel @Inject constructor(
     fun playCloud(tracks: List<CloudTrack>, startIndex: Int, source: ResolvedSongSource) {
         val items = tracks.mapIndexed { index, track ->
             PlaybackItem(
-                song = track.toOnlineSong(),
-                origin = PlaybackOrigin.Cloud(track),
+                track = track,
                 resolvedSource = source.takeIf { index == startIndex },
             )
         }
@@ -41,8 +39,16 @@ internal class PlaybackViewModel @Inject constructor(
 
     fun appendCloud(tracks: List<CloudTrack>) {
         playbackController.append(
-            tracks.map { PlaybackItem(it.toOnlineSong(), origin = PlaybackOrigin.Cloud(it)) },
+            tracks.map(::PlaybackItem),
         )
+    }
+
+    fun playLocal(media: LocalMedia) {
+        playbackController.play(PlaybackItem(media))
+    }
+
+    fun playAllLocal(media: List<LocalMedia>, startIndex: Int = 0) {
+        playbackController.playAll(media.map(::PlaybackItem), startIndex)
     }
 
     fun togglePlayPause() = playbackController.togglePlayPause()
@@ -63,16 +69,3 @@ internal class PlaybackViewModel @Inject constructor(
 
     fun clearQueue() = playbackController.clear()
 }
-
-private fun CloudTrack.toOnlineSong() = OnlineSong(
-    hash = hash,
-    title = title,
-    artist = artist,
-    coverUrl = coverUrl,
-    albumId = null,
-    albumAudioId = albumAudioId,
-    durationMillis = durationMillis,
-    quality = AudioQuality.Standard,
-    vip = false,
-    albumTitle = album,
-)

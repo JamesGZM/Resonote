@@ -7,7 +7,9 @@ import com.resonote.core.model.CollectionLoadResult
 import com.resonote.core.model.ContentFailure
 import com.resonote.core.model.LyricLine
 import com.resonote.core.playback.PlaybackController
+import com.resonote.core.playback.PlaybackItem
 import com.resonote.core.playback.PlaybackMode
+import com.resonote.core.playback.PlaybackOrigin
 import com.resonote.core.playback.PlaybackState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -25,6 +27,7 @@ sealed interface LyricsUiState {
     data object Idle : LyricsUiState
     data object Loading : LyricsUiState
     data object Empty : LyricsUiState
+    data object Unavailable : LyricsUiState
     data class Content(val lines: List<LyricLine>) : LyricsUiState
     data class Error(val failure: ContentFailure) : LyricsUiState
 }
@@ -53,21 +56,25 @@ class PlayerViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             playbackController.state
-                .map { state -> state.currentSong?.let { song -> LyricsRequest(song.hash, song.albumAudioId) } }
+                .map { state ->
+                    state.currentItem?.let { item ->
+                        item.lyricsRequest()?.let(LyricsTarget::Request) ?: LyricsTarget.Unavailable
+                    } ?: LyricsTarget.None
+                }
                 .distinctUntilChanged()
-                .collectLatest { request ->
-                    if (request == null) {
-                        lyricsState.value = LyricsUiState.Idle
-                    } else {
-                        loadLyrics(request)
+                .collectLatest { target ->
+                    when (target) {
+                        LyricsTarget.None -> lyricsState.value = LyricsUiState.Idle
+                        LyricsTarget.Unavailable -> lyricsState.value = LyricsUiState.Unavailable
+                        is LyricsTarget.Request -> loadLyrics(target.value)
                     }
                 }
         }
     }
 
     fun retryLyrics() {
-        playbackController.state.value.currentSong?.let { song ->
-            viewModelScope.launch { loadLyrics(LyricsRequest(song.hash, song.albumAudioId)) }
+        playbackController.state.value.currentItem?.lyricsRequest()?.let { request ->
+            viewModelScope.launch { loadLyrics(request) }
         }
     }
 
@@ -100,13 +107,22 @@ class PlayerViewModel @Inject constructor(
             }
             is CollectionLoadResult.Failed -> LyricsUiState.Error(result.failure)
         }
-        if (generation == lyricsGeneration && request == playbackController.state.value.currentSong?.let {
-                song -> LyricsRequest(song.hash, song.albumAudioId)
-            }
-        ) {
+        if (generation == lyricsGeneration && request == playbackController.state.value.currentItem?.lyricsRequest()) {
             lyricsState.value = loadedState
         }
     }
 }
 
+private sealed interface LyricsTarget {
+    data object None : LyricsTarget
+    data object Unavailable : LyricsTarget
+    data class Request(val value: LyricsRequest) : LyricsTarget
+}
+
 private data class LyricsRequest(val hash: String, val albumAudioId: String?)
+
+private fun PlaybackItem.lyricsRequest(): LyricsRequest? = when (val value = origin) {
+    is PlaybackOrigin.Online -> LyricsRequest(value.song.hash, value.song.albumAudioId)
+    is PlaybackOrigin.Cloud -> LyricsRequest(value.track.hash, value.track.albumAudioId)
+    is PlaybackOrigin.Local -> null
+}

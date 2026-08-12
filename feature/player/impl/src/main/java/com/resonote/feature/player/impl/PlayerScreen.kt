@@ -79,10 +79,9 @@ import com.resonote.core.designsystem.component.ResonoteArtwork
 import com.resonote.core.designsystem.component.ResonoteArtworkState
 import com.resonote.core.designsystem.component.ResonoteQualityBadge
 import com.resonote.core.designsystem.component.ResonoteVipBadge
-import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.ContentFailure
 import com.resonote.core.model.LyricLine
-import com.resonote.core.model.OnlineSong
+import com.resonote.core.playback.PlaybackMetadata
 import com.resonote.core.playback.PlaybackMode
 import com.resonote.core.playback.PlaybackStatus
 import kotlinx.coroutines.delay
@@ -128,7 +127,7 @@ fun PlayerScreen(
     modifier: Modifier = Modifier,
     initialPage: Int = 0,
 ) {
-    val song = state.playback.currentSong
+    val song = state.playback.currentMetadata
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var menuOpen by remember { mutableStateOf(false) }
@@ -258,7 +257,7 @@ private fun PlayerTopBar(
 
 @Composable
 private fun PlayerPager(
-    song: OnlineSong,
+    song: PlaybackMetadata,
     lyrics: LyricsUiState,
     positionMillis: Long,
     onSeek: (Long) -> Unit,
@@ -299,7 +298,7 @@ private fun PlayerPager(
 }
 
 @Composable
-private fun CoverPage(song: OnlineSong) {
+private fun CoverPage(song: PlaybackMetadata) {
     Box(
         modifier = Modifier.fillMaxSize().padding(horizontal = 36.dp, vertical = 14.dp),
         contentAlignment = Alignment.Center,
@@ -323,10 +322,10 @@ private fun CoverPage(song: OnlineSong) {
                 .aspectRatio(1f)
                 .shadow(20.dp, RoundedCornerShape(28.dp), ambientColor = MaterialTheme.colorScheme.primary),
         ) {
-            SignalArtwork(song.hash)
-            if (!song.coverUrl.isNullOrBlank()) {
+            SignalArtwork(song.mediaId)
+            if (!song.artworkUri.isNullOrBlank()) {
                 AsyncImage(
-                    model = song.coverUrl,
+                    model = song.artworkUri,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize(),
@@ -383,7 +382,8 @@ private fun LyricsPage(
     Box(Modifier.fillMaxSize().padding(horizontal = 24.dp), contentAlignment = Alignment.Center) {
         when (lyrics) {
             LyricsUiState.Idle, LyricsUiState.Loading -> CircularProgressIndicator(Modifier.size(32.dp), strokeWidth = 3.dp)
-            LyricsUiState.Empty -> LyricsMessage(stringResource(R.string.feature_player_impl_lyrics_empty))
+            LyricsUiState.Empty, LyricsUiState.Unavailable ->
+                LyricsMessage(stringResource(R.string.feature_player_impl_lyrics_empty))
             is LyricsUiState.Error -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 LyricsMessage(lyrics.failure.lyricsMessage())
                 Button(onClick = onRetry, modifier = Modifier.padding(top = 16.dp)) {
@@ -445,7 +445,7 @@ private fun SyncedLyrics(lines: List<LyricLine>, positionMillis: Long, onSeek: (
 }
 
 @Composable
-private fun SongIdentity(song: OnlineSong) {
+private fun SongIdentity(song: PlaybackMetadata) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 28.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -470,11 +470,11 @@ private fun SongIdentity(song: OnlineSong) {
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            song.quality.qualityLabel()?.let { label ->
+            song.format.badgeLabel()?.let { label ->
                 Spacer(Modifier.width(8.dp))
                 ResonoteQualityBadge(label)
             }
-            if (song.vip) {
+            if (song.isVip) {
                 Spacer(Modifier.width(6.dp))
                 ResonoteVipBadge()
             }
@@ -615,13 +615,6 @@ private fun PlaybackMode.label(): String = stringResource(
         PlaybackMode.Sequential -> R.string.feature_player_impl_mode_sequential
     },
 )
-
-private fun AudioQuality.qualityLabel(): String? = when (this) {
-    AudioQuality.Standard -> null
-    AudioQuality.HighQuality -> "HQ"
-    AudioQuality.HighResolution -> "HI-RES"
-    AudioQuality.Lossless -> "LOSSLESS"
-}
 
 private fun Long.timeLabel(): String {
     val totalSeconds = coerceAtLeast(0) / 1_000

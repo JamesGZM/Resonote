@@ -1,23 +1,97 @@
 package com.resonote.core.playback
 
+import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.CloudTrack
 import com.resonote.core.model.ContentFailure
+import com.resonote.core.model.LocalMedia
+import com.resonote.core.model.LocalMediaId
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.PlaybackUnavailableReason
 import com.resonote.core.model.ResolvedSongSource
 import kotlinx.coroutines.flow.StateFlow
 
 sealed interface PlaybackOrigin {
-    data object Online : PlaybackOrigin
+    data class Online(val song: OnlineSong) : PlaybackOrigin
 
     data class Cloud(val track: CloudTrack) : PlaybackOrigin
+
+    data class Local(val id: LocalMediaId) : PlaybackOrigin
+}
+
+sealed interface PlaybackFormat {
+    data class Online(val quality: AudioQuality) : PlaybackFormat
+
+    data class Cloud(val extension: String?) : PlaybackFormat
+
+    data class Local(
+        val mimeType: String?,
+        val extension: String?,
+        val sampleRateHz: Int?,
+        val bitDepth: Int?,
+        val bitrateBitsPerSecond: Int?,
+    ) : PlaybackFormat
+}
+
+data class PlaybackMetadata(
+    val mediaId: String,
+    val title: String,
+    val artist: String?,
+    val albumTitle: String?,
+    val artworkUri: String?,
+    val durationMillis: Long,
+    val format: PlaybackFormat,
+    val isVip: Boolean,
+) {
+    init {
+        require(mediaId.isNotBlank()) { "mediaId must not be blank" }
+        require(title.isNotBlank()) { "title must not be blank" }
+        require(durationMillis >= 0) { "durationMillis must not be negative" }
+    }
 }
 
 data class PlaybackItem(
-    val song: OnlineSong,
-    val origin: PlaybackOrigin = PlaybackOrigin.Online,
+    val metadata: PlaybackMetadata,
+    val origin: PlaybackOrigin,
     val resolvedSource: ResolvedSongSource? = null,
-)
+) {
+    constructor(
+        song: OnlineSong,
+        resolvedSource: ResolvedSongSource? = null,
+    ) : this(
+        metadata = song.toPlaybackMetadata(),
+        origin = PlaybackOrigin.Online(song),
+        resolvedSource = resolvedSource,
+    )
+
+    constructor(
+        track: CloudTrack,
+        resolvedSource: ResolvedSongSource? = null,
+    ) : this(
+        metadata = track.toPlaybackMetadata(resolvedSource?.extension),
+        origin = PlaybackOrigin.Cloud(track),
+        resolvedSource = resolvedSource,
+    )
+
+    constructor(media: LocalMedia) : this(
+        metadata = media.toPlaybackMetadata(),
+        origin = PlaybackOrigin.Local(media.id),
+    )
+
+    val queueKey: String
+        get() = when (val value = origin) {
+            is PlaybackOrigin.Online -> "online:${value.song.hash}"
+            is PlaybackOrigin.Cloud -> "cloud:${value.track.hash}"
+            is PlaybackOrigin.Local -> "local:${value.id.value}"
+        }
+
+    fun withResolvedSource(source: ResolvedSongSource): PlaybackItem = copy(
+        metadata = when (metadata.format) {
+            is PlaybackFormat.Cloud -> metadata.copy(format = PlaybackFormat.Cloud(source.extension))
+            else -> metadata
+        },
+        resolvedSource = source,
+    )
+}
 
 enum class PlaybackStatus {
     Idle,
@@ -57,8 +131,8 @@ data class PlaybackState(
     val currentItem: PlaybackItem?
         get() = queue.getOrNull(currentIndex)
 
-    val currentSong: OnlineSong?
-        get() = currentItem?.song
+    val currentMetadata: PlaybackMetadata?
+        get() = currentItem?.metadata
 
     val isPlaying: Boolean
         get() = status == PlaybackStatus.Playing
@@ -100,3 +174,42 @@ interface PlaybackController {
 
     fun clear()
 }
+
+private fun OnlineSong.toPlaybackMetadata() = PlaybackMetadata(
+    mediaId = hash,
+    title = title,
+    artist = artist,
+    albumTitle = albumTitle,
+    artworkUri = coverUrl,
+    durationMillis = durationMillis,
+    format = PlaybackFormat.Online(quality),
+    isVip = vip,
+)
+
+private fun CloudTrack.toPlaybackMetadata(extension: String?) = PlaybackMetadata(
+    mediaId = hash,
+    title = title,
+    artist = artist,
+    albumTitle = album,
+    artworkUri = coverUrl,
+    durationMillis = durationMillis,
+    format = PlaybackFormat.Cloud(extension),
+    isVip = false,
+)
+
+private fun LocalMedia.toPlaybackMetadata() = PlaybackMetadata(
+    mediaId = id.value,
+    title = title,
+    artist = artist,
+    albumTitle = albumTitle,
+    artworkUri = artworkUri,
+    durationMillis = durationMillis,
+    format = PlaybackFormat.Local(
+        mimeType = mimeType,
+        extension = fileExtension,
+        sampleRateHz = sampleRateHz,
+        bitDepth = bitDepth,
+        bitrateBitsPerSecond = bitrateBitsPerSecond,
+    ),
+    isVip = false,
+)

@@ -2,6 +2,8 @@ package com.resonote.core.playback.service
 
 import com.google.common.truth.Truth.assertThat
 import com.resonote.core.model.AudioQuality
+import com.resonote.core.model.LocalMedia
+import com.resonote.core.model.LocalMediaId
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.ResolvedSongSource
 import com.resonote.core.playback.PlaybackItem
@@ -14,8 +16,8 @@ class PlaybackQueueTest {
 
         queue.selectOrInsert(item("search"))
 
-        assertThat(queue.items.map { it.song.hash }).containsExactly("first", "search", "second").inOrder()
-        assertThat(queue.currentItem?.song?.hash).isEqualTo("search")
+        assertThat(queue.items.map { it.metadata.mediaId }).containsExactly("first", "search", "second").inOrder()
+        assertThat(queue.currentItem?.metadata?.mediaId).isEqualTo("search")
     }
 
     @Test
@@ -24,8 +26,20 @@ class PlaybackQueueTest {
 
         queue.replace(listOf(item("first"), item("second"), item("first")), 2)
 
-        assertThat(queue.items.map { it.song.hash }).containsExactly("first", "second").inOrder()
-        assertThat(queue.currentItem?.song?.hash).isEqualTo("first")
+        assertThat(queue.items.map { it.metadata.mediaId }).containsExactly("first", "second").inOrder()
+        assertThat(queue.currentItem?.metadata?.mediaId).isEqualTo("first")
+    }
+
+    @Test
+    fun sameRawIdFromOnlineAndLocalRemainIndependentQueueItems() {
+        val queue = PlaybackQueue()
+
+        queue.replace(listOf(item("shared"), PlaybackItem(localMedia("shared"))), 1)
+
+        assertThat(queue.items.map(PlaybackItem::queueKey))
+            .containsExactly("online:shared", "local:shared")
+            .inOrder()
+        assertThat(queue.currentItem?.queueKey).isEqualTo("local:shared")
     }
 
     @Test
@@ -35,7 +49,7 @@ class PlaybackQueueTest {
 
         queue.append(listOf(item("cloud", source), item("next")))
 
-        assertThat(queue.items.map { it.song.hash }).containsExactly("cloud", "next").inOrder()
+        assertThat(queue.items.map { it.metadata.mediaId }).containsExactly("cloud", "next").inOrder()
         assertThat(queue.items.first().resolvedSource).isEqualTo(source)
     }
 
@@ -44,8 +58,8 @@ class PlaybackQueueTest {
         val queue = PlaybackQueue().apply { replace(listOf(item("first"), item("second")), 1) }
 
         assertThat(queue.next(wrap = false)).isNull()
-        assertThat(queue.next(wrap = true)?.song?.hash).isEqualTo("first")
-        assertThat(queue.previous(wrap = true)?.song?.hash).isEqualTo("second")
+        assertThat(queue.next(wrap = true)?.metadata?.mediaId).isEqualTo("first")
+        assertThat(queue.previous(wrap = true)?.metadata?.mediaId).isEqualTo("second")
     }
 
     @Test
@@ -54,7 +68,7 @@ class PlaybackQueueTest {
 
         val selected = queue.selectRandom { 0 }
 
-        assertThat(selected?.song?.hash).isEqualTo("second")
+        assertThat(selected?.metadata?.mediaId).isEqualTo("second")
     }
 
     @Test
@@ -66,12 +80,12 @@ class PlaybackQueueTest {
         val middleRemoval = queue.removeAt(1)
 
         assertThat(middleRemoval?.removedCurrent).isTrue()
-        assertThat(queue.currentItem?.song?.hash).isEqualTo("third")
+        assertThat(queue.currentItem?.metadata?.mediaId).isEqualTo("third")
 
         val lastRemoval = queue.removeAt(1)
 
         assertThat(lastRemoval?.removedCurrent).isTrue()
-        assertThat(queue.currentItem?.song?.hash).isEqualTo("first")
+        assertThat(queue.currentItem?.metadata?.mediaId).isEqualTo("first")
     }
 
     @Test
@@ -84,7 +98,7 @@ class PlaybackQueueTest {
 
         assertThat(removal?.removedCurrent).isFalse()
         assertThat(queue.currentIndex).isEqualTo(1)
-        assertThat(queue.currentItem?.song?.hash).isEqualTo("third")
+        assertThat(queue.currentItem?.metadata?.mediaId).isEqualTo("third")
     }
 
     @Test
@@ -95,9 +109,9 @@ class PlaybackQueueTest {
 
         assertThat(queue.move(2, 0)).isTrue()
 
-        assertThat(queue.items.map { it.song.hash }).containsExactly("third", "first", "second").inOrder()
+        assertThat(queue.items.map { it.metadata.mediaId }).containsExactly("third", "first", "second").inOrder()
         assertThat(queue.currentIndex).isEqualTo(2)
-        assertThat(queue.currentItem?.song?.hash).isEqualTo("second")
+        assertThat(queue.currentItem?.metadata?.mediaId).isEqualTo("second")
     }
 
     private fun item(hash: String, source: ResolvedSongSource? = null) = PlaybackItem(
@@ -113,5 +127,22 @@ class PlaybackQueueTest {
             vip = false,
         ),
         resolvedSource = source,
+    )
+
+    private fun localMedia(id: String) = LocalMedia(
+        id = LocalMediaId(id),
+        displayName = "$id.flac",
+        title = id,
+        artist = "artist",
+        albumTitle = null,
+        artworkUri = null,
+        durationMillis = 60_000,
+        mimeType = "audio/flac",
+        fileExtension = "flac",
+        sizeBytes = 4_096,
+        sampleRateHz = 96_000,
+        bitDepth = 24,
+        bitrateBitsPerSecond = 2_304_000,
+        importedAtEpochMillis = 1_000,
     )
 }

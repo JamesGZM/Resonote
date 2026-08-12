@@ -6,6 +6,7 @@ enum class PlaybackUnavailableReason {
     Copyright,
     Vip,
     Cloud,
+    Local,
 }
 
 sealed interface ResolveSongSourceResult {

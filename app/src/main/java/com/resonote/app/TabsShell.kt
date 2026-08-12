@@ -33,7 +33,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.resonote.core.designsystem.component.ResonoteNavigationSuiteScaffold
-import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.Album
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.PlaybackUnavailableReason
@@ -51,6 +50,7 @@ import com.resonote.feature.library.impl.MyViewModel
 import com.resonote.feature.player.impl.MiniPlayerUiState
 import com.resonote.feature.player.impl.PlaybackQueueSheet
 import com.resonote.feature.player.impl.ResonoteMiniPlayer
+import com.resonote.feature.player.impl.badgeLabel
 import kotlinx.coroutines.launch
 
 internal enum class ResonoteTab(
@@ -113,7 +113,7 @@ internal fun TabsShell(
 
     BackHandler(enabled = selectedTab != ResonoteTab.HOME) { tabsShellState.handleBack() }
 
-    val currentSong = playbackState.currentSong
+    val currentMedia = playbackState.currentMetadata
     ResonoteNavigationSuiteScaffold(
         navigationSuiteItems = {
             ResonoteTab.entries.forEach { tab ->
@@ -137,11 +137,11 @@ internal fun TabsShell(
                 rootStateHolder.SaveableStateProvider(selectedTab.name) {
                     when (selectedTab) {
                         ResonoteTab.HOME -> {
-                            val bottomContentPadding = if (currentSong == null) 24.dp else 120.dp
+                            val bottomContentPadding = if (currentMedia == null) 24.dp else 120.dp
                             val common: @Composable (HomeViewModel?) -> Unit = { suppliedViewModel ->
                                 if (suppliedViewModel == null) {
                                     HomeRoute(
-                                        playingMediaId = playbackState.currentSong?.hash, bottomContentPadding = bottomContentPadding,
+                                        playingMediaId = playbackState.currentMetadata?.mediaId, bottomContentPadding = bottomContentPadding,
                                         onSearchClick = onSearchClick, onRecognitionClick = onRecognitionClick,
                                         onPlay = { onPlaySongs(it.songs, it.startIndex) },
                                         onOpenRankings = { openDiscover(DiscoverSection.RANKINGS) },
@@ -151,7 +151,7 @@ internal fun TabsShell(
                                     )
                                 } else {
                                     HomeRoute(
-                                        playingMediaId = playbackState.currentSong?.hash, bottomContentPadding = bottomContentPadding,
+                                        playingMediaId = playbackState.currentMetadata?.mediaId, bottomContentPadding = bottomContentPadding,
                                         onSearchClick = onSearchClick, onRecognitionClick = onRecognitionClick,
                                         onPlay = { onPlaySongs(it.songs, it.startIndex) },
                                         onOpenRankings = { openDiscover(DiscoverSection.RANKINGS) },
@@ -165,11 +165,11 @@ internal fun TabsShell(
                             common(homeViewModel)
                         }
                         ResonoteTab.DISCOVER -> {
-                            val bottomContentPadding = if (currentSong == null) 24.dp else 120.dp
+                            val bottomContentPadding = if (currentMedia == null) 24.dp else 120.dp
                             val actualViewModel = discoverViewModel ?: hiltViewModel()
                             DiscoverRoute(
                                 bottomContentPadding = bottomContentPadding,
-                                playingMediaId = playbackState.currentSong?.hash,
+                                playingMediaId = playbackState.currentMetadata?.mediaId,
                                 requestedSection = requestedDiscoverSection,
                                 onRequestedSectionConsumed = { requestedDiscoverSection = null },
                                 onPlaylistClick = { onPlaylistClick(it.id) },
@@ -182,7 +182,7 @@ internal fun TabsShell(
                             )
                         }
                         ResonoteTab.MY -> {
-                            val bottomContentPadding = if (currentSong == null) 24.dp else 120.dp
+                            val bottomContentPadding = if (currentMedia == null) 24.dp else 120.dp
                             val actualViewModel = myViewModel ?: hiltViewModel()
                             MyRoute(
                                 bottomContentPadding = bottomContentPadding,
@@ -196,11 +196,11 @@ internal fun TabsShell(
                     }
                 }
 
-                currentSong?.let { song ->
+                currentMedia?.let { song ->
                     ResonoteMiniPlayer(
                         state = MiniPlayerUiState(
-                            song.hash, song.title, song.artist.orEmpty(), song.quality.toLabel(), song.vip,
-                            playbackState.isPlaying, playbackState.progress, PrototypeArtworkColors, song.coverUrl,
+                            song.mediaId, song.title, song.artist.orEmpty(), song.format.badgeLabel(), song.isVip,
+                            playbackState.isPlaying, playbackState.progress, PrototypeArtworkColors, song.artworkUri,
                         ),
                         onOpenPlayer = onOpenPlayer,
                         onTogglePlay = onTogglePlay,
@@ -232,13 +232,6 @@ private val PrototypeArtworkColors = listOf(
     androidx.compose.ui.graphics.Color(0xFFFF8DA9),
 )
 
-private fun AudioQuality.toLabel(): String? = when (this) {
-    AudioQuality.Standard -> null
-    AudioQuality.HighQuality -> "HQ"
-    AudioQuality.HighResolution -> "HI-RES"
-    AudioQuality.Lossless -> "LOSSLESS"
-}
-
 @Composable
 private fun PlaybackIssue.message(): String = stringResource(
     when (this) {
@@ -246,6 +239,7 @@ private fun PlaybackIssue.message(): String = stringResource(
             PlaybackUnavailableReason.Copyright -> R.string.playback_error_copyright
             PlaybackUnavailableReason.Vip -> R.string.playback_error_vip
             PlaybackUnavailableReason.Cloud -> R.string.playback_error_cloud
+            PlaybackUnavailableReason.Local -> R.string.playback_error_local
         }
         is PlaybackIssue.SourceFailure -> R.string.playback_error_source
         is PlaybackIssue.PlayerFailure -> R.string.playback_error_player

@@ -2,17 +2,25 @@ package com.resonote.core.playback.service
 
 import com.google.common.truth.Truth.assertThat
 import com.resonote.core.data.CloudRepository
+import com.resonote.core.data.LocalMediaRepository
 import com.resonote.core.data.SongPlaybackRepository
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.CloudPage
 import com.resonote.core.model.CloudTrack
 import com.resonote.core.model.CollectionLoadResult
+import com.resonote.core.model.LocalMedia
+import com.resonote.core.model.LocalMediaDeleteResult
+import com.resonote.core.model.LocalMediaDuplicateAction
+import com.resonote.core.model.LocalMediaId
+import com.resonote.core.model.LocalMediaImportResult
+import com.resonote.core.model.LocalMediaPlaybackSource
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.ResolveSongSourceResult
 import com.resonote.core.model.ResolvedSongSource
 import com.resonote.core.playback.PlaybackItem
 import com.resonote.core.playback.PlaybackOrigin
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.flow.flowOf
 import org.junit.Test
 
 class PlaybackSourceResolverTest {
@@ -20,11 +28,11 @@ class PlaybackSourceResolverTest {
     fun onlineAndCloudItemsUseTheirMatchingRepositories() = runTest {
         val songRepository = FakeSongRepository()
         val cloudRepository = FakeCloudRepository()
-        val resolver = PlaybackSourceResolver(songRepository, cloudRepository)
+        val resolver = PlaybackSourceResolver(songRepository, cloudRepository, FakeLocalRepository())
         val cloudTrack = cloud("cloud")
 
         resolver.resolve(PlaybackItem(song("online")))
-        resolver.resolve(PlaybackItem(song("cloud"), PlaybackOrigin.Cloud(cloudTrack)))
+        resolver.resolve(PlaybackItem(cloudTrack))
 
         assertThat(songRepository.resolvedHashes).containsExactly("online")
         assertThat(cloudRepository.resolvedHashes).containsExactly("cloud")
@@ -34,12 +42,29 @@ class PlaybackSourceResolverTest {
     fun preResolvedItemSkipsBothRepositories() = runTest {
         val songRepository = FakeSongRepository()
         val cloudRepository = FakeCloudRepository()
-        val resolver = PlaybackSourceResolver(songRepository, cloudRepository)
+        val resolver = PlaybackSourceResolver(songRepository, cloudRepository, FakeLocalRepository())
         val source = ResolvedSongSource("https://media.example/song.mp3", 180_000, "mp3")
 
         val result = resolver.resolve(PlaybackItem(song("ready"), resolvedSource = source))
 
         assertThat((result as ResolveSongSourceResult.Resolved).source).isEqualTo(source)
+        assertThat(songRepository.resolvedHashes).isEmpty()
+        assertThat(cloudRepository.resolvedHashes).isEmpty()
+    }
+
+    @Test
+    fun localItemUsesPersistentPrivateSourceWithoutNetworkResolution() = runTest {
+        val songRepository = FakeSongRepository()
+        val cloudRepository = FakeCloudRepository()
+        val localRepository = FakeLocalRepository(localSource())
+        val resolver = PlaybackSourceResolver(songRepository, cloudRepository, localRepository)
+
+        val result = resolver.resolve(PlaybackItem(localMedia()))
+
+        assertThat((result as ResolveSongSourceResult.Resolved).source).isEqualTo(
+            ResolvedSongSource("file:/private/signals.flac", 180_000, "flac"),
+        )
+        assertThat(localRepository.resolvedIds).containsExactly(LocalMediaId("local-id"))
         assertThat(songRepository.resolvedHashes).isEmpty()
         assertThat(cloudRepository.resolvedHashes).isEmpty()
     }
@@ -61,6 +86,26 @@ class PlaybackSourceResolverTest {
         override suspend fun resolveSource(track: CloudTrack): ResolveSongSourceResult {
             resolvedHashes += track.hash
             return resolved(track.hash)
+        }
+    }
+
+    private class FakeLocalRepository(
+        private val source: LocalMediaPlaybackSource? = null,
+    ) : LocalMediaRepository {
+        val resolvedIds = mutableListOf<LocalMediaId>()
+
+        override fun observeAll() = flowOf(emptyList<LocalMedia>())
+
+        override suspend fun importFromUri(
+            sourceUri: String,
+            duplicateAction: LocalMediaDuplicateAction,
+        ): LocalMediaImportResult = error("unused")
+
+        override suspend fun delete(id: LocalMediaId): LocalMediaDeleteResult = error("unused")
+
+        override suspend fun resolvePlaybackSource(id: LocalMediaId): LocalMediaPlaybackSource? {
+            resolvedIds += id
+            return source
         }
     }
 
@@ -89,6 +134,28 @@ class PlaybackSourceResolverTest {
             coverUrl = null,
             durationMillis = 180_000,
             albumAudioId = "audio-$hash",
+        )
+
+        fun localMedia() = LocalMedia(
+            id = LocalMediaId("local-id"),
+            displayName = "signals.flac",
+            title = "Signals",
+            artist = "artist",
+            albumTitle = "album",
+            artworkUri = null,
+            durationMillis = 180_000,
+            mimeType = "audio/flac",
+            fileExtension = "flac",
+            sizeBytes = 4_096,
+            sampleRateHz = 96_000,
+            bitDepth = 24,
+            bitrateBitsPerSecond = 2_304_000,
+            importedAtEpochMillis = 1_000,
+        )
+
+        fun localSource() = LocalMediaPlaybackSource(
+            uri = "file:/private/signals.flac",
+            media = localMedia(),
         )
     }
 }

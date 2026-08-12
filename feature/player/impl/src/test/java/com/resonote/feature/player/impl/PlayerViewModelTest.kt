@@ -6,6 +6,8 @@ import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.CollectionLoadResult
 import com.resonote.core.model.ContentFailure
 import com.resonote.core.model.LyricLine
+import com.resonote.core.model.LocalMedia
+import com.resonote.core.model.LocalMediaId
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.playback.PlaybackController
 import com.resonote.core.playback.PlaybackItem
@@ -67,7 +69,7 @@ class PlayerViewModelTest {
             "second" to "audio-second",
         ).inOrder()
         assertThat(viewModel.uiState.value.lyrics).isEqualTo(LyricsUiState.Error(ContentFailure.Network))
-        assertThat(viewModel.uiState.value.playback.currentSong?.hash).isEqualTo("second")
+        assertThat(viewModel.uiState.value.playback.currentMetadata?.mediaId).isEqualTo("second")
         collection.cancel()
     }
 
@@ -89,6 +91,20 @@ class PlayerViewModelTest {
         assertThat(controller.selectedMode).isEqualTo(PlaybackMode.Shuffle)
     }
 
+    @Test
+    fun localMediaDoesNotRequestOnlineLyrics() = runTest(dispatcher) {
+        val controller = FakePlaybackController(PlaybackItem(localMedia()))
+        val repository = FakeLyricsRepository(CollectionLoadResult.Available(emptyList()))
+        val viewModel = PlayerViewModel(controller, repository)
+        val collection = backgroundScope.launch { viewModel.uiState.collect {} }
+
+        advanceUntilIdle()
+
+        assertThat(repository.requests).isEmpty()
+        assertThat(viewModel.uiState.value.lyrics).isEqualTo(LyricsUiState.Unavailable)
+        collection.cancel()
+    }
+
     private class FakeLyricsRepository(
         private val result: CollectionLoadResult<List<LyricLine>>,
     ) : LyricsRepository {
@@ -100,8 +116,10 @@ class PlayerViewModelTest {
         }
     }
 
-    private class FakePlaybackController(initialSong: OnlineSong) : PlaybackController {
-        override val state = MutableStateFlow(PlaybackState(queue = listOf(PlaybackItem(initialSong)), currentIndex = 0))
+    private class FakePlaybackController(initialItem: PlaybackItem) : PlaybackController {
+        constructor(initialSong: OnlineSong) : this(PlaybackItem(initialSong))
+
+        override val state = MutableStateFlow(PlaybackState(queue = listOf(initialItem), currentIndex = 0))
         var seekPosition = -1L
         var selectedIndex = -1
         var removedIndex = -1
@@ -138,6 +156,23 @@ class PlayerViewModelTest {
             durationMillis = 248_000,
             quality = AudioQuality.Lossless,
             vip = false,
+        )
+
+        fun localMedia() = LocalMedia(
+            id = LocalMediaId("local-id"),
+            displayName = "signals.flac",
+            title = "Signals",
+            artist = "artist",
+            albumTitle = "album",
+            artworkUri = null,
+            durationMillis = 180_000,
+            mimeType = "audio/flac",
+            fileExtension = "flac",
+            sizeBytes = 4_096,
+            sampleRateHz = 96_000,
+            bitDepth = 24,
+            bitrateBitsPerSecond = 2_304_000,
+            importedAtEpochMillis = 1_000,
         )
     }
 }

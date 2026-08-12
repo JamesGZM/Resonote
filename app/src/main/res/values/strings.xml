@@ -8,6 +8,7 @@
     <string name="playback_error_copyright">This song is unavailable due to copyright restrictions</string>
     <string name="playback_error_vip">VIP access is required to play this song</string>
     <string name="playback_error_cloud">No playable cloud source is available</string>
+    <string name="playback_error_local">The local audio file is no longer available</string>
     <string name="playback_error_source">Could not resolve the playback source. Try again.</string>
     <string name="playback_error_player">Playback failed. Try another song.</string>
 </resources>

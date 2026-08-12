@@ -17,16 +17,20 @@ internal class PlaybackQueue {
     fun replace(items: List<PlaybackItem>, startIndex: Int) {
         require(items.isNotEmpty()) { "Playback queue must not be empty" }
         require(startIndex in items.indices) { "startIndex must point to an item" }
-        mutableItems = items.distinctBy { it.song.hash }.toMutableList()
-        val requestedHash = items[startIndex].song.hash
-        currentIndex = mutableItems.indexOfFirst { it.song.hash == requestedHash }
+        mutableItems = items.distinctBy(PlaybackItem::queueKey).toMutableList()
+        val requestedKey = items[startIndex].queueKey
+        currentIndex = mutableItems.indexOfFirst { it.queueKey == requestedKey }
     }
 
     fun selectOrInsert(item: PlaybackItem) {
-        val existingIndex = mutableItems.indexOfFirst { it.song.hash == item.song.hash }
+        val existingIndex = mutableItems.indexOfFirst { it.queueKey == item.queueKey }
         if (existingIndex >= 0) {
             val existing = mutableItems[existingIndex]
-            mutableItems[existingIndex] = if (item.resolvedSource != null) item else existing.copy(song = item.song)
+            mutableItems[existingIndex] = if (item.resolvedSource != null) {
+                item
+            } else {
+                existing.copy(metadata = item.metadata, origin = item.origin)
+            }
             currentIndex = existingIndex
             return
         }
@@ -37,11 +41,11 @@ internal class PlaybackQueue {
     }
 
     fun append(items: List<PlaybackItem>) {
-        val indexesByHash = mutableItems.withIndex().associate { it.value.song.hash to it.index }.toMutableMap()
+        val indexesByKey = mutableItems.withIndex().associate { it.value.queueKey to it.index }.toMutableMap()
         items.forEach { item ->
-            val existingIndex = indexesByHash[item.song.hash]
+            val existingIndex = indexesByKey[item.queueKey]
             if (existingIndex == null) {
-                indexesByHash[item.song.hash] = mutableItems.size
+                indexesByKey[item.queueKey] = mutableItems.size
                 mutableItems += item
             } else if (item.resolvedSource != null) {
                 mutableItems[existingIndex] = item
@@ -74,10 +78,10 @@ internal class PlaybackQueue {
     fun move(fromIndex: Int, toIndex: Int): Boolean {
         if (fromIndex !in mutableItems.indices || toIndex !in mutableItems.indices) return false
         if (fromIndex == toIndex) return false
-        val selectedHash = currentItem?.song?.hash
+        val selectedKey = currentItem?.queueKey
         val moved = mutableItems.removeAt(fromIndex)
         mutableItems.add(toIndex, moved)
-        currentIndex = selectedHash?.let { hash -> mutableItems.indexOfFirst { it.song.hash == hash } } ?: -1
+        currentIndex = selectedKey?.let { key -> mutableItems.indexOfFirst { it.queueKey == key } } ?: -1
         return true
     }
 

@@ -147,7 +147,7 @@ internal fun ResonoteApp(
             entry<PlaylistNavKey> { key ->
                 PlaylistRoute(
                     playlistId = key.playlistId,
-                    playingMediaId = playbackState.currentSong?.hash,
+                    playingMediaId = playbackState.currentMetadata?.mediaId,
                     isAuthenticated = authState is AuthState.Authenticated,
                     onBack = { backStack.removeAt(backStack.lastIndex) },
                     onPlayAll = { playbackViewModel.playAll(it) },
@@ -158,7 +158,7 @@ internal fun ResonoteApp(
             entry<AlbumNavKey> { key ->
                 AlbumRoute(
                     key = key,
-                    playingMediaId = playbackState.currentSong?.hash,
+                    playingMediaId = playbackState.currentMetadata?.mediaId,
                     onBack = { backStack.removeAt(backStack.lastIndex) },
                     onPlayAll = playbackViewModel::playAll,
                     onSongClick = playbackViewModel::play,
@@ -168,7 +168,7 @@ internal fun ResonoteApp(
             entry<ArtistNavKey> { key ->
                 ArtistRoute(
                     key = key,
-                    playingMediaId = playbackState.currentSong?.hash,
+                    playingMediaId = playbackState.currentMetadata?.mediaId,
                     onBack = { backStack.removeAt(backStack.lastIndex) },
                     onPlayAll = playbackViewModel::playAll,
                     onSongClick = playbackViewModel::play,
@@ -178,7 +178,7 @@ internal fun ResonoteApp(
             entry<RankingNavKey> { key ->
                 RankingRoute(
                     key = key,
-                    playingMediaId = playbackState.currentSong?.hash,
+                    playingMediaId = playbackState.currentMetadata?.mediaId,
                     onBack = { backStack.removeAt(backStack.lastIndex) },
                     onPlayAll = playbackViewModel::playAll,
                     onSongClick = playbackViewModel::play,
@@ -193,8 +193,8 @@ internal fun ResonoteApp(
             }
             entry<CloudNavKey> {
                 CloudRoute(
-                    playingMediaId = playbackState.currentSong?.hash,
-                    bottomContentPadding = if (playbackState.currentSong == null) 32.dp else 120.dp,
+                    playingMediaId = playbackState.currentMetadata?.mediaId,
+                    bottomContentPadding = if (playbackState.currentMetadata == null) 32.dp else 120.dp,
                     onBack = { backStack.removeAt(backStack.lastIndex) },
                     onPlayRequest = { request ->
                         playbackViewModel.playCloud(request.tracks, request.startIndex, request.source)

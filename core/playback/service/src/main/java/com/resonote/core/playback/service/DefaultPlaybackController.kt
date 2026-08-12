@@ -256,7 +256,7 @@ internal class DefaultPlaybackController @Inject constructor(
     }
 
     private fun loadResolvedItem(item: PlaybackItem, source: ResolvedSongSource, generation: Long) {
-        queue.selectOrInsert(item.copy(resolvedSource = source))
+        queue.selectOrInsert(item.withResolvedSource(source))
         publishQueue(status = PlaybackStatus.Buffering)
         runWithController { player ->
             if (generation != loadGeneration) return@runWithController
@@ -306,7 +306,7 @@ internal class DefaultPlaybackController @Inject constructor(
         issue: PlaybackIssue? = null,
     ) {
         val currentDuration = queue.currentItem?.resolvedSource?.durationMillis
-            ?: queue.currentItem?.song?.durationMillis
+            ?: queue.currentItem?.metadata?.durationMillis
             ?: 0L
         mutableState.value = mutableState.value.copy(
             queue = queue.items,
@@ -332,7 +332,7 @@ internal class DefaultPlaybackController @Inject constructor(
         if (isResolving) return
         val duration = player.duration.takeUnless { it == C.TIME_UNSET || it < 0 }
             ?: queue.currentItem?.resolvedSource?.durationMillis
-            ?: queue.currentItem?.song?.durationMillis
+            ?: queue.currentItem?.metadata?.durationMillis
             ?: 0L
         val status = when {
             player.playerError != null -> PlaybackStatus.Failed
@@ -364,20 +364,20 @@ internal class DefaultPlaybackController @Inject constructor(
     }
 
     private fun PlaybackItem.toMediaItem(source: ResolvedSongSource): MediaItem {
-        val song = song
-        val metadata = MediaMetadata.Builder()
-            .setTitle(song.title)
-            .setArtist(song.artist)
-            .setAlbumTitle(song.albumTitle)
-            .setArtworkUri(song.coverUrl?.toUri())
-            .setDurationMs(source.durationMillis.takeIf { it > 0 } ?: song.durationMillis)
+        val playbackMetadata = metadata
+        val mediaMetadata = MediaMetadata.Builder()
+            .setTitle(playbackMetadata.title)
+            .setArtist(playbackMetadata.artist)
+            .setAlbumTitle(playbackMetadata.albumTitle)
+            .setArtworkUri(playbackMetadata.artworkUri?.toUri())
+            .setDurationMs(source.durationMillis.takeIf { it > 0 } ?: playbackMetadata.durationMillis)
             .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
             .setIsPlayable(true)
             .build()
         return MediaItem.Builder()
-            .setMediaId(song.hash)
+            .setMediaId(queueKey)
             .setUri(source.uri)
-            .setMediaMetadata(metadata)
+            .setMediaMetadata(mediaMetadata)
             .build()
     }
 
