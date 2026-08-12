@@ -119,6 +119,14 @@ internal class DefaultPlaybackController internal constructor(
         }
     }
 
+    override fun playNext(items: List<PlaybackItem>) {
+        if (items.isEmpty()) return
+        scope.launch {
+            queue.playNext(items)
+            publishQueue()
+        }
+    }
+
     override fun selectQueueItem(index: Int) {
         scope.launch {
             if (index == queue.currentIndex) return@launch

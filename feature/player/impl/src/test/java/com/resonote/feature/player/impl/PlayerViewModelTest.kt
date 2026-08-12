@@ -132,6 +132,7 @@ class PlayerViewModelTest {
 
         override fun play(item: PlaybackItem) = Unit
         override fun playAll(items: List<PlaybackItem>, startIndex: Int) = Unit
+        override fun playNext(items: List<PlaybackItem>) = Unit
         override fun append(items: List<PlaybackItem>) = Unit
         override fun selectQueueItem(index: Int) { selectedIndex = index }
         override fun removeQueueItem(index: Int) { removedIndex = index }

@@ -81,6 +81,7 @@ internal fun ResonoteApp(
     val addSuccessMessage = (addResult as? PlaylistAdditionUiState.Added)?.let {
         stringResource(R.string.song_action_add_success, it.songTitle, it.playlistName)
     }
+    val queueNextMessage = stringResource(R.string.song_action_added_next)
     val queueAddedMessage = stringResource(R.string.song_action_added_queue)
     val shareUnavailableMessage = stringResource(R.string.song_action_share_unavailable)
 
@@ -364,6 +365,12 @@ internal fun ResonoteApp(
             onPlay = {
                 songActionRequest = null
                 playbackViewModel.play(request.song)
+            },
+            onPlayNext = {
+                songActionRequest = null
+                if (playbackViewModel.playNextOnline(request.song)) {
+                    scope.launch { snackbarHostState.showSnackbar(queueNextMessage) }
+                }
             },
             onAppendToQueue = {
                 songActionRequest = null

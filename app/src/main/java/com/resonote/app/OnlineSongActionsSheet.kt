@@ -18,6 +18,7 @@ import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.LibraryAdd
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -49,6 +50,7 @@ internal fun OnlineSongActionsSheet(
     request: OnlineSongActionRequest,
     onDismiss: () -> Unit,
     onPlay: () -> Unit,
+    onPlayNext: () -> Unit,
     onAppendToQueue: () -> Unit,
     onAddToPlaylist: () -> Unit,
     onShowInfo: () -> Unit,
@@ -82,6 +84,7 @@ internal fun OnlineSongActionsSheet(
             }
             Spacer(Modifier.height(12.dp))
             SongActionRow(Icons.Rounded.PlayArrow, R.string.song_action_play, onPlay)
+            SongActionRow(Icons.Rounded.SkipNext, R.string.song_action_play_next, onPlayNext)
             SongActionRow(Icons.AutoMirrored.Rounded.PlaylistAdd, R.string.song_action_append_queue, onAppendToQueue)
             SongActionRow(Icons.Rounded.LibraryAdd, R.string.song_action_add_playlist, onAddToPlaylist)
             SongActionRow(Icons.Rounded.Info, R.string.song_action_info, onShowInfo)

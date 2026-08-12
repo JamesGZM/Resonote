@@ -11,6 +11,7 @@
     <string name="playback_error_source">Could not resolve the playback source. Try again.</string>
     <string name="playback_error_player">Playback failed. Try another song.</string>
     <string name="song_action_play">Play now</string>
+    <string name="song_action_play_next">Play next</string>
     <string name="song_action_append_queue">Add to queue</string>
     <string name="song_action_add_playlist">Add to playlist</string>
     <string name="song_action_info">Song information</string>
@@ -18,6 +19,7 @@
     <string name="song_action_unavailable">Not available yet</string>
     <string name="song_action_remove_playlist">Remove from this playlist</string>
     <string name="song_action_added_queue">Added to queue</string>
+    <string name="song_action_added_next">Playing next</string>
     <string name="song_action_share_unavailable">Sharing is not available yet</string>
     <string name="song_action_login_required">Sign in to add this song to one of your playlists</string>
     <string name="song_action_add_success">Added “%1$s” to “%2$s”</string>

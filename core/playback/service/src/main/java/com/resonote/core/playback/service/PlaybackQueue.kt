@@ -4,6 +4,7 @@ import com.resonote.core.playback.PlaybackItem
 
 internal class PlaybackQueue {
     private var mutableItems = mutableListOf<PlaybackItem>()
+    private val manuallyQueuedNextKeys = mutableListOf<String>()
 
     var currentIndex: Int = -1
         private set
@@ -20,24 +21,54 @@ internal class PlaybackQueue {
         mutableItems = items.distinctBy(PlaybackItem::queueKey).toMutableList()
         val requestedKey = items[startIndex].queueKey
         currentIndex = mutableItems.indexOfFirst { it.queueKey == requestedKey }
+        manuallyQueuedNextKeys.clear()
     }
 
     fun selectOrInsert(item: PlaybackItem) {
+        val previousKey = currentItem?.queueKey
         val existingIndex = mutableItems.indexOfFirst { it.queueKey == item.queueKey }
         if (existingIndex >= 0) {
-            val existing = mutableItems[existingIndex]
-            mutableItems[existingIndex] = if (item.resolvedSource != null) {
-                item
-            } else {
-                existing.copy(metadata = item.metadata, origin = item.origin)
-            }
+            mutableItems[existingIndex] = mutableItems[existingIndex].merge(item)
             currentIndex = existingIndex
+            if (previousKey != item.queueKey) manuallyQueuedNextKeys.clear()
             return
         }
 
         val insertionIndex = if (currentIndex in mutableItems.indices) currentIndex + 1 else mutableItems.size
         mutableItems.add(insertionIndex, item)
         currentIndex = insertionIndex
+        manuallyQueuedNextKeys.clear()
+    }
+
+    fun playNext(items: List<PlaybackItem>) {
+        if (items.isEmpty()) return
+        val selectedKey = currentItem?.queueKey
+        if (selectedKey == null) {
+            append(items)
+            return
+        }
+
+        items.distinctBy(PlaybackItem::queueKey).forEach { item ->
+            if (item.queueKey == selectedKey) {
+                mutableItems[currentIndex] = mutableItems[currentIndex].merge(item)
+                return@forEach
+            }
+
+            val queuedIndex = mutableItems.indexOfFirst { it.queueKey == item.queueKey }
+            if (item.queueKey in manuallyQueuedNextKeys && queuedIndex >= 0) {
+                mutableItems[queuedIndex] = mutableItems[queuedIndex].merge(item)
+                return@forEach
+            }
+            manuallyQueuedNextKeys.remove(item.queueKey)
+
+            if (queuedIndex >= 0) {
+                mutableItems.removeAt(queuedIndex)
+                currentIndex = mutableItems.indexOfFirst { it.queueKey == selectedKey }
+            }
+            val insertionIndex = currentIndex + 1 + manuallyQueuedNextKeys.size
+            mutableItems.add(insertionIndex, item)
+            manuallyQueuedNextKeys += item.queueKey
+        }
     }
 
     fun append(items: List<PlaybackItem>) {
@@ -55,6 +86,7 @@ internal class PlaybackQueue {
 
     fun select(index: Int): PlaybackItem? {
         if (index !in mutableItems.indices) return null
+        if (index != currentIndex) manuallyQueuedNextKeys.clear()
         currentIndex = index
         return mutableItems[index]
     }
@@ -62,12 +94,18 @@ internal class PlaybackQueue {
     fun removeAt(index: Int): QueueRemoval? {
         if (index !in mutableItems.indices) return null
         val removedCurrent = index == currentIndex
+        val removedKey = mutableItems[index].queueKey
         mutableItems.removeAt(index)
         currentIndex = when {
             mutableItems.isEmpty() -> -1
             index < currentIndex -> currentIndex - 1
             removedCurrent -> index.coerceAtMost(mutableItems.lastIndex)
             else -> currentIndex
+        }
+        if (removedCurrent) {
+            manuallyQueuedNextKeys.clear()
+        } else {
+            manuallyQueuedNextKeys.remove(removedKey)
         }
         return QueueRemoval(
             removedCurrent = removedCurrent,
@@ -82,6 +120,7 @@ internal class PlaybackQueue {
         val moved = mutableItems.removeAt(fromIndex)
         mutableItems.add(toIndex, moved)
         currentIndex = selectedKey?.let { key -> mutableItems.indexOfFirst { it.queueKey == key } } ?: -1
+        manuallyQueuedNextKeys.clear()
         return true
     }
 
@@ -115,8 +154,16 @@ internal class PlaybackQueue {
     fun clear() {
         mutableItems.clear()
         currentIndex = -1
+        manuallyQueuedNextKeys.clear()
     }
 }
+
+private fun PlaybackItem.merge(update: PlaybackItem): PlaybackItem =
+    if (update.resolvedSource != null) {
+        update
+    } else {
+        copy(metadata = update.metadata, origin = update.origin)
+    }
 
 internal data class QueueRemoval(
     val removedCurrent: Boolean,

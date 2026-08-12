@@ -32,6 +32,7 @@ class OnlineSongActionsScreenshotTest {
     @Test
     fun songActions_ownedPlaylistContext() {
         var addClicks = 0
+        var playNextClicks = 0
         composeRule.setContent {
             DeviceConfigurationOverride(
                 override = DeviceConfigurationOverride.ForcedSize(DpSize(390.dp, 844.dp)),
@@ -41,6 +42,7 @@ class OnlineSongActionsScreenshotTest {
                         request = OnlineSongActionRequest(song(), onRemoveRequest = {}),
                         onDismiss = {},
                         onPlay = {},
+                        onPlayNext = { playNextClicks += 1 },
                         onAppendToQueue = {},
                         onAddToPlaylist = { addClicks += 1 },
                         onShowInfo = {},
@@ -51,6 +53,8 @@ class OnlineSongActionsScreenshotTest {
         }
 
         composeRule.onNodeWithText("添加到歌单").assertExists()
+        composeRule.onNodeWithText("下一首播放").performClick()
+        assertThat(playNextClicks).isEqualTo(1)
         composeRule.onNodeWithText("从当前歌单移除").assertExists()
         composeRule.onNodeWithText("添加到歌单").performClick()
         assertThat(addClicks).isEqualTo(1)

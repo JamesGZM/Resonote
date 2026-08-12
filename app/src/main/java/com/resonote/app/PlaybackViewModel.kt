@@ -48,6 +48,17 @@ internal class PlaybackViewModel @Inject constructor(
         playbackController.append(listOf(PlaybackItem(song)))
     }
 
+    fun playNextOnline(song: OnlineSong): Boolean {
+        val item = PlaybackItem(song)
+        if (state.value.currentItem == null) {
+            playbackController.play(item)
+            return false
+        } else {
+            playbackController.playNext(listOf(item))
+            return true
+        }
+    }
+
     fun playLocal(media: LocalMedia) {
         playbackController.play(PlaybackItem(media))
     }

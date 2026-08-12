@@ -162,6 +162,8 @@ interface PlaybackController {
 
     fun playAll(items: List<PlaybackItem>, startIndex: Int = 0)
 
+    fun playNext(items: List<PlaybackItem>)
+
     fun append(items: List<PlaybackItem>)
 
     fun selectQueueItem(index: Int)

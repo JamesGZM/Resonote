@@ -74,6 +74,39 @@ class PlaybackViewModelTest {
     }
 
     @Test
+    fun onlinePlayNextStartsPlaybackWhenQueueHasNoCurrentItem() {
+        val controller = FakePlaybackController()
+        val viewModel = PlaybackViewModel(controller)
+
+        val queuedNext = viewModel.playNextOnline(song("next-song"))
+
+        val item = controller.playedItems.single()
+        assertThat(item.queueKey).isEqualTo("online:next-song")
+        assertThat((item.origin as PlaybackOrigin.Online).song.hash).isEqualTo("next-song")
+        assertThat(controller.nextItems).isEmpty()
+        assertThat(queuedNext).isFalse()
+    }
+
+    @Test
+    fun onlinePlayNextKeepsOnlineOriginForQueueResolution() {
+        val controller = FakePlaybackController(
+            initialState = PlaybackState(
+                queue = listOf(PlaybackItem(song("current-song"))),
+                currentIndex = 0,
+            ),
+        )
+        val viewModel = PlaybackViewModel(controller)
+
+        val queuedNext = viewModel.playNextOnline(song("next-song"))
+
+        val item = controller.nextItems.single()
+        assertThat(item.queueKey).isEqualTo("online:next-song")
+        assertThat((item.origin as PlaybackOrigin.Online).song.hash).isEqualTo("next-song")
+        assertThat(controller.playedItems).isEmpty()
+        assertThat(queuedNext).isTrue()
+    }
+
+    @Test
     fun localPlaybackKeepsActualFormatAndStableLocalIdentity() {
         val controller = FakePlaybackController()
         val viewModel = PlaybackViewModel(controller)
@@ -109,11 +142,14 @@ class PlaybackViewModelTest {
             .isEqualTo("audio-cloud-history")
     }
 
-    private class FakePlaybackController : PlaybackController {
-        override val state = MutableStateFlow(PlaybackState())
+    private class FakePlaybackController(
+        initialState: PlaybackState = PlaybackState(),
+    ) : PlaybackController {
+        override val state = MutableStateFlow(initialState)
         var playedItems = emptyList<PlaybackItem>()
         var playedIndex = -1
         var appendedItems = emptyList<PlaybackItem>()
+        var nextItems = emptyList<PlaybackItem>()
         var pauseCalls = 0
 
         override fun play(item: PlaybackItem) {
@@ -128,6 +164,10 @@ class PlaybackViewModelTest {
 
         override fun append(items: List<PlaybackItem>) {
             appendedItems = items
+        }
+
+        override fun playNext(items: List<PlaybackItem>) {
+            nextItems = items
         }
 
         override fun selectQueueItem(index: Int) = Unit

@@ -54,6 +54,63 @@ class PlaybackQueueTest {
     }
 
     @Test
+    fun playNextKeepsConsecutiveUserOrderWithoutChangingCurrentItem() {
+        val queue = PlaybackQueue().apply { replace(listOf(item("current"), item("later")), 0) }
+
+        queue.playNext(listOf(item("first-next")))
+        queue.playNext(listOf(item("second-next")))
+
+        assertThat(queue.items.map { it.metadata.mediaId })
+            .containsExactly("current", "first-next", "second-next", "later")
+            .inOrder()
+        assertThat(queue.currentItem?.metadata?.mediaId).isEqualTo("current")
+    }
+
+    @Test
+    fun playNextMovesExistingItemAndDeduplicatesRepeatedRequest() {
+        val queue = PlaybackQueue().apply {
+            replace(listOf(item("before"), item("current"), item("later"), item("target")), 1)
+        }
+
+        queue.playNext(listOf(item("target")))
+        queue.playNext(listOf(item("target")))
+
+        assertThat(queue.items.map { it.metadata.mediaId })
+            .containsExactly("before", "current", "target", "later")
+            .inOrder()
+        assertThat(queue.currentItem?.metadata?.mediaId).isEqualTo("current")
+    }
+
+    @Test
+    fun selectingAnotherCurrentItemStartsANewPlayNextSegment() {
+        val queue = PlaybackQueue().apply { replace(listOf(item("first"), item("second")), 0) }
+        queue.playNext(listOf(item("queued-for-first")))
+
+        queue.select(2)
+        queue.playNext(listOf(item("queued-for-second")))
+
+        assertThat(queue.items.map { it.metadata.mediaId })
+            .containsExactly("first", "queued-for-first", "second", "queued-for-second")
+            .inOrder()
+        assertThat(queue.currentItem?.metadata?.mediaId).isEqualTo("second")
+    }
+
+    @Test
+    fun resolvingCurrentItemKeepsConsecutivePlayNextOrder() {
+        val queue = PlaybackQueue().apply { replace(listOf(item("current"), item("later")), 0) }
+        queue.playNext(listOf(item("first-next")))
+        val source = ResolvedSongSource("https://media.example/current.mp3", 60_000, "mp3")
+
+        queue.selectOrInsert(item("current", source))
+        queue.playNext(listOf(item("second-next")))
+
+        assertThat(queue.items.map { it.metadata.mediaId })
+            .containsExactly("current", "first-next", "second-next", "later")
+            .inOrder()
+        assertThat(queue.currentItem?.resolvedSource).isEqualTo(source)
+    }
+
+    @Test
     fun sequentialNavigationStopsAtEdgesWhileLoopNavigationWraps() {
         val queue = PlaybackQueue().apply { replace(listOf(item("first"), item("second")), 1) }
 
