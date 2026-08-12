@@ -52,7 +52,7 @@ class MyScreenshotTest {
         composeRule.onNodeWithText("我喜欢").assertExists()
         capture("profile")
 
-        composeRule.onNodeWithTag("my-list").performScrollToIndex(3)
+        composeRule.onNodeWithTag("my-list").performScrollToIndex(4)
         composeRule.waitForIdle()
         capture("playlists")
     }
@@ -69,6 +69,7 @@ class MyScreenshotTest {
                         onLoginClick = onLoginClick,
                         onDailyVipClick = {},
                         onCloudClick = {},
+                        onLocalMusicClick = {},
                         onRefresh = {},
                         onRetryProfile = {},
                         onRetryPlaylists = {},

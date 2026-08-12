@@ -20,6 +20,8 @@ import com.resonote.feature.auth.impl.LoginRoute
 import com.resonote.feature.cloud.api.CloudNavKey
 import com.resonote.feature.cloud.impl.CloudRoute
 import com.resonote.feature.library.impl.MyViewModel
+import com.resonote.feature.local.api.LocalMusicNavKey
+import com.resonote.feature.local.impl.LocalMusicRoute
 import com.resonote.feature.playlist.api.PlaylistNavKey
 import com.resonote.feature.playlist.impl.PlaylistRoute
 import com.resonote.feature.player.api.PlayerNavKey
@@ -78,6 +80,7 @@ internal fun ResonoteApp(
                     onRecognitionClick = { backStack.add(RecognitionNavKey) },
                     onDailyVipClick = { backStack.navigateToDailyVip(authState) },
                     onCloudClick = { backStack.navigateToCloud(authState) },
+                    onLocalMusicClick = { backStack.add(LocalMusicNavKey) },
                     onPlaylistClick = { backStack.add(PlaylistNavKey(it)) },
                     onAlbumClick = { album ->
                         backStack.add(
@@ -200,6 +203,15 @@ internal fun ResonoteApp(
                         playbackViewModel.playCloud(request.tracks, request.startIndex, request.source)
                     },
                     onAppendTracks = playbackViewModel::appendCloud,
+                )
+            }
+            entry<LocalMusicNavKey> {
+                LocalMusicRoute(
+                    playingMediaId = playbackState.currentMetadata?.mediaId,
+                    bottomContentPadding = if (playbackState.currentMetadata == null) 32.dp else 120.dp,
+                    onBack = { backStack.removeAt(backStack.lastIndex) },
+                    onPlayAll = playbackViewModel::playAllLocal,
+                    onPlayMedia = playbackViewModel::playLocal,
                 )
             }
             entry<VideoNavKey> { key ->

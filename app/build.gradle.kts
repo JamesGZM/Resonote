@@ -43,6 +43,8 @@ dependencies {
     implementation(projects.feature.discover.impl)
     implementation(projects.feature.home.impl)
     implementation(projects.feature.library.impl)
+    implementation(projects.feature.local.api)
+    implementation(projects.feature.local.impl)
     implementation(projects.feature.player.impl)
     implementation(projects.feature.player.api)
     implementation(projects.feature.playlist.api)

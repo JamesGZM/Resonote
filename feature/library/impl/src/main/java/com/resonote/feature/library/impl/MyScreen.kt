@@ -26,6 +26,7 @@ import androidx.compose.material.icons.rounded.Cloud
 import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.GraphicEq
+import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -68,6 +69,7 @@ fun MyRoute(
     onLoginClick: () -> Unit,
     onDailyVipClick: () -> Unit,
     onCloudClick: () -> Unit,
+    onLocalMusicClick: () -> Unit,
     onPlaylistClick: (String) -> Unit,
     viewModel: MyViewModel = hiltViewModel(),
 ) {
@@ -78,6 +80,7 @@ fun MyRoute(
         onLoginClick = onLoginClick,
         onDailyVipClick = onDailyVipClick,
         onCloudClick = onCloudClick,
+        onLocalMusicClick = onLocalMusicClick,
         onRefresh = viewModel::refresh,
         onRetryProfile = viewModel::retryProfile,
         onRetryPlaylists = viewModel::retryPlaylists,
@@ -92,6 +95,7 @@ internal fun MyScreen(
     onLoginClick: () -> Unit,
     onDailyVipClick: () -> Unit,
     onCloudClick: () -> Unit,
+    onLocalMusicClick: () -> Unit,
     onRefresh: () -> Unit,
     onRetryProfile: () -> Unit,
     onRetryPlaylists: () -> Unit,
@@ -130,13 +134,19 @@ internal fun MyScreen(
         ) {
             when (state) {
                 MyUiState.CheckingAccount -> checkingAccount()
-                MyUiState.Anonymous -> anonymousAccount(onLoginClick, onDailyVipClick, onCloudClick)
+                MyUiState.Anonymous -> anonymousAccount(
+                    onLoginClick,
+                    onDailyVipClick,
+                    onCloudClick,
+                    onLocalMusicClick,
+                )
                 is MyUiState.Authenticated -> authenticatedAccount(
                     state = state,
                     onRetryProfile = onRetryProfile,
                     onRetryPlaylists = onRetryPlaylists,
                     onDailyVipClick = onDailyVipClick,
                     onCloudClick = onCloudClick,
+                    onLocalMusicClick = onLocalMusicClick,
                     onPlaylistClick = onPlaylistClick,
                 )
             }
@@ -165,6 +175,7 @@ private fun LazyListScope.anonymousAccount(
     onLoginClick: () -> Unit,
     onDailyVipClick: () -> Unit,
     onCloudClick: () -> Unit,
+    onLocalMusicClick: () -> Unit,
 ) {
     item(key = "anonymous-hero") {
         Card(
@@ -229,6 +240,9 @@ private fun LazyListScope.anonymousAccount(
     item(key = "cloud") {
         CloudEntryCard(onClick = onCloudClick, requiresLogin = true)
     }
+    item(key = "local-music") {
+        LocalMusicEntryCard(onClick = onLocalMusicClick)
+    }
     item(key = "anonymous-note") {
         Text(
             text = stringResource(R.string.my_anonymous_local_note),
@@ -245,6 +259,7 @@ private fun LazyListScope.authenticatedAccount(
     onRetryPlaylists: () -> Unit,
     onDailyVipClick: () -> Unit,
     onCloudClick: () -> Unit,
+    onLocalMusicClick: () -> Unit,
     onPlaylistClick: (String) -> Unit,
 ) {
     item(key = "profile") {
@@ -266,6 +281,9 @@ private fun LazyListScope.authenticatedAccount(
     item(key = "cloud") {
         CloudEntryCard(onClick = onCloudClick, requiresLogin = false)
     }
+    item(key = "local-music") {
+        LocalMusicEntryCard(onClick = onLocalMusicClick)
+    }
 
     when (val playlists = state.playlists) {
         MySectionState.Loading -> item(key = "playlists-loading") { PlaylistsLoadingCard() }
@@ -278,6 +296,42 @@ private fun LazyListScope.authenticatedAccount(
             )
         }
         is MySectionState.Available -> playlistSections(playlists.value, onPlaylistClick)
+    }
+}
+
+@Composable
+private fun LocalMusicEntryCard(onClick: () -> Unit) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().testTag("my-local-music"),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+        shape = MaterialTheme.shapes.extraLarge,
+    ) {
+        Row(modifier = Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+            Surface(
+                modifier = Modifier.size(52.dp),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(Icons.Rounded.LibraryMusic, contentDescription = null, modifier = Modifier.size(25.dp))
+                }
+            }
+            Column(modifier = Modifier.weight(1f).padding(start = 14.dp)) {
+                Text(
+                    stringResource(R.string.feature_library_impl_local_music),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    stringResource(R.string.feature_library_impl_local_music_body),
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+            Icon(Icons.Rounded.ChevronRight, contentDescription = null)
+        }
     }
 }
 
