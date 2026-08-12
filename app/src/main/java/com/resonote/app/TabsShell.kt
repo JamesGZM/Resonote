@@ -23,7 +23,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -52,7 +51,6 @@ import com.resonote.feature.player.impl.MiniPlayerUiState
 import com.resonote.feature.player.impl.PlaybackQueueSheet
 import com.resonote.feature.player.impl.ResonoteMiniPlayer
 import com.resonote.feature.player.impl.badgeLabel
-import kotlinx.coroutines.launch
 
 internal enum class ResonoteTab(
     val labelRes: Int,
@@ -96,15 +94,9 @@ internal fun TabsShell(
     val tabsShellState = rememberTabsShellState()
     val selectedTab = tabsShellState.selectedTab
     val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
     val rootStateHolder = rememberSaveableStateHolder()
     var requestedDiscoverSection by remember { mutableStateOf<DiscoverSection?>(null) }
     var queueOpen by remember { mutableStateOf(false) }
-    val comingSoonMessage = stringResource(R.string.feature_coming_soon)
-
-    fun showComingSoon() {
-        scope.launch { snackbarHostState.showSnackbar(comingSoonMessage) }
-    }
 
     fun openDiscover(section: DiscoverSection) {
         requestedDiscoverSection = section
@@ -150,7 +142,7 @@ internal fun TabsShell(
                                         onSearchClick = onSearchClick, onRecognitionClick = onRecognitionClick,
                                         onPlay = { onPlaySongs(it.songs, it.startIndex) },
                                         onOpenRankings = { openDiscover(DiscoverSection.RANKINGS) },
-                                        onOpenFeaturedPlaylists = ::showComingSoon,
+                                        onOpenFeaturedPlaylists = { openDiscover(DiscoverSection.PLAYLISTS) },
                                         onSongMoreClick = onSongMoreClick,
                                         onPlaylistClick = { onPlaylistClick(it.id) },
                                     )
@@ -160,7 +152,7 @@ internal fun TabsShell(
                                         onSearchClick = onSearchClick, onRecognitionClick = onRecognitionClick,
                                         onPlay = { onPlaySongs(it.songs, it.startIndex) },
                                         onOpenRankings = { openDiscover(DiscoverSection.RANKINGS) },
-                                        onOpenFeaturedPlaylists = ::showComingSoon,
+                                        onOpenFeaturedPlaylists = { openDiscover(DiscoverSection.PLAYLISTS) },
                                         onSongMoreClick = onSongMoreClick,
                                         onPlaylistClick = { onPlaylistClick(it.id) },
                                         viewModel = suppliedViewModel,

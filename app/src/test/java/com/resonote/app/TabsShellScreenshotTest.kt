@@ -104,6 +104,29 @@ class TabsShellScreenshotTest {
         )
     }
 
+    @Test
+    fun featuredPlaylistsShortcutOpensRealDiscoverContent() {
+        composeRule.setContent {
+            ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                val homeViewModel = remember { HomeViewModel(ScreenshotHomeRepository()) }
+                val discoverViewModel = remember {
+                    DiscoverViewModel(ScreenshotCatalogRepository(), ScreenshotRankingRepository())
+                }
+                TabsShell(homeViewModel = homeViewModel, discoverViewModel = discoverViewModel)
+            }
+        }
+
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("Featured playlists").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("Featured playlists").performClick()
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("深夜航线").fetchSemanticsNodes().isNotEmpty()
+        }
+
+        composeRule.onNodeWithText("深夜航线").assertExists()
+    }
+
     private class ScreenshotHomeRepository : HomeRepository {
         private val homeContent =
             HomeContent(
