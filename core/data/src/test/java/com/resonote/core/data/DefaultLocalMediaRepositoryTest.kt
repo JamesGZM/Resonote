@@ -30,6 +30,25 @@ class DefaultLocalMediaRepositoryTest {
     val temporaryFolder = TemporaryFolder()
 
     @Test
+    fun storageRecoveryRetainsActiveFilesAndFinishesPendingDeletion() = runTest {
+        val active = entity(id = "existing")
+        val pending = entity(id = "pending").copy(pendingDeletion = true)
+        val dao = FakeLocalMediaDao(mutableListOf(active, pending))
+        val store = FakeLocalMediaStore(stored = storedMedia())
+        val repository = repository(dao, store)
+
+        assertThat(repository.recoverStorage()).isTrue()
+        assertThat(store.recoverRequests.single()).containsExactly(
+            LocalMediaFiles(active.storagePath, active.artworkPath),
+        )
+        assertThat(dao.rows).containsExactly(active)
+
+        store.recoverResult = LocalMediaStoreResult.Failure(LocalMediaStoreError.StorageUnavailable)
+        assertThat(repository.recoverStorage()).isFalse()
+        assertThat(dao.rows.map(LocalMediaEntity::id)).containsExactly("existing")
+    }
+
+    @Test
     fun importPersistsThenIndexesStableLocalMedia() = runTest {
         val dao = FakeLocalMediaDao()
         val store = FakeLocalMediaStore(stored = storedMedia())
@@ -177,6 +196,8 @@ class DefaultLocalMediaRepositoryTest {
         private val observed = MutableStateFlow(rows.toList())
         var failInsert = false
 
+        override suspend fun findAllForRecovery(): List<LocalMediaEntity> = rows.toList()
+
         override fun observeAll(): Flow<List<LocalMediaEntity>> = observed
 
         override suspend fun findById(id: String): LocalMediaEntity? = rows.firstOrNull { it.id == id }
@@ -222,7 +243,15 @@ class DefaultLocalMediaRepositoryTest {
     ) : LocalMediaStore {
         val persistRequests = mutableListOf<LocalMediaPersistRequest>()
         val removedFiles = mutableListOf<LocalMediaFiles>()
+        var recoverResult: LocalMediaStoreResult<Unit> = LocalMediaStoreResult.Success(Unit)
         var removeResult: LocalMediaStoreResult<Unit> = LocalMediaStoreResult.Success(Unit)
+
+        val recoverRequests = mutableListOf<Set<LocalMediaFiles>>()
+
+        override suspend fun recover(retainedFiles: Set<LocalMediaFiles>): LocalMediaStoreResult<Unit> {
+            recoverRequests += retainedFiles
+            return recoverResult
+        }
 
         override suspend fun inspect(sourceUri: String) = LocalMediaStoreResult.Success(INSPECTION)
 

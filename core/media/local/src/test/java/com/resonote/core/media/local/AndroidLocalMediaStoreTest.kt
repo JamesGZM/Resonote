@@ -24,6 +24,47 @@ class AndroidLocalMediaStoreTest {
     val temporaryFolder = TemporaryFolder()
 
     @Test
+    fun recoverRemovesOrphanPartialsWithoutTouchingCommittedMedia() = runTest {
+        val privateRoot = File(temporaryFolder.root, "local-media")
+        val staging = File(privateRoot, ".staging").apply { mkdirs() }
+        val audio = File(privateRoot, "audio/committed.flac").apply {
+            parentFile?.mkdirs()
+            writeText("keep")
+        }
+        val orphanAudio = File(privateRoot, "audio/orphan.flac").apply { writeText("remove") }
+        val orphanArtwork = File(privateRoot, "artwork/orphan.image").apply {
+            parentFile?.mkdirs()
+            writeText("remove")
+        }
+        File(staging, "orphan.audio.part").writeText("partial")
+        File(staging, "orphan.artwork.part").writeText("partial")
+
+        val result = store(FakeSourceGateway("resonote".encodeToByteArray())).recover(
+            retainedFiles = setOf(LocalMediaFiles(audio.absolutePath, null)),
+        )
+
+        assertThat(result).isEqualTo(LocalMediaStoreResult.Success(Unit))
+        assertThat(staging.listFiles()?.toList()).isEmpty()
+        assertThat(audio.readText()).isEqualTo("keep")
+        assertThat(orphanAudio.exists()).isFalse()
+        assertThat(orphanArtwork.exists()).isFalse()
+    }
+
+    @Test
+    fun recoverReportsFailureWhenPartialCannotBeSafelyDeleted() = runTest {
+        val privateRoot = File(temporaryFolder.root, "local-media")
+        val blockedPartial = File(privateRoot, ".staging/blocked.part").apply {
+            mkdirs()
+            resolve("unexpected").writeText("keep")
+        }
+
+        val result = store(FakeSourceGateway("resonote".encodeToByteArray())).recover(emptySet())
+
+        assertThat(result).isEqualTo(LocalMediaStoreResult.Failure(LocalMediaStoreError.StorageUnavailable))
+        assertThat(blockedPartial.resolve("unexpected").readText()).isEqualTo("keep")
+    }
+
+    @Test
     fun inspectAndDigestUseReadableContentSource() = runTest {
         val source = FakeSourceGateway(bytes = "resonote".encodeToByteArray())
         val store = store(source)

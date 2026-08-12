@@ -48,6 +48,30 @@ internal class DefaultLocalMediaRepository internal constructor(
 
     private val mutationMutex = Mutex()
 
+    override suspend fun recoverStorage(): Boolean = mutationMutex.withLock {
+        val rows = try {
+            dao.findAllForRecovery()
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            return@withLock false
+        }
+        val retainedFiles = rows
+            .filterNot(LocalMediaEntity::pendingDeletion)
+            .map { LocalMediaFiles(it.storagePath, it.artworkPath) }
+            .toSet()
+        if (store.recover(retainedFiles) !is LocalMediaStoreResult.Success) return@withLock false
+        rows.filter(LocalMediaEntity::pendingDeletion).all { pending ->
+            try {
+                dao.delete(pending.id) == 1
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                false
+            }
+        }
+    }
+
     override fun observeAll() = dao.observeAll().map { rows -> rows.map(LocalMediaEntity::asExternalModel) }
 
     override suspend fun importFromUri(

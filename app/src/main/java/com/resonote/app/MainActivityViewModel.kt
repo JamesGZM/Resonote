@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.resonote.core.data.AuthRepository
+import com.resonote.core.data.LocalMediaRepository
 import com.resonote.core.model.AuthState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -18,12 +19,17 @@ import kotlinx.coroutines.flow.update
 @HiltViewModel
 internal class MainActivityViewModel @Inject constructor(
     private val authRepository: AuthRepository,
+    localMediaRepository: LocalMediaRepository,
 ) : ViewModel() {
     private val mutableExternalImportRequests = MutableStateFlow<List<ExternalLocalImportRequest>>(emptyList())
     val externalImportRequests: StateFlow<List<ExternalLocalImportRequest>> =
         mutableExternalImportRequests.asStateFlow()
 
     private var nextExternalImportRequestId = 0L
+
+    init {
+        viewModelScope.launch { localMediaRepository.recoverStorage() }
+    }
 
     val authState: StateFlow<AuthState> =
         authRepository.authState.stateIn(

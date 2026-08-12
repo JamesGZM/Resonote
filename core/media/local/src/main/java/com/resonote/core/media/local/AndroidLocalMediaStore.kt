@@ -37,6 +37,40 @@ internal class AndroidLocalMediaStore internal constructor(
         ioDispatcher = Dispatchers.IO,
     )
 
+    override suspend fun recover(retainedFiles: Set<LocalMediaFiles>): LocalMediaStoreResult<Unit> =
+        withContext(ioDispatcher) {
+            val stagingDirectory = File(privateRoot, STAGING_DIRECTORY)
+            val audioDirectory = File(privateRoot, AUDIO_DIRECTORY)
+            val artworkDirectory = File(privateRoot, ARTWORK_DIRECTORY)
+            try {
+                val retainedPaths = retainedFiles
+                    .flatMap { files -> listOfNotNull(files.audioPath, files.artworkPath) }
+                    .map { path -> File(path).canonicalPath }
+                    .toSet()
+                val stagingEntries = stagingDirectory.managedEntries()
+                    ?: return@withContext LocalMediaStoreResult.Failure(LocalMediaStoreError.StorageUnavailable)
+                val audioEntries = audioDirectory.managedEntries()
+                    ?: return@withContext LocalMediaStoreResult.Failure(LocalMediaStoreError.StorageUnavailable)
+                val artworkEntries = artworkDirectory.managedEntries()
+                    ?: return@withContext LocalMediaStoreResult.Failure(LocalMediaStoreError.StorageUnavailable)
+                val stagingRecovered = stagingEntries.all { entry ->
+                    entry.name.endsWith(PARTIAL_FILE_SUFFIX) && entry.isFile && entry.delete()
+                }
+                val committedRecovered = (audioEntries + artworkEntries)
+                    .filterNot { it.canonicalPath in retainedPaths }
+                    .all { entry -> entry.isFile && entry.delete() }
+                if (stagingRecovered && committedRecovered) {
+                    LocalMediaStoreResult.Success(Unit)
+                } else {
+                    LocalMediaStoreResult.Failure(LocalMediaStoreError.StorageUnavailable)
+                }
+            } catch (_: SecurityException) {
+                LocalMediaStoreResult.Failure(LocalMediaStoreError.StorageUnavailable)
+            } catch (_: IOException) {
+                LocalMediaStoreResult.Failure(LocalMediaStoreError.StorageUnavailable)
+            }
+        }
+
     override suspend fun inspect(sourceUri: String): LocalMediaStoreResult<LocalMediaSourceInspection> =
         withContext(ioDispatcher) {
             val uri = sourceUri.toContentUri()
@@ -270,6 +304,12 @@ internal class AndroidLocalMediaStore internal constructor(
         return path.startsWith(rootPath) && path != rootPath
     }
 
+    private fun File.managedEntries(): List<File>? = when {
+        !exists() -> emptyList()
+        !isDirectory -> null
+        else -> listFiles()?.toList()
+    }
+
     private class SourceReadException(cause: IOException) : IOException(cause)
 
     private companion object {
@@ -279,6 +319,7 @@ internal class AndroidLocalMediaStore internal constructor(
         const val AUDIO_DIRECTORY = "audio"
         const val ARTWORK_DIRECTORY = "artwork"
         const val DEFAULT_AUDIO_EXTENSION = "audio"
+        const val PARTIAL_FILE_SUFFIX = ".part"
         const val SHA_256 = "SHA-256"
         const val STORAGE_NAME_LENGTH = 32
         const val BUFFER_SIZE = 64 * 1024

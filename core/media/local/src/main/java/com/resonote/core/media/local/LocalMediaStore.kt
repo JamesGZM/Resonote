@@ -1,6 +1,8 @@
 package com.resonote.core.media.local
 
 interface LocalMediaStore {
+    suspend fun recover(retainedFiles: Set<LocalMediaFiles>): LocalMediaStoreResult<Unit>
+
     suspend fun inspect(sourceUri: String): LocalMediaStoreResult<LocalMediaSourceInspection>
 
     suspend fun calculateDigest(

@@ -94,6 +94,8 @@ class PlaybackSourceResolverTest {
     ) : LocalMediaRepository {
         val resolvedIds = mutableListOf<LocalMediaId>()
 
+        override suspend fun recoverStorage(): Boolean = true
+
         override fun observeAll() = flowOf(emptyList<LocalMedia>())
 
         override suspend fun importFromUri(

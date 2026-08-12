@@ -8,6 +8,9 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface LocalMediaDao {
+    @Query("SELECT * FROM local_media ORDER BY importedAtEpochMillis DESC, id DESC")
+    suspend fun findAllForRecovery(): List<LocalMediaEntity>
+
     @Query(
         "SELECT * FROM local_media WHERE pendingDeletion = 0 " +
             "ORDER BY importedAtEpochMillis DESC, id DESC",

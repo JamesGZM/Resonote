@@ -258,6 +258,8 @@ class LocalMusicViewModelTest {
         val deletedIds = mutableListOf<LocalMediaId>()
         var deleteResult: LocalMediaDeleteResult = LocalMediaDeleteResult.Deleted
 
+        override suspend fun recoverStorage(): Boolean = true
+
         override fun observeAll(): Flow<List<LocalMedia>> = media
 
         override suspend fun importFromUri(

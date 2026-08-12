@@ -9,6 +9,8 @@ import com.resonote.core.model.LocalMediaPlaybackSource
 import kotlinx.coroutines.flow.Flow
 
 interface LocalMediaRepository {
+    suspend fun recoverStorage(): Boolean
+
     fun observeAll(): Flow<List<LocalMedia>>
 
     suspend fun importFromUri(

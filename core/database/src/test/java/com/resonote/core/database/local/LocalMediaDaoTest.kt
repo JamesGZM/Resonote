@@ -42,6 +42,7 @@ class LocalMediaDaoTest {
 
         assertThat(dao.markPendingDeletion("newer")).isEqualTo(1)
         assertThat(dao.observeAll().first().map { it.id }).containsExactly("older")
+        assertThat(dao.findAllForRecovery().map { it.id }).containsExactly("newer", "older").inOrder()
 
         assertThat(dao.restorePendingDeletion("newer")).isEqualTo(1)
         assertThat(dao.observeAll().first().map { it.id }).containsExactly("newer", "older").inOrder()
