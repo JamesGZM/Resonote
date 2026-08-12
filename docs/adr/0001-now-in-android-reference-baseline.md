@@ -18,7 +18,7 @@ Now in Android 是官方 Android 架构指导的完整参考实现，覆盖分�
 Resonote 采用“原则全量参考、模块按业务裁剪”的策略：
 
 1. 采用 NIA 的 UI/Data/可选 Domain 分层、UDF、Flow、Repository、离线优先和本地单一事实源。
-2. 采用 `app` 组合根、core 模块、feature `api/impl`、sync/test-support 和 included `build-logic` 的模块类型与依赖规则。
+2. 采用 `app` 组合根、core 模块、按需拆分的 feature `api/impl`、sync/test-support 和 included `build-logic` 的模块类型与依赖规则。只有需要被其他 feature 独立导航或调用的稳定公共面才建立 `api`；顶层根页面不为形式统一创建空 `api` 模块。
 3. 采用 Hilt、Coroutines/Flow、kotlinx.serialization、OkHttp3、Retrofit2、Room、Proto DataStore、WorkManager、Coil、Navigation 3、Roborazzi/Robolectric/Turbine 等库族。
 4. 除冻结的 Material3 `1.4.0` 外，不在文档阶段锁定 Resonote 的最终版本；创建工程前形成完整稳定兼容矩阵。
 5. Alpha/RC 依赖默认禁止。只有稳定版无法满足已批准需求时，才能通过独立 ADR 引入。
@@ -45,7 +45,7 @@ Resonote 采用“原则全量参考、模块按业务裁剪”的策略：
 ## Reference and divergence policy
 
 - 固定提交是当前可复现参考；上游 `main` 的变化不自动改变本决策。
-- 调研 NIA 新实现时，先比较 `settings.gradle.kts`、`gradle/libs.versions.toml`、`build-logic/`、架构文档和相关模块测试。
+- 调研 NIA 新实现时，先比较 `settings.gradle.kts`、`gradle/libs.versions.toml`、`build-logic/`、架构文档和相关模块测试。`../nowinandroid` 只表示主 checkout 的默认相邻目录；从 Git worktree 工作时必须解析实际 NIA checkout，不能假定该相对路径仍然成立。
 - 下列变化必须新增或修订 ADR：分层/依赖方向变化、Material3 基线升级、引入 Alpha/RC、数据源策略变化、Feature IA 冻结、认证方案、Playback 方案、遥测或第三方网络服务。
 - 纯补丁版本升级若不改变公共 API、构建约束和运行行为，可在兼容矩阵与依赖更新提交中记录，无需新 ADR。
 

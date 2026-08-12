@@ -17,7 +17,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/playlist_add.js</code> |
 
 ### 上游请求
@@ -59,7 +59,7 @@
 |---|---|
 | DataSource 操作 | <code>playlistAdd</code> |
 | Request DTO | <code>ApiPlaylistAddRequest</code> |
-| Response DTO | <code>NetworkApiPlaylistAddResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiPlaylistAddResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiPlaylistAddResponse |
@@ -77,7 +77,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | <code>SOURCE_CONFIRMED</code> |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/playlist_del.js</code> |
 
 ### 上游请求
@@ -114,7 +114,7 @@
 |---|---|
 | DataSource 操作 | <code>playlistDel</code> |
 | Request DTO | <code>ApiPlaylistDelRequest</code> |
-| Response DTO | <code>NetworkApiPlaylistDelResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiPlaylistDelResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>OkHttp Call.Factory</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code>, <code>ApiResponseDecoder</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiPlaylistDelResponse |
@@ -132,7 +132,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/playlist_detail.js</code> |
 
 ### 上游请求
@@ -163,7 +163,7 @@
 |---|---|
 | DataSource 操作 | <code>playlistDetail</code> |
 | Request DTO | <code>ApiPlaylistDetailRequest</code> |
-| Response DTO | <code>NetworkApiPlaylistDetailResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiPlaylistDetailResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiPlaylistDetailResponse |
@@ -181,7 +181,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/playlist_effect.js</code> |
 
 ### 上游请求
@@ -209,7 +209,7 @@
 |---|---|
 | DataSource 操作 | <code>playlistEffect</code> |
 | Request DTO | <code>ApiPlaylistEffectRequest</code> |
-| Response DTO | <code>NetworkApiPlaylistEffectResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiPlaylistEffectResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiPlaylistEffectResponse |
@@ -227,7 +227,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/playlist_similar.js</code> |
 
 ### 上游请求
@@ -263,7 +263,7 @@
 |---|---|
 | DataSource 操作 | <code>playlistSimilar</code> |
 | Request DTO | <code>ApiPlaylistSimilarRequest</code> |
-| Response DTO | <code>NetworkApiPlaylistSimilarResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiPlaylistSimilarResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiPlaylistSimilarResponse |
@@ -281,7 +281,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/playlist_tags.js</code> |
 
 ### 上游请求
@@ -315,7 +315,7 @@
 |---|---|
 | DataSource 操作 | <code>playlistTags</code> |
 | Request DTO | <code>ApiPlaylistTagsRequest</code> |
-| Response DTO | <code>NetworkApiPlaylistTagsResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiPlaylistTagsResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiPlaylistTagsResponse |
@@ -333,8 +333,13 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/playlist_track_all.js</code> |
+
+### Android 首页迁移证据
+
+- <code>MoeKoeMusic-Mobile/api@283f1e97:module/playlist_track_all.js</code>
+- <code>MoeKoeMusic-Mobile@ab71195d4cf3297332490fd37704d1ae8973d4c5:src/features/playlist/playlist-api.ts</code>
 
 ### 上游请求
 
@@ -374,7 +379,7 @@
 |---|---|
 | DataSource 操作 | <code>playlistTrackAll</code> |
 | Request DTO | <code>ApiPlaylistTrackAllRequest</code> |
-| Response DTO | <code>NetworkApiPlaylistTrackAllResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiPlaylistTrackAllResponse</code>；名称为静态候选，现行实现由 internal <code>@Serializable</code> 类型化 wire DTO 直接承接 Retrofit 响应 |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiPlaylistTrackAllResponse |
@@ -392,7 +397,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/playlist_track_all_new.js</code> |
 
 ### 上游请求
@@ -429,7 +434,7 @@
 |---|---|
 | DataSource 操作 | <code>playlistTrackAllNew</code> |
 | Request DTO | <code>ApiPlaylistTrackAllNewRequest</code> |
-| Response DTO | <code>NetworkApiPlaylistTrackAllNewResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiPlaylistTrackAllNewResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiPlaylistTrackAllNewResponse |
@@ -447,7 +452,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/playlist_tracks_add.js</code> |
 
 ### 上游请求
@@ -483,7 +488,7 @@
 |---|---|
 | DataSource 操作 | <code>playlistTracksAdd</code> |
 | Request DTO | <code>ApiPlaylistTracksAddRequest</code> |
-| Response DTO | <code>NetworkApiPlaylistTracksAddResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiPlaylistTracksAddResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiPlaylistTracksAddResponse |
@@ -501,7 +506,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/playlist_tracks_del.js</code> |
 
 ### 上游请求
@@ -535,7 +540,7 @@
 |---|---|
 | DataSource 操作 | <code>playlistTracksDel</code> |
 | Request DTO | <code>ApiPlaylistTracksDelRequest</code> |
-| Response DTO | <code>NetworkApiPlaylistTracksDelResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiPlaylistTracksDelResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiPlaylistTracksDelResponse |

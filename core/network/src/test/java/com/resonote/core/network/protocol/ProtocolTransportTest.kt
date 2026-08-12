@@ -1,15 +1,12 @@
 package com.resonote.core.network.protocol
 
 import com.google.common.truth.Truth.assertThat
+import com.resonote.core.network.ApiRiskException
 import com.resonote.core.network.retrofit.ApiRawResponse
 import com.resonote.core.network.risk.ApiRiskChallengeDetector
-import com.resonote.core.network.risk.ApiRiskVerificationResult
-import com.resonote.core.network.risk.ApiRiskVerifier
-import com.resonote.core.network.risk.RiskAwareApiExecutor
 import com.resonote.core.network.session.ApiSession
 import com.resonote.core.network.session.ApiSessionManager
 import com.resonote.core.network.session.ApiSessionStore
-import dagger.Lazy
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
@@ -25,7 +22,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
-class ApiCallExecutorTest {
+class ProtocolTransportTest {
     private lateinit var server: MockWebServer
 
     @Before
@@ -40,43 +37,40 @@ class ApiCallExecutorTest {
     }
 
     @Test
-    fun verifiedRiskReplayRebuildsTimestampAndSignature() = runTest {
+    fun riskChallengeIsSurfacedWithoutAutomaticReplay() {
         server.enqueue(jsonResponse("""{"status":0,"error_code":20028,"ssaCode":"event"}"""))
-        server.enqueue(jsonResponse("""{"status":1}"""))
         val session = ApiSession("guid", "mid", "dev", dfid = "dfid")
         val sessions = ApiSessionManager(Optional.of(MemoryStore(session)), ApiDeviceIdentityFactory())
-        val risk = RiskAwareApiExecutor(
-            ApiRiskChallengeDetector(),
-            Optional.of(ApiRiskVerifier { ApiRiskVerificationResult.Verified }),
-        )
-        val executor = ApiCallExecutor(
-            OkHttpClient(),
+        val executor = ProtocolTransport(
+            { OkHttpClient() },
             Json { ignoreUnknownKeys = true },
             StepClock(1_700_000_000_000),
             ApiRequestSigner(),
             sessions,
-            Lazy { risk },
+            ApiRiskChallengeDetector(),
             ApiOriginPolicy { true },
         )
 
-        val result = executor.execute { _, _ ->
-            ApiExchange(
-                ApiEndpointSpec(
-                    id = "test-replay",
-                    origin = server.url("/").toString().removeSuffix("/"),
-                    path = "/replay",
-                    method = ApiHttpMethod.Get,
-                ),
-                decode = ApiRawResponse::statusCode,
-            )
+        val failure = org.junit.Assert.assertThrows(ApiRiskException::class.java) {
+            runTest {
+                val ignored = executor.execute { _, _ ->
+                    ApiExchange(
+                        ApiEndpointSpec(
+                            id = "test-no-replay",
+                            origin = server.url("/").toString().removeSuffix("/"),
+                            path = "/risk",
+                            method = ApiHttpMethod.Get,
+                        ),
+                        decode = ApiRawResponse::statusCode,
+                    )
+                }
+                assertThat(ignored).isEqualTo(200)
+            }
         }
 
-        assertThat(result).isEqualTo(200)
-        val first = server.takeRequest().requestUrl!!
-        val second = server.takeRequest().requestUrl!!
-        assertThat(first.queryParameter("clienttime")).isEqualTo("1700000000")
-        assertThat(second.queryParameter("clienttime")).isEqualTo("1700000001")
-        assertThat(second.queryParameter("signature")).isNotEqualTo(first.queryParameter("signature"))
+        assertThat(failure.challenge.eventId).isEqualTo("event")
+        assertThat(failure.reason).isEqualTo(ApiRiskException.Reason.VerificationUnavailable)
+        assertThat(server.requestCount).isEqualTo(1)
     }
 
     private fun jsonResponse(body: String) =

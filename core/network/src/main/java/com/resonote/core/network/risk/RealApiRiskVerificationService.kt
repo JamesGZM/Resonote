@@ -2,7 +2,7 @@ package com.resonote.core.network.risk
 
 import com.resonote.core.network.ApiProtocolException
 import com.resonote.core.network.ApiServiceException
-import com.resonote.core.network.protocol.ApiCallExecutor
+import com.resonote.core.network.protocol.ProtocolTransport
 import com.resonote.core.network.protocol.ApiEndpointSpec
 import com.resonote.core.network.protocol.ApiEndpointOrigins
 import com.resonote.core.network.protocol.ApiExchange
@@ -18,14 +18,14 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.put
 
 @Singleton
-internal class RealApiRiskGateway @Inject constructor(
-    private val executor: ApiCallExecutor,
+internal class RealApiRiskVerificationService @Inject constructor(
+    private val transport: ProtocolTransport,
     private val crypto: ApiProtocolCrypto,
     private val origins: ApiEndpointOrigins,
     private val riskContextFactory: ApiRiskContextFactory,
-) : ApiRiskGateway {
+) : ApiRiskVerificationService {
     override suspend fun methodFor(challenge: ApiRiskChallenge): ApiRiskMethod =
-        executor.execute { session, _ ->
+        transport.execute { session, _ ->
             val body =
                 buildJsonObject {
                     put("eventid", challenge.eventId)
@@ -61,7 +61,7 @@ internal class RealApiRiskGateway @Inject constructor(
         }
 
     override suspend fun submit(challenge: ApiRiskChallenge, proof: ApiRiskProof) {
-        executor.execute { session, _ ->
+        transport.execute { session, _ ->
             val completeChallenge = riskContextFactory.complete(challenge, session)
             val temporary =
                 when (proof) {

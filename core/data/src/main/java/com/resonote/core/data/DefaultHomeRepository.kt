@@ -1,6 +1,5 @@
 package com.resonote.core.data
 
-import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.HomeContent
 import com.resonote.core.model.HomeIssue
 import com.resonote.core.model.HomePlaylist
@@ -9,15 +8,14 @@ import com.resonote.core.model.HomeSection
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.RadioRecommendationResult
 import com.resonote.core.model.RecommendationMode
+import com.resonote.core.network.ApiException
 import com.resonote.core.network.ApiNetworkDataSource
 import com.resonote.core.network.model.NetworkHomePlaylist
-import com.resonote.core.network.model.NetworkHomeSong
 import com.resonote.core.network.model.NetworkRecommendationMode
 import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.random.Random
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,6 +36,7 @@ internal class RandomHomeRecommendationSampler @Inject constructor() : HomeRecom
 internal class DefaultHomeRepository @Inject constructor(
     private val network: ApiNetworkDataSource,
     private val sampler: HomeRecommendationSampler,
+    private val riskChallenges: RiskChallengeRegistry,
 ) : HomeRepository {
     private val generation = AtomicLong()
     private val stateMutex = Mutex()
@@ -46,7 +45,7 @@ internal class DefaultHomeRepository @Inject constructor(
 
     override suspend fun refresh(): HomeRefreshResult = coroutineScope {
         val requestGeneration = generation.incrementAndGet()
-        val daily = async { loadSection(HomeSection.DailyRecommendations) { network.dailyRecommendations().map(::mapSong) } }
+        val daily = async { loadSection(HomeSection.DailyRecommendations) { network.dailyRecommendations().map { it.toOnlineSong() } } }
         val playlists =
             async {
                 loadSection(HomeSection.RecommendedPlaylists) {
@@ -56,7 +55,7 @@ internal class DefaultHomeRepository @Inject constructor(
         val newSongs =
             async {
                 loadSection(HomeSection.NewSongs) {
-                    network.newSongs(page = 1, pageSize = HOME_ITEM_COUNT).map(::mapSong).take(HOME_ITEM_COUNT)
+                    network.newSongs(page = 1, pageSize = HOME_ITEM_COUNT).map { it.toOnlineSong() }.take(HOME_ITEM_COUNT)
                 }
             }
         val dailyResult = daily.await()
@@ -66,8 +65,7 @@ internal class DefaultHomeRepository @Inject constructor(
 
         stateMutex.withLock {
             if (requestGeneration != generation.get()) {
-                return@withLock mutableContent.value?.let { HomeRefreshResult.Updated(it, issues) }
-                    ?: HomeRefreshResult.Failed(issues)
+                return@withLock HomeRefreshResult.Superseded
             }
             val previous = mutableContent.value
             val anySuccess = dailyResult.value != null || playlistResult.value != null || newSongResult.value != null
@@ -87,21 +85,17 @@ internal class DefaultHomeRepository @Inject constructor(
 
     override suspend fun loadRadio(mode: RecommendationMode): RadioRecommendationResult =
         try {
-            val songs = network.radioRecommendations(mode.toNetworkMode()).map(::mapSong)
+            val songs = network.radioRecommendations(mode.toNetworkMode()).map { it.toOnlineSong() }
             RadioRecommendationResult.Available(songs)
-        } catch (cancellation: CancellationException) {
-            throw cancellation
-        } catch (failure: Throwable) {
-            RadioRecommendationResult.Failed(failure.toContentFailure())
+        } catch (failure: ApiException) {
+            RadioRecommendationResult.Failed(failure.toContentFailure(riskChallenges))
         }
 
     private suspend fun <T> loadSection(section: HomeSection, block: suspend () -> T): SectionResult<T> =
         try {
             SectionResult(value = block())
-        } catch (cancellation: CancellationException) {
-            throw cancellation
-        } catch (failure: Throwable) {
-            SectionResult(issue = HomeIssue(section, failure.toContentFailure()))
+        } catch (failure: ApiException) {
+            SectionResult(issue = HomeIssue(section, failure.toContentFailure(riskChallenges)))
         }
 
     private data class SectionResult<T>(
@@ -113,26 +107,6 @@ internal class DefaultHomeRepository @Inject constructor(
         const val HOME_ITEM_COUNT = 6
     }
 }
-
-private fun NetworkHomeSong.toAudioQuality(): AudioQuality =
-    when {
-        !losslessHash.isNullOrBlank() -> AudioQuality.Lossless
-        !highQualityHash.isNullOrBlank() -> AudioQuality.HighResolution
-        else -> AudioQuality.Standard
-    }
-
-private fun mapSong(song: NetworkHomeSong): OnlineSong =
-    OnlineSong(
-        hash = song.hash,
-        title = song.title,
-        artist = song.artist,
-        coverUrl = song.coverUrl?.replace("{size}", "480"),
-        albumId = song.albumId,
-        albumAudioId = song.albumAudioId,
-        durationMillis = song.durationMillis,
-        quality = song.toAudioQuality(),
-        vip = song.vip,
-    )
 
 private fun mapPlaylist(playlist: NetworkHomePlaylist): HomePlaylist =
     HomePlaylist(

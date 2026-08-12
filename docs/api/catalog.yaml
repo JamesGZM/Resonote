@@ -18,7 +18,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/ai.md#api-ai-001"
     upstream_requests:
       - sequence: 1
@@ -144,7 +144,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/album.md#api-album-001"
     upstream_requests:
       - sequence: 1
@@ -264,7 +264,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/album.md#api-album-002"
     upstream_requests:
       - sequence: 1
@@ -340,7 +340,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/album.md#api-album-003"
     upstream_requests:
       - sequence: 1
@@ -382,7 +382,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/album.md#api-album-004"
     upstream_requests:
       - sequence: 1
@@ -468,7 +468,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/artist.md#api-artist-001"
     upstream_requests:
       - sequence: 1
@@ -552,7 +552,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/artist.md#api-artist-002"
     upstream_requests:
       - sequence: 1
@@ -670,7 +670,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/artist.md#api-artist-003"
     upstream_requests:
       - sequence: 1
@@ -732,7 +732,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/artist.md#api-artist-004"
     upstream_requests:
       - sequence: 1
@@ -828,7 +828,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/artist.md#api-artist-005"
     upstream_requests:
       - sequence: 1
@@ -894,7 +894,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/artist.md#api-artist-006"
     upstream_requests:
       - sequence: 1
@@ -954,7 +954,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/artist.md#api-artist-007"
     upstream_requests:
       - sequence: 1
@@ -1026,7 +1026,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/artist.md#api-artist-008"
     upstream_requests:
       - sequence: 1
@@ -1116,7 +1116,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/artist.md#api-artist-009"
     upstream_requests:
       - sequence: 1
@@ -1188,7 +1188,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/song.md#api-song-001"
     upstream_requests:
       - sequence: 1
@@ -1302,7 +1302,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/song.md#api-song-002"
     upstream_requests:
       - sequence: 1
@@ -1398,7 +1398,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/song.md#api-song-003"
     upstream_requests:
       - sequence: 1
@@ -1488,7 +1488,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/recognition.md#api-recognition-001"
     upstream_requests:
       - sequence: 1
@@ -1568,7 +1568,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/song.md#api-song-004"
     upstream_requests:
       - sequence: 1
@@ -1652,7 +1652,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/brush.md#api-brush-001"
     upstream_requests:
       - sequence: 1
@@ -1766,7 +1766,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/login.md#api-login-001"
     upstream_requests:
       - sequence: 1
@@ -1836,7 +1836,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/comment.md#api-comment-001"
     upstream_requests:
       - sequence: 1
@@ -1920,7 +1920,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/comment.md#api-comment-002"
     upstream_requests:
       - sequence: 1
@@ -2094,7 +2094,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/comment.md#api-comment-004"
     upstream_requests:
       - sequence: 1
@@ -2184,7 +2184,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/comment.md#api-comment-005"
     upstream_requests:
       - sequence: 1
@@ -2274,7 +2274,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/comment.md#api-comment-006"
     upstream_requests:
       - sequence: 1
@@ -2358,7 +2358,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/comment.md#api-comment-007"
     upstream_requests:
       - sequence: 1
@@ -2454,7 +2454,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/discover.md#api-discover-001"
     upstream_requests:
       - sequence: 1
@@ -2532,7 +2532,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/discover.md#api-discover-002"
     upstream_requests:
       - sequence: 1
@@ -2596,8 +2596,9 @@ endpoints:
     domain: "discover"
     wrapper_route: "/everyday/recommend"
     source: "module/everyday_recommend.js@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb"
-    android_evidence: "MoeKoeMusic-Mobile/api@283f1e97:module/everyday_recommend.js"
-    android_evidence: "MoeKoeMusic-Mobile@ab71195d4cf3297332490fd37704d1ae8973d4c5:src/features/home/load-home-data.ts"
+    android_evidence:
+      - "MoeKoeMusic-Mobile/api@283f1e97:module/everyday_recommend.js"
+      - "MoeKoeMusic-Mobile@ab71195d4cf3297332490fd37704d1ae8973d4c5:src/features/home/load-home-data.ts"
     platform: "lite"
     authentication: "optional"
     operation: "read"
@@ -2606,7 +2607,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/discover.md#api-discover-003"
     upstream_requests:
       - sequence: 1
@@ -2662,7 +2663,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/discover.md#api-discover-004"
     upstream_requests:
       - sequence: 1
@@ -2716,7 +2717,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/favorite.md#api-favorite-001"
     upstream_requests:
       - sequence: 1
@@ -2764,7 +2765,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/fm.md#api-fm-001"
     upstream_requests:
       - sequence: 1
@@ -2872,7 +2873,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/fm.md#api-fm-002"
     upstream_requests:
       - sequence: 1
@@ -2986,7 +2987,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/fm.md#api-fm-003"
     upstream_requests:
       - sequence: 1
@@ -3100,7 +3101,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/fm.md#api-fm-004"
     upstream_requests:
       - sequence: 1
@@ -3348,7 +3349,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/images.md#api-images-001"
     upstream_requests:
       - sequence: 1
@@ -3420,7 +3421,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/images.md#api-images-002"
     upstream_requests:
       - sequence: 1
@@ -3498,7 +3499,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/ip.md#api-ip-001"
     upstream_requests:
       - sequence: 1
@@ -3582,7 +3583,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/ip.md#api-ip-002"
     upstream_requests:
       - sequence: 1
@@ -3642,7 +3643,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/ip.md#api-ip-003"
     upstream_requests:
       - sequence: 1
@@ -3702,7 +3703,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/ip.md#api-ip-004"
     upstream_requests:
       - sequence: 1
@@ -3752,7 +3753,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/ip.md#api-ip-005"
     upstream_requests:
       - sequence: 1
@@ -3812,7 +3813,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/song.md#api-song-005"
     upstream_requests:
       - sequence: 1
@@ -3884,7 +3885,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/song.md#api-song-006"
     upstream_requests:
       - sequence: 1
@@ -3956,7 +3957,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/user.md#api-user-001"
     upstream_requests:
       - sequence: 1
@@ -4034,7 +4035,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: true
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/login.md#api-login-003"
     upstream_requests:
       - sequence: 1
@@ -4156,7 +4157,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: true
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/login.md#api-login-004"
     upstream_requests:
       - sequence: 1
@@ -4316,7 +4317,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/login.md#api-login-005"
     upstream_requests:
       - sequence: 1
@@ -4394,7 +4395,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/login.md#api-login-006"
     upstream_requests:
       - sequence: 1
@@ -4532,7 +4533,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: true
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/login.md#api-login-007"
     upstream_requests:
       - sequence: 1
@@ -4658,7 +4659,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: true
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/login.md#api-login-008"
     upstream_requests:
       - sequence: 1
@@ -4790,7 +4791,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/login.md#api-login-010"
     upstream_requests:
       - sequence: 1
@@ -4858,7 +4859,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: true
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/login.md#api-login-011"
     upstream_requests:
       - sequence: 1
@@ -5068,7 +5069,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/longaudio.md#api-longaudio-001"
     upstream_requests:
       - sequence: 1
@@ -5152,7 +5153,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/longaudio.md#api-longaudio-002"
     upstream_requests:
       - sequence: 1
@@ -5224,7 +5225,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/longaudio.md#api-longaudio-003"
     upstream_requests:
       - sequence: 1
@@ -5284,7 +5285,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/longaudio.md#api-longaudio-004"
     upstream_requests:
       - sequence: 1
@@ -5332,7 +5333,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/longaudio.md#api-longaudio-005"
     upstream_requests:
       - sequence: 1
@@ -5392,7 +5393,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/longaudio.md#api-longaudio-006"
     upstream_requests:
       - sequence: 1
@@ -5446,7 +5447,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/lyrics.md#api-lyrics-001"
     upstream_requests:
       - sequence: 1
@@ -5536,7 +5537,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/discover.md#api-discover-005"
     upstream_requests:
       - sequence: 1
@@ -5596,7 +5597,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/discover.md#api-discover-006"
     upstream_requests:
       - sequence: 1
@@ -5776,7 +5777,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/user.md#api-user-002"
     upstream_requests:
       - sequence: 1
@@ -5866,7 +5867,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/playlist.md#api-playlist-001"
     upstream_requests:
       - sequence: 1
@@ -5976,7 +5977,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/playlist.md#api-playlist-002"
     upstream_requests:
       - sequence: 1
@@ -6084,7 +6085,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/playlist.md#api-playlist-003"
     upstream_requests:
       - sequence: 1
@@ -6156,7 +6157,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/playlist.md#api-playlist-004"
     upstream_requests:
       - sequence: 1
@@ -6210,7 +6211,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/playlist.md#api-playlist-005"
     upstream_requests:
       - sequence: 1
@@ -6312,7 +6313,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/playlist.md#api-playlist-006"
     upstream_requests:
       - sequence: 1
@@ -6366,6 +6367,9 @@ endpoints:
     domain: "playlist"
     wrapper_route: "/playlist/track/all"
     source: "module/playlist_track_all.js@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb"
+    android_evidence:
+      - "MoeKoeMusic-Mobile/api@283f1e97:module/playlist_track_all.js"
+      - "MoeKoeMusic-Mobile@ab71195d4cf3297332490fd37704d1ae8973d4c5:src/features/playlist/playlist-api.ts"
     platform: "lite"
     authentication: "optional"
     operation: "read"
@@ -6374,7 +6378,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/playlist.md#api-playlist-007"
     upstream_requests:
       - sequence: 1
@@ -6470,7 +6474,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/playlist.md#api-playlist-008"
     upstream_requests:
       - sequence: 1
@@ -6578,7 +6582,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/playlist.md#api-playlist-009"
     upstream_requests:
       - sequence: 1
@@ -6680,7 +6684,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/playlist.md#api-playlist-010"
     upstream_requests:
       - sequence: 1
@@ -6770,7 +6774,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/song.md#api-song-007"
     upstream_requests:
       - sequence: 1
@@ -6882,6 +6886,9 @@ endpoints:
     domain: "ranking"
     wrapper_route: "/rank/audio"
     source: "module/rank_audio.js@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb"
+    android_evidence:
+      - "MoeKoeMusic-Mobile/api@283f1e97:module/rank_audio.js"
+      - "MoeKoeMusic-Mobile@ab71195d4cf3297332490fd37704d1ae8973d4c5:src/features/home/load-home-data.ts"
     platform: "lite"
     authentication: "optional"
     operation: "read"
@@ -6890,7 +6897,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/ranking.md#api-ranking-001"
     upstream_requests:
       - sequence: 1
@@ -6994,7 +7001,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/ranking.md#api-ranking-002"
     upstream_requests:
       - sequence: 1
@@ -7052,6 +7059,9 @@ endpoints:
     domain: "ranking"
     wrapper_route: "/rank/list"
     source: "module/rank_list.js@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb"
+    android_evidence:
+      - "MoeKoeMusic-Mobile/api@283f1e97:module/rank_list.js"
+      - "MoeKoeMusic-Mobile@ab71195d4cf3297332490fd37704d1ae8973d4c5:src/features/home/load-home-data.ts"
     platform: "lite"
     authentication: "optional"
     operation: "read"
@@ -7060,7 +7070,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/ranking.md#api-ranking-003"
     upstream_requests:
       - sequence: 1
@@ -7122,7 +7132,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/ranking.md#api-ranking-004"
     upstream_requests:
       - sequence: 1
@@ -7164,7 +7174,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/ranking.md#api-ranking-005"
     upstream_requests:
       - sequence: 1
@@ -7236,7 +7246,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/discover.md#api-discover-007"
     upstream_requests:
       - sequence: 1
@@ -7296,7 +7306,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: true
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/device.md#api-device-001"
     upstream_requests:
       - sequence: 1
@@ -7558,7 +7568,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/scene.md#api-scene-001"
     upstream_requests:
       - sequence: 1
@@ -7654,7 +7664,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/scene.md#api-scene-002"
     upstream_requests:
       - sequence: 1
@@ -7744,7 +7754,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/scene.md#api-scene-003"
     upstream_requests:
       - sequence: 1
@@ -7786,7 +7796,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/scene.md#api-scene-004"
     upstream_requests:
       - sequence: 1
@@ -7870,7 +7880,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/scene.md#api-scene-005"
     upstream_requests:
       - sequence: 1
@@ -7918,7 +7928,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/scene.md#api-scene-006"
     upstream_requests:
       - sequence: 1
@@ -7972,7 +7982,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/scene.md#api-scene-007"
     upstream_requests:
       - sequence: 1
@@ -8038,7 +8048,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/scene.md#api-scene-008"
     upstream_requests:
       - sequence: 1
@@ -8128,7 +8138,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/search.md#api-search-001"
     upstream_requests:
       - sequence: 1
@@ -8249,7 +8259,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/search.md#api-search-002"
     upstream_requests:
       - sequence: 1
@@ -8327,7 +8337,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/search.md#api-search-003"
     upstream_requests:
       - sequence: 1
@@ -8435,7 +8445,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/search.md#api-search-004"
     upstream_requests:
       - sequence: 1
@@ -8497,7 +8507,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/search.md#api-search-005"
     upstream_requests:
       - sequence: 1
@@ -8591,7 +8601,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/search.md#api-search-006"
     upstream_requests:
       - sequence: 1
@@ -8771,7 +8781,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/search.md#api-search-007"
     upstream_requests:
       - sequence: 1
@@ -8855,7 +8865,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/misc.md#api-misc-001"
     upstream_requests:
       - sequence: 1
@@ -8921,7 +8931,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/sheet.md#api-sheet-001"
     upstream_requests:
       - sequence: 1
@@ -8993,7 +9003,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/sheet.md#api-sheet-002"
     upstream_requests:
       - sequence: 1
@@ -9047,7 +9057,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/sheet.md#api-sheet-003"
     upstream_requests:
       - sequence: 1
@@ -9125,7 +9135,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/sheet.md#api-sheet-004"
     upstream_requests:
       - sequence: 1
@@ -9197,7 +9207,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/sheet.md#api-sheet-005"
     upstream_requests:
       - sequence: 1
@@ -9257,7 +9267,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/sheet.md#api-sheet-006"
     upstream_requests:
       - sequence: 1
@@ -9359,7 +9369,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/misc.md#api-misc-002"
     upstream_requests:
       - sequence: 1
@@ -9431,7 +9441,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/song.md#api-song-008"
     upstream_requests:
       - sequence: 1
@@ -9487,7 +9497,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/song.md#api-song-009"
     upstream_requests:
       - sequence: 1
@@ -9535,7 +9545,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/song.md#api-song-010"
     upstream_requests:
       - sequence: 1
@@ -9587,8 +9597,9 @@ endpoints:
     domain: "song"
     wrapper_route: "/song/url"
     source: "module/song_url.js@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb"
-    android_evidence: "MoeKoeMusic-Mobile/api@283f1e97:module/song_url.js"
-    android_evidence: "MoeKoeMusic-Mobile@ab71195d4cf3297332490fd37704d1ae8973d4c5:src/features/player/song-url.ts"
+    android_evidence:
+      - "MoeKoeMusic-Mobile/api@283f1e97:module/song_url.js"
+      - "MoeKoeMusic-Mobile@ab71195d4cf3297332490fd37704d1ae8973d4c5:src/features/player/song-url.ts"
     platform: "lite"
     authentication: "optional"
     operation: "read"
@@ -9597,7 +9608,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/song.md#api-song-011"
     upstream_requests:
       - sequence: 1
@@ -9763,7 +9774,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/song.md#api-song-012"
     upstream_requests:
       - sequence: 1
@@ -9883,7 +9894,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/theme.md#api-theme-001"
     upstream_requests:
       - sequence: 1
@@ -9955,7 +9966,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/theme.md#api-theme-002"
     upstream_requests:
       - sequence: 1
@@ -10033,7 +10044,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/theme.md#api-theme-003"
     upstream_requests:
       - sequence: 1
@@ -10117,7 +10128,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/theme.md#api-theme-004"
     upstream_requests:
       - sequence: 1
@@ -10207,7 +10218,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/discover.md#api-discover-008"
     upstream_requests:
       - sequence: 1
@@ -10279,8 +10290,9 @@ endpoints:
     domain: "discover"
     wrapper_route: "/top/card"
     source: "module/top_card.js@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb"
-    android_evidence: "MoeKoeMusic-Mobile/api@283f1e97:module/top_card.js"
-    android_evidence: "MoeKoeMusic@a86cfefb:src/components/home/HomeRecommendations.vue"
+    android_evidence:
+      - "MoeKoeMusic-Mobile/api@283f1e97:module/top_card.js"
+      - "MoeKoeMusic@a86cfefb:src/components/home/HomeRecommendations.vue"
     platform: "lite"
     authentication: "optional"
     operation: "read"
@@ -10289,7 +10301,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/discover.md#api-discover-009"
     upstream_requests:
       - sequence: 1
@@ -10419,7 +10431,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/discover.md#api-discover-010"
     upstream_requests:
       - sequence: 1
@@ -10521,7 +10533,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/discover.md#api-discover-011"
     upstream_requests:
       - sequence: 1
@@ -10575,8 +10587,9 @@ endpoints:
     domain: "discover"
     wrapper_route: "/top/playlist"
     source: "module/top_playlist.js@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb"
-    android_evidence: "MoeKoeMusic-Mobile/api@283f1e97:module/top_playlist.js"
-    android_evidence: "MoeKoeMusic-Mobile@ab71195d4cf3297332490fd37704d1ae8973d4c5:src/features/home/load-home-data.ts"
+    android_evidence:
+      - "MoeKoeMusic-Mobile/api@283f1e97:module/top_playlist.js"
+      - "MoeKoeMusic-Mobile@ab71195d4cf3297332490fd37704d1ae8973d4c5:src/features/home/load-home-data.ts"
     platform: "lite"
     authentication: "optional"
     operation: "read"
@@ -10585,7 +10598,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/discover.md#api-discover-012"
     upstream_requests:
       - sequence: 1
@@ -10735,8 +10748,9 @@ endpoints:
     domain: "discover"
     wrapper_route: "/top/song"
     source: "module/top_song.js@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb"
-    android_evidence: "MoeKoeMusic-Mobile/api@283f1e97:module/top_song.js"
-    android_evidence: "MoeKoeMusic-Mobile@ab71195d4cf3297332490fd37704d1ae8973d4c5:src/features/home/load-home-data.ts"
+    android_evidence:
+      - "MoeKoeMusic-Mobile/api@283f1e97:module/top_song.js"
+      - "MoeKoeMusic-Mobile@ab71195d4cf3297332490fd37704d1ae8973d4c5:src/features/home/load-home-data.ts"
     platform: "lite"
     authentication: "optional"
     operation: "read"
@@ -10745,7 +10759,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/discover.md#api-discover-013"
     upstream_requests:
       - sequence: 1
@@ -10821,7 +10835,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/discover.md#api-discover-014"
     upstream_requests:
       - sequence: 1
@@ -10911,7 +10925,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/cloud.md#api-cloud-001"
     upstream_requests:
       - sequence: 1
@@ -11023,7 +11037,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "handle-and-replay-once + native-partial"
+      risk: "surface-challenge + native-partial"
     documentation: "endpoints/cloud.md#api-cloud-002"
     upstream_requests:
       - sequence: 1
@@ -11197,7 +11211,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/cloud.md#api-cloud-003"
     upstream_requests:
       - sequence: 1
@@ -11321,7 +11335,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/user.md#api-user-003"
     upstream_requests:
       - sequence: 1
@@ -11407,7 +11421,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/user.md#api-user-004"
     upstream_requests:
       - sequence: 1
@@ -11513,7 +11527,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/user.md#api-user-005"
     upstream_requests:
       - sequence: 1
@@ -11585,7 +11599,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/user.md#api-user-006"
     upstream_requests:
       - sequence: 1
@@ -11657,7 +11671,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/user.md#api-user-007"
     upstream_requests:
       - sequence: 1
@@ -11755,7 +11769,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/user.md#api-user-008"
     upstream_requests:
       - sequence: 1
@@ -11847,7 +11861,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/user.md#api-user-009"
     upstream_requests:
       - sequence: 1
@@ -11913,7 +11927,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/user.md#api-user-010"
     upstream_requests:
       - sequence: 1
@@ -11991,7 +12005,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/user.md#api-user-011"
     upstream_requests:
       - sequence: 1
@@ -12063,7 +12077,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/user.md#api-user-012"
     upstream_requests:
       - sequence: 1
@@ -12141,7 +12155,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/user.md#api-user-013"
     upstream_requests:
       - sequence: 1
@@ -12293,7 +12307,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/video.md#api-video-001"
     upstream_requests:
       - sequence: 1
@@ -12407,7 +12421,7 @@ endpoints:
     response_handling:
       transformed: true
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/video.md#api-video-002"
     upstream_requests:
       - sequence: 1
@@ -12509,7 +12523,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/video.md#api-video-003"
     upstream_requests:
       - sequence: 1
@@ -12601,7 +12615,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/youth.md#api-youth-001"
     upstream_requests:
       - sequence: 1
@@ -12661,7 +12675,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/youth.md#api-youth-002"
     upstream_requests:
       - sequence: 1
@@ -12709,7 +12723,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/youth.md#api-youth-003"
     upstream_requests:
       - sequence: 1
@@ -12763,7 +12777,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/youth.md#api-youth-004"
     upstream_requests:
       - sequence: 1
@@ -12835,7 +12849,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/youth.md#api-youth-005"
     upstream_requests:
       - sequence: 1
@@ -12901,7 +12915,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/youth.md#api-youth-006"
     upstream_requests:
       - sequence: 1
@@ -12955,7 +12969,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/youth.md#api-youth-007"
     upstream_requests:
       - sequence: 1
@@ -13015,7 +13029,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/youth.md#api-youth-008"
     upstream_requests:
       - sequence: 1
@@ -13075,7 +13089,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/youth.md#api-youth-009"
     upstream_requests:
       - sequence: 1
@@ -13129,7 +13143,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/youth.md#api-youth-010"
     upstream_requests:
       - sequence: 1
@@ -13171,7 +13185,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/youth.md#api-youth-011"
     upstream_requests:
       - sequence: 1
@@ -13213,7 +13227,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/youth.md#api-youth-012"
     upstream_requests:
       - sequence: 1
@@ -13279,7 +13293,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/youth.md#api-youth-013"
     upstream_requests:
       - sequence: 1
@@ -13327,7 +13341,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/youth.md#api-youth-014"
     upstream_requests:
       - sequence: 1
@@ -13387,7 +13401,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/youth.md#api-youth-015"
     upstream_requests:
       - sequence: 1
@@ -13465,7 +13479,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/youth.md#api-youth-016"
     upstream_requests:
       - sequence: 1
@@ -13527,7 +13541,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/discover.md#api-discover-015"
     upstream_requests:
       - sequence: 1
@@ -13605,7 +13619,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/discover.md#api-discover-016"
     upstream_requests:
       - sequence: 1
@@ -13713,7 +13727,7 @@ endpoints:
     response_handling:
       transformed: false
       cookie_writeback: false
-      risk: "handle-and-replay-once"
+      risk: "surface-challenge"
     documentation: "endpoints/discover.md#api-discover-017"
     upstream_requests:
       - sequence: 1

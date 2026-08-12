@@ -8,11 +8,11 @@ import com.resonote.core.network.ApiProtocolException
 import com.resonote.core.network.ApiRiskException
 import com.resonote.core.network.ApiServiceException
 
-internal fun Throwable.toContentFailure(): ContentFailure =
+internal fun ApiException.toContentFailure(riskChallenges: RiskChallengeRegistry): ContentFailure =
     when (this) {
-        is ApiRiskException -> ContentFailure.RiskVerificationUnavailable
+        is ApiRiskException -> ContentFailure.RiskVerificationRequired(riskChallenges.register(challenge))
         is ApiNetworkException -> ContentFailure.Network
         is ApiServiceException, is ApiHttpException -> ContentFailure.ServiceRejected
-        is ApiProtocolException, is ApiException -> ContentFailure.Protocol
+        is ApiProtocolException -> ContentFailure.Protocol
         else -> ContentFailure.Protocol
     }

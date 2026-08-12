@@ -1,8 +1,7 @@
 package com.resonote.core.network.risk
 
 import com.google.common.truth.Truth.assertThat
-import com.resonote.core.network.ApiRiskException
-import com.resonote.core.network.protocol.ApiCallExecutor
+import com.resonote.core.network.protocol.ProtocolTransport
 import com.resonote.core.network.protocol.ApiDeviceIdentityFactory
 import com.resonote.core.network.protocol.ApiEndpointOrigins
 import com.resonote.core.network.protocol.ApiOriginPolicy
@@ -12,7 +11,6 @@ import com.resonote.core.network.protocol.ProtocolRandom
 import com.resonote.core.network.session.ApiSession
 import com.resonote.core.network.session.ApiSessionManager
 import com.resonote.core.network.session.ApiSessionStore
-import dagger.Lazy
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
@@ -27,11 +25,10 @@ import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
-import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
 
-class RealApiRiskGatewayTest {
+class RealApiRiskVerificationServiceTest {
     private lateinit var gatewayServer: MockWebServer
     private lateinit var mobileCodeServer: MockWebServer
     private lateinit var mobileLoginServer: MockWebServer
@@ -70,11 +67,10 @@ class RealApiRiskGatewayTest {
         val clock = Clock.fixed(Instant.ofEpochMilli(1_700_000_000_123), ZoneOffset.UTC)
         val session = ApiSession("guid", "mid", "dev", dfid = "dfid", userId = "42")
         val sessions = ApiSessionManager(Optional.of(MemoryStore(session)), ApiDeviceIdentityFactory())
-        val riskExecutor = RiskAwareApiExecutor(ApiRiskChallengeDetector(), Optional.empty())
-        val executor = ApiCallExecutor(
-            OkHttpClient(), json, clock, ApiRequestSigner(), sessions, Lazy { riskExecutor }, ApiOriginPolicy { true },
+        val executor = ProtocolTransport(
+            { OkHttpClient() }, json, clock, ApiRequestSigner(), sessions, ApiRiskChallengeDetector(), ApiOriginPolicy { true },
         )
-        val gateway = RealApiRiskGateway(
+        val service = RealApiRiskVerificationService(
             executor,
             ApiProtocolCrypto(ProtocolRandom { length -> "A".repeat(length) }),
             ApiEndpointOrigins(
@@ -87,9 +83,7 @@ class RealApiRiskGatewayTest {
             ApiRiskContextFactory(clock),
         )
 
-        val failure = assertThrows(ApiRiskException::class.java) {
-            runTest { gateway.submit(ApiRiskChallenge("event"), ApiRiskProof.Sms("246810")) }
-        }
+        runTest { service.submit(ApiRiskChallenge("event"), ApiRiskProof.Sms("246810")) }
 
         val request = checkNotNull(riskVerificationServer.takeRequest(1, TimeUnit.SECONDS)) {
             "Risk verification request was sent to the wrong origin"
@@ -101,7 +95,6 @@ class RealApiRiskGatewayTest {
         assertThat(body["code"]?.jsonPrimitive?.content).isEqualTo("246810")
         assertThat(body["sid"]?.jsonPrimitive?.content).isNotEmpty()
         assertThat(body["edt"]?.jsonPrimitive?.content).isNotEmpty()
-        assertThat(failure.reason).isEqualTo(ApiRiskException.Reason.Failed)
         assertThat(gatewayServer.requestCount).isEqualTo(0)
         assertThat(mobileCodeServer.requestCount).isEqualTo(0)
         assertThat(mobileLoginServer.requestCount).isEqualTo(0)

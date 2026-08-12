@@ -23,6 +23,7 @@ class ApiProtocolException(val reason: Reason) : ApiException("API protocol fail
         MalformedResponse,
         MissingRequiredField,
         MissingRiskEvent,
+        InsecureMediaUrl,
     }
 }
 

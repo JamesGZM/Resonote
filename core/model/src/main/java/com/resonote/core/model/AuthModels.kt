@@ -13,7 +13,7 @@ sealed interface AuthFailure {
 
     data object ServiceRejected : AuthFailure
 
-    data object RiskVerificationUnavailable : AuthFailure
+    data class RiskVerificationRequired(val challenge: RiskChallengeHandle) : AuthFailure
 
     data object Network : AuthFailure
 

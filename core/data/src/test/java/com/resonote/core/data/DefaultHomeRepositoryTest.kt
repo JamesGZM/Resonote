@@ -18,6 +18,9 @@ import com.resonote.core.network.model.NetworkHomePlaylist
 import com.resonote.core.network.model.NetworkHomeSong
 import com.resonote.core.network.model.NetworkMobileCodeLoginResult
 import com.resonote.core.network.model.NetworkRecommendationMode
+import com.resonote.core.network.model.NetworkRanking
+import com.resonote.core.network.model.NetworkPlaylistPage
+import com.resonote.core.network.model.NetworkSongPage
 import com.resonote.core.network.model.NetworkSearchPage
 import com.resonote.core.network.model.NetworkSongSource
 import com.resonote.core.network.risk.ApiRiskChallenge
@@ -30,6 +33,8 @@ import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class DefaultHomeRepositoryTest {
+    private val riskChallenges = RiskChallengeRegistry()
+
     @Test
     fun refreshLoadsSectionsConcurrentlyAndSamplesExactlySixDailySongs() = runTest {
         val gates = List(3) { CompletableDeferred<Unit>() }
@@ -40,7 +45,7 @@ class DefaultHomeRepositoryTest {
                 playlists = { _, _ -> started[1].complete(Unit); gates[1].await(); List(8) { playlist("playlist-$it") } },
                 newSongLoader = { _, _ -> started[2].complete(Unit); gates[2].await(); List(8) { song("new-$it") } },
             )
-        val repository = DefaultHomeRepository(network, HomeRecommendationSampler { songs, count -> songs.takeLast(count) })
+        val repository = createHomeRepository(network, HomeRecommendationSampler { songs, count -> songs.takeLast(count) })
 
         val refresh = async { repository.refresh() }
         started.forEach { it.await() }
@@ -58,7 +63,7 @@ class DefaultHomeRepositoryTest {
     fun eachSuccessfulRefreshSamplesDailyPoolAgain() = runTest {
         var sampleCall = 0
         val repository =
-            DefaultHomeRepository(
+            createHomeRepository(
                 FakeNetwork(daily = { List(8) { song("daily-$it") } }),
                 HomeRecommendationSampler { songs, count ->
                     val offset = sampleCall++ % songs.size
@@ -85,7 +90,7 @@ class DefaultHomeRepositoryTest {
                 },
                 playlists = { _, _ -> listOf(playlist(playlistVersion)) },
             )
-        val repository = DefaultHomeRepository(network, HomeRecommendationSampler { songs, count -> songs.take(count) })
+        val repository = createHomeRepository(network, HomeRecommendationSampler { songs, count -> songs.take(count) })
         repository.refresh()
         failDaily = true
         playlistVersion = "new"
@@ -102,7 +107,7 @@ class DefaultHomeRepositoryTest {
     fun firstRefreshAllFailedKeepsEmptyState() = runTest {
         val failure = { throw ApiNetworkException(ApiNetworkException.Kind.Connection, IOException()) }
         val repository =
-            DefaultHomeRepository(
+            createHomeRepository(
                 FakeNetwork(
                     daily = failure,
                     playlists = { _, _ -> failure() },
@@ -121,7 +126,7 @@ class DefaultHomeRepositoryTest {
     @Test
     fun firstRefreshPartiallySuccessfulPublishesAvailableSections() = runTest {
         val repository =
-            DefaultHomeRepository(
+            createHomeRepository(
                 FakeNetwork(
                     daily = { throw ApiNetworkException(ApiNetworkException.Kind.Offline, IOException()) },
                     playlists = { _, _ -> listOf(playlist("available")) },
@@ -143,12 +148,23 @@ class DefaultHomeRepositoryTest {
     @Test
     fun cancellationPropagates() {
         val repository =
-            DefaultHomeRepository(
+            createHomeRepository(
                 FakeNetwork(daily = { throw CancellationException("cancelled") }),
                 HomeRecommendationSampler { songs, count -> songs.take(count) },
             )
 
         assertThrows(CancellationException::class.java) { runTest { repository.refresh() } }
+    }
+
+    @Test
+    fun programmingFailuresAreNotReportedAsProtocolFailures() {
+        val repository =
+            createHomeRepository(
+                FakeNetwork(daily = { throw AssertionError("mapper bug") }),
+                HomeRecommendationSampler { songs, count -> songs.take(count) },
+            )
+
+        assertThrows(AssertionError::class.java) { runTest { repository.refresh() } }
     }
 
     @Test
@@ -169,22 +185,23 @@ class DefaultHomeRepositoryTest {
                     }
                 },
             )
-        val repository = DefaultHomeRepository(network, HomeRecommendationSampler { songs, count -> songs.take(count) })
+        val repository = createHomeRepository(network, HomeRecommendationSampler { songs, count -> songs.take(count) })
 
         val first = async { repository.refresh() }
         firstStarted.await()
         repository.refresh()
         releaseFirst.complete(Unit)
-        first.await()
+        val superseded = first.await()
 
         assertThat(repository.content.value?.dailyRecommendations?.single()?.hash).isEqualTo("new")
+        assertThat(superseded).isEqualTo(HomeRefreshResult.Superseded)
     }
 
     @Test
     fun radioMapsEveryModeAndDomainFields() = runTest {
         val observed = mutableListOf<NetworkRecommendationMode>()
         val network = FakeNetwork(radio = { mode -> observed += mode; listOf(song("radio", lossless = true)) })
-        val repository = DefaultHomeRepository(network, HomeRecommendationSampler { songs, count -> songs.take(count) })
+        val repository = createHomeRepository(network, HomeRecommendationSampler { songs, count -> songs.take(count) })
 
         RecommendationMode.entries.forEach { repository.loadRadio(it) }
 
@@ -194,9 +211,22 @@ class DefaultHomeRepositoryTest {
     }
 
     @Test
+    fun highQualityAvailabilityDoesNotMapToHighResolution() = runTest {
+        val repository =
+            createHomeRepository(
+                FakeNetwork(daily = { listOf(song("hq", highQuality = true)) }),
+                HomeRecommendationSampler { songs, count -> songs.take(count) },
+            )
+
+        val result = repository.refresh() as HomeRefreshResult.Updated
+
+        assertThat(result.content.dailyRecommendations.single().quality).isEqualTo(AudioQuality.HighQuality)
+    }
+
+    @Test
     fun playbackRepositoryMapsResolvedUnavailableAndNetworkResults() = runTest {
         val network = FakeNetwork(source = { _, _, _ -> NetworkSongSource("https://cdn/song.mp3", 0, "mp3") })
-        val repository = DefaultSongPlaybackRepository(network)
+        val repository = DefaultSongPlaybackRepository(network, riskChallenges)
         val song = domainSong(durationMillis = 123_000)
 
         val resolved = repository.resolveSource(song) as ResolveSongSourceResult.Resolved
@@ -226,10 +256,12 @@ class DefaultHomeRepositoryTest {
             )
         }
         val risk = repository.resolveSource(song) as ResolveSongSourceResult.Failed
-        assertThat(risk.failure).isEqualTo(ContentFailure.RiskVerificationUnavailable)
+        val required = risk.failure as ContentFailure.RiskVerificationRequired
+        assertThat(required.challenge.value).isNotEmpty()
+        assertThat(required.challenge.toString()).doesNotContain("provider-event")
     }
 
-    private fun song(id: String, lossless: Boolean = false) =
+    private fun song(id: String, lossless: Boolean = false, highQuality: Boolean = false) =
         NetworkHomeSong(
             hash = id,
             title = "Title $id",
@@ -241,12 +273,18 @@ class DefaultHomeRepositoryTest {
             highQualityHash = null,
             losslessHash = if (lossless) "sq" else null,
             vip = false,
+            highQualityAvailable = highQuality,
         )
 
     private fun playlist(id: String) = NetworkHomePlaylist(id, "Playlist $id", "https://img/{size}.jpg", 100)
 
     private fun domainSong(durationMillis: Long) =
         OnlineSong("hash", "Title", "Artist", null, "1", "2", durationMillis, AudioQuality.Standard, false)
+
+    private fun createHomeRepository(
+        network: ApiNetworkDataSource,
+        sampler: HomeRecommendationSampler,
+    ) = DefaultHomeRepository(network, sampler, riskChallenges)
 
     private class FakeNetwork(
         var daily: suspend () -> List<NetworkHomeSong> = { emptyList() },
@@ -262,6 +300,9 @@ class DefaultHomeRepositoryTest {
         override suspend fun resolveSongSource(hash: String, albumId: String?, albumAudioId: String?) =
             source(hash, albumId, albumAudioId)
 
+        override suspend fun rankings(): List<NetworkRanking> = error("unused")
+        override suspend fun rankingSongs(rankId: String, page: Int, pageSize: Int): NetworkSongPage = error("unused")
+        override suspend fun playlistSongs(globalCollectionId: String, page: Int, pageSize: Int): NetworkPlaylistPage = error("unused")
         override suspend fun searchSongs(keywords: String, page: Int, pageSize: Int): NetworkSearchPage = error("unused")
         override suspend fun sendMobileCode(mobile: String) = error("unused")
         override suspend fun loginWithMobileCode(mobile: String, code: String, selectedUserId: String?): NetworkMobileCodeLoginResult =

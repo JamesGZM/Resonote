@@ -8,7 +8,7 @@ internal enum class ApiSignatureMode { Android, Web, Register, None }
 internal enum class ApiSessionMode { Full, DeviceOnly, None }
 internal enum class ApiResponseFormat { Json, Bytes }
 internal enum class ApiCleartextPolicy { Deny, LoginMobileCode }
-internal enum class ApiRiskPolicy { HandleAndReplayOnce, Bypass }
+internal enum class ApiRiskPolicy { Detect, Bypass }
 
 internal data class ApiEndpointSpec(
     val id: String,
@@ -23,7 +23,7 @@ internal data class ApiEndpointSpec(
     val includeDefaultParams: Boolean = true,
     val responseFormat: ApiResponseFormat = ApiResponseFormat.Json,
     val cleartextPolicy: ApiCleartextPolicy = ApiCleartextPolicy.Deny,
-    val riskPolicy: ApiRiskPolicy = ApiRiskPolicy.HandleAndReplayOnce,
+    val riskPolicy: ApiRiskPolicy = ApiRiskPolicy.Detect,
 ) {
     override fun toString(): String =
         "ApiEndpointSpec(id=$id, origin=$origin, path=$path, method=$method, " +

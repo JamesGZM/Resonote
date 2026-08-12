@@ -2,6 +2,8 @@
 
 ## 请求管线
 
+标准 HTTP/JSON 业务端点由私有 Retrofit Service 直接返回类型化 `ApiResponse<T>`；方法级策略由 OkHttp application interceptor 读取，依次注入公共参数/Session、对最终 Query 与 Body 字节签名，并将已知 `ssa-code` Header 归一化到 JSON 信封。设备注册在 Retrofit 调用前以 suspend single-flight 完成，不允许 Interceptor 发起嵌套请求。
+
 Android 直连必须复现固定 API 基线的请求上下文：Lite `appid=3116`、`clientver=11440`、秒级 `clienttime`、持久化设备身份，以及按端点选择的签名、请求体和响应解码。默认网关为 `https://gateway.kugou.com`；带 `x-router` 的请求仍以该网关为传输入口。
 
 ## 公共参数与请求头
@@ -31,7 +33,7 @@ Android 直连必须复现固定 API 基线的请求上下文：Lite `appid=3116
 
 ## 会话和设备身份
 
-会话至少包含 `token`、`userid`、`vip_token`、`vip_type`；设备上下文至少包含 `dfid`、GUID、MID、DEV 和平台标识。PC 的 Authorization 拼接只是包装层传输格式，Android 直连不得把它原样发送给上游，而应按端点写入 Query、Body、Header 或 Cookie。敏感值必须持久化加密，日志和 Fixture 一律脱敏。
+会话至少包含 `token`、`userid`、`vip_token`、`vip_type`；设备上下文至少包含 `dfid`、GUID、MID、DEV 和平台标识。设备注册通过可注入 Provider 按 Mobile 合同读取当前 Android 设备的总内存、品牌、Build ID、型号和厂商，缺失时使用固定 fallback，存储字段继续采用 Mobile 的固定兼容值；它优先读取解密后的 `data.dfid`，并与 Mobile 通用 Cookie 合并链一致地接受响应 `Set-Cookie` 中的 `dfid`，两处都缺失时必须报告协议错误，不能带占位值继续业务请求。PC 的 Authorization 拼接只是包装层传输格式，Android 直连不得把它原样发送给上游，而应按端点写入 Query、Body、Header 或 Cookie。敏感值必须持久化加密，日志和 Fixture 一律脱敏。
 
 ## 登录 Origin 与 Lite 条件
 
@@ -44,7 +46,11 @@ Lite 验证码登录固定发送 `t1/t2/dfid/dev/gitversion`，不得发送 Stan
 
 ## 加密与二进制
 
-固定基线出现 AES、RSA 公钥加密、歌单/云盘 AES 封装、KRC 解码、ArrayBuffer 和 PCM/文件二进制。凡目录标记 `arraybuffer`、多阶段请求或动态 URL 的端点，优先使用共享 OkHttp `Call.Factory`，不强行套用普通 Retrofit JSON 接口。
+固定基线出现 AES、RSA 公钥加密、歌单/云盘 AES 封装、KRC 解码、ArrayBuffer 和 PCM/文件二进制。标准 HTTP/JSON 端点使用 Retrofit（动态 URL 可用 `@Url` 表达）；二进制、加密或多阶段特殊协议由内部 `ProtocolTransport` 使用共享 OkHttp `Call.Factory`，不把特殊编排塞入普通 Retrofit 接口或同步 Interceptor。
+
+## 重试边界
+
+签名 API Client 禁用 OkHttp 连接失败自动重放；HTTP 5xx、业务错误和协议错误均不在 Interceptor 中重试。风控验证成功后只能由原发起流程显式创建一次新请求，使时间戳与签名重新生成；写操作没有幂等保证时不得自动重试。取消必须原样传播。
 
 ## 风控 SID/EDT
 
@@ -52,7 +58,7 @@ Lite 验证码登录固定发送 `t1/t2/dfid/dev/gitversion`，不得发送 Stan
 
 ## 错误模型
 
-必须分别保留 HTTP 失败、Provider 业务失败、签名/设备失败、登录过期、风控验证、解密失败、结构不兼容和网络失败。上游常同时使用 HTTP 状态与 Body 内 `status`/`error_code`；静态文档没有证明二者存在统一关系。
+必须分别保留 HTTP 失败、Provider 业务失败、签名/设备失败、登录过期、风控验证、解密失败、结构不兼容和网络失败。上游常同时使用 HTTP 状态与 Body 内 `status`/`error_code`；静态文档没有证明二者存在统一关系。`error_code` 缺失或数值零表示无该错误，任何非空且不等价于数值零的值（包括非数字字符串）都按业务拒绝处理。携带 `ssa-code` 的响应只能有界读取，超限和畸形 Body 均关闭后报告协议错误。
 
 ## 响应兼容策略
 

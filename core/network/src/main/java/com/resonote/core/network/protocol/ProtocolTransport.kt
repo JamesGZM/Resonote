@@ -3,17 +3,16 @@ package com.resonote.core.network.protocol
 import com.resonote.core.network.ApiHttpException
 import com.resonote.core.network.ApiNetworkException
 import com.resonote.core.network.ApiProtocolException
+import com.resonote.core.network.ApiRiskException
 import com.resonote.core.network.retrofit.ApiRawResponse
-import com.resonote.core.network.risk.ApiCallResult
-import com.resonote.core.network.risk.ApiRiskHandling
-import com.resonote.core.network.risk.RiskAwareApiExecutor
+import com.resonote.core.network.risk.ApiRiskChallengeDetector
 import com.resonote.core.network.session.ApiSession
 import com.resonote.core.network.session.ApiSessionManager
+import dagger.Lazy
 import java.io.IOException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.time.Clock
-import dagger.Lazy
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resumeWithException
@@ -30,30 +29,29 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 
 @Singleton
-internal class ApiCallExecutor @Inject constructor(
-    private val callFactory: Call.Factory,
+internal class ProtocolTransport @Inject constructor(
+    private val callFactory: Lazy<Call.Factory>,
     private val json: Json,
     private val clock: Clock,
     private val signer: ApiRequestSigner,
     private val sessionManager: ApiSessionManager,
-    private val riskExecutor: Lazy<RiskAwareApiExecutor>,
+    private val riskDetector: ApiRiskChallengeDetector,
     private val originPolicy: ApiOriginPolicy,
 ) {
     suspend fun <T> execute(factory: ApiExchangeFactory<T>): T {
-        return riskExecutor.get().execute {
-            val session = sessionManager.current()
-            val nowMillis = clock.millis()
-            val exchange = factory(session, nowMillis)
-            val raw = executeRaw(
-                prepare(exchange.spec, session, nowMillis / 1_000),
-                exchange.spec.responseFormat,
-            )
-            ApiCallResult(
-                raw = raw,
-                decode = { exchange.decode(raw) },
-                riskHandling = if (exchange.spec.riskPolicy == ApiRiskPolicy.Bypass) ApiRiskHandling.Bypass else ApiRiskHandling.HandleAndRetryOnce,
-            )
+        val session = sessionManager.current()
+        val nowMillis = clock.millis()
+        val exchange = factory(session, nowMillis)
+        val raw = executeRaw(
+            prepare(exchange.spec, session, nowMillis / 1_000),
+            exchange.spec.responseFormat,
+        )
+        if (exchange.spec.riskPolicy == ApiRiskPolicy.Detect) {
+            riskDetector.detect(raw)?.let { challenge ->
+                throw ApiRiskException(challenge, ApiRiskException.Reason.VerificationUnavailable)
+            }
         }
+        return exchange.decode(raw)
     }
 
     private fun prepare(spec: ApiEndpointSpec, session: ApiSession, clientTime: Long): Request {
@@ -122,7 +120,7 @@ internal class ApiCallExecutor @Inject constructor(
     private suspend fun executeRaw(request: Request, responseFormat: ApiResponseFormat): ApiRawResponse {
         val response =
             try {
-                callFactory.newCall(request).await()
+                callFactory.get().newCall(request).await()
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (timeout: SocketTimeoutException) {

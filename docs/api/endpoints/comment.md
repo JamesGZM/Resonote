@@ -17,7 +17,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/comment_album.js</code> |
 
 ### 上游请求
@@ -50,7 +50,7 @@
 |---|---|
 | DataSource 操作 | <code>commentAlbum</code> |
 | Request DTO | <code>ApiCommentAlbumRequest</code> |
-| Response DTO | <code>NetworkApiCommentAlbumResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiCommentAlbumResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiCommentAlbumResponse |
@@ -68,7 +68,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/comment_count.js</code> |
 
 ### 上游请求
@@ -99,7 +99,7 @@
 |---|---|
 | DataSource 操作 | <code>commentCount</code> |
 | Request DTO | <code>ApiCommentCountRequest</code> |
-| Response DTO | <code>NetworkApiCommentCountResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiCommentCountResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiCommentCountResponse |
@@ -153,7 +153,7 @@
 |---|---|
 | DataSource 操作 | <code>commentFloor</code> |
 | Request DTO | <code>ApiCommentFloorRequest</code> |
-| Response DTO | <code>NetworkApiCommentFloorResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiCommentFloorResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>OkHttp Call.Factory</code> |
 | 协议组件 | <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiCommentFloorResponse |
@@ -171,7 +171,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/comment_music.js</code> |
 
 ### 上游请求
@@ -205,7 +205,7 @@
 |---|---|
 | DataSource 操作 | <code>commentMusic</code> |
 | Request DTO | <code>ApiCommentMusicRequest</code> |
-| Response DTO | <code>NetworkApiCommentMusicResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiCommentMusicResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiCommentMusicResponse |
@@ -223,7 +223,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/comment_music_classify.js</code> |
 
 ### 上游请求
@@ -257,7 +257,7 @@
 |---|---|
 | DataSource 操作 | <code>commentMusicClassify</code> |
 | Request DTO | <code>ApiCommentMusicClassifyRequest</code> |
-| Response DTO | <code>NetworkApiCommentMusicClassifyResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiCommentMusicClassifyResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiCommentMusicClassifyResponse |
@@ -275,7 +275,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/comment_music_hotword.js</code> |
 
 ### 上游请求
@@ -308,7 +308,7 @@
 |---|---|
 | DataSource 操作 | <code>commentMusicHotword</code> |
 | Request DTO | <code>ApiCommentMusicHotwordRequest</code> |
-| Response DTO | <code>NetworkApiCommentMusicHotwordResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiCommentMusicHotwordResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiCommentMusicHotwordResponse |
@@ -326,7 +326,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/comment_playlist.js</code> |
 
 ### 上游请求
@@ -361,7 +361,7 @@
 |---|---|
 | DataSource 操作 | <code>commentPlaylist</code> |
 | Request DTO | <code>ApiCommentPlaylistRequest</code> |
-| Response DTO | <code>NetworkApiCommentPlaylistResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiCommentPlaylistResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiCommentPlaylistResponse |

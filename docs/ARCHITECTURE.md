@@ -26,14 +26,14 @@
 
 | 项目 | 位置 | 用途 |
 |---|---|---|
-| 本地 NIA 根目录 | 从 Resonote 根目录访问 `../nowinandroid` | 快速搜索和对照源码 |
+| 本地 NIA 根目录 | 主 checkout 默认使用 `../nowinandroid`；Git worktree 必须解析实际 NIA checkout | 快速搜索和对照源码 |
 | 固定上游快照 | `android/nowinandroid@7d45eae` | 可复现的模块与依赖证据 |
 | NIA Architecture Learning Journey | [`docs/ArchitectureLearningJourney.md`](https://github.com/android/nowinandroid/blob/7d45eae4f8720a0c77f507712ba2437ff974b6ed/docs/ArchitectureLearningJourney.md) | 分层、UDF、离线优先与同步数据流 |
 | NIA Modularization Learning Journey | [`docs/ModularizationLearningJourney.md`](https://github.com/android/nowinandroid/blob/7d45eae4f8720a0c77f507712ba2437ff974b6ed/docs/ModularizationLearningJourney.md) | 模块类型、依赖规则和 feature `api/impl` 拆分 |
 | Android Architecture Recommendations | [Android Developers](https://developer.android.com/topic/architecture/recommendations) | 官方分层、Repository、Flow 和 UDF 原则 |
 | Offline-first guidance | [Android Developers](https://developer.android.com/topic/architecture/data-layer/offline-first) | 本地事实源与同步策略 |
 
-文中的 NIA 路径均相对于 `../nowinandroid`。永久链接以固定提交为准；`main` 只用于主动升级调研，不能静默改变本基线。
+文中的 NIA 源码路径均相对于实际 NIA checkout。主 checkout 默认可通过 `../nowinandroid` 访问；Git worktree 中该相对路径可能失效，必须显式定位同一个固定提交。永久链接以固定提交为准；`main` 只用于主动升级调研，不能静默改变本基线。
 
 ### 2.2 NIA 完整模块清单
 
@@ -148,11 +148,12 @@ Core 模块可以依赖更底层的 Core 模块，但不得依赖 feature 或 ap
 
 NIA 的功能名属于资讯产品，不复制到 Resonote。Resonote 只采用拆分规则：
 
-- 每个需要被其他功能导航到的 feature 分为 `api` 和 `impl`。
+- 每个需要被其他功能独立导航或调用稳定入口的 feature 才分为 `api` 和 `impl`。
 - `api` 只暴露稳定的 Navigation 3 key、必要参数和跨功能入口，不依赖其他 feature。
 - `impl` 承载 Composable、ViewModel、UI State、内部组件和业务交互；可以依赖其他 feature 的 `api`，不得依赖其 `impl`。
 - 只被一个 feature 使用的类型留在该 feature；确有多个消费者时才提升到合适的 core。
-- “首页 / 发现 / 我的”当前只冻结产品标签。API 评审完成前，不冻结 `home`、`discover`、`library`、`profile` 或 `mine` 等内部模块名。
+- 首页是 Tabs Shell 直接组合的根页面，当前使用单一 `:feature:home`，不建立没有消费者的 `:feature:home:api`。如果未来首页成为可由其他 feature 独立导航的目标，再以真实公共合同拆分。
+- “发现 / 我的”的内部模块仍由各自 API 与 IA 纵向切片确认，不为了与 NIA 目录逐项对齐而预建空模块。
 
 #### 3.3.1 Resonote 页面导航状态
 
@@ -336,8 +337,8 @@ NIA 没有音乐播放实现，以下模块是 Resonote 的扩展架构。Androi
 
 | 旧产品能力 | 参考源码 | Resonote 架构处理 | 主要依赖/边界 | 状态 |
 |---|---|---|---|---|
-| 首页推荐 | `src/views/Home.vue`、`src/components/home/` | `:feature:home:api/impl`；Repository 提供分区内容，歌曲操作通过 playback api | data/domain、model、ui/designsystem、Coil | 产品范围已确认；待 API/页面设计 |
-| 发现、排行榜、新歌、新专辑、推荐歌单 | `src/views/Discover.vue`、`src/components/discover/`、`src/views/Ranking.vue` | `:feature:discover:api/impl`；排行榜先作为 Discover 子目的地，不单独建模块 | data/domain、model、ui、Coil | 产品范围已确认；待 API/页面设计 |
+| 首页推荐 | `src/views/Home.vue`、`src/components/home/` | 单一 `:feature:home`；Repository 提供分区内容，歌曲操作通过 playback api；Tabs Shell 直接组合，不建立空 `api` 模块 | data、model、ui/designsystem、Coil | 页面合同与首批 API/Data 已完成；Compose、导航和播放待实现 |
+| 发现、排行榜、新歌、新专辑、推荐歌单 | `src/views/Discover.vue`、`src/components/discover/`、`src/views/Ranking.vue` | `:feature:discover:api/impl`；排行榜先作为 Discover 子目的地，不单独建模块 | data/domain、model、ui、Coil | 榜单列表/歌曲与公开歌单详情 Data 已实现；其余发现切片和页面设计待完成 |
 | 我的/资料库 | `src/views/Library.vue` | “我的”聚合 profile、account、playlist、cloud、local music 等 feature API，不直接拥有各 Repository 实现 | auth/library/local/cloud repositories、feature api | 产品范围已确认；待 API/页面设计 |
 | 搜索与建议 | `src/views/Search.vue`、`RecommendedSearch.vue`、`components/search/`；Mobile `src/app/search.tsx` | `:feature:search:api/impl`；只从首页进入独立页面；综合/单曲/歌单/专辑/MV/歌手为内部结果类型 | data/domain、model、ui；分页库按 API 决定 | 产品范围与入口已确认；待完整 API |
 | 本地音乐与外部文件 | `src/views/LocalMusic.vue` | `:feature:localmusic:api/impl` + `:core:media:local`；SAF/ContentResolver 只作来源，App 私有副本/索引为事实源；本地音乐复用列表/Queue 合同 | data/database、WorkManager、playback api、ContentResolver、crypto digest | 产品范围、导入、去重、副本与删除语义已确认；待存储 ADR |
@@ -357,6 +358,9 @@ NIA 没有音乐播放实现，以下模块是 Resonote 的扩展架构。Androi
 拆分规则：
 
 - 顶层目的地不等于一个巨型模块。“我的”可以组合 profile、localmusic、settings、cloud 等 feature API，但不得直接拥有它们的 Repository 实现。
+- Feature 的 `api` 模块是跨功能导航/调用合同，不是网络 API 容器。网络接口统一留在 `core:network`，共享领域能力由 `core:data` Repository 暴露；同一接口可被首页和发现等多个页面复用。
+- 首页“排行榜”卡片只发出进入发现榜单的导航意图，不在整页刷新中预取榜单；目标页由发现领域使用 `API-RANKING-003` 加载榜单、使用 `API-RANKING-001` 加载榜单歌曲。
+- 首页“精选歌单”卡片进入发现的推荐歌单分类，复用已实现的 `API-DISCOVER-012`，不继承 PC 固定个人歌单 ID。首页 6 个推荐歌单与发现歌单进入同一歌单详情；详情分页使用 `API-PLAYLIST-007`。
 - 页面只是同一领域的不同筛选或详情时，先保留在同一 feature；只有可被多个来源独立导航、团队并行或依赖明显不同才拆模块。
 - 歌单、专辑和歌手必须有类型安全的独立导航合同与状态，不得在路由 query 中用互斥可空 ID 推断页面类型。来源端已知缺少有效 ID 时不创建导航请求，由 UI 禁用入口并就地说明；无法预判而进入目标页后，页面统一处理缺失、失效、已删除或无法解析的 ID，提供返回，并只对网络失败等可恢复错误提供重试。
 - 歌单写操作必须以服务端返回的所有权/权限为准，不根据入口页面或本地创建记录猜测。批量添加可复用 collection repository；批量移除、编辑资料和删除只能在自建歌单权限明确时暴露。
@@ -534,29 +538,39 @@ Hilt Convention Plugin 统一添加 `implementation(hilt-android)` 和 `ksp(hilt
 ```mermaid
 flowchart LR
     json["Singleton Json"] --> converter["Kotlin Serialization ConverterFactory"]
-    auth["Approved auth interceptor<br/>API pending"] --> client["Singleton OkHttpClient / Call.Factory"]
+    defaults["ApiDefaultsInterceptor<br/>params / session / cookie"] --> client["Singleton OkHttpClient"]
+    signing["ApiSigningInterceptor<br/>final query + body bytes"] --> client
+    riskMetadata["ApiResponseMetadataInterceptor<br/>ssa-code normalization"] --> client
     logging["Debug-only redacted logging"] --> client
-    client --> retrofit["Singleton or lazy Retrofit"]
+    client --> retrofit["Singleton Retrofit<br/>Lazy Call.Factory"]
+    client --> raw["ProtocolTransport<br/>special protocols only"]
     converter --> retrofit
-    baseUrl["Build configuration<br/>not credentials"] --> retrofit
-    retrofit --> api["Retrofit API interface"]
-    api --> source["Remote data source"]
+    origins["ApiEndpointOrigins<br/>not credentials"] --> retrofit
+    retrofit --> api["MusicApi"]
+    api --> source["RealApiNetworkDataSource"]
+    raw --> registration["DeviceRegistrationCoordinator"]
+    raw --> mobileAuth["MobileAuthProtocolClient / Risk gateway"]
+    registration --> source
+    mobileAuth --> source
     source --> repository["Repository in core:data"]
 ```
 
-- 单例 `Json` 同时用于 Retrofit converter 和需要相同协议规则的显式序列化；具体 `ignoreUnknownKeys`、枚举兼容和缺失字段策略在 API 契约阶段冻结。
-- 单例 `OkHttpClient` 或 `Call.Factory` 负责连接池、超时、拦截器和缓存策略；Retrofit 不自行创建第二个 Client。
-- 可沿用 NIA 的 `dagger.Lazy<Call.Factory>`，避免 Hilt 图初始化时在主线程过早创建 OkHttp。
-- Base URL 可来自非敏感构建配置；Token、Cookie、密码和私钥不得写入 `BuildConfig`、Version Catalog、`local.properties` 示例或仓库。
-- Logging Interceptor 只在 debug 构建启用，并对 `Authorization`、`Cookie` 等 Header 脱敏；认证响应和媒体二进制 Body 不记录。Release 不安装日志拦截器。
-- 认证 interceptor、token refresh、certificate pinning、HTTP cache 和业务重试均等待服务端契约；Retrofit/OkHttp 层不得擅自重试非幂等写入。
+- 单例 `Json` 同时用于 Retrofit converter 和特殊协议显式序列化，仅启用 `ignoreUnknownKeys` 以兼容新增字段，不启用宽松 JSON 语法。标准 HTTP/JSON 接口由 Retrofit 直接反序列化为 internal `@Serializable` wire DTO；已知字段的兼容变体必须显式建模，必要字段仍在 Network DataSource 映射边界校验。原始 `JsonObject` 仅用于加密、二进制或确有多形结构的特殊协议。
+- 单例 `OkHttpClient` 负责连接池和 application interceptor，同时作为 Retrofit 的 `Call.Factory` 与 `ProtocolTransport` 的底层传输；不得创建第二套 REST Client。Retrofit 按固定 NIA 基线通过 `dagger.Lazy<Call.Factory>` 延迟取得 Client，避免 Hilt 构图时在主线程提前初始化 OkHttp。签名 API Client 显式禁用 OkHttp 连接失败重放，业务层也不对 5xx 自动重试。
+- 标准业务端点以方法级 `@ApiRequestPolicy` 声明静态签名和 Session 策略；拦截器通过 Retrofit `Invocation` Tag 读取该注解。`ApiDefaultsInterceptor` 只读取已初始化的内存 Session 快照并注入公共参数/Header/Cookie，`ApiSigningInterceptor` 对最终 Query 和 Retrofit 已序列化的 Body 字节签名，不传递可变请求上下文。
+- `ApiResponseMetadataInterceptor` 仅对带上述策略、携带 `ssa-code` 且大小受限的 JSON 响应归一化 `ssaCode` 字段；`error_code=20028` 才由 Network DataSource 映射为类型化 Challenge。普通成功响应携带该 Header 时不得误判失败。
+- 设备注册是有副作用的 suspend single-flight 前置流程，不在 Interceptor 内发起嵌套网络调用；注册 Body 通过可注入 Provider 按 Mobile 合同读取当前 Android 设备的总内存、品牌、Build ID、型号和厂商，缺失时使用固定 fallback，存储字段继续采用 Mobile 的固定兼容值。它优先读取解密 Body 的 `data.dfid`，并按 Mobile 的统一 Cookie 合并语义接受响应 `Set-Cookie` 中的 `dfid`，两者都缺失时失败。特殊协议请求由对应 Coordinator 显式构造。
+- 播放地址只采用服务原生返回的 HTTPS 主/备用 URL；仅有 HTTP 时报告 `InsecureMediaUrl`，其他非空畸形地址报告 `MalformedResponse`，不通过改写 scheme 伪造安全地址，也不向数据层外暴露 cleartext URL。
+- Base URL 来自内部 `ApiEndpointOrigins`；Token、Cookie、密码和私钥不得写入 `BuildConfig`、Version Catalog、`local.properties` 示例或仓库。
+- `RedactedNetworkLoggingInterceptor` 在 Debug 输出 method、host、path、状态与耗时，不记录 Query、Header 或 Body；Release 构建中立即旁路，不产生网络日志。
+- Token refresh、certificate pinning 和 HTTP cache 尚未批准；Retrofit/OkHttp 层不得擅自重试 HTTP 失败、业务失败或非幂等写入。风控验证需要用户交互，完成后由发起该操作的上层流程显式创建一次新请求，不由 Interceptor、`Authenticator` 或 Network DataSource 自动重放。
 - 网络异常在 remote data source/data 层转换为项目错误语义；HTTP/IO/serialization 类型不直接进入 ViewModel。
 
 #### 6.4.4 网络测试合同
 
 - 使用 MockWebServer 验证 URL、method、query/body、Header、converter、成功响应与 HTTP 错误，不请求真实服务。
 - 分别覆盖 malformed JSON、未知字段、空 Body、超时、断网、取消和服务器错误。
-- 验证 Release 图不包含 Logging Interceptor，敏感 Header 在 debug 日志中已脱敏。
+- 验证 Release 构建中的 Logging Interceptor 立即旁路且不输出日志；Debug 日志只包含 method、host、path、状态与耗时，不包含 Query、Header 或 Body。
 - Repository 测试使用 fake remote/local data source；只在 network 模块测试 Retrofit/OkHttp 细节。
 
 ### 6.5 NIA 固定快照的版本证据
@@ -774,9 +788,9 @@ dependencies {
 }
 ```
 
-Resonote 已批准 OkHttp3 + Retrofit2，不同时引入第二套 Client 栈；如果某种动态协议无法由 Retrofit 清晰表达，先用注入的 OkHttp `Call.Factory` 写小型 data source。
+Resonote 已批准 OkHttp3 + Retrofit2，不同时引入第二套 Client 栈。标准 HTTP/JSON 端点由内部 Retrofit API 声明，公共参数、Session、Cookie 与签名由应用级 OkHttp Interceptor 注入；`Call.Factory` 仅作为共享 Client 的底层传输抽象，由小型 `ProtocolTransport` 服务设备注册、加密登录、风控验证等二进制、加密或多阶段特殊协议，不作为普通业务 API 的描述层。
 
-风控是跨 Endpoint 的协议能力。`core:network` 负责识别 Challenge、串行调用抽象的 Verifier，并在验证成功后重新签名、最多重试一次；验证码 UI 由应用层实现，风控接口本身必须旁路该协调器以避免递归。
+风控是跨 Endpoint 的协议能力。`core:network` 负责从类型化 `ApiResponse<T>` 识别内部 Challenge，并提供查询验证方式与提交证明的协议操作；`core:data` 将 Challenge 保存在进程内 Registry，只向上暴露不透明 `RiskChallengeHandle` 与 `RiskVerificationRepository`。验证码 UI、验证流程和验证成功后的单次显式重试由发起操作的 Feature/ViewModel 或用例持有。风控接口本身必须旁路 Challenge 检测以避免递归，网络层不得等待 UI 或自动重放原请求。
 
 #### 6.7.2 Feature 依赖矩阵
 

@@ -17,7 +17,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/favorite_count.js</code> |
 
 ### 上游请求
@@ -44,7 +44,7 @@
 |---|---|
 | DataSource 操作 | <code>favoriteCount</code> |
 | Request DTO | <code>ApiFavoriteCountRequest</code> |
-| Response DTO | <code>NetworkApiFavoriteCountResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiFavoriteCountResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiFavoriteCountResponse |

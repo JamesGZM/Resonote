@@ -17,7 +17,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/youth_channel_all.js</code> |
 
 ### 上游请求
@@ -46,7 +46,7 @@
 |---|---|
 | DataSource 操作 | <code>youthChannelAll</code> |
 | Request DTO | <code>ApiYouthChannelAllRequest</code> |
-| Response DTO | <code>NetworkApiYouthChannelAllResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiYouthChannelAllResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiYouthChannelAllResponse |
@@ -64,7 +64,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/youth_channel_amway.js</code> |
 
 ### 上游请求
@@ -91,7 +91,7 @@
 |---|---|
 | DataSource 操作 | <code>youthChannelAmway</code> |
 | Request DTO | <code>ApiYouthChannelAmwayRequest</code> |
-| Response DTO | <code>NetworkApiYouthChannelAmwayResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiYouthChannelAmwayResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiYouthChannelAmwayResponse |
@@ -109,7 +109,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/youth_channel_detail.js</code> |
 
 ### 上游请求
@@ -137,7 +137,7 @@
 |---|---|
 | DataSource 操作 | <code>youthChannelDetail</code> |
 | Request DTO | <code>ApiYouthChannelDetailRequest</code> |
-| Response DTO | <code>NetworkApiYouthChannelDetailResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiYouthChannelDetailResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiYouthChannelDetailResponse |
@@ -155,7 +155,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/youth_channel_similar.js</code> |
 
 ### 上游请求
@@ -186,7 +186,7 @@
 |---|---|
 | DataSource 操作 | <code>youthChannelSimilar</code> |
 | Request DTO | <code>ApiYouthChannelSimilarRequest</code> |
-| Response DTO | <code>NetworkApiYouthChannelSimilarResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiYouthChannelSimilarResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiYouthChannelSimilarResponse |
@@ -204,7 +204,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/youth_channel_song.js</code> |
 
 ### 上游请求
@@ -234,7 +234,7 @@
 |---|---|
 | DataSource 操作 | <code>youthChannelSong</code> |
 | Request DTO | <code>ApiYouthChannelSongRequest</code> |
-| Response DTO | <code>NetworkApiYouthChannelSongResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiYouthChannelSongResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiYouthChannelSongResponse |
@@ -252,7 +252,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/youth_channel_song_detail.js</code> |
 
 ### 上游请求
@@ -280,7 +280,7 @@
 |---|---|
 | DataSource 操作 | <code>youthChannelSongDetail</code> |
 | Request DTO | <code>ApiYouthChannelSongDetailRequest</code> |
-| Response DTO | <code>NetworkApiYouthChannelSongDetailResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiYouthChannelSongDetailResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiYouthChannelSongDetailResponse |
@@ -298,7 +298,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/youth_channel_sub.js</code> |
 
 ### 上游请求
@@ -327,7 +327,7 @@
 |---|---|
 | DataSource 操作 | <code>youthChannelSub</code> |
 | Request DTO | <code>ApiYouthChannelSubRequest</code> |
-| Response DTO | <code>NetworkApiYouthChannelSubResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiYouthChannelSubResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>OkHttp Call.Factory</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiYouthChannelSubResponse |
@@ -345,7 +345,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/youth_day_vip.js</code> |
 
 ### 上游请求
@@ -378,7 +378,7 @@
 |---|---|
 | DataSource 操作 | <code>youthDayVip</code> |
 | Request DTO | <code>ApiYouthDayVipRequest</code> |
-| Response DTO | <code>NetworkApiYouthDayVipResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiYouthDayVipResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiYouthDayVipResponse |
@@ -396,7 +396,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/youth_day_vip_upgrade.js</code> |
 
 ### 上游请求
@@ -428,7 +428,7 @@
 |---|---|
 | DataSource 操作 | <code>youthDayVipUpgrade</code> |
 | Request DTO | <code>ApiYouthDayVipUpgradeRequest</code> |
-| Response DTO | <code>NetworkApiYouthDayVipUpgradeResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiYouthDayVipUpgradeResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiYouthDayVipUpgradeResponse |
@@ -446,7 +446,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/youth_dynamic.js</code> |
 
 ### 上游请求
@@ -472,7 +472,7 @@
 |---|---|
 | DataSource 操作 | <code>youthDynamic</code> |
 | Request DTO | <code>ApiYouthDynamicRequest</code> |
-| Response DTO | <code>NetworkApiYouthDynamicResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiYouthDynamicResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiYouthDynamicResponse |
@@ -490,7 +490,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/youth_dynamic_recent.js</code> |
 
 ### 上游请求
@@ -516,7 +516,7 @@
 |---|---|
 | DataSource 操作 | <code>youthDynamicRecent</code> |
 | Request DTO | <code>ApiYouthDynamicRecentRequest</code> |
-| Response DTO | <code>NetworkApiYouthDynamicRecentResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiYouthDynamicRecentResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiYouthDynamicRecentResponse |
@@ -534,7 +534,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/youth_listen_song.js</code> |
 
 ### 上游请求
@@ -564,7 +564,7 @@
 |---|---|
 | DataSource 操作 | <code>youthListenSong</code> |
 | Request DTO | <code>ApiYouthListenSongRequest</code> |
-| Response DTO | <code>NetworkApiYouthListenSongResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiYouthListenSongResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiYouthListenSongResponse |
@@ -582,7 +582,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/youth_month_vip_record.js</code> |
 
 ### 上游请求
@@ -609,7 +609,7 @@
 |---|---|
 | DataSource 操作 | <code>youthMonthVipRecord</code> |
 | Request DTO | <code>ApiYouthMonthVipRecordRequest</code> |
-| Response DTO | <code>NetworkApiYouthMonthVipRecordResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiYouthMonthVipRecordResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiYouthMonthVipRecordResponse |
@@ -627,7 +627,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/youth_union_vip.js</code> |
 
 ### 上游请求
@@ -656,7 +656,7 @@
 |---|---|
 | DataSource 操作 | <code>youthUnionVip</code> |
 | Request DTO | <code>ApiYouthUnionVipRequest</code> |
-| Response DTO | <code>NetworkApiYouthUnionVipResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiYouthUnionVipResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiYouthUnionVipResponse |
@@ -674,7 +674,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/youth_user_song.js</code> |
 
 ### 上游请求
@@ -706,7 +706,7 @@
 |---|---|
 | DataSource 操作 | <code>youthUserSong</code> |
 | Request DTO | <code>ApiYouthUserSongRequest</code> |
-| Response DTO | <code>NetworkApiYouthUserSongResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiYouthUserSongResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiYouthUserSongResponse |
@@ -724,7 +724,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/youth_vip.js</code> |
 
 ### 上游请求
@@ -758,7 +758,7 @@
 |---|---|
 | DataSource 操作 | <code>youthVip</code> |
 | Request DTO | <code>ApiYouthVipRequest</code> |
-| Response DTO | <code>NetworkApiYouthVipResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiYouthVipResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiYouthVipResponse |

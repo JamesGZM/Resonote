@@ -17,7 +17,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | <code>SOURCE_CONFIRMED</code> |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/user_cloud.js</code> |
 
 ### 上游请求
@@ -62,7 +62,7 @@
 |---|---|
 | DataSource 操作 | <code>userCloud</code> |
 | Request DTO | <code>ApiUserCloudRequest</code> |
-| Response DTO | <code>NetworkApiUserCloudResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiUserCloudResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>OkHttp Call.Factory</code> |
 | 协议组件 | <code>ApiSession</code>, <code>ApiDeviceIdentity</code>, <code>ApiResponseDecoder</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiUserCloudResponse |
@@ -80,7 +80,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | <code>SOURCE_CONFIRMED</code> |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once + native-partial</code> |
+| 风控 | <code>surface-challenge + native-partial</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/user_cloud_upload.js</code> |
 
 ### 上游请求
@@ -132,7 +132,7 @@
 |---|---|
 | DataSource 操作 | <code>userCloudUpload</code> |
 | Request DTO | <code>ApiUserCloudUploadRequest</code> |
-| Response DTO | <code>NetworkApiUserCloudUploadResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiUserCloudUploadResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>OkHttp Call.Factory</code> |
 | 协议组件 | <code>ApiSession</code>, <code>ApiDeviceIdentity</code>, <code>ApiResponseDecoder</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiUserCloudUploadResponse |
@@ -150,7 +150,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/user_cloud_url.js</code> |
 
 ### 上游请求
@@ -195,7 +195,7 @@
 |---|---|
 | DataSource 操作 | <code>userCloudUrl</code> |
 | Request DTO | <code>ApiUserCloudUrlRequest</code> |
-| Response DTO | <code>NetworkApiUserCloudUrlResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiUserCloudUrlResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiUserCloudUrlResponse |

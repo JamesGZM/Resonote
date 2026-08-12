@@ -19,17 +19,3 @@ sealed interface ApiRiskMethod {
 
     data class Unsupported(val type: Int) : ApiRiskMethod
 }
-
-fun interface ApiRiskVerifier {
-    suspend fun verify(challenge: ApiRiskChallenge): ApiRiskVerificationResult
-}
-
-sealed interface ApiRiskVerificationResult {
-    data object Verified : ApiRiskVerificationResult
-
-    data object Cancelled : ApiRiskVerificationResult
-
-    data object Unavailable : ApiRiskVerificationResult
-
-    data class Failed(val reason: String? = null) : ApiRiskVerificationResult
-}

@@ -12,10 +12,21 @@ const MOBILE_API_COMMIT = '283f1e97';
 const TOP_CARD_PC_COMMIT = 'a86cfefb';
 const DOC_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const WORKSPACE_ROOT = resolve(DOC_ROOT, '../..');
-const MOEKOE_ROOT = resolve(process.env.MOEKOE_ROOT || join(WORKSPACE_ROOT, '..', 'MoeKoeMusic'));
+const MAIN_CHECKOUT_ROOT = dirname(execFileSync(
+  'git',
+  ['-C', WORKSPACE_ROOT, 'rev-parse', '--path-format=absolute', '--git-common-dir'],
+  { encoding: 'utf8' },
+).trim());
+const REFERENCE_ROOT = dirname(MAIN_CHECKOUT_ROOT);
+const MOEKOE_ROOT = resolve(process.env.MOEKOE_ROOT || join(REFERENCE_ROOT, 'MoeKoeMusic'));
 const API_ROOT = join(MOEKOE_ROOT, 'api');
-const MOBILE_ROOT = resolve(process.env.MOEKOE_MOBILE_ROOT || join(WORKSPACE_ROOT, '..', 'MoeKoeMusic-Mobile'));
+const MOBILE_ROOT = resolve(process.env.MOEKOE_MOBILE_ROOT || join(REFERENCE_ROOT, 'MoeKoeMusic-Mobile'));
 const ALLOWED_EVIDENCE = new Set(['SOURCE_CONFIRMED', 'CONSUMER_CONFIRMED', 'REFERENCE_CONFIRMED', 'DECLARED', 'FIXTURE_CONFIRMED', 'INFERRED', 'UNKNOWN']);
+const ANDROID_RETROFIT_ENDPOINTS = new Set([
+  'API-DISCOVER-003', 'API-DISCOVER-009', 'API-DISCOVER-012', 'API-DISCOVER-013',
+  'API-SONG-011', 'API-RANKING-003', 'API-RANKING-001', 'API-PLAYLIST-007',
+  'API-SEARCH-001',
+]);
 
 function git(repo, args) {
   return execFileSync('git', ['-C', repo, ...args], { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 });
@@ -145,9 +156,34 @@ function main() {
     `MoeKoeMusic-Mobile/api@${MOBILE_API_COMMIT}`,
     `MoeKoeMusic@${TOP_CARD_PC_COMMIT}`,
   ]) if (!readme.includes(evidence)) fail(`首页固定证据记录不正确：${evidence}`);
-  for (const endpointId of ['API-DISCOVER-003', 'API-DISCOVER-009', 'API-DISCOVER-012', 'API-DISCOVER-013', 'API-SONG-011']) {
+  for (const endpointId of [
+    'API-DISCOVER-003', 'API-DISCOVER-009', 'API-DISCOVER-012', 'API-DISCOVER-013',
+    'API-SONG-011', 'API-RANKING-003', 'API-RANKING-001', 'API-PLAYLIST-007',
+  ]) {
     const section = requiredSection(catalog, `  - id: "${endpointId}"`, '\n  - id:', `catalog ${endpointId}`);
-    if (!section.includes('android_evidence:')) fail(`${endpointId} 缺少 Android 首页迁移证据`);
+    if (!/^    android_evidence:\n(?:      - "[^"]+"\n)+/m.test(section)) {
+      fail(`${endpointId} 缺少 Android 首页迁移证据数组`);
+    }
+  }
+  for (const endpointId of ids) {
+    const section = requiredSection(catalog, `  - id: "${endpointId}"`, '\n  - id:', `catalog ${endpointId}`);
+    const topLevelKeys = [...section.matchAll(/^    ([a-z][a-z_]*):/gm)].map((match) => match[1]);
+    if (new Set(topLevelKeys).size !== topLevelKeys.length) fail(`${endpointId} 存在重复的顶层 YAML 键`);
+  }
+  for (const endpointId of ANDROID_RETROFIT_ENDPOINTS) {
+    const anchor = endpointId.toLowerCase();
+    const endpointDoc = markdownFiles(join(DOC_ROOT, 'endpoints')).find((path) =>
+      readFileSync(path, 'utf8').includes(`<a id="${anchor}"></a>`),
+    );
+    if (!endpointDoc) fail(`${endpointId} 缺少 Endpoint 文档`);
+    const content = readFileSync(endpointDoc, 'utf8');
+    const section = requiredSection(content, `<a id="${anchor}"></a>`, '\n<a id="', endpointId);
+    if (!section.includes('| 传输实现 | <code>Retrofit</code> |')) {
+      fail(`${endpointId} 的 Android 传输实现未标记为 Retrofit`);
+    }
+    if (!section.includes('类型化 wire DTO 直接承接 Retrofit 响应')) {
+      fail(`${endpointId} 的 Android DTO 映射未标记为类型化 Retrofit 响应`);
+    }
   }
   const fixtureDir = join(DOC_ROOT, 'fixtures');
   const fixtureFiles = readdirSync(fixtureDir).filter((name) => name.endsWith('.json'));

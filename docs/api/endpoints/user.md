@@ -17,7 +17,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/lastest_songs_listen.js</code> |
 
 ### 上游请求
@@ -49,7 +49,7 @@
 |---|---|
 | DataSource 操作 | <code>lastestSongsListen</code> |
 | Request DTO | <code>ApiLastestSongsListenRequest</code> |
-| Response DTO | <code>NetworkApiLastestSongsListenResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiLastestSongsListenResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiLastestSongsListenResponse |
@@ -67,7 +67,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/playhistory_upload.js</code> |
 
 ### 上游请求
@@ -101,7 +101,7 @@
 |---|---|
 | DataSource 操作 | <code>playhistoryUpload</code> |
 | Request DTO | <code>ApiPlayhistoryUploadRequest</code> |
-| Response DTO | <code>NetworkApiPlayhistoryUploadResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiPlayhistoryUploadResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiPlayhistoryUploadResponse |
@@ -119,7 +119,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | <code>SOURCE_CONFIRMED</code> |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/user_detail.js</code> |
 
 ### 上游请求
@@ -157,7 +157,7 @@
 |---|---|
 | DataSource 操作 | <code>userDetail</code> |
 | Request DTO | <code>ApiUserDetailRequest</code> |
-| Response DTO | <code>NetworkApiUserDetailResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiUserDetailResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code>, <code>ApiResponseDecoder</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiUserDetailResponse |
@@ -175,7 +175,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | <code>SOURCE_CONFIRMED</code> |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/user_follow.js</code> |
 
 ### 上游请求
@@ -217,7 +217,7 @@
 |---|---|
 | DataSource 操作 | <code>userFollow</code> |
 | Request DTO | <code>ApiUserFollowRequest</code> |
-| Response DTO | <code>NetworkApiUserFollowResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiUserFollowResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code>, <code>ApiResponseDecoder</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiUserFollowResponse |
@@ -235,7 +235,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/user_follow_message.js</code> |
 
 ### 上游请求
@@ -266,7 +266,7 @@
 |---|---|
 | DataSource 操作 | <code>userFollowMessage</code> |
 | Request DTO | <code>ApiUserFollowMessageRequest</code> |
-| Response DTO | <code>NetworkApiUserFollowMessageResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiUserFollowMessageResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiUserFollowMessageResponse |
@@ -284,7 +284,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/user_history.js</code> |
 
 ### 上游请求
@@ -315,7 +315,7 @@
 |---|---|
 | DataSource 操作 | <code>userHistory</code> |
 | Request DTO | <code>ApiUserHistoryRequest</code> |
-| Response DTO | <code>NetworkApiUserHistoryResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiUserHistoryResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiUserHistoryResponse |
@@ -333,7 +333,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | <code>SOURCE_CONFIRMED</code> |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/user_listen.js</code> |
 
 ### 上游请求
@@ -373,7 +373,7 @@
 |---|---|
 | DataSource 操作 | <code>userListen</code> |
 | Request DTO | <code>ApiUserListenRequest</code> |
-| Response DTO | <code>NetworkApiUserListenResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiUserListenResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code>, <code>ApiResponseDecoder</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiUserListenResponse |
@@ -391,7 +391,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/user_playlist.js</code> |
 
 ### 上游请求
@@ -430,7 +430,7 @@
 |---|---|
 | DataSource 操作 | <code>userPlaylist</code> |
 | Request DTO | <code>ApiUserPlaylistRequest</code> |
-| Response DTO | <code>NetworkApiUserPlaylistResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiUserPlaylistResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiUserPlaylistResponse |
@@ -448,7 +448,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/user_purchased_albums.js</code> |
 
 ### 上游请求
@@ -478,7 +478,7 @@
 |---|---|
 | DataSource 操作 | <code>userPurchasedAlbums</code> |
 | Request DTO | <code>ApiUserPurchasedAlbumsRequest</code> |
-| Response DTO | <code>NetworkApiUserPurchasedAlbumsResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiUserPurchasedAlbumsResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiUserPurchasedAlbumsResponse |
@@ -496,7 +496,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/user_purchased_songs.js</code> |
 
 ### 上游请求
@@ -528,7 +528,7 @@
 |---|---|
 | DataSource 操作 | <code>userPurchasedSongs</code> |
 | Request DTO | <code>ApiUserPurchasedSongsRequest</code> |
-| Response DTO | <code>NetworkApiUserPurchasedSongsResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiUserPurchasedSongsResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiUserPurchasedSongsResponse |
@@ -546,7 +546,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | <code>SOURCE_CONFIRMED</code> |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/user_video_collect.js</code> |
 
 ### 上游请求
@@ -577,7 +577,7 @@
 |---|---|
 | DataSource 操作 | <code>userVideoCollect</code> |
 | Request DTO | <code>ApiUserVideoCollectRequest</code> |
-| Response DTO | <code>NetworkApiUserVideoCollectResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiUserVideoCollectResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code>, <code>ApiResponseDecoder</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiUserVideoCollectResponse |
@@ -595,7 +595,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | <code>SOURCE_CONFIRMED</code> |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/user_video_love.js</code> |
 
 ### 上游请求
@@ -627,7 +627,7 @@
 |---|---|
 | DataSource 操作 | <code>userVideoLove</code> |
 | Request DTO | <code>ApiUserVideoLoveRequest</code> |
-| Response DTO | <code>NetworkApiUserVideoLoveResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiUserVideoLoveResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code>, <code>ApiResponseDecoder</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiUserVideoLoveResponse |
@@ -645,7 +645,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/user_vip_detail.js</code> |
 
 ### 上游请求
@@ -677,7 +677,7 @@
 |---|---|
 | DataSource 操作 | <code>userVipDetail</code> |
 | Request DTO | <code>ApiUserVipDetailRequest</code> |
-| Response DTO | <code>NetworkApiUserVipDetailResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiUserVipDetailResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiUserVipDetailResponse |

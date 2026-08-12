@@ -17,7 +17,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/captcha_sent.js</code> |
 
 ### 上游请求
@@ -53,7 +53,7 @@
 |---|---|
 | DataSource 操作 | <code>captchaSent</code> |
 | Request DTO | <code>ApiCaptchaSentRequest</code> |
-| Response DTO | <code>NetworkApiCaptchaSentResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiCaptchaSentResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code>, <code>ApiDeviceIdentity</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiCaptchaSentResponse |
@@ -110,7 +110,7 @@
 |---|---|
 | DataSource 操作 | <code>getVerifyInfo</code> |
 | Request DTO | <code>ApiGetVerifyInfoRequest</code> |
-| Response DTO | <code>NetworkApiGetVerifyInfoResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiGetVerifyInfoResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiGetVerifyInfoResponse |
@@ -128,7 +128,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | <code>SOURCE_CONFIRMED</code> |
 | Cookie 回写 | <code>SOURCE_CONFIRMED</code> |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/login.js</code> |
 
 ### 上游请求
@@ -176,7 +176,7 @@
 |---|---|
 | DataSource 操作 | <code>login</code> |
 | Request DTO | <code>ApiLoginRequest</code> |
-| Response DTO | <code>NetworkApiLoginResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiLoginResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code>, <code>ApiResponseDecoder</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiLoginResponse |
@@ -194,7 +194,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | <code>SOURCE_CONFIRMED</code> |
 | Cookie 回写 | <code>SOURCE_CONFIRMED</code> |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/login_cellphone.js</code> |
 
 ### 上游请求
@@ -251,7 +251,7 @@
 |---|---|
 | DataSource 操作 | <code>loginCellphone</code> |
 | Request DTO | <code>ApiLoginCellphoneRequest</code> |
-| Response DTO | <code>NetworkApiLoginCellphoneResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiLoginCellphoneResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code>, <code>ApiDeviceIdentity</code>, <code>ApiResponseDecoder</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiLoginCellphoneResponse |
@@ -269,7 +269,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | <code>SOURCE_CONFIRMED</code> |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/login_device.js</code> |
 
 ### 上游请求
@@ -301,7 +301,7 @@
 |---|---|
 | DataSource 操作 | <code>loginDevice</code> |
 | Request DTO | <code>ApiLoginDeviceRequest</code> |
-| Response DTO | <code>NetworkApiLoginDeviceResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiLoginDeviceResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code>, <code>ApiResponseDecoder</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiLoginDeviceResponse |
@@ -319,7 +319,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | <code>SOURCE_CONFIRMED</code> |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/login_device_kick.js</code> |
 
 ### 上游请求
@@ -361,7 +361,7 @@
 |---|---|
 | DataSource 操作 | <code>loginDeviceKick</code> |
 | Request DTO | <code>ApiLoginDeviceKickRequest</code> |
-| Response DTO | <code>NetworkApiLoginDeviceKickResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiLoginDeviceKickResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code>, <code>ApiDeviceIdentity</code>, <code>ApiResponseDecoder</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiLoginDeviceKickResponse |
@@ -379,7 +379,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | <code>SOURCE_CONFIRMED</code> |
 | Cookie 回写 | <code>SOURCE_CONFIRMED</code> |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/login_openplat.js</code> |
 
 ### 上游请求
@@ -427,7 +427,7 @@
 |---|---|
 | DataSource 操作 | <code>loginOpenplat</code> |
 | Request DTO | <code>ApiLoginOpenplatRequest</code> |
-| Response DTO | <code>NetworkApiLoginOpenplatResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiLoginOpenplatResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code>, <code>ApiResponseDecoder</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiLoginOpenplatResponse |
@@ -445,7 +445,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | <code>SOURCE_CONFIRMED</code> |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/login_qr_check.js</code> |
 
 ### 上游请求
@@ -484,7 +484,7 @@
 |---|---|
 | DataSource 操作 | <code>loginQrCheck</code> |
 | Request DTO | <code>ApiLoginQrCheckRequest</code> |
-| Response DTO | <code>NetworkApiLoginQrCheckResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiLoginQrCheckResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiLoginQrCheckResponse |
@@ -535,7 +535,7 @@
 |---|---|
 | DataSource 操作 | <code>loginQrCreate</code> |
 | Request DTO | <code>ApiLoginQrCreateRequest</code> |
-| Response DTO | <code>NetworkApiLoginQrCreateResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiLoginQrCreateResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>OkHttp Call.Factory</code> |
 | 协议组件 | <code>none</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiLoginQrCreateResponse |
@@ -553,7 +553,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/login_qr_key.js</code> |
 
 ### 上游请求
@@ -588,7 +588,7 @@
 |---|---|
 | DataSource 操作 | <code>loginQrKey</code> |
 | Request DTO | <code>ApiLoginQrKeyRequest</code> |
-| Response DTO | <code>NetworkApiLoginQrKeyResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiLoginQrKeyResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiLoginQrKeyResponse |
@@ -606,7 +606,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | <code>SOURCE_CONFIRMED</code> |
 | Cookie 回写 | <code>SOURCE_CONFIRMED</code> |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/login_token.js</code> |
 
 ### 上游请求
@@ -653,7 +653,7 @@
 |---|---|
 | DataSource 操作 | <code>loginToken</code> |
 | Request DTO | <code>ApiLoginTokenRequest</code> |
-| Response DTO | <code>NetworkApiLoginTokenResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiLoginTokenResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code>, <code>ApiDeviceIdentity</code>, <code>ApiResponseDecoder</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiLoginTokenResponse |
@@ -698,7 +698,7 @@
 |---|---|
 | DataSource 操作 | <code>loginWxCheck</code> |
 | Request DTO | <code>ApiLoginWxCheckRequest</code> |
-| Response DTO | <code>NetworkApiLoginWxCheckResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiLoginWxCheckResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>OkHttp Call.Factory</code> |
 | 协议组件 | <code>ApiResponseDecoder</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiLoginWxCheckResponse |
@@ -742,7 +742,7 @@
 |---|---|
 | DataSource 操作 | <code>loginWxCreate</code> |
 | Request DTO | <code>ApiLoginWxCreateRequest</code> |
-| Response DTO | <code>NetworkApiLoginWxCreateResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiLoginWxCreateResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>OkHttp Call.Factory</code> |
 | 协议组件 | <code>ApiSession</code>, <code>ApiResponseDecoder</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiLoginWxCreateResponse |
@@ -789,7 +789,7 @@
 |---|---|
 | DataSource 操作 | <code>sidedt</code> |
 | Request DTO | <code>ApiSidedtRequest</code> |
-| Response DTO | <code>NetworkApiSidedtResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiSidedtResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>OkHttp Call.Factory</code> |
 | 协议组件 | <code>ApiSession</code>, <code>ApiDeviceIdentity</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiSidedtResponse |
@@ -843,7 +843,7 @@
 |---|---|
 | DataSource 操作 | <code>verifyUserInfo</code> |
 | Request DTO | <code>ApiVerifyUserInfoRequest</code> |
-| Response DTO | <code>NetworkApiVerifyUserInfoResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiVerifyUserInfoResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code>, <code>ApiResponseDecoder</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiVerifyUserInfoResponse |

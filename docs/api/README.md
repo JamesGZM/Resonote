@@ -72,4 +72,4 @@ node docs/api/tools/generate-docs.mjs
 node docs/api/tools/validate-docs.mjs
 ```
 
-工具只读取固定 Git 对象；如 MoeKoeMusic 不在默认相邻目录，可通过 `MOEKOE_ROOT` 指向仓库。生成器会替换本目录中的领域文档、Schema 和 Fixture 索引。
+工具只读取固定 Git 对象；默认通过 Git common directory 定位主 checkout 的相邻参考仓库，因此普通 checkout 与 worktree 使用同一规则。如参考仓库不在该位置，可通过 `MOEKOE_ROOT` 和 `MOEKOE_MOBILE_ROOT` 分别覆盖 PC 与 Mobile checkout。生成器会替换本目录中的领域文档、Schema 和 Fixture 索引。

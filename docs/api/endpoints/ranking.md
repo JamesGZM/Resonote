@@ -17,8 +17,13 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/rank_audio.js</code> |
+
+### Android 首页迁移证据
+
+- <code>MoeKoeMusic-Mobile/api@283f1e97:module/rank_audio.js</code>
+- <code>MoeKoeMusic-Mobile@ab71195d4cf3297332490fd37704d1ae8973d4c5:src/features/home/load-home-data.ts</code>
 
 ### 上游请求
 
@@ -58,7 +63,7 @@
 |---|---|
 | DataSource 操作 | <code>rankAudio</code> |
 | Request DTO | <code>ApiRankAudioRequest</code> |
-| Response DTO | <code>NetworkApiRankAudioResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiRankAudioResponse</code>；名称为静态候选，现行实现由 internal <code>@Serializable</code> 类型化 wire DTO 直接承接 Retrofit 响应 |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiRankAudioResponse |
@@ -76,7 +81,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/rank_info.js</code> |
 
 ### 上游请求
@@ -106,7 +111,7 @@
 |---|---|
 | DataSource 操作 | <code>rankInfo</code> |
 | Request DTO | <code>ApiRankInfoRequest</code> |
-| Response DTO | <code>NetworkApiRankInfoResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiRankInfoResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiRankInfoResponse |
@@ -124,8 +129,13 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/rank_list.js</code> |
+
+### Android 首页迁移证据
+
+- <code>MoeKoeMusic-Mobile/api@283f1e97:module/rank_list.js</code>
+- <code>MoeKoeMusic-Mobile@ab71195d4cf3297332490fd37704d1ae8973d4c5:src/features/home/load-home-data.ts</code>
 
 ### 上游请求
 
@@ -158,7 +168,7 @@
 |---|---|
 | DataSource 操作 | <code>rankList</code> |
 | Request DTO | <code>ApiRankListRequest</code> |
-| Response DTO | <code>NetworkApiRankListResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiRankListResponse</code>；名称为静态候选，现行实现由 internal <code>@Serializable</code> 类型化 wire DTO 直接承接 Retrofit 响应 |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiRankListResponse |
@@ -176,7 +186,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/rank_top.js</code> |
 
 ### 上游请求
@@ -202,7 +212,7 @@
 |---|---|
 | DataSource 操作 | <code>rankTop</code> |
 | Request DTO | <code>ApiRankTopRequest</code> |
-| Response DTO | <code>NetworkApiRankTopResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiRankTopResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiRankTopResponse |
@@ -220,7 +230,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/rank_vol.js</code> |
 
 ### 上游请求
@@ -251,7 +261,7 @@
 |---|---|
 | DataSource 操作 | <code>rankVol</code> |
 | Request DTO | <code>ApiRankVolRequest</code> |
-| Response DTO | <code>NetworkApiRankVolResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiRankVolResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiRankVolResponse |

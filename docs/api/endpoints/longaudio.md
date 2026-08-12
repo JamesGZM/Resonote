@@ -17,7 +17,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/longaudio_album_audios.js</code> |
 
 ### 上游请求
@@ -50,7 +50,7 @@
 |---|---|
 | DataSource 操作 | <code>longaudioAlbumAudios</code> |
 | Request DTO | <code>ApiLongaudioAlbumAudiosRequest</code> |
-| Response DTO | <code>NetworkApiLongaudioAlbumAudiosResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiLongaudioAlbumAudiosResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiLongaudioAlbumAudiosResponse |
@@ -68,7 +68,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/longaudio_album_detail.js</code> |
 
 ### 上游请求
@@ -99,7 +99,7 @@
 |---|---|
 | DataSource 操作 | <code>longaudioAlbumDetail</code> |
 | Request DTO | <code>ApiLongaudioAlbumDetailRequest</code> |
-| Response DTO | <code>NetworkApiLongaudioAlbumDetailResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiLongaudioAlbumDetailResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiLongaudioAlbumDetailResponse |
@@ -117,7 +117,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/longaudio_daily_recommend.js</code> |
 
 ### 上游请求
@@ -146,7 +146,7 @@
 |---|---|
 | DataSource 操作 | <code>longaudioDailyRecommend</code> |
 | Request DTO | <code>ApiLongaudioDailyRecommendRequest</code> |
-| Response DTO | <code>NetworkApiLongaudioDailyRecommendResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiLongaudioDailyRecommendResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiLongaudioDailyRecommendResponse |
@@ -164,7 +164,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/longaudio_rank_recommend.js</code> |
 
 ### 上游请求
@@ -191,7 +191,7 @@
 |---|---|
 | DataSource 操作 | <code>longaudioRankRecommend</code> |
 | Request DTO | <code>ApiLongaudioRankRecommendRequest</code> |
-| Response DTO | <code>NetworkApiLongaudioRankRecommendResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiLongaudioRankRecommendResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiLongaudioRankRecommendResponse |
@@ -209,7 +209,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/longaudio_vip_recommend.js</code> |
 
 ### 上游请求
@@ -238,7 +238,7 @@
 |---|---|
 | DataSource 操作 | <code>longaudioVipRecommend</code> |
 | Request DTO | <code>ApiLongaudioVipRecommendRequest</code> |
-| Response DTO | <code>NetworkApiLongaudioVipRecommendResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiLongaudioVipRecommendResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiLongaudioVipRecommendResponse |
@@ -256,7 +256,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/longaudio_week_recommend.js</code> |
 
 ### 上游请求
@@ -284,7 +284,7 @@
 |---|---|
 | DataSource 操作 | <code>longaudioWeekRecommend</code> |
 | Request DTO | <code>ApiLongaudioWeekRecommendRequest</code> |
-| Response DTO | <code>NetworkApiLongaudioWeekRecommendResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiLongaudioWeekRecommendResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiLongaudioWeekRecommendResponse |

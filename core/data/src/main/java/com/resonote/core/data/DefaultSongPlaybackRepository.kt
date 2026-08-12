@@ -4,15 +4,16 @@ import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.PlaybackUnavailableReason
 import com.resonote.core.model.ResolveSongSourceResult
 import com.resonote.core.model.ResolvedSongSource
+import com.resonote.core.network.ApiException
 import com.resonote.core.network.ApiNetworkDataSource
 import com.resonote.core.network.ApiPlaybackUnavailableException
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.CancellationException
 
 @Singleton
 internal class DefaultSongPlaybackRepository @Inject constructor(
     private val network: ApiNetworkDataSource,
+    private val riskChallenges: RiskChallengeRegistry,
 ) : SongPlaybackRepository {
     override suspend fun resolveSource(song: OnlineSong): ResolveSongSourceResult =
         try {
@@ -20,8 +21,6 @@ internal class DefaultSongPlaybackRepository @Inject constructor(
             ResolveSongSourceResult.Resolved(
                 ResolvedSongSource(source.uri, source.durationMillis.takeIf { it > 0 } ?: song.durationMillis, source.extension),
             )
-        } catch (cancellation: CancellationException) {
-            throw cancellation
         } catch (unavailable: ApiPlaybackUnavailableException) {
             ResolveSongSourceResult.Unavailable(
                 when (unavailable.reason) {
@@ -29,7 +28,7 @@ internal class DefaultSongPlaybackRepository @Inject constructor(
                     ApiPlaybackUnavailableException.Reason.Vip -> PlaybackUnavailableReason.Vip
                 },
             )
-        } catch (failure: Throwable) {
-            ResolveSongSourceResult.Failed(failure.toContentFailure())
+        } catch (failure: ApiException) {
+            ResolveSongSourceResult.Failed(failure.toContentFailure(riskChallenges))
         }
 }

@@ -17,13 +17,21 @@ internal class ApiSessionManager @Inject constructor(
     private val store = store.orElseGet(::MemoryApiSessionStore)
     private val mutex = Mutex()
 
+    @Volatile
+    private var snapshot: ApiSession? = null
+
     val session: Flow<ApiSession?> get() = store.session
 
     suspend fun current(): ApiSession = mutex.withLock {
-        store.read() ?: ApiSession.anonymous(identityFactory).also { store.write(it) }
+        (store.read() ?: ApiSession.anonymous(identityFactory).also { store.write(it) }).also { snapshot = it }
     }
 
-    suspend fun write(value: ApiSession) = mutex.withLock { store.write(value) }
+    suspend fun write(value: ApiSession) = mutex.withLock {
+        store.write(value)
+        snapshot = value
+    }
+
+    fun snapshot(): ApiSession = checkNotNull(snapshot) { "API session must be initialized before a Retrofit request" }
 }
 
 private class MemoryApiSessionStore : ApiSessionStore {

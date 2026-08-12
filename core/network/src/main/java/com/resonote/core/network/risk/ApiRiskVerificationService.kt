@@ -1,7 +1,7 @@
 package com.resonote.core.network.risk
 
-/** Protocol-only risk operations used by an application-owned [ApiRiskVerifier]. */
-interface ApiRiskGateway {
+/** Protocol-only risk operations coordinated by the application flow that received the challenge. */
+interface ApiRiskVerificationService {
     suspend fun methodFor(challenge: ApiRiskChallenge): ApiRiskMethod
 
     suspend fun submit(challenge: ApiRiskChallenge, proof: ApiRiskProof)

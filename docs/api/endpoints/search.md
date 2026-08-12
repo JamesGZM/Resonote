@@ -17,7 +17,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/search.js</code> |
 
 ### 上游请求
@@ -66,8 +66,8 @@
 |---|---|
 | DataSource 操作 | <code>search</code> |
 | Request DTO | <code>ApiSearchRequest</code> |
-| Response DTO | <code>NetworkApiSearchResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
-| 传输实现 | <code>OkHttp Call.Factory</code> |
+| Response DTO | <code>NetworkApiSearchResponse</code>；名称为静态候选，现行实现由 internal <code>@Serializable</code> 类型化 wire DTO 直接承接 Retrofit 响应 |
+| 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiSearchResponse |
 
@@ -84,7 +84,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/search_complex.js</code> |
 
 ### 上游请求
@@ -122,7 +122,7 @@
 |---|---|
 | DataSource 操作 | <code>searchComplex</code> |
 | Request DTO | <code>ApiSearchComplexRequest</code> |
-| Response DTO | <code>NetworkApiSearchComplexResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiSearchComplexResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiSearchComplexResponse |
@@ -140,7 +140,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/search_default.js</code> |
 
 ### 上游请求
@@ -177,7 +177,7 @@
 |---|---|
 | DataSource 操作 | <code>searchDefault</code> |
 | Request DTO | <code>ApiSearchDefaultRequest</code> |
-| Response DTO | <code>NetworkApiSearchDefaultResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiSearchDefaultResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiSearchDefaultResponse |
@@ -195,7 +195,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/search_hot.js</code> |
 
 ### 上游请求
@@ -229,7 +229,7 @@
 |---|---|
 | DataSource 操作 | <code>searchHot</code> |
 | Request DTO | <code>ApiSearchHotRequest</code> |
-| Response DTO | <code>NetworkApiSearchHotResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiSearchHotResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiSearchHotResponse |
@@ -247,7 +247,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/search_lyric.js</code> |
 
 ### 上游请求
@@ -287,7 +287,7 @@
 |---|---|
 | DataSource 操作 | <code>searchLyric</code> |
 | Request DTO | <code>ApiSearchLyricRequest</code> |
-| Response DTO | <code>NetworkApiSearchLyricResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiSearchLyricResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiSearchLyricResponse |
@@ -305,7 +305,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | <code>SOURCE_CONFIRMED</code> |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/search_mixed.js</code> |
 
 ### 上游请求
@@ -354,7 +354,7 @@
 |---|---|
 | DataSource 操作 | <code>searchMixed</code> |
 | Request DTO | <code>ApiSearchMixedRequest</code> |
-| Response DTO | <code>NetworkApiSearchMixedResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiSearchMixedResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code>, <code>ApiResponseDecoder</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiSearchMixedResponse |
@@ -372,7 +372,7 @@
 | 验证 | <code>static-only</code> |
 | 响应转换 | 未发现模块级转换 |
 | Cookie 回写 | 未发现 |
-| 风控 | <code>handle-and-replay-once</code> |
+| 风控 | <code>surface-challenge</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/search_suggest.js</code> |
 
 ### 上游请求
@@ -409,7 +409,7 @@
 |---|---|
 | DataSource 操作 | <code>searchSuggest</code> |
 | Request DTO | <code>ApiSearchSuggestRequest</code> |
-| Response DTO | <code>NetworkApiSearchSuggestResponse</code>；含 UNKNOWN 时先使用宽容中间结构 |
+| Response DTO | <code>NetworkApiSearchSuggestResponse</code>；含 UNKNOWN 时不得据此生成严格 DTO |
 | 传输实现 | <code>Retrofit</code> |
 | 协议组件 | <code>ApiRequestSigner</code>, <code>ApiSession</code> |
 | 领域映射 | 在 <code>core:data</code> 映射；不得向 UI 暴露 NetworkApiSearchSuggestResponse |
