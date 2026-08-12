@@ -31,6 +31,15 @@
     <string name="my_playlist_artwork">%1$s的歌单封面</string>
     <string name="my_created_empty">还没有创建歌单。</string>
     <string name="my_collected_empty">还没有收藏歌单。</string>
+    <string name="feature_library_impl_create_playlist_action">新建歌单</string>
+    <string name="feature_library_impl_create_playlist_title">新建歌单</string>
+    <string name="feature_library_impl_create_playlist_body">给这份新的声音收藏起一个名字。</string>
+    <string name="feature_library_impl_create_playlist_name">歌单名称</string>
+    <string name="feature_library_impl_create_playlist_cancel">取消</string>
+    <string name="feature_library_impl_create_playlist_confirm">创建</string>
+    <string name="feature_library_impl_create_playlist_submitting">正在创建</string>
+    <string name="feature_library_impl_create_playlist_success">“%1$s”已创建</string>
+    <string name="feature_library_impl_create_playlist_success_refresh_failed">“%1$s”已创建，请手动刷新歌单列表</string>
     <string name="my_loading_playlists">正在同步歌单</string>
     <string name="my_profile_error">个人资料加载失败</string>
     <string name="my_playlists_error">歌单加载失败</string>

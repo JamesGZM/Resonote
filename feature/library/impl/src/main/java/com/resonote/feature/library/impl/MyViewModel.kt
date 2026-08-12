@@ -9,6 +9,7 @@ import com.resonote.core.model.AuthState
 import com.resonote.core.model.CollectionLoadResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,12 +30,15 @@ class MyViewModel @Inject constructor(
 
     private var activeUserId: String? = null
     private var refreshJob: Job? = null
+    private var createPlaylistJob: Job? = null
 
     init {
         viewModelScope.launch {
             authRepository.authState.collectLatest { authState ->
                 refreshJob?.cancel()
                 refreshJob = null
+                createPlaylistJob?.cancel()
+                createPlaylistJob = null
                 when (authState) {
                     AuthState.Anonymous, is AuthState.AuthenticationRequired -> {
                         activeUserId = null
@@ -42,7 +46,7 @@ class MyViewModel @Inject constructor(
                     }
                     is AuthState.Authenticated -> {
                         activeUserId = authState.userId
-                        mutableUiState.value = MyUiState.Authenticated()
+                        mutableUiState.value = MyUiState.Authenticated(userId = authState.userId)
                         loadAll(authState.userId)
                     }
                 }
@@ -52,7 +56,7 @@ class MyViewModel @Inject constructor(
 
     fun refresh() {
         val userId = activeUserId ?: return
-        if (refreshJob?.isActive == true) return
+        if (refreshJob?.isActive == true || createPlaylistJob?.isActive == true) return
         mutableUiState.update { state ->
             (state as? MyUiState.Authenticated)?.copy(isRefreshing = true) ?: state
         }
@@ -74,6 +78,63 @@ class MyViewModel @Inject constructor(
         viewModelScope.launch { loadPlaylists(userId) }
     }
 
+    fun createPlaylist(name: String) {
+        val userId = activeUserId ?: return
+        val normalizedName = name.trim()
+        if (
+            normalizedName.isEmpty() ||
+            createPlaylistJob?.isActive == true ||
+            refreshJob?.isActive == true
+        ) {
+            return
+        }
+
+        updateAuthenticated(userId) {
+            it.copy(playlistCreation = PlaylistCreationUiState.Submitting)
+        }
+        lateinit var job: Job
+        job = viewModelScope.launch(start = CoroutineStart.LAZY) {
+            try {
+                when (val result = libraryRepository.createPlaylist(normalizedName)) {
+                    is CollectionLoadResult.Failed -> updateAuthenticated(userId) {
+                        it.copy(playlistCreation = PlaylistCreationUiState.Failed(result.failure))
+                    }
+                    is CollectionLoadResult.Available -> refreshAfterPlaylistCreation(
+                        userId = userId,
+                        name = normalizedName,
+                        listId = result.value,
+                    )
+                }
+            } finally {
+                if (createPlaylistJob === job) createPlaylistJob = null
+            }
+        }
+        createPlaylistJob = job
+        job.start()
+    }
+
+    fun dismissPlaylistCreation() {
+        val userId = activeUserId ?: return
+        updateAuthenticated(userId) { state ->
+            if (state.playlistCreation == PlaylistCreationUiState.Submitting) {
+                state
+            } else {
+                state.copy(playlistCreation = PlaylistCreationUiState.Idle)
+            }
+        }
+    }
+
+    fun acknowledgePlaylistCreation() {
+        val userId = activeUserId ?: return
+        updateAuthenticated(userId) { state ->
+            if (state.playlistCreation is PlaylistCreationUiState.Created) {
+                state.copy(playlistCreation = PlaylistCreationUiState.Idle)
+            } else {
+                state
+            }
+        }
+    }
+
     private suspend fun loadAll(userId: String) = supervisorScope {
         launch { loadProfile(userId) }
         launch { loadPlaylists(userId) }
@@ -93,6 +154,34 @@ class MyViewModel @Inject constructor(
             is CollectionLoadResult.Failed -> MySectionState.Failed(result.failure)
         }
         updateAuthenticated(userId) { it.copy(playlists = section) }
+    }
+
+    private suspend fun refreshAfterPlaylistCreation(
+        userId: String,
+        name: String,
+        listId: String,
+    ) {
+        when (val refreshed = libraryRepository.loadPlaylists()) {
+            is CollectionLoadResult.Available -> updateAuthenticated(userId) {
+                it.copy(
+                    playlists = MySectionState.Available(refreshed.value),
+                    playlistCreation = PlaylistCreationUiState.Created(
+                        name = name,
+                        listId = listId,
+                        refreshFailed = false,
+                    ),
+                )
+            }
+            is CollectionLoadResult.Failed -> updateAuthenticated(userId) {
+                it.copy(
+                    playlistCreation = PlaylistCreationUiState.Created(
+                        name = name,
+                        listId = listId,
+                        refreshFailed = true,
+                    ),
+                )
+            }
+        }
     }
 
     private inline fun updateAuthenticated(

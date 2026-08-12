@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
 import androidx.compose.material.icons.rounded.CardGiftcard
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Cloud
@@ -29,6 +30,7 @@ import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -36,11 +38,21 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -63,6 +75,7 @@ import com.resonote.core.designsystem.component.ResonoteTopAppBar
 import com.resonote.core.model.ContentFailure
 import com.resonote.core.model.UserPlaylist
 import com.resonote.core.model.UserProfile
+import kotlinx.coroutines.launch
 
 @Composable
 fun MyRoute(
@@ -87,6 +100,9 @@ fun MyRoute(
         onRefresh = viewModel::refresh,
         onRetryProfile = viewModel::retryProfile,
         onRetryPlaylists = viewModel::retryPlaylists,
+        onCreatePlaylist = viewModel::createPlaylist,
+        onDismissPlaylistCreation = viewModel::dismissPlaylistCreation,
+        onAcknowledgePlaylistCreation = viewModel::acknowledgePlaylistCreation,
         onPlaylistClick = onPlaylistClick,
     )
 }
@@ -103,13 +119,49 @@ internal fun MyScreen(
     onRefresh: () -> Unit,
     onRetryProfile: () -> Unit,
     onRetryPlaylists: () -> Unit,
+    onCreatePlaylist: (String) -> Unit,
+    onDismissPlaylistCreation: () -> Unit,
+    onAcknowledgePlaylistCreation: () -> Unit,
     onPlaylistClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
+    val authenticatedState = state as? MyUiState.Authenticated
+    val accountKey = authenticatedState?.userId
+    var createDialogOpen by rememberSaveable(accountKey) { mutableStateOf(false) }
+    var playlistName by rememberSaveable(accountKey) { mutableStateOf("") }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val snackbarScope = rememberCoroutineScope()
+    val creationState = authenticatedState?.playlistCreation ?: PlaylistCreationUiState.Idle
+    val creationMessage = when (val creation = creationState) {
+        is PlaylistCreationUiState.Created -> stringResource(
+            if (creation.refreshFailed) {
+                R.string.feature_library_impl_create_playlist_success_refresh_failed
+            } else {
+                R.string.feature_library_impl_create_playlist_success
+            },
+            creation.name,
+        )
+        else -> ""
+    }
+
+    LaunchedEffect(accountKey) {
+        snackbarHostState.currentSnackbarData?.dismiss()
+    }
+
+    LaunchedEffect(creationState) {
+        if (creationState is PlaylistCreationUiState.Created) {
+            createDialogOpen = false
+            playlistName = ""
+            snackbarScope.launch { snackbarHostState.showSnackbar(creationMessage) }
+            onAcknowledgePlaylistCreation()
+        }
+    }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             ResonoteTopAppBar(
                 title = { Text(stringResource(R.string.my_title)) },
@@ -153,10 +205,31 @@ internal fun MyScreen(
                     onHistoryClick = onHistoryClick,
                     onCloudClick = onCloudClick,
                     onLocalMusicClick = onLocalMusicClick,
+                    onCreatePlaylistClick = {
+                        onDismissPlaylistCreation()
+                        playlistName = ""
+                        createDialogOpen = true
+                    },
                     onPlaylistClick = onPlaylistClick,
                 )
             }
         }
+    }
+
+    if (createDialogOpen && authenticatedState != null) {
+        PlaylistCreationDialog(
+            name = playlistName,
+            state = creationState,
+            onNameChange = { playlistName = it },
+            onDismiss = {
+                if (creationState != PlaylistCreationUiState.Submitting) {
+                    createDialogOpen = false
+                    playlistName = ""
+                    onDismissPlaylistCreation()
+                }
+            },
+            onConfirm = { onCreatePlaylist(playlistName) },
+        )
     }
 }
 
@@ -271,6 +344,7 @@ private fun LazyListScope.authenticatedAccount(
     onHistoryClick: () -> Unit,
     onCloudClick: () -> Unit,
     onLocalMusicClick: () -> Unit,
+    onCreatePlaylistClick: () -> Unit,
     onPlaylistClick: (String) -> Unit,
 ) {
     item(key = "profile") {
@@ -309,8 +383,70 @@ private fun LazyListScope.authenticatedAccount(
                 modifier = Modifier.testTag("my-playlists-error"),
             )
         }
-        is MySectionState.Available -> playlistSections(playlists.value, onPlaylistClick)
+        is MySectionState.Available -> playlistSections(
+            playlists = playlists.value,
+            onPlaylistClick = onPlaylistClick,
+            onCreatePlaylistClick = onCreatePlaylistClick,
+            createEnabled = !state.isRefreshing && state.playlistCreation != PlaylistCreationUiState.Submitting,
+        )
     }
+}
+
+@Composable
+private fun PlaylistCreationDialog(
+    name: String,
+    state: PlaylistCreationUiState,
+    onNameChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    val isSubmitting = state == PlaylistCreationUiState.Submitting
+    val failure = (state as? PlaylistCreationUiState.Failed)?.failure
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = { Icon(Icons.AutoMirrored.Rounded.PlaylistAdd, contentDescription = null) },
+        title = { Text(stringResource(R.string.feature_library_impl_create_playlist_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = stringResource(R.string.feature_library_impl_create_playlist_body),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = onNameChange,
+                    modifier = Modifier.fillMaxWidth().testTag("my-create-playlist-name"),
+                    enabled = !isSubmitting,
+                    isError = failure != null,
+                    singleLine = true,
+                    label = { Text(stringResource(R.string.feature_library_impl_create_playlist_name)) },
+                    supportingText = failure?.let {
+                        {
+                            Text(
+                                text = it.message(),
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        }
+                    },
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isSubmitting) {
+                Text(stringResource(R.string.feature_library_impl_create_playlist_cancel))
+            }
+        },
+        confirmButton = {
+            ResonoteButton(
+                label = stringResource(R.string.feature_library_impl_create_playlist_confirm),
+                loadingLabel = stringResource(R.string.feature_library_impl_create_playlist_submitting),
+                onClick = onConfirm,
+                enabled = name.isNotBlank() && !isSubmitting,
+                loading = isSubmitting,
+            )
+        },
+    )
 }
 
 @Composable
@@ -468,6 +604,8 @@ private fun DailyVipEntryCard(
 private fun LazyListScope.playlistSections(
     playlists: List<UserPlaylist>,
     onPlaylistClick: (String) -> Unit,
+    onCreatePlaylistClick: () -> Unit,
+    createEnabled: Boolean,
 ) {
     val liked = playlists.firstOrNull(UserPlaylist::isLike)
     val created = playlists.filter { it.isMine && !it.isLike }
@@ -484,6 +622,8 @@ private fun LazyListScope.playlistSections(
         emptyText = R.string.my_created_empty,
         playlists = created,
         onPlaylistClick = onPlaylistClick,
+        onCreateClick = onCreatePlaylistClick,
+        createEnabled = createEnabled,
     )
     playlistGroup(
         keyPrefix = "collected",
@@ -500,9 +640,11 @@ private fun LazyListScope.playlistGroup(
     emptyText: Int,
     playlists: List<UserPlaylist>,
     onPlaylistClick: (String) -> Unit,
+    onCreateClick: (() -> Unit)? = null,
+    createEnabled: Boolean = true,
 ) {
     item(key = "$keyPrefix-title") {
-        Row(verticalAlignment = Alignment.Bottom) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = stringResource(title),
                 modifier = Modifier.weight(1f),
@@ -514,6 +656,18 @@ private fun LazyListScope.playlistGroup(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.labelLarge,
             )
+            if (onCreateClick != null) {
+                IconButton(
+                    onClick = onCreateClick,
+                    modifier = Modifier.size(40.dp).testTag("my-create-playlist"),
+                    enabled = createEnabled,
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.PlaylistAdd,
+                        contentDescription = stringResource(R.string.feature_library_impl_create_playlist_action),
+                    )
+                }
+            }
         }
     }
     if (playlists.isEmpty()) {

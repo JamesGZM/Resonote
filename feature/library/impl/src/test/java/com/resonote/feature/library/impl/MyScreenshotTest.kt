@@ -57,7 +57,10 @@ class MyScreenshotTest {
         capture("playlists")
     }
 
-    private fun setScreen(state: MyUiState, onLoginClick: () -> Unit = {}) {
+    private fun setScreen(
+        state: MyUiState,
+        onLoginClick: () -> Unit = {},
+    ) {
         composeRule.setContent {
             DeviceConfigurationOverride(
                 override = DeviceConfigurationOverride.ForcedSize(DpSize(390.dp, 844.dp)),
@@ -74,6 +77,9 @@ class MyScreenshotTest {
                         onRefresh = {},
                         onRetryProfile = {},
                         onRetryPlaylists = {},
+                        onCreatePlaylist = {},
+                        onDismissPlaylistCreation = {},
+                        onAcknowledgePlaylistCreation = {},
                         onPlaylistClick = {},
                     )
                 }
@@ -82,6 +88,7 @@ class MyScreenshotTest {
     }
 
     private fun authenticatedState() = MyUiState.Authenticated(
+        userId = "2048264",
         profile = MySectionState.Available(
             UserProfile(
                 userId = "2048264",
