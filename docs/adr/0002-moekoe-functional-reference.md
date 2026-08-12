@@ -7,21 +7,22 @@
 
 ## Context
 
-NIA 能提供 Android 工程架构，但不能覆盖音乐产品的登录、媒体目录、本地导入、歌词、歌单、云盘、识曲和 MV 等功能。上级目录存在三份应用实现，其中桌面 `MoeKoeMusic` 最完整地表达产品功能，两个 Mobile 项目提供 Android、JSON 漂移和协议测试证据。
+NIA 能提供 Android 工程架构，但不能覆盖音乐产品的登录、媒体目录、本地导入、歌词、歌单、云盘、识曲和 MV 等功能。桌面 `MoeKoeMusic` 表达完整产品功能，`MoeKoeMusic-Mobile` 提供移动端行为、JSON 漂移和协议测试证据。
 
 三个应用仓库均为 GPL-2.0-only；Resonote 当前使用 MIT。桌面仓库中的 `api` 是独立 Git submodule，固定提交使用 MIT，但仍需逐文件确认来源与声明。
 
 ## Decision
 
 1. 固定 `MoeKoeMusic@52c9833afe2e7fedcba8d5b23ff8d1f9731af73a` 作为产品功能、用户任务和状态语义参考。
-2. 固定 `MoeKoeMusic-Mobile-V2@c4b4f1d56c7484580444cf294914fe0601e120bd` 作为 Android 风险、协议测试场景和迁移教训参考。
-3. 固定 `MoeKoeMusic-Mobile@ab71195d4cf3297332490fd37704d1ae8973d4c5` 作为响应字段漂移、搜索映射和登录状态行为的补充参考。
-4. 固定 `MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb` 作为 MIT API 能力证据；任何迁移必须保留适用许可和来源，并以 Resonote 架构独立实现。
-5. 参考优先级为：Resonote 冻结设计 → 已确认产品/API → Android 官方 → NIA 架构 → MoeKoe 功能。旧项目不能覆盖更高层决策。
+2. 固定 `MoeKoeMusic-Mobile@ab71195d4cf3297332490fd37704d1ae8973d4c5` 作为移动端行为、首页刷新、响应字段漂移、搜索映射和登录状态证据。
+3. 固定 Mobile 内嵌 `api@283f1e97` 作为本批 Lite 协议证据；固定 `MoeKoeMusic@a86cfefb` 只用于证明首页 `top_card` 的真实消费链。
+4. `MoeKoeMusic-Mobile-V2` 明确排除，不作为功能、架构、协议、测试或迁移教训的证据来源，也不由生成器或校验器读取。
+5. 固定 `MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb` 作为全量 MIT API 静态目录基线；任何迁移必须保留适用许可和来源，并以 Resonote 架构独立实现。
+6. 参考优先级为：Resonote 冻结设计 → 已确认产品/API → Android 官方 → NIA 架构 → MoeKoe 功能。旧项目不能覆盖更高层决策。
 6. 首页、发现、我的、搜索、本地音乐、登录、Player、歌单/专辑/歌手详情、用户资料和设置进入功能图；模块名和接口仍须由 API/IA 纵切片确认。旧 PC 把三类详情合在一个 `PlaylistDetail.vue` 的做法只作为功能证据，Resonote 使用独立导航合同和状态模型。设置只参考可迁移的产品意图，不继承代理/API 地址、系统字体、桌面歌词、快捷键、自定义音频设备、后台节流或应用内更新等桌面能力。
 7. 云盘与每日 VIP 已由产品需求确认进入“我的”功能范围；听歌识曲和 MV 也分别确认为独立功能。四者仍需分别完成 API、安全、隐私、存储或播放纵向切片。MV 在播放资格检查未返回阻断条件后暂停音乐并自动播放，匿名用户只要具备播放条件也可直接进入；退出保持音乐暂停。普通页面竖屏，用户显式点击同一 Video Player 的全屏操作时切换横屏，退出后恢复竖屏，不建立独立横屏页面、不支持传感器自动旋转，也不提供后台视频或画中画。只有未登录、Session 失效或凭据无效进入登录门禁，登录后需再次点击；VIP、版权、地区和无可用版本显示业务错误。具体 Session、方向协调和资源所有权由视频 ADR 冻结。互动式评论/社交、插件、PWA、桌面歌词、Touch Bar、全局快捷键和 Electron 更新不进入默认范围；“我的”可只读展示好友资料，不建立可点击的社交关系入口。
 8. 按 NIA 的边界把远端 DataSource、Endpoint、Network DTO、签名、Cookie、设备与风控协议统一放入 `:core:network`，通过内部 package 隔离具体协议；不额外建立 `:platform:<provider>`。
-9. Mobile V2 的 Ktor + OkHttp 技术栈不迁移。Resonote 保持已批准的 OkHttp3 + Retrofit2；特殊请求可直接使用共享 `Call.Factory`。
+9. Resonote 保持已批准的 OkHttp3 + Retrofit2；特殊请求可直接使用共享 `Call.Factory`。
 10. 不复制 GPL 应用代码、样式、图片、文案或测试。参考功能行为后重新建模、重新设计和独立实现。
 11. 顶层导航参考 `MoeKoeMusic-Mobile` 的页面行为：一个 Tabs Shell 保存首页、发现、我的根页面状态，详情位于 Shell 之外的全局页面栈；不采用 NIA 当前为每个顶层目的地保存详情 subStack 的算法。架构仍使用 NIA 的 App/Feature 分层和 Navigation 3 类型安全入口独立实现。
 12. 退出登录参考 Mobile 的确认、清 Session 和重置账号资料库行为，但补齐账号作用域、播放和缓存边界。上游明确的认证状态码进入统一登录门禁；Feature 不复制 provider 状态码判断，页面级目标可续接，原子操作不得自动重试。

@@ -38,5 +38,7 @@ class ApiRequestSignerTest {
 
         assertThat(signer.sign(parameters, body)).isEqualTo("3f1957a934c09d18916a2ceaf9655335")
         assertThat(signer.signParamsKey("1700000000123")).isEqualTo("1e147fdee80c20bcf6e0a1d8681c84b9")
+        assertThat(signer.signSongKey("ABCDEF", "fixture-mid", "99"))
+            .isEqualTo("23f15de66cfe945a02f2262d72cf3e59")
     }
 }

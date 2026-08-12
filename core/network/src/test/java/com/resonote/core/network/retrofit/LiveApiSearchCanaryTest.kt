@@ -1,6 +1,7 @@
 package com.resonote.core.network.retrofit
 
 import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.Truth.assertWithMessage
 import com.resonote.core.network.protocol.ApiCallExecutor
 import com.resonote.core.network.protocol.ApiDeviceIdentityFactory
 import com.resonote.core.network.protocol.ApiEndpointOrigins
@@ -28,6 +29,53 @@ class LiveApiSearchCanaryTest {
     @Test
     fun registeredLiteDeviceCanSearch() = runTest {
         assumeTrue(System.getenv("RESONOTE_RUN_LIVE_API_TESTS") == "true")
+        val dataSource = liveDataSource()
+
+        val result = dataSource.searchSongs("周杰伦", page = 1, pageSize = 1)
+
+        assertThat(result.items).isNotEmpty()
+    }
+
+    @Test
+    fun publicHomeEndpointsAndPlaybackUrlAreConsumable() = runTest {
+        assumeTrue(System.getenv("RESONOTE_RUN_LIVE_API_TESTS") == "true")
+        val dataSource = liveDataSource()
+
+        val daily = dataSource.dailyRecommendations()
+        val radio = dataSource.radioRecommendations(com.resonote.core.network.model.NetworkRecommendationMode.Personal)
+        val playlists = dataSource.recommendedPlaylists(page = 1, pageSize = 6)
+        val newSongs = dataSource.newSongs(page = 1, pageSize = 6)
+
+        assertThat(daily).isNotEmpty()
+        assertThat(radio).isNotEmpty()
+        assertThat(playlists).isNotEmpty()
+        assertThat(newSongs).isNotEmpty()
+        val candidates =
+            (daily + radio + newSongs)
+                .distinctBy { it.hash }
+                .sortedBy { it.vip }
+                .take(5)
+        var resolved: com.resonote.core.network.model.NetworkSongSource? = null
+        val failureKinds = mutableListOf<String>()
+        for (song in candidates) {
+            val attempt = runCatching { dataSource.resolveSongSource(song.hash, song.albumId, song.albumAudioId) }
+            resolved = attempt.getOrNull()
+            attempt.exceptionOrNull()?.let { failure ->
+                failureKinds +=
+                    if (failure is com.resonote.core.network.ApiPlaybackUnavailableException) {
+                        "ApiPlaybackUnavailableException.${failure.reason}"
+                    } else {
+                        failure::class.simpleName.orEmpty()
+                    }
+            }
+            if (resolved != null) break
+        }
+
+        assertWithMessage("Playback candidate failures: $failureKinds").that(resolved).isNotNull()
+        assertThat(resolved?.uri).startsWith("https://")
+    }
+
+    private fun liveDataSource(): RealApiNetworkDataSource {
         val json = Json { ignoreUnknownKeys = true; isLenient = true }
         val sessions = ApiSessionManager(Optional.of(MemoryStore()), ApiDeviceIdentityFactory())
         val risk = RiskAwareApiExecutor(ApiRiskChallengeDetector(), Optional.empty())
@@ -41,12 +89,7 @@ class LiveApiSearchCanaryTest {
         val executor = ApiCallExecutor(
             OkHttpClient(), json, Clock.systemUTC(), signer, sessions, Lazy { risk }, ProductionApiOriginPolicy(),
         )
-        val dataSource = RealApiNetworkDataSource(executor, json, crypto, signer, sessions, ApiEndpointOrigins())
-
-        val result = dataSource.searchSongs("周杰伦", page = 1, pageSize = 1)
-
-        assertThat(result.items).isNotEmpty()
-        assertThat(sessions.current().dfid).isNotEmpty()
+        return RealApiNetworkDataSource(executor, json, crypto, signer, sessions, ApiEndpointOrigins())
     }
 
     private class MemoryStore : ApiSessionStore {

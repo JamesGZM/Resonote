@@ -7,12 +7,14 @@ import { fileURLToPath } from 'node:url';
 
 const API_COMMIT = '6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb';
 const APP_COMMIT = '52c9833afe2e7fedcba8d5b23ff8d1f9731af73a';
-const V2_COMMIT = 'c4b4f1d56c7484580444cf294914fe0601e120bd';
+const MOBILE_COMMIT = 'ab71195d4cf3297332490fd37704d1ae8973d4c5';
+const MOBILE_API_COMMIT = '283f1e97';
+const TOP_CARD_PC_COMMIT = 'a86cfefb';
 const DOC_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const WORKSPACE_ROOT = resolve(DOC_ROOT, '../..');
 const MOEKOE_ROOT = resolve(process.env.MOEKOE_ROOT || join(WORKSPACE_ROOT, '..', 'MoeKoeMusic'));
 const API_ROOT = join(MOEKOE_ROOT, 'api');
-const V2_ROOT = resolve(process.env.MOEKOE_V2_ROOT || join(WORKSPACE_ROOT, '..', 'MoeKoeMusic-Mobile-V2'));
+const MOBILE_ROOT = resolve(process.env.MOEKOE_MOBILE_ROOT || join(WORKSPACE_ROOT, '..', 'MoeKoeMusic-Mobile'));
 const ALLOWED_EVIDENCE = new Set(['SOURCE_CONFIRMED', 'CONSUMER_CONFIRMED', 'REFERENCE_CONFIRMED', 'DECLARED', 'FIXTURE_CONFIRMED', 'INFERRED', 'UNKNOWN']);
 
 function git(repo, args) {
@@ -41,7 +43,9 @@ function markdownFiles(root) {
 }
 
 function main() {
-  if (git(V2_ROOT, ['cat-file', '-t', V2_COMMIT]).trim() !== 'commit') fail('V2 固定旁证 commit 不存在');
+  if (git(MOBILE_ROOT, ['cat-file', '-t', MOBILE_COMMIT]).trim() !== 'commit') fail('Mobile 固定消费证据 commit 不存在');
+  if (git(join(MOBILE_ROOT, 'api'), ['cat-file', '-t', MOBILE_API_COMMIT]).trim() !== 'commit') fail('Mobile 内嵌 API commit 不存在');
+  if (git(MOEKOE_ROOT, ['cat-file', '-t', TOP_CARD_PC_COMMIT]).trim() !== 'commit') fail('top_card PC 消费证据 commit 不存在');
   const catalogPath = join(DOC_ROOT, 'catalog.yaml');
   if (!existsSync(catalogPath)) fail('缺少 catalog.yaml');
   const catalog = readFileSync(catalogPath, 'utf8');
@@ -134,8 +138,17 @@ function main() {
   const mobileLoginSection = loginDoc.slice(loginDoc.indexOf('## API-LOGIN-004'), loginDoc.indexOf('## API-LOGIN-005'));
   if (mobileLoginSection.includes('<code>t3</code>')) fail('Lite 手机验证码登录不得包含 Standard-only t3');
   if ((loginDoc.match(/^## API-LOGIN-/gm) || []).length !== 15) fail('登录模块文档必须恰好覆盖 15 个模块');
-  if (!responseSchema.includes('REFERENCE_CONFIRMED')) fail('缺少 V2 行为旁证字段');
-  if (!readFileSync(join(DOC_ROOT, 'README.md'), 'utf8').includes(`MoeKoeMusic-Mobile-V2@${V2_COMMIT}`)) fail('V2 固定旁证提交记录不正确');
+  if (!responseSchema.includes('REFERENCE_CONFIRMED')) fail('缺少 Mobile 行为旁证字段');
+  const readme = readFileSync(join(DOC_ROOT, 'README.md'), 'utf8');
+  for (const evidence of [
+    `MoeKoeMusic-Mobile@${MOBILE_COMMIT}`,
+    `MoeKoeMusic-Mobile/api@${MOBILE_API_COMMIT}`,
+    `MoeKoeMusic@${TOP_CARD_PC_COMMIT}`,
+  ]) if (!readme.includes(evidence)) fail(`首页固定证据记录不正确：${evidence}`);
+  for (const endpointId of ['API-DISCOVER-003', 'API-DISCOVER-009', 'API-DISCOVER-012', 'API-DISCOVER-013', 'API-SONG-011']) {
+    const section = requiredSection(catalog, `  - id: "${endpointId}"`, '\n  - id:', `catalog ${endpointId}`);
+    if (!section.includes('android_evidence:')) fail(`${endpointId} 缺少 Android 首页迁移证据`);
+  }
   const fixtureDir = join(DOC_ROOT, 'fixtures');
   const fixtureFiles = readdirSync(fixtureDir).filter((name) => name.endsWith('.json'));
   const secretPatterns = [

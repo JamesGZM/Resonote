@@ -8,6 +8,10 @@ import com.resonote.core.model.SendMobileCodeResult
 import com.resonote.core.network.ApiNetworkDataSource
 import com.resonote.core.network.model.NetworkAccountOption
 import com.resonote.core.network.model.NetworkMobileCodeLoginResult
+import com.resonote.core.network.model.NetworkHomePlaylist
+import com.resonote.core.network.model.NetworkHomeSong
+import com.resonote.core.network.model.NetworkRecommendationMode
+import com.resonote.core.network.model.NetworkSongSource
 import com.resonote.core.network.model.NetworkSearchPage
 import com.resonote.core.network.session.ApiSession
 import com.resonote.core.network.session.ApiSessionStore
@@ -52,6 +56,11 @@ class DefaultAuthRepositoryTest {
     private class FakeNetwork(
         private val login: NetworkMobileCodeLoginResult,
     ) : ApiNetworkDataSource {
+        override suspend fun dailyRecommendations(): List<NetworkHomeSong> = error("unused")
+        override suspend fun recommendedPlaylists(page: Int, pageSize: Int): List<NetworkHomePlaylist> = error("unused")
+        override suspend fun newSongs(page: Int, pageSize: Int): List<NetworkHomeSong> = error("unused")
+        override suspend fun radioRecommendations(mode: NetworkRecommendationMode): List<NetworkHomeSong> = error("unused")
+        override suspend fun resolveSongSource(hash: String, albumId: String?, albumAudioId: String?): NetworkSongSource = error("unused")
         override suspend fun searchSongs(keywords: String, page: Int, pageSize: Int): NetworkSearchPage = error("unused")
         override suspend fun sendMobileCode(mobile: String) = Unit
         override suspend fun loginWithMobileCode(mobile: String, code: String, selectedUserId: String?) = login

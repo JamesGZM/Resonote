@@ -530,6 +530,11 @@
 | 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/song_url.js</code> |
 
+### Android 首页迁移证据
+
+- <code>MoeKoeMusic-Mobile/api@283f1e97:module/song_url.js</code>
+- <code>MoeKoeMusic-Mobile@ab71195d4cf3297332490fd37704d1ae8973d4c5:src/features/player/song-url.ts</code>
+
 ### 上游请求
 
 | 序号 | 传输 | Base URL | Path | Method | x-router | 签名 | 响应 |

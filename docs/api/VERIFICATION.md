@@ -15,15 +15,16 @@
 
 ## Android 运行时 Canary
 
-- 2026-08-11：`API-SEARCH-001` 已到达上游网关，但使用未注册的 `dfid=-` 时被业务代码 `152` 拒绝，因此该端点需要有效设备上下文后才能作为正式搜索验证。
-- 2026-08-11：参考 `MoeKoeMusic-Mobile-V2@c4b4f1d56c7484580444cf294914fe0601e120bd` 的无签名匿名搜索 Canary 已通过，确认当前网络、基础 JSON 解析与歌曲字段映射可工作。
-- Live Test 必须由 `RESONOTE_RUN_LIVE_API_TESTS=true` 显式启用；没有保存原始响应、账号、Cookie 或设备标识。
+- `LiveApiSearchCanaryTest` 默认跳过，仅在 `RESONOTE_RUN_LIVE_API_TESTS=true` 时运行。
+- 首页 Canary 验证每日推荐、私人好歌、推荐歌单和新歌速递均至少返回一个可消费项目；播放地址最多尝试 5 个公开推荐候选，至少一个必须解析出 HTTPS 地址。
+- Canary 不需要账号，不下载或播放音频，也不记录完整响应、Cookie、签名或设备标识。
+- 2026-08-12 实测首页四组内容接口均非空；播放地址的 5 个当次候选均被服务端判为无授权，因此严格播放 canary 当次失败，保留该失败以反映真实服务状态。
 
 ## 证据优先级
 
 1. API 模块实际构造和转换：`SOURCE_CONFIRMED`。
 2. 固定 PC 应用读取字段：`CONSUMER_CONFIRMED`。
-3. V2 固定版本实际读取或测试的行为旁证：`REFERENCE_CONFIRMED`；不得覆盖 Lite 源码。
+3. 固定 Mobile 消费端实际读取或测试的行为旁证：`REFERENCE_CONFIRMED`；不得覆盖 Lite 源码。
 4. `interface.d.ts` 或现有说明：`DECLARED`。
 5. 固定仓库已有脱敏样例：`FIXTURE_CONFIRMED`。
 6. 静态推断：`INFERRED`。

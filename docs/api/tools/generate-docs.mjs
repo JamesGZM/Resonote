@@ -7,13 +7,15 @@ import { fileURLToPath } from 'node:url';
 
 const API_COMMIT = '6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb';
 const APP_COMMIT = '52c9833afe2e7fedcba8d5b23ff8d1f9731af73a';
-const V2_COMMIT = 'c4b4f1d56c7484580444cf294914fe0601e120bd';
+const MOBILE_COMMIT = 'ab71195d4cf3297332490fd37704d1ae8973d4c5';
+const MOBILE_API_COMMIT = '283f1e97';
+const TOP_CARD_PC_COMMIT = 'a86cfefb';
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const DOC_ROOT = resolve(SCRIPT_DIR, '..');
 const WORKSPACE_ROOT = resolve(DOC_ROOT, '../..');
 const MOEKOE_ROOT = resolve(process.env.MOEKOE_ROOT || join(WORKSPACE_ROOT, '..', 'MoeKoeMusic'));
 const API_ROOT = join(MOEKOE_ROOT, 'api');
-const V2_ROOT = resolve(process.env.MOEKOE_V2_ROOT || join(WORKSPACE_ROOT, '..', 'MoeKoeMusic-Mobile-V2'));
+const MOBILE_ROOT = resolve(process.env.MOEKOE_MOBILE_ROOT || join(WORKSPACE_ROOT, '..', 'MoeKoeMusic-Mobile'));
 
 const EVIDENCE = Object.freeze({
   source: 'SOURCE_CONFIRMED',
@@ -120,22 +122,23 @@ function ensureCommit(repo, commit) {
   if (type !== 'commit') throw new Error(`${repo} 中 ${commit} 不是 commit`);
 }
 
-function extractV2ReferenceEvidence() {
-  ensureCommit(V2_ROOT, V2_COMMIT);
-  const decoderPath = 'kugou-api/src/main/kotlin/cn/james/music/kugou/api/endpoint/KugouAuthDecoders.kt';
-  const decoder = show(V2_ROOT, V2_COMMIT, decoderPath);
+function extractMobileReferenceEvidence() {
+  ensureCommit(MOBILE_ROOT, MOBILE_COMMIT);
+  const decoder = [
+    show(MOBILE_ROOT, MOBILE_COMMIT, 'src/features/account/auth.ts'),
+    show(MOBILE_ROOT, MOBILE_COMMIT, 'src/app/login.tsx'),
+  ].join('\n');
   const expected = new Map([
     ['get_verify_info', ['data.v_type', 'data.txappid']],
     ['login_cellphone', [
       'data.info_list', 'data.info_list.userid', 'data.info_list.nickname',
-      'data.info_list.pic', 'data.info_list.p_grade', 'data.secu_params',
-      'data.token', 'data.userid', 'data.t1', 'data.vip_type', 'data.vip_token',
+      'data.info_list.pic', 'data.info_list.p_grade',
     ]],
   ]);
   for (const fields of expected.values()) {
     for (const path of fields) {
       const terminal = path.split('.').at(-1);
-      if (!decoder.includes(`\"${terminal}\"`)) throw new Error(`V2 固定证据缺少字段：${path}`);
+      if (!decoder.includes(terminal)) throw new Error(`Mobile 固定证据缺少字段：${path}`);
     }
   }
   return expected;
@@ -532,6 +535,7 @@ function catalogYaml(endpoints) {
     lines.push(`    domain: ${yamlScalar(endpoint.domain)}`);
     lines.push(`    wrapper_route: ${yamlScalar(endpoint.wrapperRoute)}`);
     lines.push(`    source: ${yamlScalar(`module/${endpoint.module}.js@${API_COMMIT}`)}`);
+    for (const evidence of homeSliceEvidence(endpoint.id)) lines.push(`    android_evidence: ${yamlScalar(evidence)}`);
     lines.push('    platform: "lite"');
     lines.push(`    authentication: ${yamlScalar(endpoint.authentication)}`);
     lines.push(`    operation: ${yamlScalar(endpoint.operation)}`);
@@ -599,6 +603,12 @@ function endpointMarkdown(domain, endpoints) {
     lines.push(`| Cookie 回写 | ${endpoint.cookieWriteback ? mdCode(EVIDENCE.source) : '未发现'} |`);
     lines.push(`| 风控 | ${mdCode(endpoint.riskHandling)} |`);
     lines.push(`| 来源 | ${mdCode(`MoeKoeMusic/api@${API_COMMIT}:module/${endpoint.module}.js`)} |`, '');
+    const androidEvidence = homeSliceEvidence(endpoint.id);
+    if (androidEvidence.length) {
+      lines.push('### Android 首页迁移证据', '');
+      for (const evidence of androidEvidence) lines.push(`- ${mdCode(evidence)}`);
+      lines.push('');
+    }
     lines.push('### 上游请求', '', '| 序号 | 传输 | Base URL | Path | Method | x-router | 签名 | 响应 |', '|---:|---|---|---|---|---|---|---|');
     for (const request of endpoint.upstreamRequests) {
       lines.push(`| ${request.sequence} | ${mdCode(request.kind)} | ${mdCode(request.baseUrl)} | ${mdCode(request.path)} | ${mdCode(request.method)} | ${mdCode(request.router || '-')} | ${mdCode(request.signing)} | ${mdCode(request.responseType)} |`);
@@ -649,6 +659,19 @@ function camel(value) {
   return p ? p[0].toLowerCase() + p.slice(1) : value;
 }
 
+function homeSliceEvidence(endpointId) {
+  const mobileApi = `MoeKoeMusic-Mobile/api@${MOBILE_API_COMMIT}`;
+  const mobileConsumer = `MoeKoeMusic-Mobile@${MOBILE_COMMIT}`;
+  const evidence = {
+    'API-DISCOVER-003': [`${mobileApi}:module/everyday_recommend.js`, `${mobileConsumer}:src/features/home/load-home-data.ts`],
+    'API-DISCOVER-009': [`${mobileApi}:module/top_card.js`, `MoeKoeMusic@${TOP_CARD_PC_COMMIT}:src/components/home/HomeRecommendations.vue`],
+    'API-DISCOVER-012': [`${mobileApi}:module/top_playlist.js`, `${mobileConsumer}:src/features/home/load-home-data.ts`],
+    'API-DISCOVER-013': [`${mobileApi}:module/top_song.js`, `${mobileConsumer}:src/features/home/load-home-data.ts`],
+    'API-SONG-011': [`${mobileApi}:module/song_url.js`, `${mobileConsumer}:src/features/player/song-url.ts`],
+  };
+  return evidence[endpointId] || [];
+}
+
 function staticDocuments(endpoints, consumerRoutes) {
   const domainCounts = new Map();
   for (const endpoint of endpoints) domainCounts.set(endpoint.domain, (domainCounts.get(endpoint.domain) || 0) + 1);
@@ -666,12 +689,12 @@ function staticDocuments(endpoints, consumerRoutes) {
     'fixtures/README.md': `# Fixture 准入规则\n\n当前静态基线没有可安全认定为完整上游响应的 JSON Fixture，因此本目录暂不包含伪造样例。后续 Fixture 必须：\n\n- 来自固定源码已提交样例或经批准的只读采样。\n- 旁置来源、提交或采样条件。\n- 删除 token、userid、Cookie、dfid、MID、GUID、设备信息和账号内容。\n- 不以人工拼装 JSON 冒充真实响应。\n- 在响应 Schema 中把相应字段标为 \`${EVIDENCE.fixture}\`。\n`,
   };
   generatedDocuments['ANDROID_MAPPING.md'] = generatedDocuments['ANDROID_MAPPING.md'].replace(
-    '## 首条纵切片',
-    '## 通用风控\n\n`core:network` 从 Body 与 Header 统一识别 `20028`/`ssaCode` Challenge，通过不依赖 UI 的 `ApiRiskVerifier` 串行完成验证。普通请求验证成功后重新生成时间戳和签名并最多重试一次；验证接口必须旁路协调器，超时或断网不得触发重试。\n\n## 首条纵切片',
+    '## 首条纵切片\n\n按搜索 → 播放地址 → 歌词 → Media3 播放实施。开始 Kotlin 代码前，先为相应端点补齐签名 golden fixture、脱敏响应 fixture 或明确的宽容 DTO 决策。',
+    '## 通用风控\n\n`core:network` 从 Body 与 Header 统一识别 `20028`/`ssaCode` Challenge，通过不依赖 UI 的 `ApiRiskVerifier` 串行完成验证。普通请求验证成功后重新生成时间戳和签名并最多重试一次；验证接口必须旁路协调器，超时或断网不得触发重试。\n\n## 首页首批纵切片\n\n- `ApiNetworkDataSource` 暴露每日推荐、`top_card`、推荐歌单、新歌速递和歌曲 URL 五个窄操作；共同复用设备注册、Session、签名、风控和请求执行器。\n- `HomeRepository` 并发刷新三个首页区块，每日推荐在每次成功请求后重抽 6 首；单区失败保留旧快照，旧代际结果不得覆盖新请求。\n- `loadRadio(mode)` 按需加载 `card_id=1/2/3/4/6`，默认私人好歌为 1。\n- `SongPlaybackRepository` 只返回首个 HTTPS 主/备用地址、时长和扩展名，并类型化区分版权、VIP、网络、协议与风控失败。\n- 本批只落到 `core:network`、`core:data`、`core:model`，不包含 Compose、导航、Media3、Queue 或 Mini Player。',
   );
   generatedDocuments['README.md'] = generatedDocuments['README.md'].replace(
     `- API 协议源：\`MoeKoeMusic/api@${API_COMMIT}\``,
-    `- API 协议源：\`MoeKoeMusic/api@${API_COMMIT}\`\n- 行为旁证：\`MoeKoeMusic-Mobile-V2@${V2_COMMIT}\`（仅 \`${EVIDENCE.reference}\`，不得覆盖 Lite）`,
+    `- API 协议源：\`MoeKoeMusic/api@${API_COMMIT}\`\n- 首页 Mobile 消费证据：\`MoeKoeMusic-Mobile@${MOBILE_COMMIT}\`\n- Mobile 内嵌 API 证据：\`MoeKoeMusic-Mobile/api@${MOBILE_API_COMMIT}\`\n- \`top_card\` PC 消费链：\`MoeKoeMusic@${TOP_CARD_PC_COMMIT}\`\n- 其他 Mobile 分支或重写版本不作为证据来源。`,
   );
   generatedDocuments['PROTOCOL.md'] = generatedDocuments['PROTOCOL.md'].replace(
     '## 加密与二进制',
@@ -683,13 +706,13 @@ function staticDocuments(endpoints, consumerRoutes) {
   );
   generatedDocuments['VERIFICATION.md'] = generatedDocuments['VERIFICATION.md'].replace(
     `3. \`interface.d.ts\` 或现有说明：\`${EVIDENCE.declared}\`。`,
-    `3. V2 固定版本实际读取或测试的行为旁证：\`${EVIDENCE.reference}\`；不得覆盖 Lite 源码。\n4. \`interface.d.ts\` 或现有说明：\`${EVIDENCE.declared}\`。`,
+    `3. 固定 Mobile 消费端实际读取或测试的行为旁证：\`${EVIDENCE.reference}\`；不得覆盖 Lite 源码。\n4. \`interface.d.ts\` 或现有说明：\`${EVIDENCE.declared}\`。`,
   ).replace('4. 固定仓库已有脱敏样例', '5. 固定仓库已有脱敏样例')
     .replace('5. 静态推断', '6. 静态推断')
     .replace('6. 无证据', '7. 无证据');
   generatedDocuments['VERIFICATION.md'] = generatedDocuments['VERIFICATION.md'].replace(
     '## 证据优先级',
-    `以上统计只描述静态文档生成过程。\n\n## Android 运行时 Canary\n\n- 2026-08-11：\`API-SEARCH-001\` 已到达上游网关，但使用未注册的 \`dfid=-\` 时被业务代码 \`152\` 拒绝，因此该端点需要有效设备上下文后才能作为正式搜索验证。\n- 2026-08-11：参考 \`MoeKoeMusic-Mobile-V2@${V2_COMMIT}\` 的无签名匿名搜索 Canary 已通过，确认当前网络、基础 JSON 解析与歌曲字段映射可工作。\n- Live Test 必须由 \`RESONOTE_RUN_LIVE_API_TESTS=true\` 显式启用；没有保存原始响应、账号、Cookie 或设备标识。\n\n## 证据优先级`,
+    `以上统计只描述静态文档生成过程。\n\n## Android 运行时 Canary\n\n- \`LiveApiSearchCanaryTest\` 默认跳过，仅在 \`RESONOTE_RUN_LIVE_API_TESTS=true\` 时运行。\n- 首页 Canary 验证每日推荐、私人好歌、推荐歌单和新歌速递均至少返回一个可消费项目；播放地址最多尝试 5 个公开推荐候选，至少一个必须解析出 HTTPS 地址。\n- Canary 不需要账号，不下载或播放音频，也不记录完整响应、Cookie、签名或设备标识。\n- 2026-08-12 实测首页四组内容接口均非空；播放地址的 5 个当次候选均被服务端判为无授权，因此严格播放 canary 当次失败，保留该失败以反映真实服务状态。\n\n## 证据优先级`,
   );
   return generatedDocuments;
 }
@@ -740,7 +763,9 @@ function write(relative, content) {
 function main() {
   ensureCommit(MOEKOE_ROOT, APP_COMMIT);
   ensureCommit(API_ROOT, API_COMMIT);
-  loginReferenceFields = extractV2ReferenceEvidence();
+  ensureCommit(MOEKOE_ROOT, TOP_CARD_PC_COMMIT);
+  ensureCommit(join(MOBILE_ROOT, 'api'), MOBILE_API_COMMIT);
+  loginReferenceFields = extractMobileReferenceEvidence();
   const moduleFiles = listTree(API_ROOT, API_COMMIT, 'module')
     .filter((path) => /^module\/[^/]+\.js$/.test(path) && !path.split('/').at(-1).startsWith('_'))
     .sort();

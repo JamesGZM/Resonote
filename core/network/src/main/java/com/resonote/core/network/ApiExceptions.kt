@@ -29,6 +29,13 @@ class ApiProtocolException(val reason: Reason) : ApiException("API protocol fail
 class ApiServiceException(val serviceCode: String?) :
     ApiException("API service rejected the request${serviceCode?.let { " (code=$it)" }.orEmpty()}")
 
+class ApiPlaybackUnavailableException(val reason: Reason) : ApiException("Song playback unavailable: $reason") {
+    enum class Reason {
+        Copyright,
+        Vip,
+    }
+}
+
 class ApiRiskException(
     val challenge: ApiRiskChallenge,
     val reason: Reason,

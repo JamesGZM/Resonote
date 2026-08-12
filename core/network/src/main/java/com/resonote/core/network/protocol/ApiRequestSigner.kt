@@ -32,11 +32,18 @@ internal class ApiRequestSigner @Inject constructor() {
     fun signParamsKey(value: String): String =
         md5("${ApiProtocolConfig.APP_ID}${ApiProtocolConfig.ANDROID_SIGNATURE_SALT}${ApiProtocolConfig.CLIENT_VERSION}$value")
 
+    fun signSongKey(hash: String, mid: String, userId: String?): String =
+        md5("${hash.lowercase()}$LITE_SONG_KEY_SALT${ApiProtocolConfig.APP_ID}$mid${userId.orEmpty().ifBlank { "0" }}")
+
     private fun digest(vararg parts: ByteArray): String =
         MessageDigest.getInstance("MD5").run {
             parts.forEach(::update)
             digest().toHex()
         }
+
+    private companion object {
+        const val LITE_SONG_KEY_SALT = "185672dd44712f60bb1736df5a377e82"
+    }
 }
 
 internal fun ByteArray.toHex(uppercase: Boolean = false): String =

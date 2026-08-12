@@ -5,7 +5,9 @@ MoeKoeMusic/api at commit 6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb.
 That project is distributed under the MIT License; its license text is included in
 LICENSE-MoeKoeMusic-api.
 
-MoeKoeMusic-Mobile-V2 at commit c4b4f1d was consulted only as behavioral evidence.
-No Kotlin source from that project was copied into this module.
+MoeKoeMusic-Mobile at commit ab71195d4cf3297332490fd37704d1ae8973d4c5 and its
+embedded API at commit 283f1e97 were consulted as behavioral and protocol evidence.
+MoeKoeMusic at commit a86cfefb was consulted only for the top_card consumption chain.
+No GPL application source was copied into this module.
 
 The source-code licenses do not grant permission to use any upstream service.

@@ -199,6 +199,10 @@ Resonote 使用页面导航模式，不采用 NIA 当前 `topLevelStack + 每个
 - 新歌速递：首页展示 6 首歌曲的无分类预览，支持播放单曲、播放全部和通用歌曲操作；完整分页浏览仍属于发现页职责。
 - 页面只在首页提供搜索入口；点击进入独立搜索页，入口右侧话筒进入独立听歌识曲页。
 - 每个区块分别处理 Loading、Empty、Error、需要登录和部分数据可用状态；单一区块失败不应阻断整个首页。
+- 首次加载与下拉刷新并发更新每日推荐、推荐歌单和新歌速递；单区成功只替换该区，单区失败保留旧内容，首次全部失败保持空状态。
+- 每日推荐每次成功请求后从完整候选池重新洗牌并选取 6 首；不要求连续两次结果必然不同。
+- 推荐电台按用户操作调用 `top_card`，默认私人好歌 `card_id=1`，同时支持 `2/3/4/6`；不纳入整页刷新请求。
+- 首页刷新采用请求代际约束，旧请求不得覆盖后发刷新已经提交的新内容；本批仅保留进程内快照。
 
 Compact 首页实现基准已冻结：
 
@@ -644,15 +648,15 @@ Kotlin 协议层直接请求上游接口；签名、加密、设备注册、Sess
 | 能力 | 本地证据 | 当前 Android 状态 | 页面设计结论 |
 |---|---|---|---|
 | 匿名 Session 与风控基础 | 原生设备注册、Session、签名、加密与风控代码及测试 | 已合入 `main` | 可以设计匿名启动与统一受限状态 |
-| 首页推荐内容 | `docs/api/catalog.yaml` 的推荐、榜单、歌单等目录；PC 消费字段 | `ApiNetworkDataSource` 尚未公开首页能力 | 可冻结区块任务；真实字段、匿名性和错误样本待纵切片 |
+| 首页推荐内容 | Mobile 首页 `ab71195d`、内嵌 API `283f1e97`；`top_card` 消费链 `a86cfefb` | 五个窄 Network 操作、`HomeRepository`、并发/代际/保留旧区测试已实现 | 数据合同就绪；Compose 与导航不在本批 |
 | 搜索与歌曲样本 | Android Search DataSource、DTO、Repository 基础与测试 | 已有生产切片 | 可作为早期真实歌曲样本来源，但不能替代首页接口 |
-| 歌曲播放地址 | 静态目录 `/song/url`、`/song/url/new` 与旧客户端行为 | 尚未实现 Android 生产接口 | 不可把播放闭环标记为 implementation-ready；需验证公开/登录/VIP/版权状态 |
+| 歌曲播放地址 | Mobile 内嵌 `song_url` 与真实调用 Canary | Android 生产接口和 Repository 已实现；主/备用 HTTPS、版权/VIP/协议/网络/风控分类有测试 | 数据合同就绪；当次真实候选可能全部受限，播放闭环仍待 Media3 |
 | 歌词 | 静态目录 `/search/lyric` 获取 `id/accesskey`，再调用 `/lyric`；另有 PC/Mobile 字段证据 | 两步 Android 生产接口均尚未实现 | 可设计完整状态；真实逐字/翻译/音译样本待验证 |
 | Playback Service / Queue | 本文与产品合同已冻结职责、行为和依赖方向 | 生产模块、Controller 与持久化协议尚未创建 | 可讨论页面任务；实现前必须补 Playback ADR 与最小公开 API |
 | MediaSession / 系统通知 | Android 官方能力与产品合同 | 尚未接入生产播放链路 | 第一切片必须纳入，不是页面完成后的附加项 |
 | 封面与媒体 metadata | PC 字段和候选 API 响应证据 | Android 映射、占位与缓存策略尚未验证 | 低保真可用明确 fixture；高保真前需真实长度、缺失与失败样本 |
 
-结论：当前证据足以继续讨论页面清单、状态和低保真结构，但第一条切片尚未达到实现就绪。进入高保真或开发前，至少要完成首页代表区块、歌曲 URL、歌词的 Android 纵向切片，冻结 Playback 最小 API，并提供一组经过脱敏的真实字段与失败 fixture。
+结论：首页首批 API 与数据层已经达到实现就绪，歌词、Playback 最小 API、Media3 和 UI 仍是匿名在线沉浸播放闭环的后续阻塞项。真实 Canary 只证明运行当时的协议和内容可用性，不替代版权、VIP 或长期服务授权判断。
 
 ## 12. 决策与变更记录
 
@@ -742,6 +746,7 @@ Kotlin 协议层直接请求上游接口；签名、加密、设备注册、Sess
 | 2026-08-12 | P-081 | Music Item 首行固定为 Title → Quality → VIP，尾部 Duration 与 More 先保留；长标题只做单行末尾省略，Quality/VIP 不得侵入或越过 Duration。Playlist Item 固定 1:1 Artwork 与单行标题；Mini Player 复用同一信息优先级，并与同色 Bottom Navigation 保持 16dp 分隔及独立 Queue 入口 | 用户明确要求将已冻结组件写成可跨线程执行的文档合同 | Component System、Home、Lists、Tabs Shell、Player 和 QA | 已确认 |
 | 2026-08-12 | P-082 | Music Item 的 Playing Indicator 与 Duration 共用固定 Trailing Status Slot 且互斥；播放中以均衡器直接替换时长，More 继续保留 | 用户修正冻结视觉的播放中状态 | Component System、Song Lists、Playback State 和 QA | 已确认 |
 | 2026-08-12 | P-083 | Compact 首页锁定为同一页面的三段滚动状态：推荐区域、6 首每日推荐、6 个推荐歌单、6 首无分类新歌速递；Top App Bar 与 Bottom Navigation 固定，Mini Player 以 Overlay 覆盖滚动内容，末尾 Content Padding 保证最后一项可完整滚出遮挡 | 用户确认先锁定设计并进入代码实现；ImageGen 细节留待真实组件校正 | Home、Tabs Shell、Lists、Design QA 和 Implementation | 已确认 |
+| 2026-08-12 | P-084 | 首页首次加载与下拉刷新并发更新三个内容区；每日推荐每次成功后重抽 6 首；区块独立提交、失败保留旧内容并受请求代际保护；推荐电台按需使用 `top_card` 五种模式 | 用户确认以 `MoeKoeMusic-Mobile@ab71195d` 的刷新行为为准 | Home API、Repository、Refresh 和 Error Recovery | 已确认 |
 
 ## 13. 首轮讨论议题
 

@@ -87,7 +87,7 @@ NIA 继续是工程架构参考；MoeKoe 系列只用于识别产品能力、业
 |---|---|---|---|
 | 本地 `../MoeKoeMusic` | [`52c9833afe2e7fedcba8d5b23ff8d1f9731af73a`](https://github.com/MoeKoeMusic/MoeKoeMusic/tree/52c9833afe2e7fedcba8d5b23ff8d1f9731af73a) | GPL-2.0-only | 产品功能、页面入口、用户任务和状态语义参考；不复制 Vue/Electron 代码、样式或资产 |
 | `../MoeKoeMusic/api` submodule | `6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb` | MIT | API 能力与协议证据；只有逐文件确认来源、保留许可声明后才可选择性独立迁移 |
-| 本地 `../MoeKoeMusic-Mobile-V2` | `c4b4f1d56c7484580444cf294914fe0601e120bd` | GPL-2.0-only | Android/Compose/Media3 风险、测试场景和迁移教训参考；不复制 Kotlin 实现 |
+| 本地 `../MoeKoeMusic-Mobile` | `ab71195d4cf3297332490fd37704d1ae8973d4c5` | GPL-2.0-only | 移动端行为、响应漂移和真实消费链参考；不复制 Expo/React Native 实现 |
 
 参考优先级固定为：Resonote 已冻结设计规范 → 已确认产品/API 契约 → Android 官方指导 → NIA 架构 → MoeKoe 功能语义。旧项目中的路由守卫、存储、依赖和页面组织不自动成为 Resonote 决策。
 
@@ -340,10 +340,10 @@ NIA 没有音乐播放实现，以下模块是 Resonote 的扩展架构。Androi
 | 发现、排行榜、新歌、新专辑、推荐歌单 | `src/views/Discover.vue`、`src/components/discover/`、`src/views/Ranking.vue` | `:feature:discover:api/impl`；排行榜先作为 Discover 子目的地，不单独建模块 | data/domain、model、ui、Coil | 产品范围已确认；待 API/页面设计 |
 | 我的/资料库 | `src/views/Library.vue` | “我的”聚合 profile、account、playlist、cloud、local music 等 feature API，不直接拥有各 Repository 实现 | auth/library/local/cloud repositories、feature api | 产品范围已确认；待 API/页面设计 |
 | 搜索与建议 | `src/views/Search.vue`、`RecommendedSearch.vue`、`components/search/`；Mobile `src/app/search.tsx` | `:feature:search:api/impl`；只从首页进入独立页面；综合/单曲/歌单/专辑/MV/歌手为内部结果类型 | data/domain、model、ui；分页库按 API 决定 | 产品范围与入口已确认；待完整 API |
-| 本地音乐与外部文件 | `src/views/LocalMusic.vue`；Mobile V2 `feature/localmusic` | `:feature:localmusic:api/impl` + `:core:media:local`；SAF/ContentResolver 只作来源，App 私有副本/索引为事实源；本地音乐复用列表/Queue 合同 | data/database、WorkManager、playback api、ContentResolver、crypto digest | 产品范围、导入、去重、副本与删除语义已确认；待存储 ADR |
-| 登录、二维码、手机/密码、风险验证 | `src/views/Login.vue`；Mobile V2 `feature/login` | `:feature:login:api/impl`；session/auth Repository 属 data；App 组合统一登录门禁；provider 状态码映射留在 network/data 边界 | DataStore、Android Keystore；WebKit 仅官方风险页真实需要时加入 | 手机/密码与单一当前账号产品范围已确认；待密码 API/安全审计 |
+| 本地音乐与外部文件 | `src/views/LocalMusic.vue` | `:feature:localmusic:api/impl` + `:core:media:local`；SAF/ContentResolver 只作来源，App 私有副本/索引为事实源；本地音乐复用列表/Queue 合同 | data/database、WorkManager、playback api、ContentResolver、crypto digest | 产品范围、导入、去重、副本与删除语义已确认；待存储 ADR |
+| 登录、二维码、手机/密码、风险验证 | `src/views/Login.vue`；Mobile `src/features/account/` | `:feature:login:api/impl`；session/auth Repository 属 data；App 组合统一登录门禁；provider 状态码映射留在 network/data 边界 | DataStore、Android Keystore；WebKit 仅官方风险页真实需要时加入 | 手机/密码与单一当前账号产品范围已确认；待密码 API/安全审计 |
 | 歌单/专辑/歌手详情 | `src/views/PlaylistDetail.vue` | 产品层使用独立目的地与状态模型；可先由 `:feature:playlist:api/impl` 承载共享集合能力，专辑/歌手边界由 API 纵切片验证后决定是否拆 feature | collection/artist repositories、model、playback api、navigation | 产品 Must；功能合同已确认，待 API/模块切片 |
-| 用户资料 | Library 资料入口；Mobile V2 `feature/profile` | `:feature:profile:api/impl`，允许从“我的”、搜索和内容作者入口复用 | user repository、model、ui/navigation | 待账号 API |
+| 用户资料 | Library 资料入口；Mobile `src/features/account/` | `:feature:profile:api/impl`，允许从“我的”、搜索和内容作者入口复用 | user repository、model、ui/navigation | 待账号 API |
 | 设置、主题、语言、缓存管理 | `src/views/Settings.vue`、`src/config/settings.js` | `:feature:settings:impl`；从“我的”进入；设置值通过 Repository/DataStore；播放/歌词通过各自 api，缓存占用与清除通过 media cache port，不直接访问缓存目录 | datastore/data、playback/player api、media cache、designsystem；动态色按平台能力 | 产品 Must；首版仅简体中文，保留资源本地化架构 |
 | Player、MiniPlayer、Queue、歌词 | `src/components/player/`、`src/views/Lyrics.vue` | 使用 4.4 节 playback 与 player feature 分层；Mini Player 常驻 App Scaffold，歌曲主体进入 Full Player，独立操作直接打开 Queue；Queue/Lyrics 默认不独立成 feature；旧 Player 图只作历史方向稿 | playback api/service、lyrics repository、player impl | 入口与状态合同已确认；Full Player 待按 NIA + MD3 Adaptive 重设计 |
 | 云盘 | `src/views/CloudDrive.vue` | 独立 `:feature:cloud:api/impl`；Android 原生实现 PC 已用的列表、上传、删除和播放地址协议；远端文件、流式缓存与本地媒体不得混为同一模型 | core network/data、playback api、upload coordinator | 产品范围和接口能力已确认；待 Android API 纵向切片 |
@@ -774,7 +774,7 @@ dependencies {
 }
 ```
 
-Mobile V2 的 `:kugou-api` 使用 Ktor Client `3.5.1` + OkHttp Engine `5.4.0`，只作为协议验证证据。Resonote 已批准 OkHttp3 + Retrofit2，不同时引入 Ktor；如果某种动态协议无法由 Retrofit 清晰表达，先用注入的 OkHttp `Call.Factory` 写小型 data source，而不是增加第二套 Client 栈。
+Resonote 已批准 OkHttp3 + Retrofit2，不同时引入第二套 Client 栈；如果某种动态协议无法由 Retrofit 清晰表达，先用注入的 OkHttp `Call.Factory` 写小型 data source。
 
 风控是跨 Endpoint 的协议能力。`core:network` 负责识别 Challenge、串行调用抽象的 Verifier，并在验证成功后重新签名、最多重试一次；验证码 UI 由应用层实现，风控接口本身必须旁路该协调器以避免递归。
 
@@ -796,20 +796,9 @@ Mobile V2 的 `:kugou-api` 使用 Ktor Client `3.5.1` + OkHttp Engine `5.4.0`，
 | `recognition` | api → navigation；impl → recognition port、ui | 平台录音 API；协议 SDK 经隐私审计后加入 | 后台偷录、原始音频无限期保存 |
 | `video` | api → navigation；impl → video repository、ui/designsystem、playback-api | Media3 video/UI | 复用音乐 Queue、同时播放音频与视频、后台视频、PiP |
 
-#### 6.7.3 条件依赖候选证据
+#### 6.7.3 条件依赖准入
 
-Mobile V2 固定快照已经验证过下列库族，但它们不因旧项目存在而自动获批：
-
-| 能力 | 坐标 | V2 快照版本 | Resonote 准入条件 |
-|---|---|---:|---|
-| 二维码生成 | `com.google.zxing:core` | `3.5.4` | 登录 API 确认 QR 流程且完成内容/超时测试 |
-| 风险验证 WebView | `androidx.webkit:webkit` | `1.16.0` | 只有 provider 官方 H5 验证无法原生完成；限制 origin、桥接和返回数据 |
-| 歌词解析 | `com.mocharealm.accompanist:lyrics-core` | `0.4.7` | 歌词格式与许可审核通过，并用真实 fixture 验证逐字/翻译/音译 |
-| Player 封面取色 | `androidx.palette:palette` | `1.0.0` | Player 动态主题获批；只消费已解码图片且有稳定回退 |
-| 图片网络 | `io.coil-kt.coil3:coil-network-okhttp` | `3.4.0` | 若最终选择 Coil 3，必须与 Coil Compose 同版本并只在装配层加入 |
-| 本地导入调度 | `androidx.work:work-runtime-ktx` | `2.11.2` | 大文件复制需要进程恢复、唯一工作和进度持久化 |
-
-版本只代表 `MoeKoeMusic-Mobile-V2@c4b4f1d` 的运行证据。Resonote 创建工程时继续执行稳定兼容矩阵，不混用该快照的 Compose BOM、Navigation 2、Ktor 或 Material3 版本。
+二维码、WebView、歌词解析、Palette、图片网络和 WorkManager 等候选依赖只按 Resonote 的真实消费者、许可、安全审计和稳定兼容矩阵准入，不因任何旧项目曾经使用而自动获批。
 
 ## 7. 后续搭建顺序与完成条件
 

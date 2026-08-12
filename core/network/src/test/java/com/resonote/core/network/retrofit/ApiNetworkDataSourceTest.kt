@@ -2,8 +2,11 @@ package com.resonote.core.network.retrofit
 
 import com.google.common.truth.Truth.assertThat
 import com.resonote.core.network.ApiHttpException
+import com.resonote.core.network.ApiPlaybackUnavailableException
+import com.resonote.core.network.ApiProtocolException
 import com.resonote.core.network.ApiServiceException
 import com.resonote.core.network.model.NetworkMobileCodeLoginResult
+import com.resonote.core.network.model.NetworkRecommendationMode
 import com.resonote.core.network.protocol.ApiCallExecutor
 import com.resonote.core.network.protocol.ApiDeviceIdentityFactory
 import com.resonote.core.network.protocol.ApiEndpointOrigins
@@ -72,6 +75,155 @@ class ApiNetworkDataSourceTest {
     }
 
     @Test
+    fun dailyRecommendationsUsesMobileContractAndDecodesRequiredFields() = runTest {
+        gatewayServer.enqueue(
+            jsonResponse(
+                """{"status":1,"data":{"song_list":[{"hash":"ABC","ori_audio_name":"Song","author_name":"Artist","sizable_cover":"https://img/{size}.jpg","time_length":245,"hash_320":"HQ","hash_flac":"SQ","privilege":10}]}}""",
+            ),
+        )
+
+        val songs = dataSource().dailyRecommendations()
+
+        assertThat(songs).hasSize(1)
+        assertThat(songs.single().durationMillis).isEqualTo(245_000)
+        assertThat(songs.single().losslessHash).isEqualTo("SQ")
+        val request = gatewayServer.takeRequest()
+        assertThat(request.method).isEqualTo("POST")
+        assertThat(request.requestUrl?.host).isEqualTo(gatewayServer.hostName)
+        assertThat(request.requestUrl?.encodedPath).isEqualTo("/everyday_song_recommend")
+        assertThat(request.requestUrl?.queryParameter("platform")).isEqualTo("ios")
+        assertThat(request.getHeader("x-router")).isEqualTo("everydayrec.service.kugou.com")
+        assertThat(request.requestUrl?.queryParameter("signature")).isNotEmpty()
+    }
+
+    @Test
+    fun nonEmptySongListWithNoConsumableItemsIsProtocolFailure() {
+        gatewayServer.enqueue(jsonResponse("""{"status":1,"data":{"song_list":[{"hash":"","songname":""}]}}"""))
+
+        assertThrows(ApiProtocolException::class.java) {
+            runTest { dataSource().dailyRecommendations() }
+        }
+    }
+
+    @Test
+    fun recommendedPlaylistsUsesNestedMobileBody() = runTest {
+        gatewayServer.enqueue(
+            jsonResponse(
+                """{"status":1,"data":{"special_list":[{"global_collection_id":"gid","specialname":"Playlist","flexible_cover":"https://img/{size}.jpg","play_count":1234}]}}""",
+            ),
+        )
+
+        val playlists = dataSource().recommendedPlaylists(page = 1, pageSize = 6)
+
+        assertThat(playlists.single().id).isEqualTo("gid")
+        val request = gatewayServer.takeRequest()
+        assertThat(request.method).isEqualTo("POST")
+        assertThat(request.requestUrl?.host).isEqualTo(gatewayServer.hostName)
+        assertThat(request.requestUrl?.encodedPath).isEqualTo("/v2/special_recommend")
+        assertThat(request.getHeader("x-router")).isEqualTo("specialrec.service.kugou.com")
+        val body = json.parseToJsonElement(request.body.readUtf8()).jsonObject
+        assertThat(body["page"]?.jsonPrimitive?.content).isEqualTo("1")
+        assertThat(body["pagesize"]?.jsonPrimitive?.content).isEqualTo("6")
+        assertThat(body["key"]?.jsonPrimitive?.content).isNotEmpty()
+        val nested = body["special_recommend"]?.jsonObject
+        assertThat(nested?.get("categoryid")?.jsonPrimitive?.content).isEqualTo("0")
+        assertThat(nested?.get("withsong")?.jsonPrimitive?.content).isEqualTo("0")
+    }
+
+    @Test
+    fun newSongsUsesFixedUnclassifiedRankAndDecodesDeprecatedFallback() = runTest {
+        gatewayServer.enqueue(
+            jsonResponse(
+                """{"status":1,"data":[{"filename":"Artist - New Song","deprecated":{"hash":"DEF","duration":210},"trans_param":{"union_cover":"https://img/{size}.jpg"}}],"total":1}""",
+            ),
+        )
+
+        val songs = dataSource().newSongs(page = 1, pageSize = 6)
+
+        assertThat(songs.single().hash).isEqualTo("DEF")
+        assertThat(songs.single().title).isEqualTo("New Song")
+        val request = gatewayServer.takeRequest()
+        val body = json.parseToJsonElement(request.body.readUtf8()).jsonObject
+        assertThat(request.method).isEqualTo("POST")
+        assertThat(request.requestUrl?.host).isEqualTo(gatewayServer.hostName)
+        assertThat(request.requestUrl?.encodedPath).isEqualTo("/musicadservice/container/v1/newsong_publish")
+        assertThat(request.requestUrl?.queryParameter("signature")).isNotEmpty()
+        assertThat(body["rank_id"]?.jsonPrimitive?.content).isEqualTo("21608")
+        assertThat(body["tags"]?.toString()).isEqualTo("[]")
+    }
+
+    @Test
+    fun radioRecommendationsMapsAllSupportedCardIds() = runTest {
+        NetworkRecommendationMode.entries.forEach {
+            gatewayServer.enqueue(jsonResponse("""{"status":1,"data":{"song_list":[]}}"""))
+        }
+
+        NetworkRecommendationMode.entries.forEach { mode ->
+            dataSource().radioRecommendations(mode)
+            val request = gatewayServer.takeRequest()
+            assertThat(request.method).isEqualTo("POST")
+            assertThat(request.requestUrl?.host).isEqualTo(gatewayServer.hostName)
+            assertThat(request.requestUrl?.encodedPath).isEqualTo("/singlecardrec.service/v1/single_card_recommend")
+            assertThat(request.requestUrl?.queryParameter("card_id")).isEqualTo(mode.cardId.toString())
+            assertThat(request.requestUrl?.queryParameter("platform")).isEqualTo("ios")
+            assertThat(request.requestUrl?.queryParameter("signature")).isNotEmpty()
+            val body = json.parseToJsonElement(request.body.readUtf8()).jsonObject
+            assertThat(body["platform"]?.jsonPrimitive?.content).isEqualTo("android")
+            assertThat(body["client_playlist"]?.toString()).isEqualTo("[]")
+        }
+    }
+
+    @Test
+    fun songSourceUsesRegisteredIdentitySongKeyAndHttpsBackup() = runTest {
+        gatewayServer.enqueue(
+            jsonResponse(
+                """{"status":1,"url":["http://unsafe.example/song.mp3"],"backupUrl":["https://cdn.example/song.mp3"],"timeLength":321000,"extName":"mp3"}""",
+            ),
+        )
+
+        val source = dataSource().resolveSongSource("ABCDEF", "12", "34")
+
+        assertThat(source.uri).isEqualTo("https://cdn.example/song.mp3")
+        assertThat(source.durationMillis).isEqualTo(321_000)
+        val request = gatewayServer.takeRequest()
+        assertThat(request.method).isEqualTo("GET")
+        assertThat(request.requestUrl?.host).isEqualTo(gatewayServer.hostName)
+        assertThat(request.requestUrl?.encodedPath).isEqualTo("/v5/url")
+        assertThat(request.getHeader("x-router")).isEqualTo("trackercdn.kugou.com")
+        assertThat(request.requestUrl?.queryParameter("hash")).isEqualTo("abcdef")
+        assertThat(request.requestUrl?.queryParameter("album_id")).isEqualTo("12")
+        assertThat(request.requestUrl?.queryParameter("album_audio_id")).isEqualTo("34")
+        assertThat(request.requestUrl?.queryParameter("dfid")).isEqualTo("fixture-dfid")
+        assertThat(request.requestUrl?.queryParameter("key")).isNotEmpty()
+        assertThat(request.requestUrl?.queryParameter("signature")).isNotEmpty()
+    }
+
+    @Test
+    fun songSourceClassifiesCopyrightWithoutAcceptingCleartextUrl() {
+        gatewayServer.enqueue(jsonResponse("""{"status":3,"url":[]}"""))
+
+        val failure = assertThrows(ApiPlaybackUnavailableException::class.java) {
+            runTest { dataSource().resolveSongSource("ABCDEF") }
+        }
+
+        assertThat(failure.reason).isEqualTo(ApiPlaybackUnavailableException.Reason.Copyright)
+    }
+
+    @Test
+    fun songSourceClassifiesVipAndMalformedResponseSeparately() {
+        gatewayServer.enqueue(jsonResponse("""{"status":1,"url":[],"backupUrl":[]}"""))
+        gatewayServer.enqueue(jsonResponse("""{"url":[]}"""))
+
+        val vip = assertThrows(ApiPlaybackUnavailableException::class.java) {
+            runTest { dataSource().resolveSongSource("ABCDEF") }
+        }
+        assertThat(vip.reason).isEqualTo(ApiPlaybackUnavailableException.Reason.Vip)
+        assertThrows(ApiProtocolException::class.java) {
+            runTest { dataSource().resolveSongSource("ABCDEF") }
+        }
+    }
+
+    @Test
     fun sendMobileCodeUsesIsolatedMidIdentityAndExactBody() = runTest {
         mobileCodeServer.enqueue(jsonResponse("""{"status":1}"""))
 
@@ -104,6 +256,22 @@ class ApiNetworkDataSourceTest {
         assertThat(register.body.readUtf8()).matches("[A-Za-z0-9+/]+={0,2}")
         assertThat(search.requestUrl?.queryParameter("dfid")).isEqualTo("registered-dfid")
         assertThat(search.requestUrl?.queryParameter("signature")).isNotEmpty()
+    }
+
+    @Test
+    fun homeRequestsReuseSingleDeviceRegistration() = runTest {
+        val registration = crypto.encryptPlaylist("""{"status":1,"data":{"dfid":"registered-dfid"}}""")
+        deviceRegistrationServer.enqueue(MockResponse().setResponseCode(200).setBody(Buffer().write(registration.ciphertext)))
+        gatewayServer.enqueue(jsonResponse("""{"status":1,"data":{"song_list":[]}}"""))
+        gatewayServer.enqueue(jsonResponse("""{"status":1,"data":{"special_list":[]}}"""))
+        val dataSource = dataSource(session.copy(dfid = null, token = null, userId = null, cookies = emptyMap()))
+
+        dataSource.dailyRecommendations()
+        dataSource.recommendedPlaylists(page = 1, pageSize = 6)
+
+        assertThat(deviceRegistrationServer.requestCount).isEqualTo(1)
+        assertThat(gatewayServer.takeRequest().requestUrl?.queryParameter("dfid")).isEqualTo("registered-dfid")
+        assertThat(gatewayServer.takeRequest().requestUrl?.queryParameter("dfid")).isEqualTo("registered-dfid")
     }
 
     @Test

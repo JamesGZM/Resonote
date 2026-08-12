@@ -119,6 +119,11 @@
 | 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/everyday_recommend.js</code> |
 
+### Android 首页迁移证据
+
+- <code>MoeKoeMusic-Mobile/api@283f1e97:module/everyday_recommend.js</code>
+- <code>MoeKoeMusic-Mobile@ab71195d4cf3297332490fd37704d1ae8973d4c5:src/features/home/load-home-data.ts</code>
+
 ### 上游请求
 
 | 序号 | 传输 | Base URL | Path | Method | x-router | 签名 | 响应 |
@@ -432,6 +437,11 @@
 | 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/top_card.js</code> |
 
+### Android 首页迁移证据
+
+- <code>MoeKoeMusic-Mobile/api@283f1e97:module/top_card.js</code>
+- <code>MoeKoeMusic@a86cfefb:src/components/home/HomeRecommendations.vue</code>
+
 ### 上游请求
 
 | 序号 | 传输 | Base URL | Path | Method | x-router | 签名 | 响应 |
@@ -602,6 +612,11 @@
 | 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/top_playlist.js</code> |
 
+### Android 首页迁移证据
+
+- <code>MoeKoeMusic-Mobile/api@283f1e97:module/top_playlist.js</code>
+- <code>MoeKoeMusic-Mobile@ab71195d4cf3297332490fd37704d1ae8973d4c5:src/features/home/load-home-data.ts</code>
+
 ### 上游请求
 
 | 序号 | 传输 | Base URL | Path | Method | x-router | 签名 | 响应 |
@@ -669,6 +684,11 @@
 | Cookie 回写 | 未发现 |
 | 风控 | <code>handle-and-replay-once</code> |
 | 来源 | <code>MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb:module/top_song.js</code> |
+
+### Android 首页迁移证据
+
+- <code>MoeKoeMusic-Mobile/api@283f1e97:module/top_song.js</code>
+- <code>MoeKoeMusic-Mobile@ab71195d4cf3297332490fd37704d1ae8973d4c5:src/features/home/load-home-data.ts</code>
 
 ### 上游请求
 

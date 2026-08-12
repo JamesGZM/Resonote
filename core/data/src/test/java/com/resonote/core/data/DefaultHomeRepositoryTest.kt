@@ -1,0 +1,270 @@
+package com.resonote.core.data
+
+import com.google.common.truth.Truth.assertThat
+import com.resonote.core.model.AudioQuality
+import com.resonote.core.model.ContentFailure
+import com.resonote.core.model.HomeRefreshResult
+import com.resonote.core.model.HomeSection
+import com.resonote.core.model.PlaybackUnavailableReason
+import com.resonote.core.model.RecommendationMode
+import com.resonote.core.model.ResolveSongSourceResult
+import com.resonote.core.model.OnlineSong
+import com.resonote.core.network.ApiNetworkDataSource
+import com.resonote.core.network.ApiNetworkException
+import com.resonote.core.network.ApiPlaybackUnavailableException
+import com.resonote.core.network.ApiProtocolException
+import com.resonote.core.network.ApiRiskException
+import com.resonote.core.network.model.NetworkHomePlaylist
+import com.resonote.core.network.model.NetworkHomeSong
+import com.resonote.core.network.model.NetworkMobileCodeLoginResult
+import com.resonote.core.network.model.NetworkRecommendationMode
+import com.resonote.core.network.model.NetworkSearchPage
+import com.resonote.core.network.model.NetworkSongSource
+import com.resonote.core.network.risk.ApiRiskChallenge
+import java.io.IOException
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertThrows
+import org.junit.Test
+
+class DefaultHomeRepositoryTest {
+    @Test
+    fun refreshLoadsSectionsConcurrentlyAndSamplesExactlySixDailySongs() = runTest {
+        val gates = List(3) { CompletableDeferred<Unit>() }
+        val started = List(3) { CompletableDeferred<Unit>() }
+        val network =
+            FakeNetwork(
+                daily = { started[0].complete(Unit); gates[0].await(); List(8) { song("daily-$it") } },
+                playlists = { _, _ -> started[1].complete(Unit); gates[1].await(); List(8) { playlist("playlist-$it") } },
+                newSongLoader = { _, _ -> started[2].complete(Unit); gates[2].await(); List(8) { song("new-$it") } },
+            )
+        val repository = DefaultHomeRepository(network, HomeRecommendationSampler { songs, count -> songs.takeLast(count) })
+
+        val refresh = async { repository.refresh() }
+        started.forEach { it.await() }
+        gates.forEach { it.complete(Unit) }
+        val result = refresh.await() as HomeRefreshResult.Updated
+
+        assertThat(result.content.dailyRecommendations.map { it.hash })
+            .containsExactly("daily-2", "daily-3", "daily-4", "daily-5", "daily-6", "daily-7")
+            .inOrder()
+        assertThat(result.content.recommendedPlaylists).hasSize(6)
+        assertThat(result.content.newSongs).hasSize(6)
+    }
+
+    @Test
+    fun eachSuccessfulRefreshSamplesDailyPoolAgain() = runTest {
+        var sampleCall = 0
+        val repository =
+            DefaultHomeRepository(
+                FakeNetwork(daily = { List(8) { song("daily-$it") } }),
+                HomeRecommendationSampler { songs, count ->
+                    val offset = sampleCall++ % songs.size
+                    (songs.drop(offset) + songs.take(offset)).take(count)
+                },
+            )
+
+        val first = repository.refresh() as HomeRefreshResult.Updated
+        val second = repository.refresh() as HomeRefreshResult.Updated
+
+        assertThat(first.content.dailyRecommendations.first().hash).isEqualTo("daily-0")
+        assertThat(second.content.dailyRecommendations.first().hash).isEqualTo("daily-1")
+    }
+
+    @Test
+    fun partialFailureKeepsOldSectionAndUpdatesSuccessfulSections() = runTest {
+        var failDaily = false
+        var playlistVersion = "old"
+        val network =
+            FakeNetwork(
+                daily = {
+                    if (failDaily) throw ApiNetworkException(ApiNetworkException.Kind.Offline, IOException())
+                    List(6) { song("daily-$it") }
+                },
+                playlists = { _, _ -> listOf(playlist(playlistVersion)) },
+            )
+        val repository = DefaultHomeRepository(network, HomeRecommendationSampler { songs, count -> songs.take(count) })
+        repository.refresh()
+        failDaily = true
+        playlistVersion = "new"
+
+        val result = repository.refresh() as HomeRefreshResult.Updated
+
+        assertThat(result.content.dailyRecommendations.map { it.hash }).containsExactlyElementsIn(List(6) { "daily-$it" }).inOrder()
+        assertThat(result.content.recommendedPlaylists.single().id).isEqualTo("new")
+        assertThat(result.issues.single().section).isEqualTo(HomeSection.DailyRecommendations)
+        assertThat(result.issues.single().failure).isEqualTo(ContentFailure.Network)
+    }
+
+    @Test
+    fun firstRefreshAllFailedKeepsEmptyState() = runTest {
+        val failure = { throw ApiNetworkException(ApiNetworkException.Kind.Connection, IOException()) }
+        val repository =
+            DefaultHomeRepository(
+                FakeNetwork(
+                    daily = failure,
+                    playlists = { _, _ -> failure() },
+                    newSongLoader = { _, _ -> failure() },
+                ),
+                HomeRecommendationSampler { songs, count -> songs.take(count) },
+            )
+
+        val result = repository.refresh()
+
+        assertThat(result).isInstanceOf(HomeRefreshResult.Failed::class.java)
+        assertThat((result as HomeRefreshResult.Failed).issues).hasSize(3)
+        assertThat(repository.content.value).isNull()
+    }
+
+    @Test
+    fun firstRefreshPartiallySuccessfulPublishesAvailableSections() = runTest {
+        val repository =
+            DefaultHomeRepository(
+                FakeNetwork(
+                    daily = { throw ApiNetworkException(ApiNetworkException.Kind.Offline, IOException()) },
+                    playlists = { _, _ -> listOf(playlist("available")) },
+                    newSongLoader = { _, _ -> throw ApiProtocolException(ApiProtocolException.Reason.MalformedResponse) },
+                ),
+                HomeRecommendationSampler { songs, count -> songs.take(count) },
+            )
+
+        val result = repository.refresh() as HomeRefreshResult.Updated
+
+        assertThat(result.content.dailyRecommendations).isEmpty()
+        assertThat(result.content.recommendedPlaylists.single().id).isEqualTo("available")
+        assertThat(result.content.newSongs).isEmpty()
+        assertThat(result.issues.map { it.section })
+            .containsExactly(HomeSection.DailyRecommendations, HomeSection.NewSongs)
+            .inOrder()
+    }
+
+    @Test
+    fun cancellationPropagates() {
+        val repository =
+            DefaultHomeRepository(
+                FakeNetwork(daily = { throw CancellationException("cancelled") }),
+                HomeRecommendationSampler { songs, count -> songs.take(count) },
+            )
+
+        assertThrows(CancellationException::class.java) { runTest { repository.refresh() } }
+    }
+
+    @Test
+    fun olderRequestCannotOverwriteNewerRefresh() = runTest {
+        val firstStarted = CompletableDeferred<Unit>()
+        val releaseFirst = CompletableDeferred<Unit>()
+        var dailyCall = 0
+        val network =
+            FakeNetwork(
+                daily = {
+                    dailyCall += 1
+                    if (dailyCall == 1) {
+                        firstStarted.complete(Unit)
+                        releaseFirst.await()
+                        listOf(song("old"))
+                    } else {
+                        listOf(song("new"))
+                    }
+                },
+            )
+        val repository = DefaultHomeRepository(network, HomeRecommendationSampler { songs, count -> songs.take(count) })
+
+        val first = async { repository.refresh() }
+        firstStarted.await()
+        repository.refresh()
+        releaseFirst.complete(Unit)
+        first.await()
+
+        assertThat(repository.content.value?.dailyRecommendations?.single()?.hash).isEqualTo("new")
+    }
+
+    @Test
+    fun radioMapsEveryModeAndDomainFields() = runTest {
+        val observed = mutableListOf<NetworkRecommendationMode>()
+        val network = FakeNetwork(radio = { mode -> observed += mode; listOf(song("radio", lossless = true)) })
+        val repository = DefaultHomeRepository(network, HomeRecommendationSampler { songs, count -> songs.take(count) })
+
+        RecommendationMode.entries.forEach { repository.loadRadio(it) }
+
+        assertThat(observed).containsExactlyElementsIn(NetworkRecommendationMode.entries).inOrder()
+        val result = repository.loadRadio() as com.resonote.core.model.RadioRecommendationResult.Available
+        assertThat(result.songs.single().quality).isEqualTo(AudioQuality.Lossless)
+    }
+
+    @Test
+    fun playbackRepositoryMapsResolvedUnavailableAndNetworkResults() = runTest {
+        val network = FakeNetwork(source = { _, _, _ -> NetworkSongSource("https://cdn/song.mp3", 0, "mp3") })
+        val repository = DefaultSongPlaybackRepository(network)
+        val song = domainSong(durationMillis = 123_000)
+
+        val resolved = repository.resolveSource(song) as ResolveSongSourceResult.Resolved
+        assertThat(resolved.source.durationMillis).isEqualTo(123_000)
+
+        network.source = { _, _, _ -> throw ApiPlaybackUnavailableException(ApiPlaybackUnavailableException.Reason.Vip) }
+        val unavailable = repository.resolveSource(song) as ResolveSongSourceResult.Unavailable
+        assertThat(unavailable.reason).isEqualTo(PlaybackUnavailableReason.Vip)
+
+        network.source = { _, _, _ -> throw ApiPlaybackUnavailableException(ApiPlaybackUnavailableException.Reason.Copyright) }
+        val copyright = repository.resolveSource(song) as ResolveSongSourceResult.Unavailable
+        assertThat(copyright.reason).isEqualTo(PlaybackUnavailableReason.Copyright)
+
+        network.source = { _, _, _ -> throw ApiNetworkException(ApiNetworkException.Kind.Timeout, IOException()) }
+        val failed = repository.resolveSource(song) as ResolveSongSourceResult.Failed
+        assertThat(failed.failure).isEqualTo(ContentFailure.Network)
+
+        network.source = { _, _, _ -> throw ApiProtocolException(ApiProtocolException.Reason.MalformedResponse) }
+        val malformed = repository.resolveSource(song) as ResolveSongSourceResult.Failed
+        assertThat(malformed.failure).isEqualTo(ContentFailure.Protocol)
+
+        network.source = {
+                _, _, _ ->
+            throw ApiRiskException(
+                ApiRiskChallenge(eventId = "redacted"),
+                ApiRiskException.Reason.VerificationUnavailable,
+            )
+        }
+        val risk = repository.resolveSource(song) as ResolveSongSourceResult.Failed
+        assertThat(risk.failure).isEqualTo(ContentFailure.RiskVerificationUnavailable)
+    }
+
+    private fun song(id: String, lossless: Boolean = false) =
+        NetworkHomeSong(
+            hash = id,
+            title = "Title $id",
+            artist = "Artist",
+            coverUrl = "https://img/{size}.jpg",
+            albumId = "1",
+            albumAudioId = "2",
+            durationMillis = 180_000,
+            highQualityHash = null,
+            losslessHash = if (lossless) "sq" else null,
+            vip = false,
+        )
+
+    private fun playlist(id: String) = NetworkHomePlaylist(id, "Playlist $id", "https://img/{size}.jpg", 100)
+
+    private fun domainSong(durationMillis: Long) =
+        OnlineSong("hash", "Title", "Artist", null, "1", "2", durationMillis, AudioQuality.Standard, false)
+
+    private class FakeNetwork(
+        var daily: suspend () -> List<NetworkHomeSong> = { emptyList() },
+        var playlists: suspend (Int, Int) -> List<NetworkHomePlaylist> = { _, _ -> emptyList() },
+        var newSongLoader: suspend (Int, Int) -> List<NetworkHomeSong> = { _, _ -> emptyList() },
+        var radio: suspend (NetworkRecommendationMode) -> List<NetworkHomeSong> = { emptyList() },
+        var source: suspend (String, String?, String?) -> NetworkSongSource = { _, _, _ -> error("unused") },
+    ) : ApiNetworkDataSource {
+        override suspend fun dailyRecommendations() = daily()
+        override suspend fun recommendedPlaylists(page: Int, pageSize: Int) = playlists(page, pageSize)
+        override suspend fun newSongs(page: Int, pageSize: Int): List<NetworkHomeSong> = newSongLoader(page, pageSize)
+        override suspend fun radioRecommendations(mode: NetworkRecommendationMode) = radio(mode)
+        override suspend fun resolveSongSource(hash: String, albumId: String?, albumAudioId: String?) =
+            source(hash, albumId, albumAudioId)
+
+        override suspend fun searchSongs(keywords: String, page: Int, pageSize: Int): NetworkSearchPage = error("unused")
+        override suspend fun sendMobileCode(mobile: String) = error("unused")
+        override suspend fun loginWithMobileCode(mobile: String, code: String, selectedUserId: String?): NetworkMobileCodeLoginResult =
+            error("unused")
+    }
+}

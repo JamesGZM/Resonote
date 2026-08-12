@@ -6,7 +6,10 @@
 
 - PC 消费端：`MoeKoeMusic@52c9833afe2e7fedcba8d5b23ff8d1f9731af73a`
 - API 协议源：`MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb`
-- 行为旁证：`MoeKoeMusic-Mobile-V2@c4b4f1d56c7484580444cf294914fe0601e120bd`（仅 `REFERENCE_CONFIRMED`，不得覆盖 Lite）
+- 首页 Mobile 消费证据：`MoeKoeMusic-Mobile@ab71195d4cf3297332490fd37704d1ae8973d4c5`
+- Mobile 内嵌 API 证据：`MoeKoeMusic-Mobile/api@283f1e97`
+- `top_card` PC 消费链：`MoeKoeMusic@a86cfefb`
+- 其他 Mobile 分支或重写版本不作为证据来源。
 - 平台：概念版 `lite`（`appid=3116`、`clientver=11440`）
 - 模块：164
 - 验证：仅静态分析，无外部网络请求
