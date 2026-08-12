@@ -20,15 +20,25 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.resonote.core.designsystem.component.ResonoteNavigationSuiteScaffold
 import com.resonote.core.model.AudioQuality
+import com.resonote.core.model.Album
+import com.resonote.core.model.Ranking
+import com.resonote.feature.discover.impl.DiscoverRoute
+import com.resonote.feature.discover.impl.DiscoverSection
+import com.resonote.feature.discover.impl.DiscoverViewModel
 import com.resonote.feature.home.impl.HomeRoute
 import com.resonote.feature.home.impl.HomeViewModel
 import com.resonote.feature.player.impl.MiniPlayerUiState
@@ -51,15 +61,25 @@ internal fun TabsShell(
     playbackState: PrototypePlaybackState = rememberPrototypePlaybackState(),
     onSearchClick: () -> Unit = {},
     onPlaylistClick: (String) -> Unit = {},
+    onAlbumClick: (Album) -> Unit = {},
+    onRankingClick: (Ranking) -> Unit = {},
+    discoverViewModel: DiscoverViewModel? = null,
 ) {
     val tabsShellState = rememberTabsShellState()
     val selectedTab = tabsShellState.selectedTab
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val rootStateHolder = rememberSaveableStateHolder()
+    var requestedDiscoverSection by remember { mutableStateOf<DiscoverSection?>(null) }
     val comingSoonMessage = stringResource(R.string.feature_coming_soon)
 
     fun showComingSoon() {
         scope.launch { snackbarHostState.showSnackbar(comingSoonMessage) }
+    }
+
+    fun openDiscover(section: DiscoverSection) {
+        requestedDiscoverSection = section
+        tabsShellState.selectTab(ResonoteTab.DISCOVER)
     }
 
     BackHandler(enabled = selectedTab != ResonoteTab.HOME) { tabsShellState.handleBack() }
@@ -85,35 +105,53 @@ internal fun TabsShell(
             snackbarHost = { SnackbarHost(snackbarHostState) },
         ) { outerPadding ->
             Box(Modifier.fillMaxSize().padding(outerPadding)) {
-                when (selectedTab) {
-                    ResonoteTab.HOME -> {
-                        val bottomContentPadding = if (currentSong == null) 24.dp else 120.dp
-                        val common: @Composable (HomeViewModel?) -> Unit = { suppliedViewModel ->
-                            if (suppliedViewModel == null) {
-                                HomeRoute(
-                                    playingMediaId = playbackState.currentSongId, bottomContentPadding = bottomContentPadding,
-                                    onSearchClick = onSearchClick, onRecognitionClick = ::showComingSoon,
-                                    onPlay = playbackState::play, onOpenRankings = ::showComingSoon,
-                                    onOpenFeaturedPlaylists = ::showComingSoon,
-                                    onSongMoreClick = { showComingSoon() },
-                                    onPlaylistClick = { onPlaylistClick(it.id) },
-                                )
-                            } else {
-                                HomeRoute(
-                                    playingMediaId = playbackState.currentSongId, bottomContentPadding = bottomContentPadding,
-                                    onSearchClick = onSearchClick, onRecognitionClick = ::showComingSoon,
-                                    onPlay = playbackState::play, onOpenRankings = ::showComingSoon,
-                                    onOpenFeaturedPlaylists = ::showComingSoon,
-                                    onSongMoreClick = { showComingSoon() },
-                                    onPlaylistClick = { onPlaylistClick(it.id) },
-                                    viewModel = suppliedViewModel,
-                                )
+                rootStateHolder.SaveableStateProvider(selectedTab.name) {
+                    when (selectedTab) {
+                        ResonoteTab.HOME -> {
+                            val bottomContentPadding = if (currentSong == null) 24.dp else 120.dp
+                            val common: @Composable (HomeViewModel?) -> Unit = { suppliedViewModel ->
+                                if (suppliedViewModel == null) {
+                                    HomeRoute(
+                                        playingMediaId = playbackState.currentSongId, bottomContentPadding = bottomContentPadding,
+                                        onSearchClick = onSearchClick, onRecognitionClick = ::showComingSoon,
+                                        onPlay = playbackState::play, onOpenRankings = { openDiscover(DiscoverSection.RANKINGS) },
+                                        onOpenFeaturedPlaylists = ::showComingSoon,
+                                        onSongMoreClick = { showComingSoon() },
+                                        onPlaylistClick = { onPlaylistClick(it.id) },
+                                    )
+                                } else {
+                                    HomeRoute(
+                                        playingMediaId = playbackState.currentSongId, bottomContentPadding = bottomContentPadding,
+                                        onSearchClick = onSearchClick, onRecognitionClick = ::showComingSoon,
+                                        onPlay = playbackState::play, onOpenRankings = { openDiscover(DiscoverSection.RANKINGS) },
+                                        onOpenFeaturedPlaylists = ::showComingSoon,
+                                        onSongMoreClick = { showComingSoon() },
+                                        onPlaylistClick = { onPlaylistClick(it.id) },
+                                        viewModel = suppliedViewModel,
+                                    )
+                                }
                             }
+                            common(homeViewModel)
                         }
-                        common(homeViewModel)
+                        ResonoteTab.DISCOVER -> {
+                            val bottomContentPadding = if (currentSong == null) 24.dp else 120.dp
+                            val actualViewModel = discoverViewModel ?: hiltViewModel()
+                            DiscoverRoute(
+                                bottomContentPadding = bottomContentPadding,
+                                playingMediaId = playbackState.currentSongId,
+                                requestedSection = requestedDiscoverSection,
+                                onRequestedSectionConsumed = { requestedDiscoverSection = null },
+                                onPlaylistClick = { onPlaylistClick(it.id) },
+                                onRankingClick = onRankingClick,
+                                onAlbumClick = onAlbumClick,
+                                onPlaySongs = playbackState::playAll,
+                                onSongClick = playbackState::play,
+                                onSongMoreClick = { showComingSoon() },
+                                viewModel = actualViewModel,
+                            )
+                        }
+                        ResonoteTab.MY -> PlaceholderPage(stringResource(R.string.tab_my))
                     }
-                    ResonoteTab.DISCOVER -> PlaceholderPage(stringResource(R.string.tab_discover))
-                    ResonoteTab.MY -> PlaceholderPage(stringResource(R.string.tab_my))
                 }
 
                 currentSong?.let { song ->

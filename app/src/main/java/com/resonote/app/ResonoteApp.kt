@@ -40,6 +40,21 @@ internal fun ResonoteApp(viewModel: MainActivityViewModel = hiltViewModel()) {
                     playbackState = playbackState,
                     onSearchClick = { backStack.add(SearchNavKey()) },
                     onPlaylistClick = { backStack.add(PlaylistNavKey(it)) },
+                    onAlbumClick = { album ->
+                        backStack.add(
+                            AlbumNavKey(
+                                albumId = album.id,
+                                name = album.name,
+                                artist = album.artist,
+                                coverUrl = album.coverUrl,
+                                publishDate = album.publishDate,
+                                songCount = album.songCount,
+                            ),
+                        )
+                    },
+                    onRankingClick = { ranking ->
+                        backStack.add(RankingNavKey(ranking.id, ranking.title, ranking.coverUrl))
+                    },
                 )
             }
             entry<SearchNavKey> { key ->
