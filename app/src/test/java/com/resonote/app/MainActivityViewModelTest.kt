@@ -17,6 +17,7 @@ import com.resonote.core.navigation.LoginGateNavKey
 import com.resonote.core.navigation.LoginContinuation
 import com.resonote.core.navigation.TabsShellNavKey
 import com.resonote.feature.cloud.api.CloudNavKey
+import com.resonote.feature.local.api.LocalMusicNavKey
 import com.resonote.feature.vip.api.DailyVipNavKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -187,6 +188,19 @@ class MainActivityViewModelTest {
         assertThat(viewModel.externalImportRequests.value).containsExactly(
             ExternalLocalImportRequest(2, listOf("content://provider/foreground"), finishTaskOnBack = false),
         )
+    }
+
+    @Test
+    fun coldExternalLocalBackFinishesTaskWhileForegroundBackRestoresPreviousPage() {
+        val coldKey = LocalMusicNavKey(finishTaskOnBack = true)
+        val coldStack = mutableListOf<NavKey>(TabsShellNavKey, coldKey)
+        assertThat(coldStack.leaveLocalMusic(coldKey)).isTrue()
+        assertThat(coldStack).containsExactly(TabsShellNavKey, coldKey).inOrder()
+
+        val foregroundKey = LocalMusicNavKey(finishTaskOnBack = false)
+        val foregroundStack = mutableListOf<NavKey>(TabsShellNavKey, foregroundKey)
+        assertThat(foregroundStack.leaveLocalMusic(foregroundKey)).isFalse()
+        assertThat(foregroundStack).containsExactly(TabsShellNavKey)
     }
 
     private class FakeAuthRepository : AuthRepository {

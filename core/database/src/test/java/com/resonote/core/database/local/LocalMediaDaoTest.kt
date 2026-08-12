@@ -66,6 +66,36 @@ class LocalMediaDaoTest {
         assertThat(dao.findById("song")).isNull()
     }
 
+    @Test
+    fun namedDatabaseRetainsCompleteLocalMediaAfterCloseAndReopen() = runTest {
+        val context = RuntimeEnvironment.getApplication()
+        val databaseName = "local-media-restart-test.db"
+        context.deleteDatabase(databaseName)
+        val original = entity("persistent", storagePath = context.filesDir.resolve("persistent.flac").path)
+
+        val firstDatabase = Room.databaseBuilder(context, ResonoteDatabase::class.java, databaseName)
+            .allowMainThreadQueries()
+            .build()
+        try {
+            firstDatabase.localMediaDao().insert(original)
+        } finally {
+            firstDatabase.close()
+        }
+
+        val reopenedDatabase = Room.databaseBuilder(context, ResonoteDatabase::class.java, databaseName)
+            .allowMainThreadQueries()
+            .build()
+        val restored = try {
+            reopenedDatabase.localMediaDao().findById("persistent")
+        } finally {
+            reopenedDatabase.close()
+        }
+
+        assertThat(restored).isEqualTo(original)
+        assertThat(restored?.asExternalModel()).isEqualTo(original.asExternalModel())
+        context.deleteDatabase(databaseName)
+    }
+
     private companion object {
         const val SHA = "c7c4e0f766c17694a51f3b92a5f01d3ba2d729391bb781e4c6299f51f91aa508"
 

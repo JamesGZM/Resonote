@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
@@ -220,8 +221,7 @@ internal fun ResonoteApp(
                     playingMediaId = playbackState.currentMetadata?.mediaId,
                     bottomContentPadding = if (playbackState.currentMetadata == null) 32.dp else 120.dp,
                     onBack = {
-                        if (key.finishTaskOnBack) onFinishExternalTask()
-                        else backStack.removeAt(backStack.lastIndex)
+                        if (backStack.leaveLocalMusic(key)) onFinishExternalTask()
                     },
                     onPlayAll = playbackViewModel::playAllLocal,
                     onPlayMedia = playbackViewModel::playLocal,
@@ -261,4 +261,10 @@ internal fun ResonoteApp(
             }
         },
     )
+}
+
+internal fun MutableList<NavKey>.leaveLocalMusic(key: LocalMusicNavKey): Boolean {
+    if (key.finishTaskOnBack) return true
+    if (lastOrNull() == key) removeAt(lastIndex)
+    return false
 }
