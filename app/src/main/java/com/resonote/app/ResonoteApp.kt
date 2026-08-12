@@ -52,6 +52,8 @@ import com.resonote.feature.recognition.api.RecognitionNavKey
 import com.resonote.feature.recognition.impl.RecognitionRoute
 import com.resonote.feature.search.api.SearchNavKey
 import com.resonote.feature.search.impl.SearchRoute
+import com.resonote.feature.settings.api.SettingsNavKey
+import com.resonote.feature.settings.impl.SettingsRoute
 import com.resonote.feature.vip.api.DailyVipNavKey
 import com.resonote.feature.vip.impl.DailyVipRoute
 import com.resonote.feature.video.api.VideoNavKey
@@ -153,6 +155,7 @@ internal fun ResonoteApp(
                     },
                     onCloudClick = { backStack.navigateToCloud(authState) },
                     onLocalMusicClick = { backStack.add(LocalMusicNavKey()) },
+                    onSettingsClick = { backStack.add(SettingsNavKey) },
                     onPlaylistClick = { backStack.add(PlaylistNavKey(it)) },
                     onUserPlaylistClick = { playlist ->
                         val accountId = (authState as? AuthState.Authenticated)?.userId
@@ -232,6 +235,9 @@ internal fun ResonoteApp(
                     onBack = { backStack.removeAt(backStack.lastIndex) },
                     onSongMoreClick = { openSongActions(it) },
                 )
+            }
+            entry<SettingsNavKey> {
+                SettingsRoute(onBack = { backStack.removeAt(backStack.lastIndex) })
             }
             entry<PlaylistNavKey> { key ->
                 PlaylistRoute(

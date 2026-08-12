@@ -18,6 +18,8 @@
     <string name="feature_library_impl_local_music_body">导入并播放保存在此设备的音乐</string>
     <string name="feature_library_impl_recent_playback">最近播放</string>
     <string name="feature_library_impl_recent_playback_body">查看账号在线足迹与这台设备的播放档案</string>
+    <string name="feature_library_impl_settings">设置</string>
+    <string name="feature_library_impl_settings_body">调整会真正应用到播放体验的偏好</string>
     <string name="my_user_id">ID %1$s</string>
     <string name="my_avatar">%1$s的头像</string>
     <string name="my_follows">关注</string>

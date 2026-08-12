@@ -1,0 +1,84 @@
+package com.resonote.feature.settings.impl
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.resonote.core.data.PlaybackPreferencesRepository
+import com.resonote.core.model.PlaybackSpeed
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+
+sealed interface SettingsUiState {
+    data object Loading : SettingsUiState
+    data object LoadFailed : SettingsUiState
+
+    data class Ready(
+        val playbackSpeed: PlaybackSpeed,
+        val isSaving: Boolean = false,
+        val saveFailed: Boolean = false,
+    ) : SettingsUiState
+}
+
+@HiltViewModel
+class SettingsViewModel @Inject constructor(
+    private val playbackPreferencesRepository: PlaybackPreferencesRepository,
+) : ViewModel() {
+    private val mutableUiState = MutableStateFlow<SettingsUiState>(SettingsUiState.Loading)
+    val uiState: StateFlow<SettingsUiState> = mutableUiState.asStateFlow()
+
+    private var observationJob: Job? = null
+
+    init {
+        observePreferences()
+    }
+
+    fun retry() = observePreferences()
+
+    fun setPlaybackSpeed(speed: PlaybackSpeed) {
+        val state = mutableUiState.value as? SettingsUiState.Ready ?: return
+        if (state.isSaving || state.playbackSpeed == speed) return
+
+        mutableUiState.value = state.copy(isSaving = true, saveFailed = false)
+        viewModelScope.launch {
+            try {
+                playbackPreferencesRepository.setPlaybackSpeed(speed)
+                mutableUiState.value = SettingsUiState.Ready(playbackSpeed = speed)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                val current = mutableUiState.value as? SettingsUiState.Ready ?: state
+                mutableUiState.value = current.copy(isSaving = false, saveFailed = true)
+            }
+        }
+    }
+
+    fun acknowledgeSaveFailure() {
+        val state = mutableUiState.value as? SettingsUiState.Ready ?: return
+        mutableUiState.value = state.copy(saveFailed = false)
+    }
+
+    private fun observePreferences() {
+        if (observationJob?.isActive == true) return
+        observationJob = viewModelScope.launch {
+            mutableUiState.value = SettingsUiState.Loading
+            try {
+                playbackPreferencesRepository.playbackSpeed.collect { speed ->
+                    val current = mutableUiState.value as? SettingsUiState.Ready
+                    mutableUiState.value = SettingsUiState.Ready(
+                        playbackSpeed = speed,
+                        isSaving = current?.isSaving == true,
+                    )
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                mutableUiState.value = SettingsUiState.LoadFailed
+            }
+        }
+    }
+}

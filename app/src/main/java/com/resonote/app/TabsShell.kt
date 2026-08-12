@@ -90,6 +90,7 @@ internal fun TabsShell(
     onHistoryClick: () -> Unit = {},
     onCloudClick: () -> Unit = {},
     onLocalMusicClick: () -> Unit = {},
+    onSettingsClick: () -> Unit = {},
 ) {
     val tabsShellState = rememberTabsShellState()
     val selectedTab = tabsShellState.selectedTab
@@ -188,6 +189,7 @@ internal fun TabsShell(
                                 onHistoryClick = onHistoryClick,
                                 onCloudClick = onCloudClick,
                                 onLocalMusicClick = onLocalMusicClick,
+                                onSettingsClick = onSettingsClick,
                                 onPlaylistClick = onUserPlaylistClick,
                                 viewModel = actualViewModel,
                             )

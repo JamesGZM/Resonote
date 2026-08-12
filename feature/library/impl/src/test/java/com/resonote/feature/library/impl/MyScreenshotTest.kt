@@ -51,15 +51,27 @@ class MyScreenshotTest {
         composeRule.onNodeWithTag("my-profile").assertIsDisplayed()
         capture("profile")
 
-        composeRule.onNodeWithTag("my-list").performScrollToIndex(5)
+        composeRule.onNodeWithTag("my-list").performScrollToIndex(6)
         composeRule.waitForIdle()
         composeRule.onNodeWithText("我喜欢").assertIsDisplayed()
         capture("playlists")
     }
 
+    @Test
+    fun settingsEntryIsAvailableWithoutAccount() {
+        var settingsClicks = 0
+        setScreen(MyUiState.Anonymous, onSettingsClick = { settingsClicks++ })
+
+        composeRule.onNodeWithTag("my-list").performScrollToIndex(5)
+        composeRule.onNodeWithTag("my-settings").performClick()
+
+        assertThat(settingsClicks).isEqualTo(1)
+    }
+
     private fun setScreen(
         state: MyUiState,
         onLoginClick: () -> Unit = {},
+        onSettingsClick: () -> Unit = {},
     ) {
         composeRule.setContent {
             DeviceConfigurationOverride(
@@ -74,6 +86,7 @@ class MyScreenshotTest {
                         onHistoryClick = {},
                         onCloudClick = {},
                         onLocalMusicClick = {},
+                        onSettingsClick = onSettingsClick,
                         onRefresh = {},
                         onRetryProfile = {},
                         onRetryPlaylists = {},

@@ -144,7 +144,8 @@ Core 模块可以依赖更底层的 Core 模块，但不得依赖 feature 或 ap
 | `:feature:topic:impl` | `feature/topic/impl/` | Topic 详情功能实现 |
 | `:feature:search:api` | `feature/search/api/` | Search 导航公共面 |
 | `:feature:search:impl` | `feature/search/impl/` | Search UI、状态和查询逻辑 |
-| `:feature:settings:impl` | `feature/settings/impl/` | Settings 实现；NIA 当前没有单独的 settings `api` 模块 |
+| `:feature:settings:api` | `feature/settings/api/` | Settings 导航公共面；Resonote 按独立二级目的地规则补充分层 |
+| `:feature:settings:impl` | `feature/settings/impl/` | Settings UI、状态与真实偏好交互 |
 
 NIA 的功能名属于资讯产品，不复制到 Resonote。Resonote 只采用拆分规则：
 
@@ -348,7 +349,7 @@ NIA 没有音乐播放实现，以下模块是 Resonote 的扩展架构。Androi
 | 登录、二维码、手机/密码、风险验证 | `src/views/Login.vue`；Mobile `src/features/account/` | `:feature:login:api/impl`；session/auth Repository 属 data；App 组合统一登录门禁；provider 状态码映射留在 network/data 边界 | DataStore、Android Keystore；WebKit 仅官方风险页真实需要时加入 | 手机/密码/二维码协议与统一门禁已实现并通过 fixture；待正式登录页面、真实账号联调与安全审计 |
 | 歌单/专辑/歌手详情 | `src/views/PlaylistDetail.vue` | 产品层使用独立目的地与状态模型；可先由 `:feature:playlist:api/impl` 承载共享集合能力，专辑/歌手边界由 API 纵切片验证后决定是否拆 feature | collection/artist repositories、model、playback api、navigation | 产品 Must；功能合同已确认，待 API/模块切片 |
 | 用户资料 | Library 资料入口；Mobile `src/features/account/` | `:feature:profile:api/impl`，允许从“我的”、搜索和内容作者入口复用 | user repository、model、ui/navigation | 用户详情与 VIP API/Data 已完成 Fake 测试；待页面与真实账号联调 |
-| 设置、主题、语言、缓存管理 | `src/views/Settings.vue`、`src/config/settings.js` | `:feature:settings:impl`；从“我的”进入；设置值通过 Repository/DataStore；播放/歌词通过各自 api，缓存占用与清除通过 media cache port，不直接访问缓存目录 | datastore/data、playback/player api、media cache、designsystem；动态色按平台能力 | 产品 Must；首版仅简体中文，保留资源本地化架构 |
+| 设置、主题、语言、缓存管理 | `src/views/Settings.vue`、`src/config/settings.js` | `:feature:settings:api/impl`；从“我的”进入；设置值通过 Repository/DataStore；播放/歌词通过各自 api，缓存占用与清除通过 media cache port，不直接访问缓存目录 | datastore/data、playback/player api、media cache、designsystem；动态色按平台能力 | 独立页面与持久化播放倍速已实现；其余分组随真实消费者纵向接入；首版仅简体中文，保留资源本地化架构 |
 | Player、MiniPlayer、Queue、歌词 | `src/components/player/`、`src/views/Lyrics.vue` | 使用 4.4 节 playback 与 player feature 分层；Mini Player 常驻 App Scaffold，歌曲主体进入 Full Player，独立操作直接打开 Queue；Queue/Lyrics 默认不独立成 feature；旧 Player 图只作历史方向稿 | playback api/service、lyrics repository、player impl | 入口与状态合同已确认；Full Player 待按 NIA + MD3 Adaptive 重设计 |
 | 云盘 | `src/views/CloudDrive.vue` | 独立 `:feature:cloud:api/impl`；Android 原生实现 PC 已用的列表、上传、删除和播放地址协议；远端文件、流式缓存与本地媒体不得混为同一模型 | core network/data、playback api、upload coordinator | 列表与播放地址 API/Data 已完成加密 fixture；上传/删除、页面和真实账号联调待完成 |
 | 听歌识曲 | PC `src/views/Recognize.vue`；Mobile `src/app/recognize.tsx`、`features/recognize/recognize-api.ts` | 独立 `:feature:recognition:api/impl`；从首页/搜索话筒进入，录音采集与识别协议隔离 | microphone permission、audio capture、provider adapter、playback api | API/Data、页面、权限状态与 `AudioRecord` 适配器已实现；待真机录音/权限矩阵与发布前隐私审计 |

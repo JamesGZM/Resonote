@@ -1,0 +1,16 @@
+<resources>
+    <string name="feature_settings_impl_title">Settings</string>
+    <string name="feature_settings_impl_back">Back</string>
+    <string name="feature_settings_impl_intro_eyebrow">LISTENING PROFILE</string>
+    <string name="feature_settings_impl_intro_title">Make playback feel like yours</string>
+    <string name="feature_settings_impl_intro_body">Preferences are saved on this device and applied wherever you listen.</string>
+    <string name="feature_settings_impl_playback_section">Playback</string>
+    <string name="feature_settings_impl_playback_speed">Playback speed</string>
+    <string name="feature_settings_impl_playback_speed_body">Use the same speed in the player and across sessions</string>
+    <string name="feature_settings_impl_speed_value">%1$s×</string>
+    <string name="feature_settings_impl_cancel">Cancel</string>
+    <string name="feature_settings_impl_loading">Loading playback preferences</string>
+    <string name="feature_settings_impl_load_error">Playback preferences could not be loaded.</string>
+    <string name="feature_settings_impl_retry">Retry</string>
+    <string name="feature_settings_impl_save_error">Playback speed was not saved. Try again.</string>
+</resources>

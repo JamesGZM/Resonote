@@ -30,6 +30,7 @@ import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -85,6 +86,7 @@ fun MyRoute(
     onHistoryClick: () -> Unit,
     onCloudClick: () -> Unit,
     onLocalMusicClick: () -> Unit,
+    onSettingsClick: () -> Unit,
     onPlaylistClick: (UserPlaylist) -> Unit,
     viewModel: MyViewModel = hiltViewModel(),
 ) {
@@ -97,6 +99,7 @@ fun MyRoute(
         onHistoryClick = onHistoryClick,
         onCloudClick = onCloudClick,
         onLocalMusicClick = onLocalMusicClick,
+        onSettingsClick = onSettingsClick,
         onRefresh = viewModel::refresh,
         onRetryProfile = viewModel::retryProfile,
         onRetryPlaylists = viewModel::retryPlaylists,
@@ -116,6 +119,7 @@ internal fun MyScreen(
     onHistoryClick: () -> Unit,
     onCloudClick: () -> Unit,
     onLocalMusicClick: () -> Unit,
+    onSettingsClick: () -> Unit,
     onRefresh: () -> Unit,
     onRetryProfile: () -> Unit,
     onRetryPlaylists: () -> Unit,
@@ -196,6 +200,7 @@ internal fun MyScreen(
                     onHistoryClick,
                     onCloudClick,
                     onLocalMusicClick,
+                    onSettingsClick,
                 )
                 is MyUiState.Authenticated -> authenticatedAccount(
                     state = state,
@@ -205,6 +210,7 @@ internal fun MyScreen(
                     onHistoryClick = onHistoryClick,
                     onCloudClick = onCloudClick,
                     onLocalMusicClick = onLocalMusicClick,
+                    onSettingsClick = onSettingsClick,
                     onCreatePlaylistClick = {
                         onDismissPlaylistCreation()
                         playlistName = ""
@@ -256,6 +262,7 @@ private fun LazyListScope.anonymousAccount(
     onHistoryClick: () -> Unit,
     onCloudClick: () -> Unit,
     onLocalMusicClick: () -> Unit,
+    onSettingsClick: () -> Unit,
 ) {
     item(key = "anonymous-hero") {
         Card(
@@ -326,6 +333,9 @@ private fun LazyListScope.anonymousAccount(
     item(key = "local-music") {
         LocalMusicEntryCard(onClick = onLocalMusicClick)
     }
+    item(key = "settings") {
+        SettingsEntryCard(onClick = onSettingsClick)
+    }
     item(key = "anonymous-note") {
         Text(
             text = stringResource(R.string.my_anonymous_local_note),
@@ -344,6 +354,7 @@ private fun LazyListScope.authenticatedAccount(
     onHistoryClick: () -> Unit,
     onCloudClick: () -> Unit,
     onLocalMusicClick: () -> Unit,
+    onSettingsClick: () -> Unit,
     onCreatePlaylistClick: () -> Unit,
     onPlaylistClick: (UserPlaylist) -> Unit,
 ) {
@@ -371,6 +382,9 @@ private fun LazyListScope.authenticatedAccount(
     }
     item(key = "local-music") {
         LocalMusicEntryCard(onClick = onLocalMusicClick)
+    }
+    item(key = "settings") {
+        SettingsEntryCard(onClick = onSettingsClick)
     }
 
     when (val playlists = state.playlists) {
@@ -513,6 +527,42 @@ private fun LocalMusicEntryCard(onClick: () -> Unit) {
                 Text(
                     stringResource(R.string.feature_library_impl_local_music_body),
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+            Icon(Icons.Rounded.ChevronRight, contentDescription = null)
+        }
+    }
+}
+
+@Composable
+private fun SettingsEntryCard(onClick: () -> Unit) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().testTag("my-settings"),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        shape = MaterialTheme.shapes.extraLarge,
+    ) {
+        Row(modifier = Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+            Surface(
+                modifier = Modifier.size(52.dp),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                contentColor = MaterialTheme.colorScheme.onSurface,
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(Icons.Rounded.Settings, contentDescription = null, modifier = Modifier.size(25.dp))
+                }
+            }
+            Column(modifier = Modifier.weight(1f).padding(start = 14.dp)) {
+                Text(
+                    stringResource(R.string.feature_library_impl_settings),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    stringResource(R.string.feature_library_impl_settings_body),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
