@@ -13,8 +13,10 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.resonote.core.data.ListeningHistoryRepository
+import com.resonote.core.data.PlaybackPreferencesRepository
 import com.resonote.core.model.ResolveSongSourceResult
 import com.resonote.core.model.ResolvedSongSource
+import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.playback.PlaybackController
 import com.resonote.core.playback.PlaybackIssue
 import com.resonote.core.playback.PlaybackItem
@@ -41,6 +43,7 @@ internal class DefaultPlaybackController internal constructor(
     @param:ApplicationContext private val context: Context,
     private val sourceResolver: PlaybackSourceResolver,
     private val historyRepository: ListeningHistoryRepository,
+    private val preferencesRepository: PlaybackPreferencesRepository,
     private val elapsedRealtime: () -> Long,
 ) : PlaybackController, Player.Listener {
     @Inject
@@ -48,7 +51,8 @@ internal class DefaultPlaybackController internal constructor(
         @ApplicationContext context: Context,
         sourceResolver: PlaybackSourceResolver,
         historyRepository: ListeningHistoryRepository,
-    ) : this(context, sourceResolver, historyRepository, SystemClock::elapsedRealtime)
+        preferencesRepository: PlaybackPreferencesRepository,
+    ) : this(context, sourceResolver, historyRepository, preferencesRepository, SystemClock::elapsedRealtime)
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val queue = PlaybackQueue()
@@ -80,6 +84,7 @@ internal class DefaultPlaybackController internal constructor(
                             action(connectedController)
                         }
                         syncPlayerState(connectedController)
+                        connectedController.setPlaybackSpeed(mutableState.value.playbackSpeed.factor)
                         startPositionUpdates()
                     }
                     .onFailure { failure ->
@@ -91,6 +96,14 @@ internal class DefaultPlaybackController internal constructor(
             },
             ContextCompat.getMainExecutor(context),
         )
+        scope.launch {
+            preferencesRepository.playbackSpeed.collect { speed ->
+                if (mutableState.value.playbackSpeed != speed) {
+                    mutableState.value = mutableState.value.copy(playbackSpeed = speed)
+                }
+                runWithController { it.setPlaybackSpeed(speed.factor) }
+            }
+        }
     }
 
     override fun play(item: PlaybackItem) {
@@ -153,7 +166,10 @@ internal class DefaultPlaybackController internal constructor(
             controller?.clearMediaItems()
             val next = removal.nextCurrentItem
             if (next == null) {
-                mutableState.value = PlaybackState(mode = mutableState.value.mode)
+                mutableState.value = PlaybackState(
+                    mode = mutableState.value.mode,
+                    playbackSpeed = mutableState.value.playbackSpeed,
+                )
             } else {
                 publishQueue(status = PlaybackStatus.Resolving)
                 resolveAndLoad(next)
@@ -227,6 +243,13 @@ internal class DefaultPlaybackController internal constructor(
         mutableState.value = mutableState.value.copy(mode = mode)
     }
 
+    override fun setPlaybackSpeed(speed: PlaybackSpeed) {
+        if (mutableState.value.playbackSpeed == speed) return
+        mutableState.value = mutableState.value.copy(playbackSpeed = speed)
+        runWithController { it.setPlaybackSpeed(speed.factor) }
+        scope.launch { preferencesRepository.setPlaybackSpeed(speed) }
+    }
+
     override fun clear() {
         scope.launch {
             sampleHistory(controller?.isPlaying == true, endedNaturally = false)
@@ -237,7 +260,10 @@ internal class DefaultPlaybackController internal constructor(
             queue.clear()
             controller?.stop()
             controller?.clearMediaItems()
-            mutableState.value = PlaybackState(mode = mutableState.value.mode)
+            mutableState.value = PlaybackState(
+                mode = mutableState.value.mode,
+                playbackSpeed = mutableState.value.playbackSpeed,
+            )
         }
     }
 

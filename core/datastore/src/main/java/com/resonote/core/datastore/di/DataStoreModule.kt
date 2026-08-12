@@ -7,11 +7,15 @@ import com.resonote.core.datastore.AndroidKeystoreSessionCipher
 import com.resonote.core.datastore.EncryptedApiSessionSerializer
 import com.resonote.core.datastore.EncryptedSessionStorage
 import com.resonote.core.datastore.ProtoEncryptedSessionStorage
+import com.resonote.core.datastore.PlaybackPreferencesSerializer
+import com.resonote.core.datastore.PlaybackPreferencesStorage
+import com.resonote.core.datastore.ProtoPlaybackPreferencesStorage
 import com.resonote.core.datastore.ProtoSearchHistoryStorage
 import com.resonote.core.datastore.SearchHistorySerializer
 import com.resonote.core.datastore.SearchHistoryStorage
 import com.resonote.core.datastore.SessionCipher
 import com.resonote.core.datastore.proto.EncryptedApiSession
+import com.resonote.core.datastore.proto.PlaybackPreferences
 import com.resonote.core.datastore.proto.SearchHistory
 import dagger.Binds
 import dagger.Module
@@ -44,6 +48,16 @@ internal object DataStoreModule {
             serializer = SearchHistorySerializer,
             produceFile = { File(context.filesDir, "datastore/search_history.pb") },
         )
+
+    @Provides
+    @Singleton
+    fun providePlaybackPreferencesDataStore(
+        @ApplicationContext context: Context,
+    ): DataStore<PlaybackPreferences> =
+        DataStoreFactory.create(
+            serializer = PlaybackPreferencesSerializer,
+            produceFile = { File(context.filesDir, "datastore/playback_preferences.pb") },
+        )
 }
 
 @Module
@@ -57,4 +71,9 @@ internal abstract class DataStoreBindings {
 
     @Binds
     abstract fun bindSearchHistoryStorage(implementation: ProtoSearchHistoryStorage): SearchHistoryStorage
+
+    @Binds
+    abstract fun bindPlaybackPreferencesStorage(
+        implementation: ProtoPlaybackPreferencesStorage,
+    ): PlaybackPreferencesStorage
 }

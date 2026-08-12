@@ -11,6 +11,10 @@
     <string name="feature_player_impl_previous">上一首</string>
     <string name="feature_player_impl_share">分享</string>
     <string name="feature_player_impl_share_unavailable">分享功能暂未开放</string>
+    <string name="feature_player_impl_song_actions">歌曲操作</string>
+    <string name="feature_player_impl_playback_speed">播放速度</string>
+    <string name="feature_player_impl_speed_value">%1$s×</string>
+    <string name="feature_player_impl_cancel">取消</string>
     <string name="feature_player_impl_unknown_artist">未知歌手</string>
     <string name="feature_player_impl_empty_queue">播放队列为空</string>
     <string name="feature_player_impl_back">返回</string>

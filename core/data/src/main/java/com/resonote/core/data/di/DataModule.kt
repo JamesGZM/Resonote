@@ -27,6 +27,8 @@ import com.resonote.core.data.EncryptedApiSessionStore
 import com.resonote.core.data.HomeRecommendationSampler
 import com.resonote.core.data.HomeRepository
 import com.resonote.core.data.PlaylistRepository
+import com.resonote.core.data.PlaybackPreferencesRepository
+import com.resonote.core.data.DefaultPlaybackPreferencesRepository
 import com.resonote.core.data.RankingRepository
 import com.resonote.core.data.RandomHomeRecommendationSampler
 import com.resonote.core.data.RiskVerificationRepository
@@ -62,6 +64,11 @@ internal abstract class DataBindings {
 
     @Binds
     abstract fun bindPlaylistRepository(implementation: DefaultPlaylistRepository): PlaylistRepository
+
+    @Binds
+    abstract fun bindPlaybackPreferencesRepository(
+        implementation: DefaultPlaybackPreferencesRepository,
+    ): PlaybackPreferencesRepository
 
     @Binds
     abstract fun bindSongPlaybackRepository(implementation: DefaultSongPlaybackRepository): SongPlaybackRepository

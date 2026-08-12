@@ -11,6 +11,10 @@
     <string name="feature_player_impl_previous">Previous</string>
     <string name="feature_player_impl_share">Share</string>
     <string name="feature_player_impl_share_unavailable">Sharing is not available yet</string>
+    <string name="feature_player_impl_song_actions">Song actions</string>
+    <string name="feature_player_impl_playback_speed">Playback speed</string>
+    <string name="feature_player_impl_speed_value">%1$s×</string>
+    <string name="feature_player_impl_cancel">Cancel</string>
     <string name="feature_player_impl_unknown_artist">Unknown artist</string>
     <string name="feature_player_impl_empty_queue">The playback queue is empty</string>
     <string name="feature_player_impl_back">Back</string>

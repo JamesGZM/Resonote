@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,10 +33,12 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material.icons.rounded.RepeatOne
 import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material.icons.rounded.StopCircle
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -44,12 +47,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -68,6 +73,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -82,6 +88,7 @@ import com.resonote.core.designsystem.component.ResonoteVipBadge
 import com.resonote.core.model.ContentFailure
 import com.resonote.core.model.LyricLine
 import com.resonote.core.model.OnlineSong
+import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.playback.PlaybackMetadata
 import com.resonote.core.playback.PlaybackMode
 import com.resonote.core.playback.PlaybackOrigin
@@ -104,6 +111,7 @@ fun PlayerRoute(
         onNext = viewModel::next,
         onSeek = viewModel::seekTo,
         onModeChange = viewModel::setMode,
+        onPlaybackSpeedChange = viewModel::setPlaybackSpeed,
         onRetryLyrics = viewModel::retryLyrics,
         onSelectQueueItem = viewModel::selectQueueItem,
         onRemoveQueueItem = viewModel::removeQueueItem,
@@ -125,6 +133,7 @@ fun PlayerScreen(
     onNext: () -> Unit,
     onSeek: (Long) -> Unit,
     onModeChange: (PlaybackMode) -> Unit,
+    onPlaybackSpeedChange: (PlaybackSpeed) -> Unit,
     onRetryLyrics: () -> Unit,
     onSelectQueueItem: (Int) -> Unit,
     onRemoveQueueItem: (Int) -> Unit,
@@ -139,6 +148,7 @@ fun PlayerScreen(
     val scope = rememberCoroutineScope()
     var menuOpen by remember { mutableStateOf(false) }
     var queueOpen by remember { mutableStateOf(false) }
+    var speedDialogOpen by remember { mutableStateOf(false) }
     val unavailable = stringResource(R.string.feature_player_impl_share_unavailable)
 
     Scaffold(
@@ -161,6 +171,11 @@ fun PlayerScreen(
                         menuOpen = menuOpen,
                         onMenuChange = { menuOpen = it },
                         onSongMoreClick = onSongMoreClick,
+                        playbackSpeed = state.playback.playbackSpeed,
+                        onOpenSpeed = {
+                            menuOpen = false
+                            speedDialogOpen = true
+                        },
                         onShare = {
                             menuOpen = false
                             scope.launch { snackbar.showSnackbar(unavailable) }
@@ -206,6 +221,16 @@ fun PlayerScreen(
             onModeChange = onModeChange,
         )
     }
+    if (speedDialogOpen) {
+        PlaybackSpeedDialog(
+            selected = state.playback.playbackSpeed,
+            onSelect = {
+                onPlaybackSpeedChange(it)
+                speedDialogOpen = false
+            },
+            onDismiss = { speedDialogOpen = false },
+        )
+    }
 }
 
 @Composable
@@ -224,6 +249,8 @@ private fun PlayerTopBar(
     menuOpen: Boolean,
     onMenuChange: (Boolean) -> Unit,
     onSongMoreClick: (() -> Unit)?,
+    playbackSpeed: PlaybackSpeed,
+    onOpenSpeed: () -> Unit,
     onShare: () -> Unit,
 ) {
     Row(
@@ -250,13 +277,37 @@ private fun PlayerTopBar(
             )
         }
         Box {
-            IconButton(onClick = onSongMoreClick ?: { onMenuChange(true) }) {
+            IconButton(onClick = { onMenuChange(true) }) {
                 Icon(Icons.Rounded.MoreVert, stringResource(R.string.feature_player_impl_more))
             }
             DropdownMenu(
-                expanded = menuOpen && onSongMoreClick == null,
+                expanded = menuOpen,
                 onDismissRequest = { onMenuChange(false) },
             ) {
+                if (onSongMoreClick != null) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.feature_player_impl_song_actions)) },
+                        leadingIcon = { Icon(Icons.Rounded.MoreVert, contentDescription = null) },
+                        onClick = {
+                            onMenuChange(false)
+                            onSongMoreClick()
+                        },
+                    )
+                }
+                DropdownMenuItem(
+                    text = {
+                        Column {
+                            Text(stringResource(R.string.feature_player_impl_playback_speed))
+                            Text(
+                                playbackSpeed.label(),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.labelMedium,
+                            )
+                        }
+                    },
+                    leadingIcon = { Icon(Icons.Rounded.Speed, contentDescription = null) },
+                    onClick = onOpenSpeed,
+                )
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.feature_player_impl_share)) },
                     leadingIcon = { Icon(Icons.Rounded.Share, contentDescription = null) },
@@ -265,6 +316,43 @@ private fun PlayerTopBar(
             }
         }
     }
+}
+
+@Composable
+private fun PlaybackSpeedDialog(
+    selected: PlaybackSpeed,
+    onSelect: (PlaybackSpeed) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.feature_player_impl_playback_speed)) },
+        text = {
+            Column {
+                PlaybackSpeed.entries.forEach { speed ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .selectable(
+                                selected = speed == selected,
+                                role = Role.RadioButton,
+                                onClick = { onSelect(speed) },
+                            )
+                            .padding(horizontal = 4.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(selected = speed == selected, onClick = null)
+                        Text(speed.label(), modifier = Modifier.padding(start = 12.dp))
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.feature_player_impl_cancel))
+            }
+        },
+    )
 }
 
 @Composable
@@ -625,6 +713,19 @@ private fun PlaybackMode.label(): String = stringResource(
         PlaybackMode.Shuffle -> R.string.feature_player_impl_mode_shuffle
         PlaybackMode.SingleLoop -> R.string.feature_player_impl_mode_single_loop
         PlaybackMode.Sequential -> R.string.feature_player_impl_mode_sequential
+    },
+)
+
+@Composable
+private fun PlaybackSpeed.label(): String = stringResource(
+    R.string.feature_player_impl_speed_value,
+    when (this) {
+        PlaybackSpeed.Half -> "0.5"
+        PlaybackSpeed.ThreeQuarters -> "0.75"
+        PlaybackSpeed.Normal -> "1"
+        PlaybackSpeed.OneAndQuarter -> "1.25"
+        PlaybackSpeed.OneAndHalf -> "1.5"
+        PlaybackSpeed.Double -> "2"
     },
 )
 

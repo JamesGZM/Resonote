@@ -3,7 +3,9 @@ package com.resonote.feature.player.impl
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -14,6 +16,7 @@ import com.resonote.core.designsystem.theme.ResonoteThemeMode
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.LyricLine
 import com.resonote.core.model.OnlineSong
+import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.playback.PlaybackItem
 import com.resonote.core.playback.PlaybackMode
 import com.resonote.core.playback.PlaybackState
@@ -56,6 +59,21 @@ class PlayerScreenScreenshotTest {
     }
 
     @Test
+    fun player_compactSpeedDialog() {
+        setPlayerContent()
+        composeRule.onNodeWithContentDescription("More options").performClick()
+        composeRule.onNodeWithText("Playback speed").performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("1.5×").fetchSemanticsNodes().isNotEmpty()
+        }
+
+        captureScreenRoboImage(
+            filePath = "src/test/screenshots/Player/PlayerCompact_speed.png",
+            roborazziOptions = DefaultRoborazziOptions,
+        )
+    }
+
+    @Test
     fun primaryControlsDispatchIndependentActions() {
         var toggleCount = 0
         var nextCount = 0
@@ -68,9 +86,34 @@ class PlayerScreenScreenshotTest {
         assertEquals(1, nextCount)
     }
 
+    @Test
+    fun playbackSpeedSelectionDispatchesFromOverflow() {
+        var selected: PlaybackSpeed? = null
+        setPlayerContent(onPlaybackSpeedChange = { selected = it })
+
+        composeRule.onNodeWithContentDescription("More options").performClick()
+        composeRule.onNodeWithText("Playback speed").performClick()
+        composeRule.onNodeWithText("1.5×").performClick()
+
+        assertEquals(PlaybackSpeed.OneAndHalf, selected)
+    }
+
+    @Test
+    fun onlineSongActionsRemainReachableFromOverflow() {
+        var songActionCount = 0
+        setPlayerContent(onSongMoreClick = { songActionCount++ })
+
+        composeRule.onNodeWithContentDescription("More options").performClick()
+        composeRule.onNodeWithText("Song actions").performClick()
+
+        assertEquals(1, songActionCount)
+    }
+
     private fun setPlayerContent(
         onTogglePlay: () -> Unit = {},
         onNext: () -> Unit = {},
+        onPlaybackSpeedChange: (PlaybackSpeed) -> Unit = {},
+        onSongMoreClick: (() -> Unit)? = null,
         initialPage: Int = 0,
     ) {
         composeRule.setContent {
@@ -86,12 +129,14 @@ class PlayerScreenScreenshotTest {
                         onNext = onNext,
                         onSeek = {},
                         onModeChange = {},
+                        onPlaybackSpeedChange = onPlaybackSpeedChange,
                         onRetryLyrics = {},
                         onSelectQueueItem = {},
                         onRemoveQueueItem = {},
                         onMoveQueueItem = { _, _ -> },
                         onClearQueue = {},
                         initialPage = initialPage,
+                        onSongMoreClick = onSongMoreClick,
                     )
                 }
             }

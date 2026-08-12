@@ -9,6 +9,7 @@ import com.resonote.core.model.LyricLine
 import com.resonote.core.model.LocalMedia
 import com.resonote.core.model.LocalMediaId
 import com.resonote.core.model.OnlineSong
+import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.playback.PlaybackController
 import com.resonote.core.playback.PlaybackItem
 import com.resonote.core.playback.PlaybackMode
@@ -83,12 +84,14 @@ class PlayerViewModelTest {
         viewModel.removeQueueItem(1)
         viewModel.moveQueueItem(2, 0)
         viewModel.setMode(PlaybackMode.Shuffle)
+        viewModel.setPlaybackSpeed(PlaybackSpeed.OneAndHalf)
 
         assertThat(controller.seekPosition).isEqualTo(42_000)
         assertThat(controller.selectedIndex).isEqualTo(2)
         assertThat(controller.removedIndex).isEqualTo(1)
         assertThat(controller.moved).isEqualTo(2 to 0)
         assertThat(controller.selectedMode).isEqualTo(PlaybackMode.Shuffle)
+        assertThat(controller.selectedSpeed).isEqualTo(PlaybackSpeed.OneAndHalf)
     }
 
     @Test
@@ -125,6 +128,7 @@ class PlayerViewModelTest {
         var removedIndex = -1
         var moved: Pair<Int, Int>? = null
         var selectedMode: PlaybackMode? = null
+        var selectedSpeed: PlaybackSpeed? = null
 
         fun setSong(song: OnlineSong) {
             state.value = PlaybackState(queue = listOf(PlaybackItem(song)), currentIndex = 0)
@@ -143,6 +147,7 @@ class PlayerViewModelTest {
         override fun previous() = Unit
         override fun seekTo(positionMillis: Long) { seekPosition = positionMillis }
         override fun setMode(mode: PlaybackMode) { selectedMode = mode }
+        override fun setPlaybackSpeed(speed: PlaybackSpeed) { selectedSpeed = speed }
         override fun clear() = Unit
     }
 

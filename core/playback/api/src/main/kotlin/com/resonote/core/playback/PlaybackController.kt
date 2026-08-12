@@ -9,6 +9,7 @@ import com.resonote.core.model.LocalMedia
 import com.resonote.core.model.LocalMediaId
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.PlaybackUnavailableReason
+import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.model.ResolvedSongSource
 import kotlinx.coroutines.flow.StateFlow
 
@@ -136,6 +137,7 @@ data class PlaybackState(
     val durationMillis: Long = 0,
     val bufferedPositionMillis: Long = 0,
     val mode: PlaybackMode = PlaybackMode.ListLoop,
+    val playbackSpeed: PlaybackSpeed = PlaybackSpeed.Normal,
     val issue: PlaybackIssue? = null,
 ) {
     val currentItem: PlaybackItem?
@@ -183,6 +185,8 @@ interface PlaybackController {
     fun seekTo(positionMillis: Long)
 
     fun setMode(mode: PlaybackMode)
+
+    fun setPlaybackSpeed(speed: PlaybackSpeed)
 
     fun clear()
 }

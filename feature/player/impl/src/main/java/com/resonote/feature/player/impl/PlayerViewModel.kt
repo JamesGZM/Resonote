@@ -6,6 +6,7 @@ import com.resonote.core.data.LyricsRepository
 import com.resonote.core.model.CollectionLoadResult
 import com.resonote.core.model.ContentFailure
 import com.resonote.core.model.LyricLine
+import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.playback.PlaybackController
 import com.resonote.core.playback.PlaybackItem
 import com.resonote.core.playback.PlaybackMode
@@ -87,6 +88,8 @@ class PlayerViewModel @Inject constructor(
     fun seekTo(positionMillis: Long) = playbackController.seekTo(positionMillis)
 
     fun setMode(mode: PlaybackMode) = playbackController.setMode(mode)
+
+    fun setPlaybackSpeed(speed: PlaybackSpeed) = playbackController.setPlaybackSpeed(speed)
 
     fun selectQueueItem(index: Int) = playbackController.selectQueueItem(index)
 

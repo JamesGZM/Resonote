@@ -9,6 +9,7 @@ import com.resonote.core.model.DeviceHistorySource
 import com.resonote.core.model.LocalMedia
 import com.resonote.core.model.LocalMediaId
 import com.resonote.core.model.OnlineSong
+import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.model.ResolvedSongSource
 import com.resonote.core.playback.PlaybackController
 import com.resonote.core.playback.PlaybackItem
@@ -189,6 +190,8 @@ class PlaybackViewModelTest {
         override fun seekTo(positionMillis: Long) = Unit
 
         override fun setMode(mode: PlaybackMode) = Unit
+
+        override fun setPlaybackSpeed(speed: PlaybackSpeed) = Unit
 
         override fun clear() = Unit
     }
