@@ -1,0 +1,23 @@
+{
+  "status": 1,
+  "data": {
+    "lists": [
+      {
+        "hash": "ABC123",
+        "name": "Artist One - First Song",
+        "singername": "Artist One",
+        "author_name": "Artist One",
+        "image": "https://image.example/{size}/first.jpg",
+        "duration": 245,
+        "future_field": "ignored"
+      },
+      {
+        "hash": "DEF456",
+        "name": "Second Song",
+        "author_name": "Artist Two",
+        "image": "",
+        "duration": 180000
+      }
+    ]
+  }
+}

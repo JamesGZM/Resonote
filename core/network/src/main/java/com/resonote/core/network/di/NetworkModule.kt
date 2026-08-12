@@ -8,6 +8,7 @@ import com.resonote.core.network.LyricsNetworkDataSource
 import com.resonote.core.network.VideoNetworkDataSource
 import com.resonote.core.network.RecognitionNetworkDataSource
 import com.resonote.core.network.LibraryNetworkDataSource
+import com.resonote.core.network.ListeningHistoryNetworkDataSource
 import com.resonote.core.network.PlaybackNetworkDataSource
 import com.resonote.core.network.PlaylistNetworkDataSource
 import com.resonote.core.network.RankingNetworkDataSource
@@ -25,6 +26,7 @@ import com.resonote.core.network.protocol.ApiEndpointOrigins
 import com.resonote.core.network.protocol.ApiOriginPolicy
 import com.resonote.core.network.protocol.ProductionApiOriginPolicy
 import com.resonote.core.network.protocol.RedactedNetworkLoggingInterceptor
+import com.resonote.core.network.protocol.UserListenProtocolClient
 import com.resonote.core.network.retrofit.RealHomeNetworkDataSource
 import com.resonote.core.network.retrofit.RealCatalogNetworkDataSource
 import com.resonote.core.network.retrofit.RealRankingNetworkDataSource
@@ -140,6 +142,9 @@ internal abstract class NetworkBindings {
         implementation: RealUserProfileNetworkDataSource,
     ): UserProfileNetworkDataSource
     @Binds abstract fun bindLibraryNetworkDataSource(implementation: RealLibraryNetworkDataSource): LibraryNetworkDataSource
+    @Binds abstract fun bindListeningHistoryNetworkDataSource(
+        implementation: UserListenProtocolClient,
+    ): ListeningHistoryNetworkDataSource
     @Binds abstract fun bindCloudNetworkDataSource(implementation: RealCloudNetworkDataSource): CloudNetworkDataSource
     @Binds abstract fun bindSearchNetworkDataSource(implementation: RealSearchNetworkDataSource): SearchNetworkDataSource
     @Binds abstract fun bindLyricsNetworkDataSource(implementation: RealLyricsNetworkDataSource): LyricsNetworkDataSource

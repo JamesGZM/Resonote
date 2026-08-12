@@ -10,6 +10,7 @@ internal data class ApiEndpointOrigins(
     val riskVerification: String = "https://verifyservice.kugou.com",
     val vip: String = "https://kugouvip.kugou.com",
     val cloud: String = "https://mcloudservice.kugou.com",
+    val listen: String = "https://listenservice.kugou.com",
     val openApi: String = "https://openapi.kugou.com",
     val complexSearch: String = "https://complexsearch.kugou.com",
     val lyrics: String = "https://lyrics.kugou.com",
