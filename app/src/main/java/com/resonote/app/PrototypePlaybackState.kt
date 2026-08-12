@@ -71,6 +71,10 @@ internal class PrototypePlaybackState {
         isPlaying = false
     }
 
+    fun pauseForRecognition() {
+        isPlaying = false
+    }
+
     fun playNext() {
         if (queue.isEmpty()) return
         val currentIndex = queue.indexOfFirst { it.hash == currentSongId }.coerceAtLeast(0)

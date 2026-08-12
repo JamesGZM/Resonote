@@ -24,6 +24,8 @@ import com.resonote.feature.playlist.api.PlaylistNavKey
 import com.resonote.feature.playlist.impl.PlaylistRoute
 import com.resonote.feature.ranking.api.RankingNavKey
 import com.resonote.feature.ranking.impl.RankingRoute
+import com.resonote.feature.recognition.api.RecognitionNavKey
+import com.resonote.feature.recognition.impl.RecognitionRoute
 import com.resonote.feature.search.api.SearchNavKey
 import com.resonote.feature.search.impl.SearchRoute
 import com.resonote.feature.vip.api.DailyVipNavKey
@@ -56,6 +58,7 @@ internal fun ResonoteApp(viewModel: MainActivityViewModel = hiltViewModel()) {
                         }
                     },
                     onSearchClick = { backStack.add(SearchNavKey()) },
+                    onRecognitionClick = { backStack.add(RecognitionNavKey) },
                     onDailyVipClick = { backStack.navigateToDailyVip(authState) },
                     onCloudClick = { backStack.navigateToCloud(authState) },
                     onPlaylistClick = { backStack.add(PlaylistNavKey(it)) },
@@ -80,7 +83,7 @@ internal fun ResonoteApp(viewModel: MainActivityViewModel = hiltViewModel()) {
                 SearchRoute(
                     initialQuery = key.initialQuery,
                     onBack = { backStack.removeAt(backStack.lastIndex) },
-                    onRecognitionClick = null,
+                    onRecognitionClick = { backStack.add(RecognitionNavKey) },
                     onSongClick = playbackState::play,
                     onSongMoreClick = null,
                     onPlaylistClick = { backStack.add(PlaylistNavKey(it)) },
@@ -182,6 +185,19 @@ internal fun ResonoteApp(viewModel: MainActivityViewModel = hiltViewModel()) {
                     key = key,
                     onBack = { backStack.removeAt(backStack.lastIndex) },
                     onFullscreenChange = setVideoFullscreen,
+                )
+            }
+            entry<RecognitionNavKey> {
+                RecognitionRoute(
+                    onBack = { backStack.removeAt(backStack.lastIndex) },
+                    onCaptureStarted = playbackState::pauseForRecognition,
+                    onPlay = playbackState::play,
+                    onSearch = { match ->
+                        val query = listOfNotNull(match.song.title, match.song.artist)
+                            .filter(String::isNotBlank)
+                            .joinToString(" ")
+                        backStack.add(SearchNavKey(initialQuery = query))
+                    },
                 )
             }
             entry<LoginGateNavKey> { key ->

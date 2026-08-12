@@ -81,6 +81,18 @@ class PrototypePlaybackStateTest {
         assertThat(state.queue.map { it.hash }).containsExactly("first", "second").inOrder()
     }
 
+    @Test
+    fun startingRecognitionPausesMusicWithoutChangingQueueOrCurrentSong() {
+        val state = PrototypePlaybackState()
+        state.playAll(listOf(song("first"), song("second")), startIndex = 1)
+
+        state.pauseForRecognition()
+
+        assertThat(state.isPlaying).isFalse()
+        assertThat(state.currentSongId).isEqualTo("second")
+        assertThat(state.queue.map { it.hash }).containsExactly("first", "second").inOrder()
+    }
+
     private fun song(id: String) = OnlineSong(
         hash = id,
         title = id,

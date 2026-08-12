@@ -61,6 +61,7 @@ internal fun TabsShell(
     homeViewModel: HomeViewModel? = null,
     playbackState: PrototypePlaybackState = rememberPrototypePlaybackState(),
     onSearchClick: () -> Unit = {},
+    onRecognitionClick: () -> Unit = {},
     onPlaylistClick: (String) -> Unit = {},
     onAlbumClick: (Album) -> Unit = {},
     onRankingClick: (Ranking) -> Unit = {},
@@ -118,7 +119,7 @@ internal fun TabsShell(
                                 if (suppliedViewModel == null) {
                                     HomeRoute(
                                         playingMediaId = playbackState.currentSongId, bottomContentPadding = bottomContentPadding,
-                                        onSearchClick = onSearchClick, onRecognitionClick = ::showComingSoon,
+                                        onSearchClick = onSearchClick, onRecognitionClick = onRecognitionClick,
                                         onPlay = playbackState::play, onOpenRankings = { openDiscover(DiscoverSection.RANKINGS) },
                                         onOpenFeaturedPlaylists = ::showComingSoon,
                                         onSongMoreClick = { showComingSoon() },
@@ -127,7 +128,7 @@ internal fun TabsShell(
                                 } else {
                                     HomeRoute(
                                         playingMediaId = playbackState.currentSongId, bottomContentPadding = bottomContentPadding,
-                                        onSearchClick = onSearchClick, onRecognitionClick = ::showComingSoon,
+                                        onSearchClick = onSearchClick, onRecognitionClick = onRecognitionClick,
                                         onPlay = playbackState::play, onOpenRankings = { openDiscover(DiscoverSection.RANKINGS) },
                                         onOpenFeaturedPlaylists = ::showComingSoon,
                                         onSongMoreClick = { showComingSoon() },
