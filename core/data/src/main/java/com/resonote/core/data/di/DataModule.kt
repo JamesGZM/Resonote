@@ -10,6 +10,8 @@ import com.resonote.core.data.DefaultLyricsRepository
 import com.resonote.core.data.DefaultVideoRepository
 import com.resonote.core.data.DefaultRecognitionRepository
 import com.resonote.core.data.SearchRepository
+import com.resonote.core.data.SearchHistoryRepository
+import com.resonote.core.data.DefaultSearchHistoryRepository
 import com.resonote.core.data.LyricsRepository
 import com.resonote.core.data.VideoRepository
 import com.resonote.core.data.RecognitionRepository
@@ -74,6 +76,11 @@ internal abstract class DataBindings {
 
     @Binds
     abstract fun bindSearchRepository(implementation: DefaultSearchRepository): SearchRepository
+
+    @Binds
+    abstract fun bindSearchHistoryRepository(
+        implementation: DefaultSearchHistoryRepository,
+    ): SearchHistoryRepository
 
     @Binds
     abstract fun bindLyricsRepository(implementation: DefaultLyricsRepository): LyricsRepository

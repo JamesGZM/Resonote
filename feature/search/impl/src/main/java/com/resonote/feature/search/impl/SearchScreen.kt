@@ -28,6 +28,8 @@ import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
 import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material.icons.rounded.GraphicEq
+import androidx.compose.material.icons.rounded.DeleteOutline
+import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Person
@@ -42,8 +44,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -97,6 +102,10 @@ fun SearchRoute(
         onQueryChange = viewModel::updateQuery,
         onSubmit = viewModel::submit,
         onRetry = viewModel::retry,
+        onSelectCategory = viewModel::selectCategory,
+        onLoadMore = viewModel::loadMore,
+        onRemoveHistory = viewModel::removeHistory,
+        onClearHistory = viewModel::clearHistory,
         onBack = onBack,
         onRecognitionClick = onRecognitionClick,
         onSongClick = onSongClick,
@@ -114,6 +123,10 @@ fun SearchScreen(
     onQueryChange: (String) -> Unit,
     onSubmit: (String?) -> Unit,
     onRetry: () -> Unit,
+    onSelectCategory: (SearchCategory) -> Unit,
+    onLoadMore: () -> Unit,
+    onRemoveHistory: (String) -> Unit,
+    onClearHistory: () -> Unit,
     onBack: () -> Unit,
     onRecognitionClick: (() -> Unit)?,
     onSongClick: (OnlineSong) -> Unit,
@@ -137,10 +150,19 @@ fun SearchScreen(
                     onSubmit(null)
                 },
             )
+            if (state.result !is SearchResultUiState.Idle) {
+                SearchCategoryBar(
+                    selectedCategory = state.selectedCategory,
+                    onSelectCategory = onSelectCategory,
+                )
+            }
             when (val result = state.result) {
                 SearchResultUiState.Idle -> SearchDiscovery(
+                    history = state.history,
                     hotKeywords = state.hotKeywords.map { it.keyword },
                     suggestions = state.suggestions,
+                    onRemoveHistory = onRemoveHistory,
+                    onClearHistory = onClearHistory,
                     onKeywordClick = {
                         keyboard?.hide()
                         onSubmit(it)
@@ -151,6 +173,8 @@ fun SearchScreen(
                 is SearchResultUiState.Error -> ErrorState(result.failure, onRetry)
                 is SearchResultUiState.Content -> SearchResults(
                     result = result.value,
+                    onSelectCategory = onSelectCategory,
+                    onLoadMore = onLoadMore,
                     onSongClick = onSongClick,
                     onSongMoreClick = onSongMoreClick,
                     onPlaylistClick = onPlaylistClick,
@@ -162,6 +186,39 @@ fun SearchScreen(
         }
     }
 }
+
+@Composable
+private fun SearchCategoryBar(
+    selectedCategory: SearchCategory,
+    onSelectCategory: (SearchCategory) -> Unit,
+) {
+    PrimaryScrollableTabRow(
+        selectedTabIndex = selectedCategory.ordinal,
+        edgePadding = 12.dp,
+        divider = {},
+        containerColor = MaterialTheme.colorScheme.background,
+    ) {
+        SearchCategory.entries.forEach { category ->
+            Tab(
+                selected = selectedCategory == category,
+                onClick = { onSelectCategory(category) },
+                text = { Text(category.label()) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun SearchCategory.label(): String = stringResource(
+    when (this) {
+        SearchCategory.ALL -> R.string.search_all
+        SearchCategory.SONGS -> R.string.search_songs
+        SearchCategory.PLAYLISTS -> R.string.search_playlists
+        SearchCategory.ALBUMS -> R.string.search_albums
+        SearchCategory.MVS -> R.string.search_mvs
+        SearchCategory.ARTISTS -> R.string.search_artists
+    },
+)
 
 @Composable
 private fun SearchHeader(
@@ -182,7 +239,7 @@ private fun SearchHeader(
             value = query,
             onValueChange = onQueryChange,
             modifier = Modifier.weight(1f),
-            label = stringResource(R.string.search_hint),
+            label = if (query.isBlank()) stringResource(R.string.search_hint) else "",
             leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
             trailingIcon = if (query.isBlank()) null else ({
                 IconButton(onClick = { onQueryChange("") }) {
@@ -201,8 +258,11 @@ private fun SearchHeader(
 
 @Composable
 private fun SearchDiscovery(
+    history: List<String>,
     hotKeywords: List<String>,
     suggestions: List<String>,
+    onRemoveHistory: (String) -> Unit,
+    onClearHistory: () -> Unit,
     onKeywordClick: (String) -> Unit,
 ) {
     LazyColumn(
@@ -219,15 +279,42 @@ private fun SearchDiscovery(
                     modifier = Modifier.clickable { onKeywordClick(suggestion) },
                 )
             }
-        } else if (hotKeywords.isNotEmpty()) {
-            item { SectionTitle(stringResource(R.string.search_hot), Icons.Rounded.GraphicEq) }
-            item {
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = 20.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    items(hotKeywords, key = { "hot-$it" }) { keyword ->
-                        AssistChip(onClick = { onKeywordClick(keyword) }, label = { Text(keyword) })
+        } else {
+            if (history.isNotEmpty()) {
+                item {
+                    SectionTitle(
+                        title = stringResource(R.string.search_history),
+                        icon = Icons.Rounded.History,
+                        actionLabel = stringResource(R.string.search_history_clear),
+                        onAction = onClearHistory,
+                    )
+                }
+                items(history, key = { "history-$it" }) { query ->
+                    ListItem(
+                        headlineContent = { Text(query) },
+                        leadingContent = { Icon(Icons.Rounded.History, contentDescription = null) },
+                        trailingContent = {
+                            IconButton(onClick = { onRemoveHistory(query) }) {
+                                Icon(
+                                    Icons.Rounded.DeleteOutline,
+                                    stringResource(R.string.search_history_remove, query),
+                                )
+                            }
+                        },
+                        modifier = Modifier.clickable { onKeywordClick(query) },
+                    )
+                }
+            }
+            if (hotKeywords.isNotEmpty()) {
+                item { SectionTitle(stringResource(R.string.search_hot), Icons.Rounded.GraphicEq) }
+                item {
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 20.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        items(hotKeywords, key = { "hot-$it" }) { keyword ->
+                            AssistChip(onClick = { onKeywordClick(keyword) }, label = { Text(keyword) })
+                        }
                     }
                 }
             }
@@ -288,7 +375,44 @@ private fun MessageState(
 
 @Composable
 private fun SearchResults(
+    result: SearchContentUiState,
+    onSelectCategory: (SearchCategory) -> Unit,
+    onLoadMore: () -> Unit,
+    onSongClick: (OnlineSong) -> Unit,
+    onSongMoreClick: ((OnlineSong) -> Unit)?,
+    onPlaylistClick: ((String) -> Unit)?,
+    onAlbumClick: ((String) -> Unit)?,
+    onArtistClick: ((String) -> Unit)?,
+    onMvClick: ((String) -> Unit)?,
+) {
+    when (result) {
+        is SearchContentUiState.Aggregate -> AggregateSearchResults(
+            result = result.value,
+            onSelectCategory = onSelectCategory,
+            onSongClick = onSongClick,
+            onSongMoreClick = onSongMoreClick,
+            onPlaylistClick = onPlaylistClick,
+            onAlbumClick = onAlbumClick,
+            onArtistClick = onArtistClick,
+            onMvClick = onMvClick,
+        )
+        is SearchContentUiState.Page -> PagedSearchResults(
+            page = result,
+            onLoadMore = onLoadMore,
+            onSongClick = onSongClick,
+            onSongMoreClick = onSongMoreClick,
+            onPlaylistClick = onPlaylistClick,
+            onAlbumClick = onAlbumClick,
+            onArtistClick = onArtistClick,
+            onMvClick = onMvClick,
+        )
+    }
+}
+
+@Composable
+private fun AggregateSearchResults(
     result: ComplexSearchResult,
+    onSelectCategory: (SearchCategory) -> Unit,
     onSongClick: (OnlineSong) -> Unit,
     onSongMoreClick: ((OnlineSong) -> Unit)?,
     onPlaylistClick: ((String) -> Unit)?,
@@ -301,7 +425,13 @@ private fun SearchResults(
         contentPadding = PaddingValues(bottom = 32.dp),
     ) {
         if (result.songs.isNotEmpty()) {
-            item { SectionTitle(stringResource(R.string.search_songs), Icons.Rounded.MusicNote) }
+            item {
+                SectionTitle(
+                    stringResource(R.string.search_songs),
+                    Icons.Rounded.MusicNote,
+                    stringResource(R.string.search_see_all),
+                ) { onSelectCategory(SearchCategory.SONGS) }
+            }
             items(result.songs, key = { "song-${it.hash}" }) { song ->
                 ResonoteMusicItem(
                     title = song.title,
@@ -311,12 +441,18 @@ private fun SearchResults(
                     isVip = song.vip,
                     artworkState = ResonoteArtworkState.MISSING,
                     onClick = { onSongClick(song) },
-                    onMoreClick = { onSongMoreClick?.invoke(song) },
+                    onMoreClick = onSongMoreClick?.let { callback -> { callback(song) } },
                 )
             }
         }
         if (result.artists.isNotEmpty()) {
-            item { SectionTitle(stringResource(R.string.search_artists), Icons.Rounded.Person) }
+            item {
+                SectionTitle(
+                    stringResource(R.string.search_artists),
+                    Icons.Rounded.Person,
+                    stringResource(R.string.search_see_all),
+                ) { onSelectCategory(SearchCategory.ARTISTS) }
+            }
             items(result.artists, key = { "artist-${it.id}" }) { artist ->
                 EntityRow(
                     title = artist.name,
@@ -327,19 +463,37 @@ private fun SearchResults(
             }
         }
         if (result.albums.isNotEmpty()) {
-            item { SectionTitle(stringResource(R.string.search_albums), Icons.Rounded.Album) }
+            item {
+                SectionTitle(
+                    stringResource(R.string.search_albums),
+                    Icons.Rounded.Album,
+                    stringResource(R.string.search_see_all),
+                ) { onSelectCategory(SearchCategory.ALBUMS) }
+            }
             items(result.albums, key = { "album-${it.id}" }) { album ->
                 AlbumRow(album, onClick = onAlbumClick?.let { callback -> { callback(album.id) } })
             }
         }
         if (result.playlists.isNotEmpty()) {
-            item { SectionTitle(stringResource(R.string.search_playlists), Icons.AutoMirrored.Rounded.PlaylistPlay) }
+            item {
+                SectionTitle(
+                    stringResource(R.string.search_playlists),
+                    Icons.AutoMirrored.Rounded.PlaylistPlay,
+                    stringResource(R.string.search_see_all),
+                ) { onSelectCategory(SearchCategory.PLAYLISTS) }
+            }
             items(result.playlists, key = { "playlist-${it.id}" }) { playlist ->
                 PlaylistRow(playlist, onClick = onPlaylistClick?.let { callback -> { callback(playlist.id) } })
             }
         }
         if (result.mvs.isNotEmpty()) {
-            item { SectionTitle(stringResource(R.string.search_mvs), Icons.Rounded.VideoLibrary) }
+            item {
+                SectionTitle(
+                    stringResource(R.string.search_mvs),
+                    Icons.Rounded.VideoLibrary,
+                    stringResource(R.string.search_see_all),
+                ) { onSelectCategory(SearchCategory.MVS) }
+            }
             itemsIndexed(result.mvs, key = { _, mv -> "mv-${mv.hash}" }) { _, mv ->
                 MvRow(mv, onClick = onMvClick?.let { callback -> { callback(mv.hash) } })
             }
@@ -348,7 +502,84 @@ private fun SearchResults(
 }
 
 @Composable
-private fun SectionTitle(title: String, icon: ImageVector) {
+private fun PagedSearchResults(
+    page: SearchContentUiState.Page,
+    onLoadMore: () -> Unit,
+    onSongClick: (OnlineSong) -> Unit,
+    onSongMoreClick: ((OnlineSong) -> Unit)?,
+    onPlaylistClick: ((String) -> Unit)?,
+    onAlbumClick: ((String) -> Unit)?,
+    onArtistClick: ((String) -> Unit)?,
+    onMvClick: ((String) -> Unit)?,
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(bottom = 32.dp),
+    ) {
+        items(page.items, key = { "page-${it.stableId}" }) { item ->
+            when (item) {
+                is SearchResultItem.Song -> ResonoteMusicItem(
+                    title = item.value.title,
+                    supportingText = item.value.artist.orEmpty(),
+                    duration = item.value.durationMillis.durationLabel(),
+                    qualityLabel = item.value.quality.label(),
+                    isVip = item.value.vip,
+                    artworkState = ResonoteArtworkState.MISSING,
+                    onClick = { onSongClick(item.value) },
+                    onMoreClick = onSongMoreClick?.let { callback -> { callback(item.value) } },
+                )
+                is SearchResultItem.Playlist -> PlaylistRow(
+                    item.value,
+                    onPlaylistClick?.let { callback -> { callback(item.value.id) } },
+                )
+                is SearchResultItem.Album -> AlbumRow(
+                    item.value,
+                    onAlbumClick?.let { callback -> { callback(item.value.id) } },
+                )
+                is SearchResultItem.Artist -> EntityRow(
+                    title = item.value.name,
+                    supporting = stringResource(
+                        R.string.search_artist_metadata,
+                        item.value.songCount,
+                        item.value.albumCount,
+                    ),
+                    icon = Icons.Rounded.Person,
+                    onClick = onArtistClick?.let { callback -> { callback(item.value.id) } },
+                )
+                is SearchResultItem.Mv -> MvRow(
+                    item.value,
+                    onMvClick?.let { callback -> { callback(item.value.hash) } },
+                )
+            }
+        }
+        if (page.hasMore || page.isLoadingMore || page.loadMoreFailure != null) {
+            item(key = "load-more") {
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(20.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    when {
+                        page.isLoadingMore -> CircularProgressIndicator(modifier = Modifier.size(28.dp))
+                        page.loadMoreFailure != null -> TextButton(onClick = onLoadMore) {
+                            Text(stringResource(R.string.search_load_more_retry))
+                        }
+                        page.hasMore -> TextButton(onClick = onLoadMore) {
+                            Text(stringResource(R.string.search_load_more))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SectionTitle(
+    title: String,
+    icon: ImageVector,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null,
+) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -357,7 +588,15 @@ private fun SectionTitle(title: String, icon: ImageVector) {
             Icon(icon, contentDescription = null, modifier = Modifier.padding(8.dp).size(18.dp))
         }
         Spacer(Modifier.width(12.dp))
-        Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+        Text(
+            title,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold,
+        )
+        if (actionLabel != null && onAction != null) {
+            TextButton(onClick = onAction) { Text(actionLabel) }
+        }
     }
 }
 

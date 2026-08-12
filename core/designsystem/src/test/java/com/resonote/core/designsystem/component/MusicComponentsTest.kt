@@ -61,4 +61,21 @@ class MusicComponentsTest {
         composeRule.onNodeWithText("未收录封面").assertExists()
         composeRule.onNodeWithText("3:36").assertExists()
     }
+
+    @Test
+    fun absentMoreCallback_removesUnavailableAction() {
+        composeRule.setContent {
+            ResonoteTheme {
+                ResonoteMusicItem(
+                    title = "无更多操作",
+                    supportingText = "Resonote",
+                    duration = "3:00",
+                    onClick = {},
+                    onMoreClick = null,
+                )
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("More actions for 无更多操作").assertDoesNotExist()
+    }
 }

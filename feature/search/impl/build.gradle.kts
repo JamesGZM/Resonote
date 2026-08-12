@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.resonote.android.library)
     alias(libs.plugins.resonote.android.library.compose)
     alias(libs.plugins.resonote.hilt)
+    alias(libs.plugins.roborazzi)
 }
 
 android {
@@ -25,4 +26,8 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.truth)
+    testImplementation(projects.core.screenshotTesting)
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+    testImplementation(libs.robolectric)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

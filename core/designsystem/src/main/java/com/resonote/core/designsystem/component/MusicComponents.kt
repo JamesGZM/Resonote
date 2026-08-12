@@ -138,7 +138,7 @@ fun ResonoteMusicItem(
     supportingText: String,
     duration: String,
     onClick: () -> Unit,
-    onMoreClick: () -> Unit,
+    onMoreClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
     artworkState: ResonoteArtworkState = ResonoteArtworkState.LOADED,
     artwork: @Composable BoxScope.() -> Unit = {},
@@ -225,12 +225,16 @@ fun ResonoteMusicItem(
                 )
             }
         }
-        ResonoteIconButton(
-            label = stringResource(R.string.core_designsystem_more_actions, title),
-            onClick = onMoreClick,
-            enabled = enabled,
-            icon = { Icon(Icons.Rounded.MoreVert, contentDescription = null) },
-        )
+        if (onMoreClick != null) {
+            ResonoteIconButton(
+                label = stringResource(R.string.core_designsystem_more_actions, title),
+                onClick = onMoreClick,
+                enabled = enabled,
+                icon = { Icon(Icons.Rounded.MoreVert, contentDescription = null) },
+            )
+        } else {
+            Spacer(Modifier.width(16.dp))
+        }
     }
 }
 

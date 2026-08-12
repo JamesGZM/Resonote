@@ -7,8 +7,12 @@ import com.resonote.core.datastore.AndroidKeystoreSessionCipher
 import com.resonote.core.datastore.EncryptedApiSessionSerializer
 import com.resonote.core.datastore.EncryptedSessionStorage
 import com.resonote.core.datastore.ProtoEncryptedSessionStorage
+import com.resonote.core.datastore.ProtoSearchHistoryStorage
+import com.resonote.core.datastore.SearchHistorySerializer
+import com.resonote.core.datastore.SearchHistoryStorage
 import com.resonote.core.datastore.SessionCipher
 import com.resonote.core.datastore.proto.EncryptedApiSession
+import com.resonote.core.datastore.proto.SearchHistory
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -30,6 +34,16 @@ internal object DataStoreModule {
             serializer = EncryptedApiSessionSerializer,
             produceFile = { File(context.filesDir, "datastore/api_session.pb") },
         )
+
+    @Provides
+    @Singleton
+    fun provideSearchHistoryDataStore(
+        @ApplicationContext context: Context,
+    ): DataStore<SearchHistory> =
+        DataStoreFactory.create(
+            serializer = SearchHistorySerializer,
+            produceFile = { File(context.filesDir, "datastore/search_history.pb") },
+        )
 }
 
 @Module
@@ -40,4 +54,7 @@ internal abstract class DataStoreBindings {
 
     @Binds
     abstract fun bindSessionCipher(implementation: AndroidKeystoreSessionCipher): SessionCipher
+
+    @Binds
+    abstract fun bindSearchHistoryStorage(implementation: ProtoSearchHistoryStorage): SearchHistoryStorage
 }
