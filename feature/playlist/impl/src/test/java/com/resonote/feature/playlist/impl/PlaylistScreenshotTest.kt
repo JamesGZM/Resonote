@@ -9,6 +9,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -61,6 +62,7 @@ class PlaylistScreenshotTest {
                             songs = songs,
                             page = 1,
                             hasMore = true,
+                            writableListId = "list-midnight",
                         ),
                         playingMediaId = "room",
                         onBack = {},
@@ -76,13 +78,17 @@ class PlaylistScreenshotTest {
 
         composeRule.onAllNodesWithText("深夜独白：安静的陪伴").assertCountEquals(2)
         composeRule.onNodeWithText("播放全部").assertExists()
-        composeRule.onNodeWithContentDescription("More actions for 静默轨道").assertDoesNotExist()
+        composeRule.onNodeWithContentDescription("More actions for 静默轨道").assertExists()
         capture("top")
 
         composeRule.onNodeWithTag("playlist-list").performScrollToIndex(6)
         composeRule.waitForIdle()
         composeRule.onNodeWithText("加载更多").assertExists()
         capture("songs")
+
+        composeRule.onNodeWithContentDescription("More actions for 城市醒来之前").performClick()
+        composeRule.onNodeWithText("从歌单中移除？").assertExists()
+        composeRule.onNodeWithText("“城市醒来之前”将从这个歌单中移除，不会删除歌曲本身。").assertExists()
     }
 
     private fun capture(name: String) {
@@ -100,6 +106,7 @@ class PlaylistScreenshotTest {
         vip: Boolean,
     ) = OnlineSong(
         hash = id,
+        fileId = "$id-file",
         title = title,
         artist = artist,
         coverUrl = null,

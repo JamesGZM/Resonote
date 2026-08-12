@@ -37,6 +37,7 @@ import com.resonote.core.model.Album
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.PlaybackUnavailableReason
 import com.resonote.core.model.Ranking
+import com.resonote.core.model.UserPlaylist
 import com.resonote.core.playback.PlaybackIssue
 import com.resonote.core.playback.PlaybackMode
 import com.resonote.core.playback.PlaybackState
@@ -80,6 +81,7 @@ internal fun TabsShell(
     onSearchClick: () -> Unit = {},
     onRecognitionClick: () -> Unit = {},
     onPlaylistClick: (String) -> Unit = {},
+    onUserPlaylistClick: (UserPlaylist) -> Unit = {},
     onAlbumClick: (Album) -> Unit = {},
     onRankingClick: (Ranking) -> Unit = {},
     discoverViewModel: DiscoverViewModel? = null,
@@ -193,7 +195,7 @@ internal fun TabsShell(
                                 onHistoryClick = onHistoryClick,
                                 onCloudClick = onCloudClick,
                                 onLocalMusicClick = onLocalMusicClick,
-                                onPlaylistClick = onPlaylistClick,
+                                onPlaylistClick = onUserPlaylistClick,
                                 viewModel = actualViewModel,
                             )
                         }

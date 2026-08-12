@@ -85,7 +85,7 @@ fun MyRoute(
     onHistoryClick: () -> Unit,
     onCloudClick: () -> Unit,
     onLocalMusicClick: () -> Unit,
-    onPlaylistClick: (String) -> Unit,
+    onPlaylistClick: (UserPlaylist) -> Unit,
     viewModel: MyViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -122,7 +122,7 @@ internal fun MyScreen(
     onCreatePlaylist: (String) -> Unit,
     onDismissPlaylistCreation: () -> Unit,
     onAcknowledgePlaylistCreation: () -> Unit,
-    onPlaylistClick: (String) -> Unit,
+    onPlaylistClick: (UserPlaylist) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
@@ -345,7 +345,7 @@ private fun LazyListScope.authenticatedAccount(
     onCloudClick: () -> Unit,
     onLocalMusicClick: () -> Unit,
     onCreatePlaylistClick: () -> Unit,
-    onPlaylistClick: (String) -> Unit,
+    onPlaylistClick: (UserPlaylist) -> Unit,
 ) {
     item(key = "profile") {
         when (val profile = state.profile) {
@@ -603,7 +603,7 @@ private fun DailyVipEntryCard(
 
 private fun LazyListScope.playlistSections(
     playlists: List<UserPlaylist>,
-    onPlaylistClick: (String) -> Unit,
+    onPlaylistClick: (UserPlaylist) -> Unit,
     onCreatePlaylistClick: () -> Unit,
     createEnabled: Boolean,
 ) {
@@ -639,7 +639,7 @@ private fun LazyListScope.playlistGroup(
     title: Int,
     emptyText: Int,
     playlists: List<UserPlaylist>,
-    onPlaylistClick: (String) -> Unit,
+    onPlaylistClick: (UserPlaylist) -> Unit,
     onCreateClick: (() -> Unit)? = null,
     createEnabled: Boolean = true,
 ) {
@@ -693,7 +693,7 @@ private fun LazyListScope.playlistGroup(
                 shape = MaterialTheme.shapes.extraLarge,
             ) {
                 playlists.forEachIndexed { index, playlist ->
-                    PlaylistRow(playlist = playlist, onClick = { onPlaylistClick(playlist.globalId) })
+                    PlaylistRow(playlist = playlist, onClick = { onPlaylistClick(playlist) })
                     if (index < playlists.lastIndex) HorizontalDivider(modifier = Modifier.padding(start = 84.dp))
                 }
             }
@@ -825,9 +825,9 @@ private fun ProfileStat(label: String, value: String, modifier: Modifier = Modif
 }
 
 @Composable
-private fun LikedPlaylistCard(playlist: UserPlaylist, onPlaylistClick: (String) -> Unit) {
+private fun LikedPlaylistCard(playlist: UserPlaylist, onPlaylistClick: (UserPlaylist) -> Unit) {
     Card(
-        onClick = { onPlaylistClick(playlist.globalId) },
+        onClick = { onPlaylistClick(playlist) },
         modifier = Modifier.fillMaxWidth().testTag("my-liked"),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
         shape = MaterialTheme.shapes.extraLarge,

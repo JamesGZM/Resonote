@@ -14,11 +14,24 @@ sealed interface PlaylistUiState {
         val songs: List<OnlineSong>,
         val page: Int,
         val hasMore: Boolean,
+        val writableListId: String? = null,
         val isLoadingMore: Boolean = false,
         val loadMoreFailure: ContentFailure? = null,
+        val removal: PlaylistRemovalUiState = PlaylistRemovalUiState.Idle,
     ) : PlaylistUiState
 
     data object Empty : PlaylistUiState
 
     data class Error(val failure: ContentFailure) : PlaylistUiState
+}
+
+@Immutable
+sealed interface PlaylistRemovalUiState {
+    data object Idle : PlaylistRemovalUiState
+
+    data class Removing(val songHash: String) : PlaylistRemovalUiState
+
+    data class Failed(val songHash: String, val failure: ContentFailure) : PlaylistRemovalUiState
+
+    data class Removed(val title: String) : PlaylistRemovalUiState
 }

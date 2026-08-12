@@ -20,20 +20,28 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
+import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,18 +58,20 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.resonote.core.designsystem.component.ResonoteArtworkState
+import com.resonote.core.designsystem.component.ResonoteDestructiveButton
 import com.resonote.core.designsystem.component.ResonoteMusicItem
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.ContentFailure
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.PlaylistDetails
+import com.resonote.feature.playlist.api.PlaylistNavKey
 
 @Composable
 fun PlaylistRoute(
-    playlistId: String,
+    key: PlaylistNavKey,
     playingMediaId: String?,
-    isAuthenticated: Boolean,
+    currentAccountId: String?,
     onBack: () -> Unit,
     onPlayAll: (List<OnlineSong>) -> Unit,
     onSongClick: (OnlineSong) -> Unit,
@@ -69,10 +79,13 @@ fun PlaylistRoute(
     viewModel: PlaylistViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    LaunchedEffect(playlistId) { viewModel.load(playlistId) }
-    LaunchedEffect(isAuthenticated) {
+    val writableListId = key.writableListId.takeIf { key.writableAccountId == currentAccountId }
+    LaunchedEffect(key.playlistId, writableListId, currentAccountId) {
+        viewModel.load(key.playlistId, writableListId, currentAccountId)
+    }
+    LaunchedEffect(currentAccountId) {
         val error = viewModel.uiState.value as? PlaylistUiState.Error
-        if (isAuthenticated && error?.failure == ContentFailure.AuthenticationRequired) viewModel.retry()
+        if (currentAccountId != null && error?.failure == ContentFailure.AuthenticationRequired) viewModel.retry()
     }
     PlaylistScreen(
         state = state,
@@ -83,6 +96,9 @@ fun PlaylistRoute(
         onPlayAll = onPlayAll,
         onSongClick = onSongClick,
         onSongMoreClick = onSongMoreClick,
+        onRemoveSong = viewModel::removeSong,
+        onDismissRemovalFailure = viewModel::dismissRemovalFailure,
+        onAcknowledgeRemoval = viewModel::acknowledgeRemoval,
     )
 }
 
@@ -97,10 +113,33 @@ fun PlaylistScreen(
     onSongClick: (OnlineSong) -> Unit,
     onSongMoreClick: ((OnlineSong) -> Unit)?,
     modifier: Modifier = Modifier,
+    onRemoveSong: (OnlineSong) -> Unit = {},
+    onDismissRemovalFailure: () -> Unit = {},
+    onAcknowledgeRemoval: () -> Unit = {},
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    var pendingRemovalHash by rememberSaveable { mutableStateOf<String?>(null) }
+    val content = state as? PlaylistUiState.Content
+    val removal = content?.removal
+    val removedMessage = (removal as? PlaylistRemovalUiState.Removed)?.let {
+        stringResource(R.string.feature_playlist_impl_remove_success, it.title)
+    }
+
+    LaunchedEffect(content?.writableListId) {
+        if (content?.writableListId == null) pendingRemovalHash = null
+    }
+    LaunchedEffect(removedMessage) {
+        if (removedMessage != null) {
+            pendingRemovalHash = null
+            snackbarHostState.showSnackbar(removedMessage)
+            onAcknowledgeRemoval()
+        }
+    }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             ResonoteTopAppBar(
                 title = {
@@ -135,9 +174,30 @@ fun PlaylistScreen(
                 onPlayAll = onPlayAll,
                 onSongClick = onSongClick,
                 onSongMoreClick = onSongMoreClick,
+                onRemoveRequest = { pendingRemovalHash = it.hash },
                 modifier = Modifier.padding(padding),
             )
         }
+    }
+
+    val pendingSong = content?.songs?.firstOrNull { it.hash == pendingRemovalHash }
+    if (pendingSong != null && content.writableListId != null) {
+        val removing = removal == PlaylistRemovalUiState.Removing(pendingSong.hash)
+        val failure = (removal as? PlaylistRemovalUiState.Failed)
+            ?.takeIf { it.songHash == pendingSong.hash }
+            ?.failure
+        RemoveSongDialog(
+            song = pendingSong,
+            removing = removing,
+            failure = failure,
+            onDismiss = {
+                if (!removing) {
+                    pendingRemovalHash = null
+                    onDismissRemovalFailure()
+                }
+            },
+            onConfirm = { onRemoveSong(pendingSong) },
+        )
     }
 }
 
@@ -149,6 +209,7 @@ private fun PlaylistContent(
     onPlayAll: (List<OnlineSong>) -> Unit,
     onSongClick: (OnlineSong) -> Unit,
     onSongMoreClick: ((OnlineSong) -> Unit)?,
+    onRemoveRequest: (OnlineSong) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -164,6 +225,10 @@ private fun PlaylistContent(
             )
         }
         items(state.songs, key = { "song-${it.hash}" }) { song ->
+            val canRemove = state.writableListId != null &&
+                !song.fileId.isNullOrBlank() &&
+                !state.isLoadingMore &&
+                state.removal !is PlaylistRemovalUiState.Removing
             ResonoteMusicItem(
                 title = song.title,
                 supportingText = song.artist.orEmpty(),
@@ -173,7 +238,11 @@ private fun PlaylistContent(
                 isPlaying = song.hash == playingMediaId,
                 artworkState = ResonoteArtworkState.MISSING,
                 onClick = { onSongClick(song) },
-                onMoreClick = onSongMoreClick?.let { callback -> { callback(song) } },
+                onMoreClick = when {
+                    canRemove -> ({ onRemoveRequest(song) })
+                    onSongMoreClick != null -> ({ onSongMoreClick(song) })
+                    else -> null
+                },
             )
         }
         if (state.hasMore || state.isLoadingMore || state.loadMoreFailure != null) {
@@ -195,6 +264,58 @@ private fun PlaylistContent(
             }
         }
     }
+}
+
+@Composable
+private fun RemoveSongDialog(
+    song: OnlineSong,
+    removing: Boolean,
+    failure: ContentFailure?,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = { Icon(Icons.Rounded.DeleteOutline, contentDescription = null) },
+        title = { Text(stringResource(R.string.feature_playlist_impl_remove_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(stringResource(R.string.feature_playlist_impl_remove_body, song.title))
+                failure?.let {
+                    Text(
+                        text = removalFailureMessage(it),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !removing) {
+                Text(stringResource(R.string.feature_playlist_impl_remove_cancel))
+            }
+        },
+        confirmButton = {
+            ResonoteDestructiveButton(
+                label = stringResource(R.string.feature_playlist_impl_remove_confirm),
+                loadingLabel = stringResource(R.string.feature_playlist_impl_removing),
+                loading = removing,
+                enabled = !removing,
+                onClick = onConfirm,
+            )
+        },
+    )
+}
+
+@Composable
+private fun removalFailureMessage(failure: ContentFailure): String = when (failure) {
+    ContentFailure.AuthenticationRequired -> stringResource(R.string.feature_playlist_impl_remove_error_auth)
+    ContentFailure.Network -> stringResource(R.string.feature_playlist_impl_remove_error_network)
+    ContentFailure.ServiceRejected -> stringResource(R.string.feature_playlist_impl_remove_error_service)
+    is ContentFailure.RiskVerificationRequired,
+    ContentFailure.RiskBlocked,
+    -> stringResource(R.string.feature_playlist_impl_remove_error_risk)
+    ContentFailure.Protocol -> stringResource(R.string.feature_playlist_impl_remove_error_protocol)
 }
 
 @Composable

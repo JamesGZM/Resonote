@@ -21,4 +21,5 @@ internal fun NetworkSong.toOnlineSong(): OnlineSong =
             },
         vip = vip,
         albumTitle = albumTitle,
+        fileId = fileId,
     )

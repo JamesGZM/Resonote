@@ -18,6 +18,7 @@ data class OnlineSong(
     val quality: AudioQuality,
     val vip: Boolean,
     val albumTitle: String? = null,
+    val fileId: String? = null,
 )
 
 data class SongPage(val songs: List<OnlineSong>, val page: Int, val total: Int?, val hasMore: Boolean)

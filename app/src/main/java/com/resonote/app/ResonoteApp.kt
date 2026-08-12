@@ -107,6 +107,17 @@ internal fun ResonoteApp(
                     onCloudClick = { backStack.navigateToCloud(authState) },
                     onLocalMusicClick = { backStack.add(LocalMusicNavKey()) },
                     onPlaylistClick = { backStack.add(PlaylistNavKey(it)) },
+                    onUserPlaylistClick = { playlist ->
+                        val accountId = (authState as? AuthState.Authenticated)?.userId
+                        val canWrite = playlist.isMine && accountId != null
+                        backStack.add(
+                            PlaylistNavKey(
+                                playlistId = playlist.globalId,
+                                writableListId = playlist.listId.takeIf { canWrite },
+                                writableAccountId = accountId.takeIf { canWrite },
+                            ),
+                        )
+                    },
                     onAlbumClick = { album ->
                         backStack.add(
                             AlbumNavKey(
@@ -174,9 +185,9 @@ internal fun ResonoteApp(
             }
             entry<PlaylistNavKey> { key ->
                 PlaylistRoute(
-                    playlistId = key.playlistId,
+                    key = key,
                     playingMediaId = playbackState.currentMetadata?.mediaId,
-                    isAuthenticated = authState is AuthState.Authenticated,
+                    currentAccountId = (authState as? AuthState.Authenticated)?.userId,
                     onBack = { backStack.removeAt(backStack.lastIndex) },
                     onPlayAll = { playbackViewModel.playAll(it) },
                     onSongClick = playbackViewModel::play,
