@@ -31,6 +31,7 @@ dependencies {
     implementation(projects.core.designsystem)
     implementation(projects.core.navigation)
     implementation(projects.core.data)
+    implementation(projects.feature.auth.impl)
     implementation(projects.feature.album.api)
     implementation(projects.feature.album.impl)
     implementation(projects.feature.artist.api)

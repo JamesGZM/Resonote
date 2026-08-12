@@ -6,8 +6,4 @@
     <string name="tab_my">My music</string>
     <string name="page_in_design">Page design in progress</string>
     <string name="feature_coming_soon">Feature in development</string>
-    <string name="auth_login_required">Sign-in required</string>
-    <string name="auth_session_expired">Sign-in expired</string>
-    <string name="auth_login_pending">Sign-in UI is not connected yet</string>
-    <string name="action_back">Back</string>
 </resources>

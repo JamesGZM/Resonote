@@ -15,6 +15,7 @@ import com.resonote.feature.album.api.AlbumNavKey
 import com.resonote.feature.album.impl.AlbumRoute
 import com.resonote.feature.artist.api.ArtistNavKey
 import com.resonote.feature.artist.impl.ArtistRoute
+import com.resonote.feature.auth.impl.LoginRoute
 import com.resonote.feature.playlist.api.PlaylistNavKey
 import com.resonote.feature.playlist.impl.PlaylistRoute
 import com.resonote.feature.ranking.api.RankingNavKey
@@ -133,7 +134,7 @@ internal fun ResonoteApp(viewModel: MainActivityViewModel = hiltViewModel()) {
                 )
             }
             entry<LoginGateNavKey> { key ->
-                LoginGateScreen(
+                LoginRoute(
                     sessionExpired = key.sessionExpired,
                     onBack = {
                         if (backStack.lastOrNull() is LoginGateNavKey) backStack.removeAt(backStack.lastIndex)
