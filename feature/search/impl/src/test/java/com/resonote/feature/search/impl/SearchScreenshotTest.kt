@@ -6,14 +6,17 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.github.takahirom.roborazzi.captureRoboImage
+import com.google.common.truth.Truth.assertThat
 import com.resonote.core.designsystem.theme.ResonoteTheme
 import com.resonote.core.designsystem.theme.ResonoteThemeMode
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.SearchKeyword
+import com.resonote.core.model.SearchMv
 import com.resonote.core.screenshottesting.DefaultRoborazziOptions
 import org.junit.Rule
 import org.junit.Test
@@ -79,7 +82,49 @@ class SearchScreenshotTest {
         capture("songs")
     }
 
-    private fun setSearchContent(state: SearchUiState) {
+    @Test
+    fun search_compactMvPageAndPreservesMetadataOnClick() {
+        val mv = SearchMv(
+            hash = "tide-signal",
+            name = "潮汐信号：海岸线现场",
+            singer = "林澈 · Winter Archive",
+            coverUrl = "https://img.example/tide.jpg",
+            durationMillis = 265_000,
+        )
+        var selected: SearchMv? = null
+        setSearchContent(
+            state = SearchUiState(
+                query = "潮汐",
+                selectedCategory = SearchCategory.MVS,
+                result = SearchResultUiState.Content(
+                    query = "潮汐",
+                    category = SearchCategory.MVS,
+                    value = SearchContentUiState.Page(
+                        items = listOf(
+                            SearchResultItem.Mv(mv),
+                            SearchResultItem.Mv(
+                                SearchMv("night-route", "夜航路线", "林澈", null, 247_000),
+                            ),
+                        ),
+                        page = 1,
+                        total = 2,
+                        hasMore = false,
+                    ),
+                ),
+            ),
+            onMvClick = { selected = it },
+        )
+
+        composeRule.onNodeWithText("潮汐信号：海岸线现场").performClick()
+
+        assertThat(selected).isEqualTo(mv)
+        capture("mvs")
+    }
+
+    private fun setSearchContent(
+        state: SearchUiState,
+        onMvClick: ((SearchMv) -> Unit)? = null,
+    ) {
         composeRule.setContent {
             DeviceConfigurationOverride(
                 override = DeviceConfigurationOverride.ForcedSize(DpSize(390.dp, 844.dp)),
@@ -101,7 +146,7 @@ class SearchScreenshotTest {
                         onPlaylistClick = null,
                         onAlbumClick = null,
                         onArtistClick = null,
-                        onMvClick = null,
+                        onMvClick = onMvClick,
                     )
                 }
             }

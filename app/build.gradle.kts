@@ -50,6 +50,8 @@ dependencies {
     implementation(projects.feature.search.impl)
     implementation(projects.feature.vip.api)
     implementation(projects.feature.vip.impl)
+    implementation(projects.feature.video.api)
+    implementation(projects.feature.video.impl)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material.icons.extended)

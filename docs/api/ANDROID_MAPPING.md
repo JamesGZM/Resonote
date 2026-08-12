@@ -51,6 +51,13 @@
 - `API-RANKING-003`、`API-RANKING-001`、`API-PLAYLIST-007` 已由共享 Network DataSource、`RankingRepository` 与 `PlaylistRepository` 实现，并保持类型化错误、取消传播和 Mobile 分页语义：榜单按可消费歌曲是否填满当前页判断，歌单将非正总数视为未知且以原始页大小兜底；它们不扩充 `HomeRepository.refresh()` 的职责。
 - 推荐、榜单和歌单歌曲的音质同时读取显式 HQ/SQ Hash 与 `relate_goods` 可用档位；320K 映射为 `HighQuality`，不冒充 `HighResolution`。缺失歌手在领域层保留为 `null`，由 UI 本地化兜底；仅歌单协议需要的 `fileid` 留在 Network DTO，不进入 `OnlineSong`。
 
+## MV 播放纵向切片
+
+- 搜索的 MV 分类继续复用 `API-SEARCH-001`，`SearchMv` 将 hash、名称、歌手、封面和时长传入类型安全 `VideoNavKey`；Feature 不读取 Wire DTO，也不丢弃已经解析的展示字段。
+- `VideoRepository` 使用 `API-VIDEO-003` 解析 HTTPS 播放地址。只有非空可用地址进入 Ready 并创建单项 Media3 ExoPlayer；空地址显示不可用状态，网络、认证、风控、服务和协议失败保留 `ContentFailure` 类型及显式重试入口。
+- 点击 MV 是原子播放操作：App 先暂停当前音乐，但保留 Queue、当前歌曲和进度，再压入全局视频目的地；退出视频后不自动恢复音乐。进入页面后的认证失效由根级登录门禁承接，返回视频错误上下文后仍需用户手动重试。
+- 视频页使用 Media3 Compose Material3 Player 提供画面、播放/暂停和进度控制；用户显式全屏时才请求横屏并隐藏系统栏，系统 Back 先退出全屏。离开页面即释放视频播放器，不启用后台视频或画中画。
+
 ## 禁止依赖
 
 - UI/Feature 不直接依赖 Retrofit、OkHttp 或 API DTO。

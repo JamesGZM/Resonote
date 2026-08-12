@@ -69,6 +69,18 @@ class PrototypePlaybackStateTest {
         assertThat(state.currentSongId).isEqualTo("online")
     }
 
+    @Test
+    fun openingVideoPausesMusicWithoutChangingQueueOrCurrentSong() {
+        val state = PrototypePlaybackState()
+        state.playAll(listOf(song("first"), song("second")), startIndex = 1)
+
+        state.pauseForVideo()
+
+        assertThat(state.isPlaying).isFalse()
+        assertThat(state.currentSongId).isEqualTo("second")
+        assertThat(state.queue.map { it.hash }).containsExactly("first", "second").inOrder()
+    }
+
     private fun song(id: String) = OnlineSong(
         hash = id,
         title = id,

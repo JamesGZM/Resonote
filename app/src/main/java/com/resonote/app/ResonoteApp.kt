@@ -28,6 +28,8 @@ import com.resonote.feature.search.api.SearchNavKey
 import com.resonote.feature.search.impl.SearchRoute
 import com.resonote.feature.vip.api.DailyVipNavKey
 import com.resonote.feature.vip.impl.DailyVipRoute
+import com.resonote.feature.video.api.VideoNavKey
+import com.resonote.feature.video.impl.VideoRoute
 
 @Composable
 internal fun ResonoteApp(viewModel: MainActivityViewModel = hiltViewModel()) {
@@ -35,6 +37,7 @@ internal fun ResonoteApp(viewModel: MainActivityViewModel = hiltViewModel()) {
     val playbackState = rememberPrototypePlaybackState()
     val authState by viewModel.authState.collectAsStateWithLifecycle()
     val myViewModel: MyViewModel = hiltViewModel()
+    val setVideoFullscreen = rememberVideoFullscreenController()
 
     LaunchedEffect(authState) {
         backStack.synchronizeAuthenticationGate(authState)
@@ -104,7 +107,18 @@ internal fun ResonoteApp(viewModel: MainActivityViewModel = hiltViewModel()) {
                             ),
                         )
                     },
-                    onMvClick = null,
+                    onMvClick = { mv ->
+                        playbackState.pauseForVideo()
+                        backStack.add(
+                            VideoNavKey(
+                                hash = mv.hash,
+                                title = mv.name,
+                                singer = mv.singer,
+                                coverUrl = mv.coverUrl,
+                                durationMillis = mv.durationMillis,
+                            ),
+                        )
+                    },
                 )
             }
             entry<PlaylistNavKey> { key ->
@@ -161,6 +175,13 @@ internal fun ResonoteApp(viewModel: MainActivityViewModel = hiltViewModel()) {
                     onBack = { backStack.removeAt(backStack.lastIndex) },
                     onPlayRequest = playbackState::playCloud,
                     onAppendTracks = playbackState::appendCloud,
+                )
+            }
+            entry<VideoNavKey> { key ->
+                VideoRoute(
+                    key = key,
+                    onBack = { backStack.removeAt(backStack.lastIndex) },
+                    onFullscreenChange = setVideoFullscreen,
                 )
             }
             entry<LoginGateNavKey> { key ->

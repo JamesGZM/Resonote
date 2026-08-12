@@ -33,6 +33,7 @@ import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.VideoLibrary
 import androidx.compose.material3.AssistChip
@@ -57,6 +58,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -65,6 +67,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.compose.AsyncImage
 import com.resonote.core.designsystem.component.ResonoteArtworkState
 import com.resonote.core.designsystem.component.ResonoteMusicItem
 import com.resonote.core.designsystem.component.ResonoteTextField
@@ -87,7 +90,7 @@ fun SearchRoute(
     onPlaylistClick: ((String) -> Unit)?,
     onAlbumClick: ((SearchAlbum) -> Unit)?,
     onArtistClick: ((SearchArtist) -> Unit)?,
-    onMvClick: ((String) -> Unit)?,
+    onMvClick: ((SearchMv) -> Unit)?,
     viewModel: SearchViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -134,7 +137,7 @@ fun SearchScreen(
     onPlaylistClick: ((String) -> Unit)?,
     onAlbumClick: ((SearchAlbum) -> Unit)?,
     onArtistClick: ((SearchArtist) -> Unit)?,
-    onMvClick: ((String) -> Unit)?,
+    onMvClick: ((SearchMv) -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     val keyboard = LocalSoftwareKeyboardController.current
@@ -211,12 +214,12 @@ private fun SearchCategoryBar(
 @Composable
 private fun SearchCategory.label(): String = stringResource(
     when (this) {
-        SearchCategory.ALL -> R.string.search_all
-        SearchCategory.SONGS -> R.string.search_songs
-        SearchCategory.PLAYLISTS -> R.string.search_playlists
-        SearchCategory.ALBUMS -> R.string.search_albums
-        SearchCategory.MVS -> R.string.search_mvs
-        SearchCategory.ARTISTS -> R.string.search_artists
+        SearchCategory.ALL -> R.string.feature_search_impl_search_all
+        SearchCategory.SONGS -> R.string.feature_search_impl_search_songs
+        SearchCategory.PLAYLISTS -> R.string.feature_search_impl_search_playlists
+        SearchCategory.ALBUMS -> R.string.feature_search_impl_search_albums
+        SearchCategory.MVS -> R.string.feature_search_impl_search_mvs
+        SearchCategory.ARTISTS -> R.string.feature_search_impl_search_artists
     },
 )
 
@@ -233,17 +236,17 @@ private fun SearchHeader(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         IconButton(onClick = onBack) {
-            Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.search_back))
+            Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.feature_search_impl_search_back))
         }
         ResonoteTextField(
             value = query,
             onValueChange = onQueryChange,
             modifier = Modifier.weight(1f),
-            label = if (query.isBlank()) stringResource(R.string.search_hint) else "",
+            label = if (query.isBlank()) stringResource(R.string.feature_search_impl_search_hint) else "",
             leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
             trailingIcon = if (query.isBlank()) null else ({
                 IconButton(onClick = { onQueryChange("") }) {
-                    Icon(Icons.Rounded.Clear, stringResource(R.string.search_clear))
+                    Icon(Icons.Rounded.Clear, stringResource(R.string.feature_search_impl_search_clear))
                 }
             }),
             singleLine = true,
@@ -251,7 +254,7 @@ private fun SearchHeader(
             keyboardActions = KeyboardActions(onSearch = { onSubmit() }),
         )
         IconButton(onClick = { onRecognitionClick?.invoke() }, enabled = onRecognitionClick != null) {
-            Icon(Icons.Rounded.Mic, stringResource(R.string.search_recognition))
+            Icon(Icons.Rounded.Mic, stringResource(R.string.feature_search_impl_search_recognition))
         }
     }
 }
@@ -270,7 +273,7 @@ private fun SearchDiscovery(
         contentPadding = PaddingValues(bottom = 32.dp),
     ) {
         if (suggestions.isNotEmpty()) {
-            item { SectionTitle(stringResource(R.string.search_suggestions), Icons.Rounded.Search) }
+            item { SectionTitle(stringResource(R.string.feature_search_impl_search_suggestions), Icons.Rounded.Search) }
             items(suggestions, key = { "suggestion-$it" }) { suggestion ->
                 ListItem(
                     headlineContent = { Text(suggestion) },
@@ -283,9 +286,9 @@ private fun SearchDiscovery(
             if (history.isNotEmpty()) {
                 item {
                     SectionTitle(
-                        title = stringResource(R.string.search_history),
+                        title = stringResource(R.string.feature_search_impl_search_history),
                         icon = Icons.Rounded.History,
-                        actionLabel = stringResource(R.string.search_history_clear),
+                        actionLabel = stringResource(R.string.feature_search_impl_search_history_clear),
                         onAction = onClearHistory,
                     )
                 }
@@ -297,7 +300,7 @@ private fun SearchDiscovery(
                             IconButton(onClick = { onRemoveHistory(query) }) {
                                 Icon(
                                     Icons.Rounded.DeleteOutline,
-                                    stringResource(R.string.search_history_remove, query),
+                                    stringResource(R.string.feature_search_impl_search_history_remove, query),
                                 )
                             }
                         },
@@ -306,7 +309,7 @@ private fun SearchDiscovery(
                 }
             }
             if (hotKeywords.isNotEmpty()) {
-                item { SectionTitle(stringResource(R.string.search_hot), Icons.Rounded.GraphicEq) }
+                item { SectionTitle(stringResource(R.string.feature_search_impl_search_hot), Icons.Rounded.GraphicEq) }
                 item {
                     LazyRow(
                         contentPadding = PaddingValues(horizontal = 20.dp),
@@ -327,7 +330,7 @@ private fun LoadingState(query: String) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
             CircularProgressIndicator()
-            Text(stringResource(R.string.search_loading, query), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.feature_search_impl_search_loading, query), color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -335,22 +338,22 @@ private fun LoadingState(query: String) {
 @Composable
 private fun EmptyState() = MessageState(
     icon = Icons.Rounded.Search,
-    title = stringResource(R.string.search_empty_title),
-    body = stringResource(R.string.search_empty_body),
+    title = stringResource(R.string.feature_search_impl_search_empty_title),
+    body = stringResource(R.string.feature_search_impl_search_empty_body),
 )
 
 @Composable
 private fun ErrorState(failure: ContentFailure, onRetry: () -> Unit) {
     val body = when (failure) {
-        ContentFailure.Network -> stringResource(R.string.search_error_network)
-        ContentFailure.AuthenticationRequired -> stringResource(R.string.search_error_auth)
-        else -> stringResource(R.string.search_error_generic)
+        ContentFailure.Network -> stringResource(R.string.feature_search_impl_search_error_network)
+        ContentFailure.AuthenticationRequired -> stringResource(R.string.feature_search_impl_search_error_auth)
+        else -> stringResource(R.string.feature_search_impl_search_error_generic)
     }
     MessageState(
         icon = Icons.Rounded.Search,
-        title = stringResource(R.string.search_error_title),
+        title = stringResource(R.string.feature_search_impl_search_error_title),
         body = body,
-        action = { Button(onClick = onRetry) { Text(stringResource(R.string.search_retry)) } },
+        action = { Button(onClick = onRetry) { Text(stringResource(R.string.feature_search_impl_search_retry)) } },
     )
 }
 
@@ -383,7 +386,7 @@ private fun SearchResults(
     onPlaylistClick: ((String) -> Unit)?,
     onAlbumClick: ((SearchAlbum) -> Unit)?,
     onArtistClick: ((SearchArtist) -> Unit)?,
-    onMvClick: ((String) -> Unit)?,
+    onMvClick: ((SearchMv) -> Unit)?,
 ) {
     when (result) {
         is SearchContentUiState.Aggregate -> AggregateSearchResults(
@@ -418,7 +421,7 @@ private fun AggregateSearchResults(
     onPlaylistClick: ((String) -> Unit)?,
     onAlbumClick: ((SearchAlbum) -> Unit)?,
     onArtistClick: ((SearchArtist) -> Unit)?,
-    onMvClick: ((String) -> Unit)?,
+    onMvClick: ((SearchMv) -> Unit)?,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -427,9 +430,9 @@ private fun AggregateSearchResults(
         if (result.songs.isNotEmpty()) {
             item {
                 SectionTitle(
-                    stringResource(R.string.search_songs),
+                    stringResource(R.string.feature_search_impl_search_songs),
                     Icons.Rounded.MusicNote,
-                    stringResource(R.string.search_see_all),
+                    stringResource(R.string.feature_search_impl_search_see_all),
                 ) { onSelectCategory(SearchCategory.SONGS) }
             }
             items(result.songs, key = { "song-${it.hash}" }) { song ->
@@ -448,15 +451,15 @@ private fun AggregateSearchResults(
         if (result.artists.isNotEmpty()) {
             item {
                 SectionTitle(
-                    stringResource(R.string.search_artists),
+                    stringResource(R.string.feature_search_impl_search_artists),
                     Icons.Rounded.Person,
-                    stringResource(R.string.search_see_all),
+                    stringResource(R.string.feature_search_impl_search_see_all),
                 ) { onSelectCategory(SearchCategory.ARTISTS) }
             }
             items(result.artists, key = { "artist-${it.id}" }) { artist ->
                 EntityRow(
                     title = artist.name,
-                    supporting = stringResource(R.string.search_artist_metadata, artist.songCount, artist.albumCount),
+                    supporting = stringResource(R.string.feature_search_impl_search_artist_metadata, artist.songCount, artist.albumCount),
                     icon = Icons.Rounded.Person,
                     onClick = onArtistClick?.let { callback -> { callback(artist) } },
                 )
@@ -465,9 +468,9 @@ private fun AggregateSearchResults(
         if (result.albums.isNotEmpty()) {
             item {
                 SectionTitle(
-                    stringResource(R.string.search_albums),
+                    stringResource(R.string.feature_search_impl_search_albums),
                     Icons.Rounded.Album,
-                    stringResource(R.string.search_see_all),
+                    stringResource(R.string.feature_search_impl_search_see_all),
                 ) { onSelectCategory(SearchCategory.ALBUMS) }
             }
             items(result.albums, key = { "album-${it.id}" }) { album ->
@@ -477,9 +480,9 @@ private fun AggregateSearchResults(
         if (result.playlists.isNotEmpty()) {
             item {
                 SectionTitle(
-                    stringResource(R.string.search_playlists),
+                    stringResource(R.string.feature_search_impl_search_playlists),
                     Icons.AutoMirrored.Rounded.PlaylistPlay,
-                    stringResource(R.string.search_see_all),
+                    stringResource(R.string.feature_search_impl_search_see_all),
                 ) { onSelectCategory(SearchCategory.PLAYLISTS) }
             }
             items(result.playlists, key = { "playlist-${it.id}" }) { playlist ->
@@ -489,13 +492,13 @@ private fun AggregateSearchResults(
         if (result.mvs.isNotEmpty()) {
             item {
                 SectionTitle(
-                    stringResource(R.string.search_mvs),
+                    stringResource(R.string.feature_search_impl_search_mvs),
                     Icons.Rounded.VideoLibrary,
-                    stringResource(R.string.search_see_all),
+                    stringResource(R.string.feature_search_impl_search_see_all),
                 ) { onSelectCategory(SearchCategory.MVS) }
             }
             itemsIndexed(result.mvs, key = { _, mv -> "mv-${mv.hash}" }) { _, mv ->
-                MvRow(mv, onClick = onMvClick?.let { callback -> { callback(mv.hash) } })
+                MvRow(mv, onClick = onMvClick?.let { callback -> { callback(mv) } })
             }
         }
     }
@@ -510,7 +513,7 @@ private fun PagedSearchResults(
     onPlaylistClick: ((String) -> Unit)?,
     onAlbumClick: ((SearchAlbum) -> Unit)?,
     onArtistClick: ((SearchArtist) -> Unit)?,
-    onMvClick: ((String) -> Unit)?,
+    onMvClick: ((SearchMv) -> Unit)?,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -539,7 +542,7 @@ private fun PagedSearchResults(
                 is SearchResultItem.Artist -> EntityRow(
                     title = item.value.name,
                     supporting = stringResource(
-                        R.string.search_artist_metadata,
+                        R.string.feature_search_impl_search_artist_metadata,
                         item.value.songCount,
                         item.value.albumCount,
                     ),
@@ -548,7 +551,7 @@ private fun PagedSearchResults(
                 )
                 is SearchResultItem.Mv -> MvRow(
                     item.value,
-                    onMvClick?.let { callback -> { callback(item.value.hash) } },
+                    onMvClick?.let { callback -> { callback(item.value) } },
                 )
             }
         }
@@ -561,10 +564,10 @@ private fun PagedSearchResults(
                     when {
                         page.isLoadingMore -> CircularProgressIndicator(modifier = Modifier.size(28.dp))
                         page.loadMoreFailure != null -> TextButton(onClick = onLoadMore) {
-                            Text(stringResource(R.string.search_load_more_retry))
+                            Text(stringResource(R.string.feature_search_impl_search_load_more_retry))
                         }
                         page.hasMore -> TextButton(onClick = onLoadMore) {
-                            Text(stringResource(R.string.search_load_more))
+                            Text(stringResource(R.string.feature_search_impl_search_load_more))
                         }
                     }
                 }
@@ -603,7 +606,7 @@ private fun SectionTitle(
 @Composable
 private fun AlbumRow(album: SearchAlbum, onClick: (() -> Unit)?) = EntityRow(
     title = album.name,
-    supporting = stringResource(R.string.search_album_metadata, album.artist.orEmpty(), album.songCount),
+    supporting = stringResource(R.string.feature_search_impl_search_album_metadata, album.artist.orEmpty(), album.songCount),
     icon = Icons.Rounded.Album,
     onClick = onClick,
 )
@@ -611,23 +614,69 @@ private fun AlbumRow(album: SearchAlbum, onClick: (() -> Unit)?) = EntityRow(
 @Composable
 private fun PlaylistRow(playlist: SearchPlaylist, onClick: (() -> Unit)?) = EntityRow(
     title = playlist.name,
-    supporting = stringResource(R.string.search_playlist_metadata, playlist.creator.orEmpty(), playlist.songCount),
+    supporting = stringResource(R.string.feature_search_impl_search_playlist_metadata, playlist.creator.orEmpty(), playlist.songCount),
     icon = Icons.AutoMirrored.Rounded.PlaylistPlay,
     onClick = onClick,
 )
 
 @Composable
-private fun MvRow(mv: SearchMv, onClick: (() -> Unit)?) = EntityRow(
-    title = mv.name,
-    supporting = stringResource(
-        R.string.search_mv_metadata,
-        mv.singer.orEmpty(),
-        mv.durationMillis.coerceAtLeast(0) / 60_000,
-        mv.durationMillis.coerceAtLeast(0) / 1_000 % 60,
-    ),
-    icon = Icons.Rounded.VideoLibrary,
-    onClick = onClick,
-)
+private fun MvRow(mv: SearchMv, onClick: (() -> Unit)?) {
+    ListItem(
+        headlineContent = {
+            Text(mv.name, maxLines = 2, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.SemiBold)
+        },
+        supportingContent = {
+            Text(
+                mv.singer.orEmpty(),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        },
+        leadingContent = {
+            Box(
+                modifier = Modifier.width(112.dp).height(63.dp)
+                    .background(entityGradient(mv.name), MaterialTheme.shapes.medium),
+                contentAlignment = Alignment.Center,
+            ) {
+                if (!mv.coverUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = mv.coverUrl,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                    )
+                }
+                Surface(shape = CircleShape, color = Color.Black.copy(alpha = 0.52f), contentColor = Color.White) {
+                    Icon(Icons.Rounded.PlayArrow, contentDescription = null, modifier = Modifier.padding(6.dp).size(18.dp))
+                }
+                if (mv.durationMillis > 0) {
+                    Surface(
+                        modifier = Modifier.align(Alignment.BottomEnd).padding(5.dp),
+                        shape = MaterialTheme.shapes.extraSmall,
+                        color = Color.Black.copy(alpha = 0.66f),
+                        contentColor = Color.White,
+                    ) {
+                        Text(
+                            stringResource(
+                                R.string.feature_search_impl_search_mv_duration,
+                                mv.durationMillis / 60_000,
+                                mv.durationMillis / 1_000 % 60,
+                            ),
+                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                        )
+                    }
+                }
+            }
+        },
+        trailingContent = onClick?.let {
+            { Icon(Icons.AutoMirrored.Rounded.ArrowForward, contentDescription = null) }
+        },
+        modifier = if (onClick == null) Modifier else Modifier.clickable(onClick = onClick),
+    )
+    HorizontalDivider(modifier = Modifier.padding(start = 144.dp), color = MaterialTheme.colorScheme.outlineVariant)
+}
 
 @Composable
 private fun EntityRow(title: String, supporting: String, icon: ImageVector, onClick: (() -> Unit)?) {
