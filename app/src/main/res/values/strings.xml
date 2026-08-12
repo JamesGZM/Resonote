@@ -5,4 +5,9 @@
     <string name="tab_discover">Discover</string>
     <string name="tab_my">My music</string>
     <string name="feature_coming_soon">Feature in development</string>
+    <string name="playback_error_copyright">This song is unavailable due to copyright restrictions</string>
+    <string name="playback_error_vip">VIP access is required to play this song</string>
+    <string name="playback_error_cloud">No playable cloud source is available</string>
+    <string name="playback_error_source">Could not resolve the playback source. Try again.</string>
+    <string name="playback_error_player">Playback failed. Try another song.</string>
 </resources>

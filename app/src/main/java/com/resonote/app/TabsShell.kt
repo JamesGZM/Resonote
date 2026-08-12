@@ -19,6 +19,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,7 +35,11 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.resonote.core.designsystem.component.ResonoteNavigationSuiteScaffold
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.Album
+import com.resonote.core.model.OnlineSong
+import com.resonote.core.model.PlaybackUnavailableReason
 import com.resonote.core.model.Ranking
+import com.resonote.core.playback.PlaybackIssue
+import com.resonote.core.playback.PlaybackState
 import com.resonote.feature.discover.impl.DiscoverRoute
 import com.resonote.feature.discover.impl.DiscoverSection
 import com.resonote.feature.discover.impl.DiscoverViewModel
@@ -59,7 +64,11 @@ internal enum class ResonoteTab(
 @Composable
 internal fun TabsShell(
     homeViewModel: HomeViewModel? = null,
-    playbackState: PrototypePlaybackState = rememberPrototypePlaybackState(),
+    playbackState: PlaybackState = PlaybackState(),
+    onPlaySong: (OnlineSong) -> Unit = {},
+    onPlaySongs: (List<OnlineSong>, Int) -> Unit = { _, _ -> },
+    onTogglePlay: () -> Unit = {},
+    onNext: () -> Unit = {},
     onSearchClick: () -> Unit = {},
     onRecognitionClick: () -> Unit = {},
     onPlaylistClick: (String) -> Unit = {},
@@ -86,6 +95,11 @@ internal fun TabsShell(
     fun openDiscover(section: DiscoverSection) {
         requestedDiscoverSection = section
         tabsShellState.selectTab(ResonoteTab.DISCOVER)
+    }
+
+    val playbackIssueMessage = playbackState.issue?.message()
+    LaunchedEffect(playbackIssueMessage) {
+        playbackIssueMessage?.let { snackbarHostState.showSnackbar(it) }
     }
 
     BackHandler(enabled = selectedTab != ResonoteTab.HOME) { tabsShellState.handleBack() }
@@ -118,18 +132,20 @@ internal fun TabsShell(
                             val common: @Composable (HomeViewModel?) -> Unit = { suppliedViewModel ->
                                 if (suppliedViewModel == null) {
                                     HomeRoute(
-                                        playingMediaId = playbackState.currentSongId, bottomContentPadding = bottomContentPadding,
+                                        playingMediaId = playbackState.currentSong?.hash, bottomContentPadding = bottomContentPadding,
                                         onSearchClick = onSearchClick, onRecognitionClick = onRecognitionClick,
-                                        onPlay = playbackState::play, onOpenRankings = { openDiscover(DiscoverSection.RANKINGS) },
+                                        onPlay = { onPlaySongs(it.songs, it.startIndex) },
+                                        onOpenRankings = { openDiscover(DiscoverSection.RANKINGS) },
                                         onOpenFeaturedPlaylists = ::showComingSoon,
                                         onSongMoreClick = { showComingSoon() },
                                         onPlaylistClick = { onPlaylistClick(it.id) },
                                     )
                                 } else {
                                     HomeRoute(
-                                        playingMediaId = playbackState.currentSongId, bottomContentPadding = bottomContentPadding,
+                                        playingMediaId = playbackState.currentSong?.hash, bottomContentPadding = bottomContentPadding,
                                         onSearchClick = onSearchClick, onRecognitionClick = onRecognitionClick,
-                                        onPlay = playbackState::play, onOpenRankings = { openDiscover(DiscoverSection.RANKINGS) },
+                                        onPlay = { onPlaySongs(it.songs, it.startIndex) },
+                                        onOpenRankings = { openDiscover(DiscoverSection.RANKINGS) },
                                         onOpenFeaturedPlaylists = ::showComingSoon,
                                         onSongMoreClick = { showComingSoon() },
                                         onPlaylistClick = { onPlaylistClick(it.id) },
@@ -144,14 +160,14 @@ internal fun TabsShell(
                             val actualViewModel = discoverViewModel ?: hiltViewModel()
                             DiscoverRoute(
                                 bottomContentPadding = bottomContentPadding,
-                                playingMediaId = playbackState.currentSongId,
+                                playingMediaId = playbackState.currentSong?.hash,
                                 requestedSection = requestedDiscoverSection,
                                 onRequestedSectionConsumed = { requestedDiscoverSection = null },
                                 onPlaylistClick = { onPlaylistClick(it.id) },
                                 onRankingClick = onRankingClick,
                                 onAlbumClick = onAlbumClick,
-                                onPlaySongs = playbackState::playAll,
-                                onSongClick = playbackState::play,
+                                onPlaySongs = { onPlaySongs(it, 0) },
+                                onSongClick = onPlaySong,
                                 onSongMoreClick = { showComingSoon() },
                                 viewModel = actualViewModel,
                             )
@@ -178,8 +194,8 @@ internal fun TabsShell(
                             playbackState.isPlaying, playbackState.progress, PrototypeArtworkColors,
                         ),
                         onOpenPlayer = ::showComingSoon,
-                        onTogglePlay = playbackState::togglePlay,
-                        onNext = playbackState::playNext,
+                        onTogglePlay = onTogglePlay,
+                        onNext = onNext,
                         onOpenQueue = ::showComingSoon,
                         modifier = Modifier.align(Alignment.BottomCenter).padding(horizontal = 16.dp, vertical = 16.dp),
                     )
@@ -201,3 +217,16 @@ private fun AudioQuality.toLabel(): String? = when (this) {
     AudioQuality.HighResolution -> "HI-RES"
     AudioQuality.Lossless -> "LOSSLESS"
 }
+
+@Composable
+private fun PlaybackIssue.message(): String = stringResource(
+    when (this) {
+        is PlaybackIssue.Unavailable -> when (reason) {
+            PlaybackUnavailableReason.Copyright -> R.string.playback_error_copyright
+            PlaybackUnavailableReason.Vip -> R.string.playback_error_vip
+            PlaybackUnavailableReason.Cloud -> R.string.playback_error_cloud
+        }
+        is PlaybackIssue.SourceFailure -> R.string.playback_error_source
+        is PlaybackIssue.PlayerFailure -> R.string.playback_error_player
+    },
+)

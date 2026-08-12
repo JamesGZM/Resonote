@@ -34,9 +34,12 @@ import com.resonote.feature.video.api.VideoNavKey
 import com.resonote.feature.video.impl.VideoRoute
 
 @Composable
-internal fun ResonoteApp(viewModel: MainActivityViewModel = hiltViewModel()) {
+internal fun ResonoteApp(
+    viewModel: MainActivityViewModel = hiltViewModel(),
+    playbackViewModel: PlaybackViewModel = hiltViewModel(),
+) {
     val backStack = rememberNavBackStack(TabsShellNavKey)
-    val playbackState = rememberPrototypePlaybackState()
+    val playbackState by playbackViewModel.state.collectAsStateWithLifecycle()
     val authState by viewModel.authState.collectAsStateWithLifecycle()
     val myViewModel: MyViewModel = hiltViewModel()
     val setVideoFullscreen = rememberVideoFullscreenController()
@@ -51,6 +54,10 @@ internal fun ResonoteApp(viewModel: MainActivityViewModel = hiltViewModel()) {
             entry<TabsShellNavKey> {
                 TabsShell(
                     playbackState = playbackState,
+                    onPlaySong = playbackViewModel::play,
+                    onPlaySongs = playbackViewModel::playAll,
+                    onTogglePlay = playbackViewModel::togglePlayPause,
+                    onNext = playbackViewModel::next,
                     myViewModel = myViewModel,
                     onLoginRequest = {
                         if (backStack.lastOrNull() !is LoginGateNavKey) {
@@ -84,7 +91,7 @@ internal fun ResonoteApp(viewModel: MainActivityViewModel = hiltViewModel()) {
                     initialQuery = key.initialQuery,
                     onBack = { backStack.removeAt(backStack.lastIndex) },
                     onRecognitionClick = { backStack.add(RecognitionNavKey) },
-                    onSongClick = playbackState::play,
+                    onSongClick = playbackViewModel::play,
                     onSongMoreClick = null,
                     onPlaylistClick = { backStack.add(PlaylistNavKey(it)) },
                     onAlbumClick = { album ->
@@ -111,7 +118,7 @@ internal fun ResonoteApp(viewModel: MainActivityViewModel = hiltViewModel()) {
                         )
                     },
                     onMvClick = { mv ->
-                        playbackState.pauseForVideo()
+                        playbackViewModel.pause()
                         backStack.add(
                             VideoNavKey(
                                 hash = mv.hash,
@@ -127,41 +134,41 @@ internal fun ResonoteApp(viewModel: MainActivityViewModel = hiltViewModel()) {
             entry<PlaylistNavKey> { key ->
                 PlaylistRoute(
                     playlistId = key.playlistId,
-                    playingMediaId = playbackState.currentSongId,
+                    playingMediaId = playbackState.currentSong?.hash,
                     isAuthenticated = authState is AuthState.Authenticated,
                     onBack = { backStack.removeAt(backStack.lastIndex) },
-                    onPlayAll = { playbackState.playAll(it) },
-                    onSongClick = playbackState::play,
+                    onPlayAll = { playbackViewModel.playAll(it) },
+                    onSongClick = playbackViewModel::play,
                     onSongMoreClick = null,
                 )
             }
             entry<AlbumNavKey> { key ->
                 AlbumRoute(
                     key = key,
-                    playingMediaId = playbackState.currentSongId,
+                    playingMediaId = playbackState.currentSong?.hash,
                     onBack = { backStack.removeAt(backStack.lastIndex) },
-                    onPlayAll = playbackState::playAll,
-                    onSongClick = playbackState::play,
+                    onPlayAll = playbackViewModel::playAll,
+                    onSongClick = playbackViewModel::play,
                     onSongMoreClick = null,
                 )
             }
             entry<ArtistNavKey> { key ->
                 ArtistRoute(
                     key = key,
-                    playingMediaId = playbackState.currentSongId,
+                    playingMediaId = playbackState.currentSong?.hash,
                     onBack = { backStack.removeAt(backStack.lastIndex) },
-                    onPlayAll = playbackState::playAll,
-                    onSongClick = playbackState::play,
+                    onPlayAll = playbackViewModel::playAll,
+                    onSongClick = playbackViewModel::play,
                     onSongMoreClick = null,
                 )
             }
             entry<RankingNavKey> { key ->
                 RankingRoute(
                     key = key,
-                    playingMediaId = playbackState.currentSongId,
+                    playingMediaId = playbackState.currentSong?.hash,
                     onBack = { backStack.removeAt(backStack.lastIndex) },
-                    onPlayAll = playbackState::playAll,
-                    onSongClick = playbackState::play,
+                    onPlayAll = playbackViewModel::playAll,
+                    onSongClick = playbackViewModel::play,
                     onSongMoreClick = null,
                 )
             }
@@ -173,11 +180,13 @@ internal fun ResonoteApp(viewModel: MainActivityViewModel = hiltViewModel()) {
             }
             entry<CloudNavKey> {
                 CloudRoute(
-                    playingMediaId = playbackState.currentSongId,
+                    playingMediaId = playbackState.currentSong?.hash,
                     bottomContentPadding = if (playbackState.currentSong == null) 32.dp else 120.dp,
                     onBack = { backStack.removeAt(backStack.lastIndex) },
-                    onPlayRequest = playbackState::playCloud,
-                    onAppendTracks = playbackState::appendCloud,
+                    onPlayRequest = { request ->
+                        playbackViewModel.playCloud(request.tracks, request.startIndex, request.source)
+                    },
+                    onAppendTracks = playbackViewModel::appendCloud,
                 )
             }
             entry<VideoNavKey> { key ->
@@ -190,8 +199,8 @@ internal fun ResonoteApp(viewModel: MainActivityViewModel = hiltViewModel()) {
             entry<RecognitionNavKey> {
                 RecognitionRoute(
                     onBack = { backStack.removeAt(backStack.lastIndex) },
-                    onCaptureStarted = playbackState::pauseForRecognition,
-                    onPlay = playbackState::play,
+                    onCaptureStarted = playbackViewModel::pause,
+                    onPlay = playbackViewModel::play,
                     onSearch = { match ->
                         val query = listOfNotNull(match.song.title, match.song.artist)
                             .filter(String::isNotBlank)
