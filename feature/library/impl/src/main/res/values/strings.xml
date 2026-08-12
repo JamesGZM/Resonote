@@ -11,6 +11,9 @@
     <string name="my_daily_vip">每日 VIP</string>
     <string name="my_daily_vip_body">由你确认后领取今日畅听权益</string>
     <string name="my_daily_vip_login">登录后领取，返回时不会自动签到</string>
+    <string name="my_cloud">我的云盘</string>
+    <string name="my_cloud_body">浏览并播放账号云端音乐</string>
+    <string name="my_cloud_login">登录后继续进入云盘</string>
     <string name="my_user_id">ID %1$s</string>
     <string name="my_avatar">%1$s的头像</string>
     <string name="my_follows">关注</string>

@@ -11,7 +11,9 @@ import com.resonote.core.model.QrLoginCheckResult
 import com.resonote.core.model.QrLoginKeyResult
 import com.resonote.core.model.SendMobileCodeResult
 import com.resonote.core.navigation.LoginGateNavKey
+import com.resonote.core.navigation.LoginContinuation
 import com.resonote.core.navigation.TabsShellNavKey
+import com.resonote.feature.cloud.api.CloudNavKey
 import com.resonote.feature.vip.api.DailyVipNavKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -86,6 +88,27 @@ class MainActivityViewModelTest {
         backStack.navigateToDailyVip(AuthState.Authenticated("42"))
         assertThat(backStack.filterIsInstance<DailyVipNavKey>()).hasSize(1)
         assertThat(backStack.last()).isEqualTo(DailyVipNavKey)
+    }
+
+    @Test
+    fun cloudNavigationContinuesAfterLoginWithoutDuplicatingDestination() {
+        val backStack = mutableListOf<NavKey>(TabsShellNavKey)
+
+        backStack.navigateToCloud(AuthState.Anonymous)
+        assertThat(backStack.last()).isEqualTo(
+            LoginGateNavKey(sessionExpired = false, continuation = LoginContinuation.Cloud),
+        )
+        assertThat(backStack.filterIsInstance<CloudNavKey>()).isEmpty()
+
+        backStack.synchronizeAuthenticationGate(AuthState.Authenticated("42"))
+        assertThat(backStack.last()).isEqualTo(CloudNavKey)
+        assertThat(backStack.filterIsInstance<CloudNavKey>()).hasSize(1)
+
+        backStack.synchronizeAuthenticationGate(AuthState.AuthenticationRequired(AuthGateReason.Expired))
+        assertThat(backStack.last()).isEqualTo(LoginGateNavKey(sessionExpired = true))
+        backStack.synchronizeAuthenticationGate(AuthState.Authenticated("42"))
+        assertThat(backStack.filterIsInstance<CloudNavKey>()).hasSize(1)
+        assertThat(backStack.last()).isEqualTo(CloudNavKey)
     }
 
     private class FakeAuthRepository : AuthRepository {

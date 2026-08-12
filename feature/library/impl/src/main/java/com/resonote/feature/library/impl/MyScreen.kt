@@ -20,9 +20,10 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ChevronRight
-import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.CardGiftcard
+import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.Cloud
+import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.Refresh
@@ -66,6 +67,7 @@ fun MyRoute(
     bottomContentPadding: Dp,
     onLoginClick: () -> Unit,
     onDailyVipClick: () -> Unit,
+    onCloudClick: () -> Unit,
     onPlaylistClick: (String) -> Unit,
     viewModel: MyViewModel = hiltViewModel(),
 ) {
@@ -75,6 +77,7 @@ fun MyRoute(
         bottomContentPadding = bottomContentPadding,
         onLoginClick = onLoginClick,
         onDailyVipClick = onDailyVipClick,
+        onCloudClick = onCloudClick,
         onRefresh = viewModel::refresh,
         onRetryProfile = viewModel::retryProfile,
         onRetryPlaylists = viewModel::retryPlaylists,
@@ -88,6 +91,7 @@ internal fun MyScreen(
     bottomContentPadding: Dp,
     onLoginClick: () -> Unit,
     onDailyVipClick: () -> Unit,
+    onCloudClick: () -> Unit,
     onRefresh: () -> Unit,
     onRetryProfile: () -> Unit,
     onRetryPlaylists: () -> Unit,
@@ -126,12 +130,13 @@ internal fun MyScreen(
         ) {
             when (state) {
                 MyUiState.CheckingAccount -> checkingAccount()
-                MyUiState.Anonymous -> anonymousAccount(onLoginClick, onDailyVipClick)
+                MyUiState.Anonymous -> anonymousAccount(onLoginClick, onDailyVipClick, onCloudClick)
                 is MyUiState.Authenticated -> authenticatedAccount(
                     state = state,
                     onRetryProfile = onRetryProfile,
                     onRetryPlaylists = onRetryPlaylists,
                     onDailyVipClick = onDailyVipClick,
+                    onCloudClick = onCloudClick,
                     onPlaylistClick = onPlaylistClick,
                 )
             }
@@ -159,6 +164,7 @@ private fun LazyListScope.checkingAccount() {
 private fun LazyListScope.anonymousAccount(
     onLoginClick: () -> Unit,
     onDailyVipClick: () -> Unit,
+    onCloudClick: () -> Unit,
 ) {
     item(key = "anonymous-hero") {
         Card(
@@ -220,6 +226,9 @@ private fun LazyListScope.anonymousAccount(
     item(key = "daily-vip") {
         DailyVipEntryCard(onClick = onDailyVipClick, requiresLogin = true)
     }
+    item(key = "cloud") {
+        CloudEntryCard(onClick = onCloudClick, requiresLogin = true)
+    }
     item(key = "anonymous-note") {
         Text(
             text = stringResource(R.string.my_anonymous_local_note),
@@ -235,6 +244,7 @@ private fun LazyListScope.authenticatedAccount(
     onRetryProfile: () -> Unit,
     onRetryPlaylists: () -> Unit,
     onDailyVipClick: () -> Unit,
+    onCloudClick: () -> Unit,
     onPlaylistClick: (String) -> Unit,
 ) {
     item(key = "profile") {
@@ -253,6 +263,9 @@ private fun LazyListScope.authenticatedAccount(
     item(key = "daily-vip") {
         DailyVipEntryCard(onClick = onDailyVipClick, requiresLogin = false)
     }
+    item(key = "cloud") {
+        CloudEntryCard(onClick = onCloudClick, requiresLogin = false)
+    }
 
     when (val playlists = state.playlists) {
         MySectionState.Loading -> item(key = "playlists-loading") { PlaylistsLoadingCard() }
@@ -265,6 +278,45 @@ private fun LazyListScope.authenticatedAccount(
             )
         }
         is MySectionState.Available -> playlistSections(playlists.value, onPlaylistClick)
+    }
+}
+
+@Composable
+private fun CloudEntryCard(
+    onClick: () -> Unit,
+    requiresLogin: Boolean,
+) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().testTag("my-cloud"),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+        shape = MaterialTheme.shapes.extraLarge,
+    ) {
+        Row(modifier = Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+            Surface(
+                modifier = Modifier.size(52.dp),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.secondary,
+                contentColor = MaterialTheme.colorScheme.onSecondary,
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(Icons.Rounded.Cloud, contentDescription = null, modifier = Modifier.size(25.dp))
+                }
+            }
+            Column(modifier = Modifier.weight(1f).padding(start = 14.dp)) {
+                Text(
+                    stringResource(R.string.my_cloud),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    stringResource(if (requiresLogin) R.string.my_cloud_login else R.string.my_cloud_body),
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+            Icon(Icons.Rounded.ChevronRight, contentDescription = null)
+        }
     }
 }
 

@@ -36,6 +36,8 @@ dependencies {
     implementation(projects.feature.album.impl)
     implementation(projects.feature.artist.api)
     implementation(projects.feature.artist.impl)
+    implementation(projects.feature.cloud.api)
+    implementation(projects.feature.cloud.impl)
     implementation(projects.feature.discover.impl)
     implementation(projects.feature.home.impl)
     implementation(projects.feature.library.impl)

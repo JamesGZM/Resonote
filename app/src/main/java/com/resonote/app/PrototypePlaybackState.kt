@@ -7,7 +7,11 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.resonote.core.model.AudioQuality
+import com.resonote.core.model.CloudTrack
 import com.resonote.core.model.OnlineSong
+import com.resonote.core.model.ResolvedSongSource
+import com.resonote.feature.cloud.impl.CloudPlaybackRequest
 import com.resonote.feature.home.impl.HomePlaybackRequest
 
 @Stable
@@ -19,6 +23,8 @@ internal class PrototypePlaybackState {
     var isPlaying by mutableStateOf(false)
         private set
     var progress by mutableFloatStateOf(0f)
+        private set
+    var currentResolvedSource by mutableStateOf<ResolvedSongSource?>(null)
         private set
 
     val currentSong: OnlineSong?
@@ -32,6 +38,7 @@ internal class PrototypePlaybackState {
         require(songs.isNotEmpty()) { "Playback queue must not be empty" }
         require(startIndex in songs.indices) { "startIndex must point to a song" }
         queue = songs
+        currentResolvedSource = null
         select(songs[startIndex])
     }
 
@@ -42,7 +49,18 @@ internal class PrototypePlaybackState {
             val insertionIndex = if (currentIndex < 0) queue.size else currentIndex + 1
             queue = queue.toMutableList().apply { add(insertionIndex, song) }
         }
+        currentResolvedSource = null
         select(song)
+    }
+
+    fun playCloud(request: CloudPlaybackRequest) {
+        playAll(request.tracks.map(CloudTrack::toOnlineSong), request.startIndex)
+        currentResolvedSource = request.source
+    }
+
+    fun appendCloud(tracks: List<CloudTrack>) {
+        val existingHashes = queue.mapTo(mutableSetOf(), OnlineSong::hash)
+        queue = queue + tracks.filter { existingHashes.add(it.hash) }.map(CloudTrack::toOnlineSong)
     }
 
     fun togglePlay() {
@@ -52,6 +70,7 @@ internal class PrototypePlaybackState {
     fun playNext() {
         if (queue.isEmpty()) return
         val currentIndex = queue.indexOfFirst { it.hash == currentSongId }.coerceAtLeast(0)
+        currentResolvedSource = null
         select(queue[(currentIndex + 1).mod(queue.size)])
     }
 
@@ -61,6 +80,19 @@ internal class PrototypePlaybackState {
         progress = 0f
     }
 }
+
+private fun CloudTrack.toOnlineSong() = OnlineSong(
+    hash = hash,
+    title = title,
+    artist = artist,
+    coverUrl = coverUrl,
+    albumId = null,
+    albumAudioId = albumAudioId,
+    durationMillis = durationMillis,
+    quality = AudioQuality.Standard,
+    vip = false,
+    albumTitle = album,
+)
 
 @Composable
 internal fun rememberPrototypePlaybackState(): PrototypePlaybackState = remember { PrototypePlaybackState() }

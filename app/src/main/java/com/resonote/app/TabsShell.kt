@@ -68,6 +68,7 @@ internal fun TabsShell(
     myViewModel: MyViewModel? = null,
     onLoginRequest: () -> Unit = {},
     onDailyVipClick: () -> Unit = {},
+    onCloudClick: () -> Unit = {},
 ) {
     val tabsShellState = rememberTabsShellState()
     val selectedTab = tabsShellState.selectedTab
@@ -161,6 +162,7 @@ internal fun TabsShell(
                                 bottomContentPadding = bottomContentPadding,
                                 onLoginClick = onLoginRequest,
                                 onDailyVipClick = onDailyVipClick,
+                                onCloudClick = onCloudClick,
                                 onPlaylistClick = onPlaylistClick,
                                 viewModel = actualViewModel,
                             )

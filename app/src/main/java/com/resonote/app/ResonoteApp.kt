@@ -3,6 +3,7 @@ package com.resonote.app
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation3.runtime.entryProvider
@@ -16,6 +17,8 @@ import com.resonote.feature.album.impl.AlbumRoute
 import com.resonote.feature.artist.api.ArtistNavKey
 import com.resonote.feature.artist.impl.ArtistRoute
 import com.resonote.feature.auth.impl.LoginRoute
+import com.resonote.feature.cloud.api.CloudNavKey
+import com.resonote.feature.cloud.impl.CloudRoute
 import com.resonote.feature.library.impl.MyViewModel
 import com.resonote.feature.playlist.api.PlaylistNavKey
 import com.resonote.feature.playlist.impl.PlaylistRoute
@@ -51,6 +54,7 @@ internal fun ResonoteApp(viewModel: MainActivityViewModel = hiltViewModel()) {
                     },
                     onSearchClick = { backStack.add(SearchNavKey()) },
                     onDailyVipClick = { backStack.navigateToDailyVip(authState) },
+                    onCloudClick = { backStack.navigateToCloud(authState) },
                     onPlaylistClick = { backStack.add(PlaylistNavKey(it)) },
                     onAlbumClick = { album ->
                         backStack.add(
@@ -148,6 +152,15 @@ internal fun ResonoteApp(viewModel: MainActivityViewModel = hiltViewModel()) {
                 DailyVipRoute(
                     onBack = { backStack.removeAt(backStack.lastIndex) },
                     onRewardApplied = myViewModel::refresh,
+                )
+            }
+            entry<CloudNavKey> {
+                CloudRoute(
+                    playingMediaId = playbackState.currentSongId,
+                    bottomContentPadding = if (playbackState.currentSong == null) 32.dp else 120.dp,
+                    onBack = { backStack.removeAt(backStack.lastIndex) },
+                    onPlayRequest = playbackState::playCloud,
+                    onAppendTracks = playbackState::appendCloud,
                 )
             }
             entry<LoginGateNavKey> { key ->

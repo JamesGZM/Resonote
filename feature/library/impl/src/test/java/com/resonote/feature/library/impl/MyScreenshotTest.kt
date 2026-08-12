@@ -68,6 +68,7 @@ class MyScreenshotTest {
                         bottomContentPadding = 24.dp,
                         onLoginClick = onLoginClick,
                         onDailyVipClick = {},
+                        onCloudClick = {},
                         onRefresh = {},
                         onRetryProfile = {},
                         onRetryPlaylists = {},
