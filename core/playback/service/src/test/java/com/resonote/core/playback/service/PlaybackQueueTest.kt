@@ -57,6 +57,49 @@ class PlaybackQueueTest {
         assertThat(selected?.song?.hash).isEqualTo("second")
     }
 
+    @Test
+    fun removingCurrentSelectsFollowingItemOrNewLastItem() {
+        val queue = PlaybackQueue().apply {
+            replace(listOf(item("first"), item("second"), item("third")), 1)
+        }
+
+        val middleRemoval = queue.removeAt(1)
+
+        assertThat(middleRemoval?.removedCurrent).isTrue()
+        assertThat(queue.currentItem?.song?.hash).isEqualTo("third")
+
+        val lastRemoval = queue.removeAt(1)
+
+        assertThat(lastRemoval?.removedCurrent).isTrue()
+        assertThat(queue.currentItem?.song?.hash).isEqualTo("first")
+    }
+
+    @Test
+    fun removingItemBeforeCurrentKeepsSameSongSelected() {
+        val queue = PlaybackQueue().apply {
+            replace(listOf(item("first"), item("second"), item("third")), 2)
+        }
+
+        val removal = queue.removeAt(0)
+
+        assertThat(removal?.removedCurrent).isFalse()
+        assertThat(queue.currentIndex).isEqualTo(1)
+        assertThat(queue.currentItem?.song?.hash).isEqualTo("third")
+    }
+
+    @Test
+    fun movingItemsPreservesCurrentSongSelection() {
+        val queue = PlaybackQueue().apply {
+            replace(listOf(item("first"), item("second"), item("third")), 1)
+        }
+
+        assertThat(queue.move(2, 0)).isTrue()
+
+        assertThat(queue.items.map { it.song.hash }).containsExactly("third", "first", "second").inOrder()
+        assertThat(queue.currentIndex).isEqualTo(2)
+        assertThat(queue.currentItem?.song?.hash).isEqualTo("second")
+    }
+
     private fun item(hash: String, source: ResolvedSongSource? = null) = PlaybackItem(
         song = OnlineSong(
             hash = hash,

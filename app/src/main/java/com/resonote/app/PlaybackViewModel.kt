@@ -8,6 +8,7 @@ import com.resonote.core.model.ResolvedSongSource
 import com.resonote.core.playback.PlaybackController
 import com.resonote.core.playback.PlaybackItem
 import com.resonote.core.playback.PlaybackOrigin
+import com.resonote.core.playback.PlaybackMode
 import com.resonote.core.playback.PlaybackState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -49,6 +50,18 @@ internal class PlaybackViewModel @Inject constructor(
     fun pause() = playbackController.pause()
 
     fun next() = playbackController.next()
+
+    fun seekTo(positionMillis: Long) = playbackController.seekTo(positionMillis)
+
+    fun setMode(mode: PlaybackMode) = playbackController.setMode(mode)
+
+    fun selectQueueItem(index: Int) = playbackController.selectQueueItem(index)
+
+    fun removeQueueItem(index: Int) = playbackController.removeQueueItem(index)
+
+    fun moveQueueItem(fromIndex: Int, toIndex: Int) = playbackController.moveQueueItem(fromIndex, toIndex)
+
+    fun clearQueue() = playbackController.clear()
 }
 
 private fun CloudTrack.toOnlineSong() = OnlineSong(

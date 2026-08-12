@@ -44,6 +44,7 @@ dependencies {
     implementation(projects.feature.home.impl)
     implementation(projects.feature.library.impl)
     implementation(projects.feature.player.impl)
+    implementation(projects.feature.player.api)
     implementation(projects.feature.playlist.api)
     implementation(projects.feature.playlist.impl)
     implementation(projects.feature.ranking.api)

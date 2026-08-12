@@ -80,6 +80,12 @@ interface PlaybackController {
 
     fun append(items: List<PlaybackItem>)
 
+    fun selectQueueItem(index: Int)
+
+    fun removeQueueItem(index: Int)
+
+    fun moveQueueItem(fromIndex: Int, toIndex: Int)
+
     fun togglePlayPause()
 
     fun pause()

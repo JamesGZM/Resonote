@@ -39,6 +39,7 @@ import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.PlaybackUnavailableReason
 import com.resonote.core.model.Ranking
 import com.resonote.core.playback.PlaybackIssue
+import com.resonote.core.playback.PlaybackMode
 import com.resonote.core.playback.PlaybackState
 import com.resonote.feature.discover.impl.DiscoverRoute
 import com.resonote.feature.discover.impl.DiscoverSection
@@ -48,6 +49,7 @@ import com.resonote.feature.home.impl.HomeViewModel
 import com.resonote.feature.library.impl.MyRoute
 import com.resonote.feature.library.impl.MyViewModel
 import com.resonote.feature.player.impl.MiniPlayerUiState
+import com.resonote.feature.player.impl.PlaybackQueueSheet
 import com.resonote.feature.player.impl.ResonoteMiniPlayer
 import kotlinx.coroutines.launch
 
@@ -69,6 +71,12 @@ internal fun TabsShell(
     onPlaySongs: (List<OnlineSong>, Int) -> Unit = { _, _ -> },
     onTogglePlay: () -> Unit = {},
     onNext: () -> Unit = {},
+    onOpenPlayer: () -> Unit = {},
+    onSelectQueueItem: (Int) -> Unit = {},
+    onRemoveQueueItem: (Int) -> Unit = {},
+    onMoveQueueItem: (Int, Int) -> Unit = { _, _ -> },
+    onClearQueue: () -> Unit = {},
+    onModeChange: (PlaybackMode) -> Unit = {},
     onSearchClick: () -> Unit = {},
     onRecognitionClick: () -> Unit = {},
     onPlaylistClick: (String) -> Unit = {},
@@ -86,6 +94,7 @@ internal fun TabsShell(
     val scope = rememberCoroutineScope()
     val rootStateHolder = rememberSaveableStateHolder()
     var requestedDiscoverSection by remember { mutableStateOf<DiscoverSection?>(null) }
+    var queueOpen by remember { mutableStateOf(false) }
     val comingSoonMessage = stringResource(R.string.feature_coming_soon)
 
     fun showComingSoon() {
@@ -191,17 +200,29 @@ internal fun TabsShell(
                     ResonoteMiniPlayer(
                         state = MiniPlayerUiState(
                             song.hash, song.title, song.artist.orEmpty(), song.quality.toLabel(), song.vip,
-                            playbackState.isPlaying, playbackState.progress, PrototypeArtworkColors,
+                            playbackState.isPlaying, playbackState.progress, PrototypeArtworkColors, song.coverUrl,
                         ),
-                        onOpenPlayer = ::showComingSoon,
+                        onOpenPlayer = onOpenPlayer,
                         onTogglePlay = onTogglePlay,
                         onNext = onNext,
-                        onOpenQueue = ::showComingSoon,
+                        onOpenQueue = { queueOpen = true },
                         modifier = Modifier.align(Alignment.BottomCenter).padding(horizontal = 16.dp, vertical = 16.dp),
                     )
                 }
             }
         }
+    }
+
+    if (queueOpen) {
+        PlaybackQueueSheet(
+            playback = playbackState,
+            onDismiss = { queueOpen = false },
+            onSelect = onSelectQueueItem,
+            onRemove = onRemoveQueueItem,
+            onMove = onMoveQueueItem,
+            onClear = onClearQueue,
+            onModeChange = onModeChange,
+        )
     }
 }
 

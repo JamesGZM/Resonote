@@ -28,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -39,6 +40,7 @@ import com.resonote.core.designsystem.component.ResonoteTonalIconButton
 import com.resonote.core.designsystem.component.ResonoteVipBadge
 import com.resonote.core.designsystem.tokens.ResonoteTokens
 import com.resonote.feature.player.impl.R
+import coil3.compose.AsyncImage
 
 @Immutable
 data class MiniPlayerUiState(
@@ -50,6 +52,7 @@ data class MiniPlayerUiState(
     val isPlaying: Boolean = false,
     val progress: Float = 0f,
     val artworkColors: List<Color>,
+    val coverUrl: String? = null,
 )
 
 @Composable
@@ -91,7 +94,16 @@ fun ResonoteMiniPlayer(
                             Modifier
                                 .matchParentSize()
                                 .background(Brush.linearGradient(state.artworkColors)),
-                        )
+                        ) {
+                            if (!state.coverUrl.isNullOrBlank()) {
+                                AsyncImage(
+                                    model = state.coverUrl,
+                                    contentDescription = null,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.matchParentSize(),
+                                )
+                            }
+                        }
                     }
                     Spacer(Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {

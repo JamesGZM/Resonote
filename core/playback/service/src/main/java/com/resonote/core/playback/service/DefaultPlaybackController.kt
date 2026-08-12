@@ -107,6 +107,44 @@ internal class DefaultPlaybackController @Inject constructor(
         }
     }
 
+    override fun selectQueueItem(index: Int) {
+        scope.launch {
+            if (index == queue.currentIndex) return@launch
+            val item = queue.select(index) ?: return@launch
+            publishQueue(status = PlaybackStatus.Resolving)
+            resolveAndLoad(item)
+        }
+    }
+
+    override fun removeQueueItem(index: Int) {
+        scope.launch {
+            val removal = queue.removeAt(index) ?: return@launch
+            if (!removal.removedCurrent) {
+                publishQueue()
+                return@launch
+            }
+
+            loadGeneration++
+            isResolving = false
+            pendingControllerAction = null
+            controller?.stop()
+            controller?.clearMediaItems()
+            val next = removal.nextCurrentItem
+            if (next == null) {
+                mutableState.value = PlaybackState(mode = mutableState.value.mode)
+            } else {
+                publishQueue(status = PlaybackStatus.Resolving)
+                resolveAndLoad(next)
+            }
+        }
+    }
+
+    override fun moveQueueItem(fromIndex: Int, toIndex: Int) {
+        scope.launch {
+            if (queue.move(fromIndex, toIndex)) publishQueue()
+        }
+    }
+
     override fun togglePlayPause() {
         if (controller?.mediaItemCount == 0) {
             queue.currentItem?.let { item ->

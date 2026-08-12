@@ -55,6 +55,32 @@ internal class PlaybackQueue {
         return mutableItems[index]
     }
 
+    fun removeAt(index: Int): QueueRemoval? {
+        if (index !in mutableItems.indices) return null
+        val removedCurrent = index == currentIndex
+        mutableItems.removeAt(index)
+        currentIndex = when {
+            mutableItems.isEmpty() -> -1
+            index < currentIndex -> currentIndex - 1
+            removedCurrent -> index.coerceAtMost(mutableItems.lastIndex)
+            else -> currentIndex
+        }
+        return QueueRemoval(
+            removedCurrent = removedCurrent,
+            nextCurrentItem = currentItem,
+        )
+    }
+
+    fun move(fromIndex: Int, toIndex: Int): Boolean {
+        if (fromIndex !in mutableItems.indices || toIndex !in mutableItems.indices) return false
+        if (fromIndex == toIndex) return false
+        val selectedHash = currentItem?.song?.hash
+        val moved = mutableItems.removeAt(fromIndex)
+        mutableItems.add(toIndex, moved)
+        currentIndex = selectedHash?.let { hash -> mutableItems.indexOfFirst { it.song.hash == hash } } ?: -1
+        return true
+    }
+
     fun selectRandom(randomIndex: (Int) -> Int): PlaybackItem? {
         if (mutableItems.isEmpty()) return null
         if (mutableItems.size == 1) return select(0)
@@ -87,3 +113,8 @@ internal class PlaybackQueue {
         currentIndex = -1
     }
 }
+
+internal data class QueueRemoval(
+    val removedCurrent: Boolean,
+    val nextCurrentItem: PlaybackItem?,
+)

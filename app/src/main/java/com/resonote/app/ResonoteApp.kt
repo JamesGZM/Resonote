@@ -22,6 +22,8 @@ import com.resonote.feature.cloud.impl.CloudRoute
 import com.resonote.feature.library.impl.MyViewModel
 import com.resonote.feature.playlist.api.PlaylistNavKey
 import com.resonote.feature.playlist.impl.PlaylistRoute
+import com.resonote.feature.player.api.PlayerNavKey
+import com.resonote.feature.player.impl.PlayerRoute
 import com.resonote.feature.ranking.api.RankingNavKey
 import com.resonote.feature.ranking.impl.RankingRoute
 import com.resonote.feature.recognition.api.RecognitionNavKey
@@ -58,6 +60,14 @@ internal fun ResonoteApp(
                     onPlaySongs = playbackViewModel::playAll,
                     onTogglePlay = playbackViewModel::togglePlayPause,
                     onNext = playbackViewModel::next,
+                    onOpenPlayer = {
+                        if (backStack.lastOrNull() !is PlayerNavKey) backStack.add(PlayerNavKey)
+                    },
+                    onSelectQueueItem = playbackViewModel::selectQueueItem,
+                    onRemoveQueueItem = playbackViewModel::removeQueueItem,
+                    onMoveQueueItem = playbackViewModel::moveQueueItem,
+                    onClearQueue = playbackViewModel::clearQueue,
+                    onModeChange = playbackViewModel::setMode,
                     myViewModel = myViewModel,
                     onLoginRequest = {
                         if (backStack.lastOrNull() !is LoginGateNavKey) {
@@ -130,6 +140,9 @@ internal fun ResonoteApp(
                         )
                     },
                 )
+            }
+            entry<PlayerNavKey> {
+                PlayerRoute(onBack = { backStack.removeAt(backStack.lastIndex) })
             }
             entry<PlaylistNavKey> { key ->
                 PlaylistRoute(

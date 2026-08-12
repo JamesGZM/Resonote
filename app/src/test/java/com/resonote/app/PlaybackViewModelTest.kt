@@ -76,6 +76,12 @@ class PlaybackViewModelTest {
             appendedItems = items
         }
 
+        override fun selectQueueItem(index: Int) = Unit
+
+        override fun removeQueueItem(index: Int) = Unit
+
+        override fun moveQueueItem(fromIndex: Int, toIndex: Int) = Unit
+
         override fun togglePlayPause() = Unit
 
         override fun pause() {
