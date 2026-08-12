@@ -85,7 +85,7 @@ fun SearchRoute(
     onSongClick: (OnlineSong) -> Unit,
     onSongMoreClick: ((OnlineSong) -> Unit)?,
     onPlaylistClick: ((String) -> Unit)?,
-    onAlbumClick: ((String) -> Unit)?,
+    onAlbumClick: ((SearchAlbum) -> Unit)?,
     onArtistClick: ((String) -> Unit)?,
     onMvClick: ((String) -> Unit)?,
     viewModel: SearchViewModel = hiltViewModel(),
@@ -132,7 +132,7 @@ fun SearchScreen(
     onSongClick: (OnlineSong) -> Unit,
     onSongMoreClick: ((OnlineSong) -> Unit)?,
     onPlaylistClick: ((String) -> Unit)?,
-    onAlbumClick: ((String) -> Unit)?,
+    onAlbumClick: ((SearchAlbum) -> Unit)?,
     onArtistClick: ((String) -> Unit)?,
     onMvClick: ((String) -> Unit)?,
     modifier: Modifier = Modifier,
@@ -381,7 +381,7 @@ private fun SearchResults(
     onSongClick: (OnlineSong) -> Unit,
     onSongMoreClick: ((OnlineSong) -> Unit)?,
     onPlaylistClick: ((String) -> Unit)?,
-    onAlbumClick: ((String) -> Unit)?,
+    onAlbumClick: ((SearchAlbum) -> Unit)?,
     onArtistClick: ((String) -> Unit)?,
     onMvClick: ((String) -> Unit)?,
 ) {
@@ -416,7 +416,7 @@ private fun AggregateSearchResults(
     onSongClick: (OnlineSong) -> Unit,
     onSongMoreClick: ((OnlineSong) -> Unit)?,
     onPlaylistClick: ((String) -> Unit)?,
-    onAlbumClick: ((String) -> Unit)?,
+    onAlbumClick: ((SearchAlbum) -> Unit)?,
     onArtistClick: ((String) -> Unit)?,
     onMvClick: ((String) -> Unit)?,
 ) {
@@ -471,7 +471,7 @@ private fun AggregateSearchResults(
                 ) { onSelectCategory(SearchCategory.ALBUMS) }
             }
             items(result.albums, key = { "album-${it.id}" }) { album ->
-                AlbumRow(album, onClick = onAlbumClick?.let { callback -> { callback(album.id) } })
+                AlbumRow(album, onClick = onAlbumClick?.let { callback -> { callback(album) } })
             }
         }
         if (result.playlists.isNotEmpty()) {
@@ -508,7 +508,7 @@ private fun PagedSearchResults(
     onSongClick: (OnlineSong) -> Unit,
     onSongMoreClick: ((OnlineSong) -> Unit)?,
     onPlaylistClick: ((String) -> Unit)?,
-    onAlbumClick: ((String) -> Unit)?,
+    onAlbumClick: ((SearchAlbum) -> Unit)?,
     onArtistClick: ((String) -> Unit)?,
     onMvClick: ((String) -> Unit)?,
 ) {
@@ -534,7 +534,7 @@ private fun PagedSearchResults(
                 )
                 is SearchResultItem.Album -> AlbumRow(
                     item.value,
-                    onAlbumClick?.let { callback -> { callback(item.value.id) } },
+                    onAlbumClick?.let { callback -> { callback(item.value) } },
                 )
                 is SearchResultItem.Artist -> EntityRow(
                     title = item.value.name,

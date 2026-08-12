@@ -11,6 +11,8 @@ import androidx.navigation3.ui.NavDisplay
 import com.resonote.core.navigation.LoginGateNavKey
 import com.resonote.core.navigation.TabsShellNavKey
 import com.resonote.core.model.AuthState
+import com.resonote.feature.album.api.AlbumNavKey
+import com.resonote.feature.album.impl.AlbumRoute
 import com.resonote.feature.playlist.api.PlaylistNavKey
 import com.resonote.feature.playlist.impl.PlaylistRoute
 import com.resonote.feature.search.api.SearchNavKey
@@ -44,7 +46,18 @@ internal fun ResonoteApp(viewModel: MainActivityViewModel = hiltViewModel()) {
                     onSongClick = playbackState::play,
                     onSongMoreClick = null,
                     onPlaylistClick = { backStack.add(PlaylistNavKey(it)) },
-                    onAlbumClick = null,
+                    onAlbumClick = { album ->
+                        backStack.add(
+                            AlbumNavKey(
+                                albumId = album.id,
+                                name = album.name,
+                                artist = album.artist,
+                                coverUrl = album.coverUrl,
+                                publishDate = album.publishDate,
+                                songCount = album.songCount,
+                            ),
+                        )
+                    },
                     onArtistClick = null,
                     onMvClick = null,
                 )
@@ -56,6 +69,16 @@ internal fun ResonoteApp(viewModel: MainActivityViewModel = hiltViewModel()) {
                     isAuthenticated = authState is AuthState.Authenticated,
                     onBack = { backStack.removeAt(backStack.lastIndex) },
                     onPlayAll = { playbackState.playAll(it) },
+                    onSongClick = playbackState::play,
+                    onSongMoreClick = null,
+                )
+            }
+            entry<AlbumNavKey> { key ->
+                AlbumRoute(
+                    key = key,
+                    playingMediaId = playbackState.currentSongId,
+                    onBack = { backStack.removeAt(backStack.lastIndex) },
+                    onPlayAll = playbackState::playAll,
                     onSongClick = playbackState::play,
                     onSongMoreClick = null,
                 )
