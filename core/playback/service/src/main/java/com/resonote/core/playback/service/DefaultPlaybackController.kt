@@ -68,8 +68,11 @@ internal class DefaultPlaybackController internal constructor(
     private var loadGeneration = 0L
     private var handledEndedGeneration = -1L
     private var isResolving = false
+    private var activeFailureBehavior = FailureBehavior.SkipQueueItem
     private var positionUpdates: Job? = null
+    private var automaticSkipJob: Job? = null
     private val historyEligibility = PlaybackHistoryEligibilityTracker()
+    private val failureRecovery = PlaybackFailureRecovery(MAX_CONSECUTIVE_AUTOMATIC_SKIPS)
 
     override val state: StateFlow<PlaybackState> = mutableState.asStateFlow()
 
@@ -109,9 +112,9 @@ internal class DefaultPlaybackController internal constructor(
 
     override fun play(item: PlaybackItem) {
         scope.launch {
-            queue.selectOrInsert(item)
-            publishQueue(status = PlaybackStatus.Resolving)
-            resolveAndLoad(item)
+            failureRecovery.reset()
+            mutableState.value = mutableState.value.copy(issue = null)
+            resolveAndLoad(item, failureBehavior = FailureBehavior.RejectWithoutQueueMutation)
         }
     }
 
@@ -120,8 +123,9 @@ internal class DefaultPlaybackController internal constructor(
         require(startIndex in items.indices) { "startIndex must point to an item" }
         scope.launch {
             queue.replace(items, startIndex)
+            failureRecovery.reset()
             publishQueue(status = PlaybackStatus.Resolving)
-            resolveAndLoad(checkNotNull(queue.currentItem))
+            resolveAndLoad(checkNotNull(queue.currentItem), failureBehavior = FailureBehavior.SkipQueueItem)
         }
     }
 
@@ -143,10 +147,11 @@ internal class DefaultPlaybackController internal constructor(
 
     override fun selectQueueItem(index: Int) {
         scope.launch {
-            if (index == queue.currentIndex) return@launch
+            if (index == queue.currentIndex && mutableState.value.status != PlaybackStatus.Failed) return@launch
             val item = queue.select(index) ?: return@launch
+            failureRecovery.reset()
             publishQueue(status = PlaybackStatus.Resolving)
-            resolveAndLoad(item)
+            resolveAndLoad(item, failureBehavior = FailureBehavior.SkipQueueItem)
         }
     }
 
@@ -173,7 +178,7 @@ internal class DefaultPlaybackController internal constructor(
                 )
             } else {
                 publishQueue(status = PlaybackStatus.Resolving)
-                resolveAndLoad(next)
+                resolveAndLoad(next, failureBehavior = FailureBehavior.SkipQueueItem)
             }
         }
     }
@@ -188,8 +193,9 @@ internal class DefaultPlaybackController internal constructor(
         if (controller?.mediaItemCount == 0) {
             queue.currentItem?.let { item ->
                 scope.launch {
+                    failureRecovery.reset()
                     publishQueue(status = PlaybackStatus.Resolving)
-                    resolveAndLoad(item)
+                    resolveAndLoad(item, failureBehavior = FailureBehavior.SkipQueueItem)
                 }
             }
             return
@@ -216,6 +222,7 @@ internal class DefaultPlaybackController internal constructor(
     }
 
     override fun next() {
+        failureRecovery.reset()
         scope.launch { selectNext(automatic = false) }
     }
 
@@ -231,8 +238,9 @@ internal class DefaultPlaybackController internal constructor(
                 PlaybackMode.Sequential -> queue.previous(wrap = false)
                 PlaybackMode.ListLoop, PlaybackMode.SingleLoop -> queue.previous(wrap = true)
             } ?: return@launch
+            failureRecovery.reset()
             publishQueue(status = PlaybackStatus.Resolving)
-            resolveAndLoad(item)
+            resolveAndLoad(item, failureBehavior = FailureBehavior.SkipQueueItem)
         }
     }
 
@@ -258,6 +266,9 @@ internal class DefaultPlaybackController internal constructor(
             loadGeneration++
             isResolving = false
             pendingControllerAction = null
+            automaticSkipJob?.cancel()
+            automaticSkipJob = null
+            failureRecovery.reset()
             queue.clear()
             controller?.stop()
             controller?.clearMediaItems()
@@ -284,41 +295,80 @@ internal class DefaultPlaybackController internal constructor(
             status = PlaybackStatus.Failed,
             issue = PlaybackIssue.PlayerFailure(error.message),
         )
+        if (activeFailureBehavior == FailureBehavior.SkipQueueItem) {
+            scheduleAutomaticSkip(loadGeneration)
+        }
     }
 
-    private suspend fun resolveAndLoad(item: PlaybackItem) {
-        sampleHistory(controller?.isPlaying == true, endedNaturally = false)
-        historyEligibility.reset()
+    private suspend fun resolveAndLoad(item: PlaybackItem, failureBehavior: FailureBehavior) {
+        automaticSkipJob?.cancel()
+        automaticSkipJob = null
+        val preservesCurrentPlayback =
+            failureBehavior == FailureBehavior.RejectWithoutQueueMutation &&
+                (controller?.mediaItemCount ?: 0) > 0
         val generation = ++loadGeneration
-        handledEndedGeneration = -1L
-        isResolving = true
-        controller?.stop()
-        controller?.clearMediaItems()
+        if (!preservesCurrentPlayback) {
+            sampleHistory(controller?.isPlaying == true, endedNaturally = false)
+            historyEligibility.reset()
+            activeFailureBehavior = failureBehavior
+            handledEndedGeneration = -1L
+            isResolving = true
+            controller?.stop()
+            controller?.clearMediaItems()
+        }
 
         val result = try {
             sourceResolver.resolve(item)
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (failure: Exception) {
-            failResolution(generation, PlaybackIssue.PlayerFailure(failure.message))
+            failResolution(
+                generation = generation,
+                issue = PlaybackIssue.PlayerFailure(failure.message),
+                failureBehavior = failureBehavior,
+                preservesCurrentPlayback = preservesCurrentPlayback,
+            )
             return
         }
         if (generation != loadGeneration) return
 
         when (result) {
-            is ResolveSongSourceResult.Resolved -> loadResolvedItem(item, result.source, generation)
+            is ResolveSongSourceResult.Resolved -> loadResolvedItem(
+                item = item,
+                source = result.source,
+                generation = generation,
+                preservesCurrentPlayback = preservesCurrentPlayback,
+            )
             is ResolveSongSourceResult.Unavailable -> failResolution(
                 generation,
                 PlaybackIssue.Unavailable(result.reason),
+                failureBehavior,
+                preservesCurrentPlayback,
             )
             is ResolveSongSourceResult.Failed -> failResolution(
                 generation,
                 PlaybackIssue.SourceFailure(result.failure),
+                failureBehavior,
+                preservesCurrentPlayback,
             )
         }
     }
 
-    private fun loadResolvedItem(item: PlaybackItem, source: ResolvedSongSource, generation: Long) {
+    private fun loadResolvedItem(
+        item: PlaybackItem,
+        source: ResolvedSongSource,
+        generation: Long,
+        preservesCurrentPlayback: Boolean,
+    ) {
+        if (preservesCurrentPlayback) {
+            sampleHistory(controller?.isPlaying == true, endedNaturally = false)
+            historyEligibility.reset()
+            activeFailureBehavior = FailureBehavior.RejectWithoutQueueMutation
+            handledEndedGeneration = -1L
+            isResolving = true
+            controller?.stop()
+            controller?.clearMediaItems()
+        }
         queue.selectOrInsert(item.withResolvedSource(source))
         publishQueue(status = PlaybackStatus.Buffering)
         runWithController { player ->
@@ -337,14 +387,26 @@ internal class DefaultPlaybackController internal constructor(
         }
     }
 
-    private fun failResolution(generation: Long, issue: PlaybackIssue) {
+    private fun failResolution(
+        generation: Long,
+        issue: PlaybackIssue,
+        failureBehavior: FailureBehavior,
+        preservesCurrentPlayback: Boolean,
+    ) {
         if (generation != loadGeneration) return
+        if (preservesCurrentPlayback) {
+            mutableState.value = mutableState.value.withNonInterruptingIssue(issue)
+            return
+        }
         historyEligibility.reset()
         isResolving = false
         pendingControllerAction = null
         controller?.stop()
         controller?.clearMediaItems()
         publishQueue(status = PlaybackStatus.Failed, issue = issue)
+        if (failureBehavior == FailureBehavior.SkipQueueItem && issue.allowsAutomaticSkip()) {
+            scheduleAutomaticSkip(generation)
+        }
     }
 
     private suspend fun selectNext(automatic: Boolean) {
@@ -368,7 +430,28 @@ internal class DefaultPlaybackController internal constructor(
             return
         }
         publishQueue(status = PlaybackStatus.Resolving)
-        resolveAndLoad(item)
+        resolveAndLoad(item, failureBehavior = FailureBehavior.SkipQueueItem)
+    }
+
+    private fun scheduleAutomaticSkip(generation: Long) {
+        automaticSkipJob?.cancel()
+        if (!failureRecovery.onFailure()) return
+        automaticSkipJob = scope.launch {
+            delay(AUTOMATIC_SKIP_DELAY_MILLIS)
+            if (generation != loadGeneration || mutableState.value.status != PlaybackStatus.Failed) return@launch
+            selectNextAfterFailure()
+        }
+    }
+
+    private suspend fun selectNextAfterFailure() {
+        val item = when (mutableState.value.mode) {
+            PlaybackMode.Shuffle -> queue.selectRandom(Random::nextInt)
+            PlaybackMode.Sequential -> queue.next(wrap = false)
+            PlaybackMode.ListLoop, PlaybackMode.SingleLoop -> queue.next(wrap = true)
+        }
+        if (item == null) return
+        publishQueue(status = PlaybackStatus.Resolving)
+        resolveAndLoad(item, failureBehavior = FailureBehavior.SkipQueueItem)
     }
 
     private fun publishQueue(
@@ -412,6 +495,7 @@ internal class DefaultPlaybackController internal constructor(
             queue.currentItem != null -> PlaybackStatus.Paused
             else -> PlaybackStatus.Idle
         }
+        if (status == PlaybackStatus.Playing) failureRecovery.onPlaybackStarted()
         mutableState.value = mutableState.value.copy(
             queue = queue.items,
             currentIndex = queue.currentIndex,
@@ -471,5 +555,12 @@ internal class DefaultPlaybackController internal constructor(
     private companion object {
         const val POSITION_UPDATE_INTERVAL_MILLIS = 500L
         const val PREVIOUS_RESTART_THRESHOLD_MILLIS = 5_000L
+        const val AUTOMATIC_SKIP_DELAY_MILLIS = 3_000L
+        const val MAX_CONSECUTIVE_AUTOMATIC_SKIPS = 5
+    }
+
+    private enum class FailureBehavior {
+        RejectWithoutQueueMutation,
+        SkipQueueItem,
     }
 }
