@@ -158,7 +158,7 @@ private fun RankingContent(
                 onPlayAll = { onPlayAll(state.songs) },
             )
         }
-        itemsIndexed(state.songs, key = { _, song -> "song-${song.hash}" }) { index, song ->
+        itemsIndexed(state.songs, key = { index, song -> "song-${song.hash}-$index" }) { index, song ->
             ResonoteMusicItem(
                 title = song.title,
                 supportingText = song.artist.orEmpty(),

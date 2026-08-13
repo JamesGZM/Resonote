@@ -16,7 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -198,7 +198,10 @@ private fun ArtistContent(
                         Text(stringResource(R.string.artist_play_all))
                     }
                 }
-                items(page.songs, key = { "${state.selectedSection}-${it.hash}" }) { song ->
+                itemsIndexed(
+                    items = page.songs,
+                    key = { index, song -> "${state.selectedSection}-${song.hash}-$index" },
+                ) { _, song ->
                     ResonoteMusicItem(
                         title = song.title,
                         supportingText = song.artist.orEmpty(),

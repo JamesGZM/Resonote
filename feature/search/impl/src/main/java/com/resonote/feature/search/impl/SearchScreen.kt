@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -274,7 +273,7 @@ private fun SearchDiscovery(
     ) {
         if (suggestions.isNotEmpty()) {
             item { SectionTitle(stringResource(R.string.feature_search_impl_search_suggestions), Icons.Rounded.Search) }
-            items(suggestions, key = { "suggestion-$it" }) { suggestion ->
+            itemsIndexed(suggestions, key = { index, value -> "suggestion-$value-$index" }) { _, suggestion ->
                 ListItem(
                     headlineContent = { Text(suggestion) },
                     leadingContent = { Icon(Icons.Rounded.Search, contentDescription = null) },
@@ -292,7 +291,7 @@ private fun SearchDiscovery(
                         onAction = onClearHistory,
                     )
                 }
-                items(history, key = { "history-$it" }) { query ->
+                itemsIndexed(history, key = { index, value -> "history-$value-$index" }) { _, query ->
                     ListItem(
                         headlineContent = { Text(query) },
                         leadingContent = { Icon(Icons.Rounded.History, contentDescription = null) },
@@ -315,7 +314,7 @@ private fun SearchDiscovery(
                         contentPadding = PaddingValues(horizontal = 20.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        items(hotKeywords, key = { "hot-$it" }) { keyword ->
+                        itemsIndexed(hotKeywords, key = { index, value -> "hot-$value-$index" }) { _, keyword ->
                             AssistChip(onClick = { onKeywordClick(keyword) }, label = { Text(keyword) })
                         }
                     }
@@ -435,7 +434,7 @@ private fun AggregateSearchResults(
                     stringResource(R.string.feature_search_impl_search_see_all),
                 ) { onSelectCategory(SearchCategory.SONGS) }
             }
-            items(result.songs, key = { "song-${it.hash}" }) { song ->
+            itemsIndexed(result.songs, key = { index, song -> "song-${song.hash}-$index" }) { _, song ->
                 ResonoteMusicItem(
                     title = song.title,
                     supportingText = song.artist.orEmpty(),
@@ -456,7 +455,7 @@ private fun AggregateSearchResults(
                     stringResource(R.string.feature_search_impl_search_see_all),
                 ) { onSelectCategory(SearchCategory.ARTISTS) }
             }
-            items(result.artists, key = { "artist-${it.id}" }) { artist ->
+            itemsIndexed(result.artists, key = { index, artist -> "artist-${artist.id}-$index" }) { _, artist ->
                 EntityRow(
                     title = artist.name,
                     supporting = stringResource(R.string.feature_search_impl_search_artist_metadata, artist.songCount, artist.albumCount),
@@ -474,7 +473,7 @@ private fun AggregateSearchResults(
                     stringResource(R.string.feature_search_impl_search_see_all),
                 ) { onSelectCategory(SearchCategory.ALBUMS) }
             }
-            items(result.albums, key = { "album-${it.id}" }) { album ->
+            itemsIndexed(result.albums, key = { index, album -> "album-${album.id}-$index" }) { _, album ->
                 AlbumRow(album, onClick = onAlbumClick?.let { callback -> { callback(album) } })
             }
         }
@@ -486,7 +485,10 @@ private fun AggregateSearchResults(
                     stringResource(R.string.feature_search_impl_search_see_all),
                 ) { onSelectCategory(SearchCategory.PLAYLISTS) }
             }
-            items(result.playlists, key = { "playlist-${it.id}" }) { playlist ->
+            itemsIndexed(
+                items = result.playlists,
+                key = { index, playlist -> "playlist-${playlist.id}-$index" },
+            ) { _, playlist ->
                 PlaylistRow(playlist, onClick = onPlaylistClick?.let { callback -> { callback(playlist.id) } })
             }
         }
@@ -498,7 +500,7 @@ private fun AggregateSearchResults(
                     stringResource(R.string.feature_search_impl_search_see_all),
                 ) { onSelectCategory(SearchCategory.MVS) }
             }
-            itemsIndexed(result.mvs, key = { _, mv -> "mv-${mv.hash}" }) { _, mv ->
+            itemsIndexed(result.mvs, key = { index, mv -> "mv-${mv.hash}-$index" }) { _, mv ->
                 MvRow(mv, onClick = onMvClick?.let { callback -> { callback(mv) } })
             }
         }
@@ -520,7 +522,7 @@ private fun PagedSearchResults(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = 32.dp),
     ) {
-        items(page.items, key = { "page-${it.stableId}" }) { item ->
+        itemsIndexed(page.items, key = { index, item -> "page-${item.stableId}-$index" }) { _, item ->
             when (item) {
                 is SearchResultItem.Song -> ResonoteMusicItem(
                     title = item.value.title,

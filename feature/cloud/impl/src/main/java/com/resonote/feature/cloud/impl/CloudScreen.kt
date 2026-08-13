@@ -17,7 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -244,10 +244,10 @@ private fun LazyListScope.cloudContent(
                 body = stringResource(R.string.feature_cloud_impl_cloud_no_results_body, state.query.trim()),
             )
         }
-        state.viewMode == CloudViewMode.List -> items(
+        state.viewMode == CloudViewMode.List -> itemsIndexed(
             items = state.visibleTracks,
-            key = { "track-${it.hash}" },
-        ) { track ->
+            key = { index, track -> "track-${track.hash}-$index" },
+        ) { _, track ->
             CloudTrackRow(
                 track = track,
                 isPlaying = track.hash == playingMediaId,
@@ -256,10 +256,10 @@ private fun LazyListScope.cloudContent(
                 onAppend = { onAppendTracks(listOf(track)) },
             )
         }
-        else -> items(
+        else -> itemsIndexed(
             items = state.visibleTracks.chunked(2),
-            key = { row -> "grid-${row.joinToString("-") { it.hash }}" },
-        ) { rowTracks ->
+            key = { index, row -> "grid-${row.joinToString("-") { it.hash }}-$index" },
+        ) { _, rowTracks ->
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 rowTracks.forEach { track ->
                     CloudTrackGridCard(

@@ -394,7 +394,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.onlineContent(
                 )
             }
         } else {
-            itemsIndexed(section.songs, key = { _, song -> "online:${song.hash}" }) { index, song ->
+            itemsIndexed(section.songs, key = { index, song -> "online:${song.hash}:$index" }) { index, song ->
                 OnlineHistoryRow(
                     song = song,
                     isPlaying = playingMediaId == song.hash,
@@ -427,7 +427,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.deviceContent(
         }
         else -> itemsIndexed(
             state.deviceItems,
-            key = { _, item -> "${item.record.source}:${item.record.mediaId}" },
+            key = { index, item -> "${item.record.source}:${item.record.mediaId}:$index" },
         ) { index, item ->
             DeviceHistoryRow(
                 item = item,

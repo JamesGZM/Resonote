@@ -16,7 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.BarChart
 import androidx.compose.material.icons.rounded.LibraryMusic
@@ -148,7 +148,10 @@ fun HomeScreen(
                     modifier = Modifier.testTag("home-playlists-header"),
                 )
             }
-            items(state.recommendedPlaylists.chunked(2), key = { pair -> pair.joinToString { it.id } }) { pair ->
+            itemsIndexed(
+                items = state.recommendedPlaylists.chunked(2),
+                key = { index, pair -> "${pair.joinToString { it.id }}-$index" },
+            ) { _, pair ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),

@@ -50,6 +50,20 @@ class PlaylistViewModelTest {
     }
 
     @Test
+    fun firstPageDropsDuplicateSongHashes() = runTest(dispatcher) {
+        val repository = FakePlaylistRepository(duplicateFirstPageSong = true)
+        val viewModel = PlaylistViewModel(repository, FakeLibraryRepository())
+
+        viewModel.load("playlist")
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value as PlaylistUiState.Content
+        assertThat(state.songs.map(OnlineSong::hash))
+            .containsExactly("song-1", "song-2")
+            .inOrder()
+    }
+
+    @Test
     fun missingDetailsAndSongsBecomeExplicitEmptyState() = runTest(dispatcher) {
         val repository = FakePlaylistRepository(emptyFirstPage = true)
         val viewModel = PlaylistViewModel(repository, FakeLibraryRepository())
@@ -211,6 +225,7 @@ class PlaylistViewModelTest {
         var failFirstRequest: Boolean = false,
         private val failSecondPage: Boolean = false,
         private val emptyFirstPage: Boolean = false,
+        private val duplicateFirstPageSong: Boolean = false,
     ) : PlaylistRepository {
         val requests = mutableListOf<Pair<String, Int>>()
 
@@ -229,7 +244,11 @@ class PlaylistViewModelTest {
                 if (page == 1) {
                     PlaylistPage(
                         PlaylistDetails("playlist", "深夜歌单", "适合安静聆听", null, 3),
-                        listOf(song("song-1"), song("song-2")),
+                        buildList {
+                            add(song("song-1"))
+                            add(song("song-2"))
+                            if (duplicateFirstPageSong) add(song("song-1"))
+                        },
                         page = 1,
                         hasMore = true,
                     )

@@ -74,7 +74,7 @@ class PlaylistViewModel @Inject constructor(
                     } else {
                         PlaylistUiState.Content(
                             value.details,
-                            value.songs,
+                            value.songs.distinctBy(OnlineSong::hash),
                             value.page,
                             value.hasMore,
                             writableListId = this@PlaylistViewModel.writableListId,

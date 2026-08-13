@@ -236,7 +236,10 @@ private fun PlaylistPane(
             }
             is DiscoverPageState.Error -> item(key = "error") { PaneError(page.failure, onRetry) }
             is DiscoverPageState.Content -> {
-                itemsIndexed(page.items.chunked(2), key = { _, row -> "row-${row.first().id}" }) { _, row ->
+                itemsIndexed(
+                    items = page.items.chunked(2),
+                    key = { index, row -> "row-${row.first().id}-$index" },
+                ) { _, row ->
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -303,7 +306,10 @@ private fun PlaylistFilters(
                             label = { Text(stringResource(R.string.discover_recommended)) },
                         )
                     }
-                    items(categories.value, key = { "parent-${it.tagId}" }) { category ->
+                    itemsIndexed(
+                        items = categories.value,
+                        key = { index, category -> "parent-${category.tagId}-$index" },
+                    ) { _, category ->
                         FilterChip(
                             selected = category.tagId == selectedParentId,
                             onClick = { onSelectParent(category.tagId) },
@@ -317,7 +323,10 @@ private fun PlaylistFilters(
                             contentPadding = PaddingValues(horizontal = 16.dp),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            items(children, key = { "child-${it.tagId}" }) { category ->
+                            itemsIndexed(
+                                items = children,
+                                key = { index, category -> "child-${category.tagId}-$index" },
+                            ) { _, category ->
                                 FilterChip(
                                     selected = category.tagId == selectedCategoryId,
                                     onClick = { onSelectCategory(category.tagId) },
@@ -351,7 +360,10 @@ private fun RankingPane(
             -> item { PaneLoading() }
             DiscoverLoadState.Empty -> item { PaneMessage(Icons.Rounded.BarChart, stringResource(R.string.discover_empty_rankings)) }
             is DiscoverLoadState.Error -> item { PaneError(rankings.failure, onRetry) }
-            is DiscoverLoadState.Content -> itemsIndexed(rankings.value, key = { _, item -> item.id }) { index, ranking ->
+            is DiscoverLoadState.Content -> itemsIndexed(
+                items = rankings.value,
+                key = { index, item -> "${item.id}-$index" },
+            ) { index, ranking ->
                 RankingCard(index + 1, ranking, onClick = { onRankingClick(ranking) })
             }
         }
@@ -406,7 +418,10 @@ private fun AlbumPane(
                 if (filtered.isEmpty()) {
                     item { PaneMessage(Icons.Rounded.Album, stringResource(R.string.discover_empty_albums)) }
                 } else {
-                    itemsIndexed(filtered.chunked(2), key = { _, row -> "album-row-${row.first().id}" }) { _, row ->
+                    itemsIndexed(
+                        items = filtered.chunked(2),
+                        key = { index, row -> "album-row-${row.first().id}-$index" },
+                    ) { _, row ->
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -456,7 +471,10 @@ private fun SongPane(
                         Text(stringResource(R.string.discover_play_all))
                     }
                 }
-                items(songs.items, key = { it.hash }) { song ->
+                itemsIndexed(
+                    items = songs.items,
+                    key = { index, song -> "${song.hash}-$index" },
+                ) { _, song ->
                     ResonoteMusicItem(
                         title = song.title,
                         supportingText = song.artist.orEmpty(),
