@@ -203,6 +203,11 @@ Slot 与一致的调用约定；交互 Icon 使用 Resonote Icon Button 以保�
 
 - 文案简短说明结果；最多一个 Text Action，可附 Dismiss Icon。关键错误不只放 Snackbar。
 - 使用 `LiveRegionMode.Polite`；Action 可聚焦，超时尊重无障碍服务与内容长度。
+- App 只能在根层持有一个稳定的 `SnackbarHostState`、Controller 与 `SnackbarHost`；切换 Tab、进入子页面或打开 Feature 不得替换、销毁或创建第二个 Host。
+- Feature 只能向 App 级 Controller 提交消息，不得持有 `SnackbarHostState`，不得在页面 `Scaffold` 中声明 `snackbarHost`，也不得从页面生命周期直接挂起调用 `showSnackbar()`。
+- App 级 Controller 负责调用挂起的 `showSnackbar()`，使消息展示不受触发页面重组、状态清空或退出影响。无 Action 默认 `Long`；有 Action 默认 `Indefinite` 并提供 Dismiss。
+- 根 Host 使用 `WindowInsets.safeDrawing.exclude(WindowInsets.ime)`。Tab Bar 与 Mini Player 只能向根 Host 上报动态 Bottom Avoidance，不得通过嵌套 Host 解决位置问题。
+- 实现模式参考 NiA `NiaApp.kt` 的单一 Host、`LocalSnackbarHostState` 与 Safe Drawing 处理；当前固定参考提交为 `7d45eae4f8720a0c77f507712ba2437ff974b6ed`。
 
 #### Dialog
 
@@ -468,10 +473,13 @@ Resonote 使用 Material3 Adaptive Navigation Suite 1.4.0 稳定版作为 Primar
 
 - 使用 07A Material3 Navigation Bar 合同，目的地固定为“首页、发现、我的”，首页为 App 默认选中项。
 - Navigation Bar 消费底部系统 Insets；其 Container 延伸覆盖手势安全区，Gesture Indicator 使用 03D 设计证据规则。
+- Navigation/App Scaffold 将 `innerPadding` 交给页面内容时，必须同时执行 `.padding(innerPadding).consumeWindowInsets(innerPadding)`；禁止让发现、我的等 Feature Scaffold 再次消费 Navigation Bar 已处理的底部 Insets。
 - 三键/两键虚拟系统导航启用时，System Navigation Bar 使用同一 `surfaceContainer` 实色与匹配的图标明暗，不允许平台默认对比遮罩在底部产生第二条异色容器。
+- Gesture、Two-button、Three-button 三种模式下，页面可用内容区域必须连续结束于 Navigation Bar 顶边；两者之间不得出现等于系统导航栏高度的额外空白带。
 - Mini Player 出现或消失不得改变三个 Destination 的尺寸、选中状态、Tab 状态或 Back Stack。
 - Mini Player 与 Navigation Bar 都映射 `surfaceContainer`，但二者之间必须露出 16dp 页面 `background`；颜色相同不代表可以合并为同一个 Container。
 - 三个 Destination 等分可用宽度；Icon、Active Indicator 与 Label 使用 Material3 Navigation Bar 的内部 Token，不因 Mini Player 出现而上移、压缩或改变选中态。
+- Compact Destination 保持冻结的 Resonote Icon/Label/Color/Ripple 视觉结构；Item 内容层固定为 64dp，完整点击区域必须覆盖同一 64dp，不得扩展到页面内容或底部系统 Insets。禁止在 Item 上使用 `clipToBounds()` 或裁切 Ripple/State Layer。
 
 09 状态：**已冻结**。
 用户确认的冻结视觉基线：`design/approved/components/09-miniplayer-bottom-navigation.png`

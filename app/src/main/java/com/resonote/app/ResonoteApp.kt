@@ -4,14 +4,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,11 +22,16 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
-import com.resonote.core.navigation.LoginGateNavKey
-import com.resonote.core.navigation.TabsShellNavKey
+import com.resonote.core.designsystem.component.LocalResonoteSnackbarController
+import com.resonote.core.designsystem.component.ResonoteSnackbarHost
+import com.resonote.core.designsystem.component.ResonoteSnackbarController
+import com.resonote.core.designsystem.component.rememberResonoteSnackbarController
+import com.resonote.core.designsystem.tokens.ResonoteTokens
 import com.resonote.core.model.AuthState
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.PlaybackUnavailableReason
+import com.resonote.core.navigation.LoginGateNavKey
+import com.resonote.core.navigation.TabsShellNavKey
 import com.resonote.core.playback.PlaybackIssue
 import com.resonote.feature.album.api.AlbumNavKey
 import com.resonote.feature.album.impl.AlbumRoute
@@ -61,12 +65,13 @@ import com.resonote.feature.vip.api.DailyVipNavKey
 import com.resonote.feature.vip.impl.DailyVipRoute
 import com.resonote.feature.video.api.VideoNavKey
 import com.resonote.feature.video.impl.VideoRoute
-import kotlinx.coroutines.launch
 
 @Composable
 internal fun ResonoteApp(
     viewModel: MainActivityViewModel = hiltViewModel(),
     playbackViewModel: PlaybackViewModel = hiltViewModel(),
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+    snackbarController: ResonoteSnackbarController = rememberResonoteSnackbarController(snackbarHostState),
     onFinishExternalTask: () -> Unit = {},
 ) {
     val backStack = rememberNavBackStack(TabsShellNavKey)
@@ -78,8 +83,7 @@ internal fun ResonoteApp(
     val myViewModel: MyViewModel = hiltViewModel()
     val myState by myViewModel.uiState.collectAsStateWithLifecycle()
     val setVideoFullscreen = rememberVideoFullscreenController()
-    val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
+    var tabSnackbarBottomInset by remember { mutableStateOf(0.dp) }
     var songActionRequest by remember { mutableStateOf<OnlineSongActionRequest?>(null) }
     var playlistPickerSong by remember { mutableStateOf<OnlineSong?>(null) }
     var infoSong by remember { mutableStateOf<OnlineSong?>(null) }
@@ -91,12 +95,7 @@ internal fun ResonoteApp(
     val queueAddedMessage = stringResource(R.string.song_action_added_queue)
     val shareUnavailableMessage = stringResource(R.string.song_action_share_unavailable)
     val playbackIssueMessage = playbackState.issue?.let { stringResource(it.messageRes()) }
-    val snackbarBottomPadding = when {
-        hasTabBar && playbackState.currentMetadata != null -> 144.dp
-        hasTabBar -> 84.dp
-        else -> 20.dp
-    }
-
+    val snackbarSpacing = ResonoteTokens.spacing.space2
     SyncSystemBars(
         navigationBarColor = if (hasTabBar) {
             MaterialTheme.colorScheme.surface
@@ -120,12 +119,12 @@ internal fun ResonoteApp(
     LaunchedEffect(addSuccessMessage) {
         val message = addSuccessMessage ?: return@LaunchedEffect
         playlistPickerSong = null
-        snackbarHostState.showSnackbar(message)
+        snackbarController.show(message)
         myViewModel.acknowledgePlaylistAddition()
     }
 
     LaunchedEffect(playbackIssueMessage) {
-        playbackIssueMessage?.let { snackbarHostState.showSnackbar(it) }
+        playbackIssueMessage?.let(snackbarController::show)
     }
 
     LaunchedEffect(externalImportRequest?.id) {
@@ -136,9 +135,10 @@ internal fun ResonoteApp(
     }
 
     Box(Modifier.fillMaxSize()) {
-        NavDisplay(
-            backStack = backStack,
-            entryProvider = entryProvider {
+        CompositionLocalProvider(LocalResonoteSnackbarController provides snackbarController) {
+            NavDisplay(
+                backStack = backStack,
+                entryProvider = entryProvider {
             entry<TabsShellNavKey> {
                 TabsShell(
                     playbackState = playbackState,
@@ -178,6 +178,7 @@ internal fun ResonoteApp(
                     onCloudClick = { backStack.navigateToCloud(authState) },
                     onLocalMusicClick = { backStack.add(LocalMusicNavKey()) },
                     onSettingsClick = { backStack.add(SettingsNavKey) },
+                    onSnackbarBottomInsetChanged = { tabSnackbarBottomInset = it },
                     onPlaylistClick = { backStack.add(PlaylistNavKey(it)) },
                     onUserPlaylistClick = { playlist ->
                         val accountId = (authState as? AuthState.Authenticated)?.userId
@@ -378,13 +379,18 @@ internal fun ResonoteApp(
                     },
                 )
             }
-        },
-        )
-        SnackbarHost(
+                },
+            )
+        }
+        ResonoteSnackbarHost(
             hostState = snackbarHostState,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(start = 20.dp, end = 20.dp, bottom = snackbarBottomPadding),
+                .padding(
+                    start = snackbarSpacing,
+                    end = snackbarSpacing,
+                    bottom = snackbarSpacing + if (hasTabBar) tabSnackbarBottomInset else 0.dp,
+                ),
         )
     }
 
@@ -399,13 +405,13 @@ internal fun ResonoteApp(
             onPlayNext = {
                 songActionRequest = null
                 if (playbackViewModel.playNextOnline(request.song)) {
-                    scope.launch { snackbarHostState.showSnackbar(queueNextMessage) }
+                    snackbarController.show(queueNextMessage)
                 }
             },
             onAppendToQueue = {
                 songActionRequest = null
                 playbackViewModel.appendOnline(request.song)
-                scope.launch { snackbarHostState.showSnackbar(queueAddedMessage) }
+                snackbarController.show(queueAddedMessage)
             },
             onAddToPlaylist = {
                 songActionRequest = null
@@ -422,7 +428,7 @@ internal fun ResonoteApp(
             },
             onShareUnavailable = {
                 songActionRequest = null
-                scope.launch { snackbarHostState.showSnackbar(shareUnavailableMessage) }
+                snackbarController.show(shareUnavailableMessage)
             },
         )
     }

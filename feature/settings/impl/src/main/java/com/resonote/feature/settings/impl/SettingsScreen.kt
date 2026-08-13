@@ -31,8 +31,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -52,6 +50,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.resonote.core.designsystem.component.LocalResonoteSnackbarController
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
 import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.model.OnlinePlaybackQuality
@@ -62,19 +61,18 @@ fun SettingsRoute(
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
+    val snackbarController = LocalResonoteSnackbarController.current
     val saveFailureMessage = stringResource(R.string.feature_settings_impl_save_error)
 
     LaunchedEffect((state as? SettingsUiState.Ready)?.saveFailed) {
         if ((state as? SettingsUiState.Ready)?.saveFailed == true) {
-            snackbarHostState.showSnackbar(saveFailureMessage)
+            snackbarController?.show(saveFailureMessage)
             viewModel.acknowledgeSaveFailure()
         }
     }
 
     SettingsScreen(
         state = state,
-        snackbarHostState = snackbarHostState,
         onBack = onBack,
         onRetry = viewModel::retry,
         onPlaybackSpeedChange = viewModel::setPlaybackSpeed,
@@ -90,7 +88,6 @@ internal fun SettingsScreen(
     onPlaybackSpeedChange: (PlaybackSpeed) -> Unit,
     onOnlinePlaybackQualityChange: (OnlinePlaybackQuality) -> Unit = {},
     modifier: Modifier = Modifier,
-    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     var speedDialogOpen by remember { mutableStateOf(false) }
     var qualityDialogOpen by remember { mutableStateOf(false) }
@@ -99,7 +96,6 @@ internal fun SettingsScreen(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             ResonoteTopAppBar(
                 title = { Text(stringResource(R.string.feature_settings_impl_title)) },

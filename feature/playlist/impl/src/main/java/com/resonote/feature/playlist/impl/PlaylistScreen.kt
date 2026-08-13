@@ -30,8 +30,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -58,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.resonote.core.designsystem.component.ResonoteDestructiveButton
+import com.resonote.core.designsystem.component.LocalResonoteSnackbarController
 import com.resonote.core.designsystem.component.ResonoteMusicItem
 import com.resonote.core.designsystem.component.ResonoteRemoteArtwork
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
@@ -119,7 +118,7 @@ fun PlaylistScreen(
     onDismissRemovalFailure: () -> Unit = {},
     onAcknowledgeRemoval: () -> Unit = {},
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
+    val snackbarController = LocalResonoteSnackbarController.current
     var pendingRemovalHash by rememberSaveable { mutableStateOf<String?>(null) }
     val content = state as? PlaylistUiState.Content
     val removal = content?.removal
@@ -133,7 +132,7 @@ fun PlaylistScreen(
     LaunchedEffect(removedMessage) {
         if (removedMessage != null) {
             pendingRemovalHash = null
-            snackbarHostState.showSnackbar(removedMessage)
+            snackbarController?.show(removedMessage)
             onAcknowledgeRemoval()
         }
     }
@@ -141,7 +140,6 @@ fun PlaylistScreen(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             ResonoteTopAppBar(
                 title = {

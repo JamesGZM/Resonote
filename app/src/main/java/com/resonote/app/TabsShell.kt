@@ -1,15 +1,18 @@
 package com.resonote.app
 
 import androidx.activity.compose.BackHandler
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -17,9 +20,13 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.annotation.DrawableRes
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.resonote.core.designsystem.component.ResonoteNavigationSuiteScaffold
@@ -79,12 +86,17 @@ internal fun TabsShell(
     onCloudClick: () -> Unit = {},
     onLocalMusicClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
+    onSnackbarBottomInsetChanged: (Dp) -> Unit = {},
 ) {
     val tabsShellState = rememberTabsShellState()
     val selectedTab = tabsShellState.selectedTab
     val rootStateHolder = rememberSaveableStateHolder()
     var requestedDiscoverSection by remember { mutableStateOf<DiscoverSection?>(null) }
     var queueOpen by remember { mutableStateOf(false) }
+    var shellBottomPx by remember { mutableStateOf(0f) }
+    var contentBottomPx by remember { mutableStateOf(0f) }
+    var miniPlayerTopPx by remember { mutableStateOf(0f) }
+    val density = LocalDensity.current
 
     fun openDiscover(section: DiscoverSection) {
         requestedDiscoverSection = section
@@ -94,24 +106,47 @@ internal fun TabsShell(
     BackHandler(enabled = selectedTab != ResonoteTab.HOME) { tabsShellState.handleBack() }
 
     val currentMedia = playbackState.currentMetadata
+    val snackbarAnchorPx = if (currentMedia == null) contentBottomPx else miniPlayerTopPx
+    val snackbarBottomInset = if (shellBottomPx == 0f || snackbarAnchorPx == 0f) {
+        0.dp
+    } else {
+        with(density) {
+            val safeDrawingBottomPx = WindowInsets.safeDrawing.getBottom(this)
+            (shellBottomPx - snackbarAnchorPx - safeDrawingBottomPx)
+                .coerceAtLeast(0f)
+                .toDp()
+        }
+    }
+    LaunchedEffect(snackbarBottomInset) {
+        onSnackbarBottomInsetChanged(snackbarBottomInset)
+    }
     ResonoteNavigationSuiteScaffold(
         navigationSuiteItems = {
             ResonoteTab.entries.forEach { tab ->
                 item(
                     selected = selectedTab == tab,
                     onClick = { tabsShellState.selectTab(tab) },
+                    modifier = Modifier.testTag("resonote-tab-${tab.name.lowercase()}"),
                     icon = { Icon(painterResource(tab.iconRes), contentDescription = null) },
                     label = { Text(stringResource(tab.labelRes)) },
                 )
             }
         },
+        modifier = Modifier
+            .fillMaxSize()
+            .onGloballyPositioned { shellBottomPx = it.boundsInRoot().bottom },
     ) {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             containerColor = MaterialTheme.colorScheme.background,
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
         ) { outerPadding ->
-            Box(Modifier.fillMaxSize().padding(outerPadding)) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .padding(outerPadding)
+                    .onGloballyPositioned { contentBottomPx = it.boundsInRoot().bottom },
+            ) {
                 rootStateHolder.SaveableStateProvider(selectedTab.name) {
                     when (selectedTab) {
                         ResonoteTab.HOME -> {
@@ -187,7 +222,11 @@ internal fun TabsShell(
                         onTogglePlay = onTogglePlay,
                         onNext = onNext,
                         onOpenQueue = { queueOpen = true },
-                        modifier = Modifier.align(Alignment.BottomCenter).padding(horizontal = 16.dp, vertical = 16.dp),
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .testTag("resonote-mini-player")
+                            .onGloballyPositioned { miniPlayerTopPx = it.boundsInRoot().top }
+                            .padding(horizontal = 16.dp, vertical = 16.dp),
                     )
                 }
             }

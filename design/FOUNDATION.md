@@ -489,9 +489,13 @@ Edge-to-edge 与 Insets：
 - 背景色、图片和非交互装饰可以延伸到系统栏后方；重要文字与触控目标必须处于相应安全区域。
 - 不硬编码 Status Bar、Navigation Bar、Caption Bar、Cutout 或 IME 高度。
 - 使用 Material 3 `Scaffold` 的 `innerPadding` 后，不再在同一层重复应用 `safeDrawingPadding()`；每类 Insets 只由一个明确层级消费。
+- 接收 `Scaffold` `innerPadding` 的内容容器必须按 `.padding(innerPadding).consumeWindowInsets(innerPadding)` 的顺序应用两者；只应用 `padding` 会让嵌套 Scaffold 再次读取同一系统 Insets，禁止省略消费步骤。
+- 嵌套 Scaffold 必须声明 Insets 所有者。外层 Navigation/App Scaffold 已消费的 Bottom/System Insets，Feature Scaffold 不得再次消费；Feature 只处理尚未由父层处理的 Insets。
 - 输入页面启用 `adjustResize` 并处理 `ime`；当前焦点与提交控件不得被键盘遮挡。
 - 手势排除区保持最小，只为确实冲突的局部交互申请，不屏蔽整条屏幕边缘。
 - Insets 变化必须参与动画和布局重算，不在旋转、分屏、键盘开合时跳帧或遗留空白。
+- Bottom Navigation 的 Insets 验证必须覆盖 Gesture、Two-button 与 Three-button Navigation；页面内容底边到 Navigation Bar 顶边不得出现第二份系统安全区空白。
+- 实现基线参考 NiA `NiaApp.kt` 的 `padding(padding).consumeWindowInsets(padding)`，当前固定参考提交为 `7d45eae4f8720a0c77f507712ba2437ff974b6ed`。
 - 依据：[Window Size Classes](https://developer.android.com/develop/ui/views/layout/use-window-size-classes)、[Edge-to-edge](https://developer.android.com/develop/ui/compose/system/setup-e2e)、[Window Insets](https://developer.android.com/develop/ui/compose/system/insets)。
 - 状态：**已冻结**。
 - 辅助视觉证据：`design/approved/foundation/03d-adaptive-layout-insets.png`

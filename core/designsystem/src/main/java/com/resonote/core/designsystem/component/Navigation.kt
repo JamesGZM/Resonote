@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -36,9 +39,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 
@@ -160,7 +162,12 @@ private fun ResonoteCompactNavigationScaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = { ResonoteCompactNavigationBar(items) },
     ) { contentPadding ->
-        Box(Modifier.fillMaxSize().padding(contentPadding)) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .padding(contentPadding)
+                .consumeWindowInsets(contentPadding),
+        ) {
             content()
         }
     }
@@ -168,27 +175,28 @@ private fun ResonoteCompactNavigationScaffold(
 
 @Composable
 private fun ResonoteCompactNavigationBar(items: List<ResonoteNavigationSuiteItem>) {
-    val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)
-    val itemHeight = CompactNavigationItemHeight * fontScale
+    val colors = MaterialTheme.colorScheme
+    val windowInsets = NavigationBarDefaults.windowInsets
+    val bottomInset = windowInsets.asPaddingValues().calculateBottomPadding()
     NavigationBar(
-        modifier = Modifier.fillMaxWidth(),
-        containerColor = MaterialTheme.colorScheme.surface,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(CompactNavigationItemHeight + bottomInset)
+            .testTag("resonote-navigation-bar"),
+        containerColor = colors.surface,
         tonalElevation = 0.dp,
-        windowInsets = NavigationBarDefaults.windowInsets,
+        windowInsets = windowInsets,
     ) {
         items.forEachIndexed { index, item ->
             key(index) {
-                ResonoteCompactNavigationItem(item, itemHeight)
+                ResonoteCompactNavigationItem(item)
             }
         }
     }
 }
 
 @Composable
-private fun RowScope.ResonoteCompactNavigationItem(
-    item: ResonoteNavigationSuiteItem,
-    itemHeight: androidx.compose.ui.unit.Dp,
-) {
+private fun RowScope.ResonoteCompactNavigationItem(item: ResonoteNavigationSuiteItem) {
     val colors = MaterialTheme.colorScheme
     val contentColor by animateColorAsState(
         targetValue = if (item.selected) colors.primary else colors.onSurfaceVariant,
@@ -199,8 +207,7 @@ private fun RowScope.ResonoteCompactNavigationItem(
     Column(
         modifier = item.modifier
             .weight(1f)
-            .height(itemHeight)
-            .clipToBounds()
+            .fillMaxHeight()
             .selectable(
                 selected = item.selected,
                 onClick = item.onClick,

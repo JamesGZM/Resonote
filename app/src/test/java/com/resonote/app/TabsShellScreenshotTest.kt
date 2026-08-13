@@ -1,40 +1,60 @@
 package com.resonote.app
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
+import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.runtime.remember
 import com.github.takahirom.roborazzi.captureRoboImage
-import com.resonote.core.data.HomeRepository
+import com.google.common.truth.Truth.assertThat
 import com.resonote.core.data.ContentCatalogRepository
+import com.resonote.core.data.HomeRepository
 import com.resonote.core.data.RankingRepository
 import com.resonote.core.designsystem.theme.ResonoteTheme
 import com.resonote.core.designsystem.theme.ResonoteThemeMode
-import com.resonote.core.model.AudioQuality
+import com.resonote.core.designsystem.component.ResonoteSnackbarHost
+import com.resonote.core.designsystem.component.rememberResonoteSnackbarController
+import com.resonote.core.designsystem.tokens.ResonoteTokens
 import com.resonote.core.model.Album
 import com.resonote.core.model.ArtistInfo
 import com.resonote.core.model.ArtistSongsPage
+import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.Banner
 import com.resonote.core.model.CatalogSongPage
 import com.resonote.core.model.CollectionLoadResult
-import com.resonote.core.model.HomeContent
-import com.resonote.core.model.PlaylistSummary
-import com.resonote.core.model.PlaylistCategory
-import com.resonote.core.model.Ranking
-import com.resonote.core.model.SongPage
 import com.resonote.core.model.HomeRefreshResult
+import com.resonote.core.model.HomeContent
 import com.resonote.core.model.OnlineSong
+import com.resonote.core.model.PlaylistCategory
+import com.resonote.core.model.PlaylistSummary
+import com.resonote.core.model.Ranking
 import com.resonote.core.model.RadioRecommendationResult
 import com.resonote.core.model.RecommendationMode
+import com.resonote.core.model.SongPage
+import com.resonote.core.playback.PlaybackItem
+import com.resonote.core.playback.PlaybackState
 import com.resonote.core.screenshottesting.DefaultRoborazziOptions
-import com.resonote.feature.home.impl.HomeViewModel
 import com.resonote.feature.discover.impl.DiscoverViewModel
+import com.resonote.feature.home.impl.HomeViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.junit.Rule
@@ -72,6 +92,23 @@ class TabsShellScreenshotTest {
             filePath = "src/test/screenshots/TabsShell/TabsShellCompact_home.png",
             roborazziOptions = DefaultRoborazziOptions,
         )
+    }
+
+    @Test
+    fun compactTabItemAndClickTargetAre64DpHigh() {
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                override = DeviceConfigurationOverride.ForcedSize(DpSize(390.dp, 844.dp)),
+            ) {
+                ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                    val homeViewModel = remember { HomeViewModel(ScreenshotHomeRepository()) }
+                    TabsShell(homeViewModel = homeViewModel)
+                }
+            }
+        }
+
+        composeRule.onNodeWithTag("resonote-tab-home")
+            .assertHeightIsEqualTo(64.dp)
     }
 
     @Test
@@ -125,6 +162,107 @@ class TabsShellScreenshotTest {
         }
 
         composeRule.onNodeWithText("深夜航线").assertExists()
+    }
+
+    @Test
+    fun snackbarIsPlacedAboveTabBar() {
+        val snackbarHostState = SnackbarHostState()
+        setSnackbarContent(snackbarHostState)
+
+        val snackbarBottom = composeRule.onNodeWithTag("resonote-snackbar-host")
+            .fetchSemanticsNode().boundsInRoot.bottom
+        val tabBarTop = composeRule.onNodeWithText("Home")
+            .fetchSemanticsNode().boundsInRoot.top
+
+        assertThat(composeRule.onAllNodesWithTag("resonote-snackbar-host").fetchSemanticsNodes()).hasSize(1)
+        assertThat(snackbarBottom).isAtMost(tabBarTop)
+    }
+
+    @Test
+    fun snackbarIsPlacedAboveMiniPlayer() {
+        val snackbarHostState = SnackbarHostState()
+        setSnackbarContent(
+            snackbarHostState = snackbarHostState,
+            playbackState = PlaybackState(queue = listOf(PlaybackItem(song("playing"))), currentIndex = 0),
+        )
+
+        val snackbarBottom = composeRule.onNodeWithTag("resonote-snackbar-host")
+            .fetchSemanticsNode().boundsInRoot.bottom
+        val miniPlayerTop = composeRule.onNodeWithTag("resonote-mini-player")
+            .fetchSemanticsNode().boundsInRoot.top
+
+        assertThat(snackbarBottom).isAtMost(miniPlayerTop)
+    }
+
+    @Test
+    fun snackbarOutlivesTheEffectThatDispatchesIt() {
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                val snackbarHostState = remember { SnackbarHostState() }
+                val snackbarController = rememberResonoteSnackbarController(snackbarHostState)
+                var producerExists by remember { mutableStateOf(true) }
+                Box(Modifier.fillMaxSize()) {
+                    if (producerExists) {
+                        LaunchedEffect(Unit) {
+                            snackbarController.show("Playback failed")
+                            producerExists = false
+                        }
+                    }
+                    ResonoteSnackbarHost(
+                        hostState = snackbarHostState,
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                    )
+                }
+            }
+        }
+
+        composeRule.mainClock.advanceTimeBy(1_000)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Playback failed").assertExists()
+
+        composeRule.mainClock.advanceTimeBy(5_000)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Playback failed").assertExists()
+    }
+
+    private fun setSnackbarContent(
+        snackbarHostState: SnackbarHostState,
+        playbackState: PlaybackState = PlaybackState(),
+    ) {
+        composeRule.setContent {
+            ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                val homeViewModel = remember { HomeViewModel(ScreenshotHomeRepository()) }
+                var snackbarBottomInset by remember { mutableStateOf(0.dp) }
+                val snackbarSpacing = ResonoteTokens.spacing.space2
+                LaunchedEffect(snackbarHostState) {
+                    snackbarHostState.showSnackbar(
+                        message = "Saved to your library",
+                        duration = SnackbarDuration.Indefinite,
+                    )
+                }
+                Box(Modifier.fillMaxSize()) {
+                    TabsShell(
+                        homeViewModel = homeViewModel,
+                        playbackState = playbackState,
+                        onSnackbarBottomInsetChanged = { snackbarBottomInset = it },
+                    )
+                    ResonoteSnackbarHost(
+                        hostState = snackbarHostState,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(
+                                start = snackbarSpacing,
+                                end = snackbarSpacing,
+                                bottom = snackbarSpacing + snackbarBottomInset,
+                            ),
+                    )
+                }
+            }
+        }
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("Saved to your library").fetchSemanticsNodes().isNotEmpty()
+        }
     }
 
     private class ScreenshotHomeRepository : HomeRepository {

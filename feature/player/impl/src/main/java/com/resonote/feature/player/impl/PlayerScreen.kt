@@ -50,8 +50,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -61,7 +59,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -81,6 +78,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.resonote.core.designsystem.component.LocalResonoteSnackbarController
 import com.resonote.core.designsystem.component.ResonoteArtwork
 import com.resonote.core.designsystem.component.ResonoteArtworkState
 import com.resonote.core.designsystem.component.ResonoteQualityBadge
@@ -94,7 +92,6 @@ import com.resonote.core.playback.PlaybackMode
 import com.resonote.core.playback.PlaybackOrigin
 import com.resonote.core.playback.PlaybackStatus
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @Composable
 fun PlayerRoute(
@@ -144,8 +141,7 @@ fun PlayerScreen(
     onSongMoreClick: (() -> Unit)? = null,
 ) {
     val song = state.playback.currentMetadata
-    val snackbar = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
+    val snackbarController = LocalResonoteSnackbarController.current
     var menuOpen by remember { mutableStateOf(false) }
     var queueOpen by remember { mutableStateOf(false) }
     var speedDialogOpen by remember { mutableStateOf(false) }
@@ -154,7 +150,6 @@ fun PlayerScreen(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = Color.Transparent,
-        snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
         Box(
             Modifier
@@ -178,7 +173,7 @@ fun PlayerScreen(
                         },
                         onShare = {
                             menuOpen = false
-                            scope.launch { snackbar.showSnackbar(unavailable) }
+                            snackbarController?.show(unavailable)
                         },
                     )
                     PlayerPager(

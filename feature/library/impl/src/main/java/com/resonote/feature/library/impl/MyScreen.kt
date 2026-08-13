@@ -41,8 +41,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -51,7 +49,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -69,6 +66,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.resonote.core.designsystem.component.LocalResonoteSnackbarController
 import com.resonote.core.designsystem.component.ResonoteArtwork
 import com.resonote.core.designsystem.component.ResonoteArtworkState
 import com.resonote.core.designsystem.component.ResonoteButton
@@ -134,8 +132,7 @@ internal fun MyScreen(
     val accountKey = authenticatedState?.userId
     var createDialogOpen by rememberSaveable(accountKey) { mutableStateOf(false) }
     var playlistName by rememberSaveable(accountKey) { mutableStateOf("") }
-    val snackbarHostState = remember { SnackbarHostState() }
-    val snackbarScope = rememberCoroutineScope()
+    val snackbarController = LocalResonoteSnackbarController.current
     val creationState = authenticatedState?.playlistCreation ?: PlaylistCreationUiState.Idle
     val creationMessage = when (val creation = creationState) {
         is PlaylistCreationUiState.Created -> stringResource(
@@ -149,15 +146,11 @@ internal fun MyScreen(
         else -> ""
     }
 
-    LaunchedEffect(accountKey) {
-        snackbarHostState.currentSnackbarData?.dismiss()
-    }
-
     LaunchedEffect(creationState) {
         if (creationState is PlaylistCreationUiState.Created) {
             createDialogOpen = false
             playlistName = ""
-            snackbarScope.launch { snackbarHostState.showSnackbar(creationMessage) }
+            snackbarController?.show(creationMessage)
             onAcknowledgePlaylistCreation()
         }
     }
@@ -165,7 +158,6 @@ internal fun MyScreen(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             ResonoteTopAppBar(
                 title = { Text(stringResource(R.string.my_title)) },

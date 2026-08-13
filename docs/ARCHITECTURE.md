@@ -299,7 +299,7 @@ sealed interface ExampleUiState {
 
 - 实际名称、字段、错误类型和写入语义必须来自 API/产品契约，不得照抄示例。
 - Repository 接口应按领域能力组织，不能按 Retrofit endpoint 一一镜像。
-- One-off UI effects 只用于导航、Snackbar 等一次性消费事件；持久页面内容必须进入 UI State。
+- One-off UI effects 只用于导航、Snackbar 等一次性消费事件；持久页面内容必须进入 UI State。Snackbar 由 `:app` 根级 Controller/Host 统一持有，Feature 只提交消息事件，不得创建页面级 Host，也不得让展示任务绑定到临时页面协程生命周期。
 - 错误应在能够恢复或转换语义的边界处理，并保留可测试的显式失败路径。
 
 ### 4.4 Resonote 音乐域边界
