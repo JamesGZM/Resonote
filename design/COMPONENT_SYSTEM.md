@@ -205,7 +205,8 @@ Slot 与一致的调用约定；交互 Icon 使用 Resonote Icon Button 以保�
 - 使用 `LiveRegionMode.Polite`；Action 可聚焦，超时尊重无障碍服务与内容长度。
 - App 只能在根层持有一个稳定的 `SnackbarHostState`、Controller 与 `SnackbarHost`；切换 Tab、进入子页面或打开 Feature 不得替换、销毁或创建第二个 Host。
 - Feature 只能向 App 级 Controller 提交消息，不得持有 `SnackbarHostState`，不得在页面 `Scaffold` 中声明 `snackbarHost`，也不得从页面生命周期直接挂起调用 `showSnackbar()`。
-- App 级 Controller 负责调用挂起的 `showSnackbar()`，使消息展示不受触发页面重组、状态清空或退出影响。无 Action 默认 `Long`；有 Action 默认 `Indefinite` 并提供 Dismiss。
+- App 级 Controller 负责调用挂起的 `showSnackbar()`，使消息展示不受触发页面重组、状态清空或退出影响。普通无 Action 反馈默认 `Short`；有 Action 默认 `Indefinite` 并提供 Dismiss。
+- Controller 采用 latest-wins 调度：相同消息再次触发时合并为当前一条并从最新触发时刻重新计时；新的不同消息替换当前消息并取消旧任务。任何情况下最多保留一条请求，不保留可导致长时间连续展示的历史队列。需要持久恢复或逐条确认的事件不得用 Snackbar 队列承载。
 - 根 Host 使用 `WindowInsets.safeDrawing.exclude(WindowInsets.ime)`。Tab Bar 与 Mini Player 只能向根 Host 上报动态 Bottom Avoidance，不得通过嵌套 Host 解决位置问题。
 - 实现模式参考 NiA `NiaApp.kt` 的单一 Host、`LocalSnackbarHostState` 与 Safe Drawing 处理；当前固定参考提交为 `7d45eae4f8720a0c77f507712ba2437ff974b6ed`。
 

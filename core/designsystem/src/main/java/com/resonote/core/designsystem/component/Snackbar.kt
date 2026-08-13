@@ -19,6 +19,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 val LocalResonoteSnackbarController = staticCompositionLocalOf<ResonoteSnackbarController?> { null }
@@ -28,22 +29,34 @@ class ResonoteSnackbarController internal constructor(
     private val hostState: SnackbarHostState,
     private val scope: CoroutineScope,
 ) {
+    private var activeJob: Job? = null
+    private var requestGeneration = 0L
+
     fun show(
         message: String,
         actionLabel: String? = null,
         withDismissAction: Boolean = actionLabel != null,
-        duration: SnackbarDuration = if (actionLabel == null) SnackbarDuration.Long else SnackbarDuration.Indefinite,
+        duration: SnackbarDuration = if (actionLabel == null) SnackbarDuration.Short else SnackbarDuration.Indefinite,
         onResult: (SnackbarResult) -> Unit = {},
     ) {
-        scope.launch {
-            onResult(
-                hostState.showSnackbar(
-                    message = message,
-                    actionLabel = actionLabel,
-                    withDismissAction = withDismissAction,
-                    duration = duration,
-                ),
-            )
+        val generation = ++requestGeneration
+        activeJob?.cancel()
+        hostState.currentSnackbarData?.dismiss()
+        activeJob = scope.launch {
+            try {
+                onResult(
+                    hostState.showSnackbar(
+                        message = message,
+                        actionLabel = actionLabel,
+                        withDismissAction = withDismissAction,
+                        duration = duration,
+                    ),
+                )
+            } finally {
+                if (generation == requestGeneration) {
+                    activeJob = null
+                }
+            }
         }
     }
 }
