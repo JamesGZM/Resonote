@@ -34,11 +34,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.resonote.core.model.ContentFailure
+import com.resonote.core.designsystem.component.ResonoteRemoteArtwork
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.UserPlaylist
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -174,6 +176,14 @@ private fun PlaylistTargetRow(
                         MaterialTheme.colorScheme.onSurfaceVariant
                     },
                 )
+                if (!playlist.coverUrl.isNullOrBlank()) {
+                    ResonoteRemoteArtwork(
+                        model = playlist.coverUrl,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        fallback = {},
+                    )
+                }
             }
         },
         trailingContent = {

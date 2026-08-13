@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -18,8 +19,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Equalizer
+import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -30,6 +33,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
@@ -38,6 +43,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.resonote.core.designsystem.R
 import com.resonote.core.designsystem.tokens.ResonoteTokens
+import coil3.compose.AsyncImage
 
 enum class ResonoteArtworkState {
     LOADED,
@@ -70,6 +76,36 @@ fun ResonoteArtwork(
             artwork()
         } else {
             ArtworkPlaceholderMarks()
+        }
+    }
+}
+
+@Composable
+fun ResonoteRemoteArtwork(
+    model: String?,
+    contentDescription: String?,
+    modifier: Modifier = Modifier,
+    fallback: @Composable BoxScope.() -> Unit = {
+        Box(
+            modifier = Modifier.matchParentSize().background(MaterialTheme.colorScheme.surfaceContainerHighest),
+            contentAlignment = Alignment.Center,
+        ) {
+            ArtworkPlaceholderMarks()
+        }
+    },
+) {
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center,
+    ) {
+        fallback()
+        model?.takeIf(String::isNotBlank)?.let { url ->
+            AsyncImage(
+                model = url,
+                contentDescription = contentDescription,
+                modifier = Modifier.matchParentSize(),
+                contentScale = ContentScale.Crop,
+            )
         }
     }
 }
@@ -141,13 +177,15 @@ fun ResonoteMusicItem(
     onMoreClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
     artworkState: ResonoteArtworkState = ResonoteArtworkState.LOADED,
-    artwork: @Composable BoxScope.() -> Unit = {},
+    artworkUrl: String? = null,
+    artwork: @Composable BoxScope.() -> Unit = { DefaultSongArtwork(title) },
     qualityLabel: String? = null,
     isVip: Boolean = false,
     isPlaying: Boolean = false,
     isSelected: Boolean = false,
     enabled: Boolean = true,
 ) {
+    val effectiveArtworkState = if (!artworkUrl.isNullOrBlank()) ResonoteArtworkState.LOADED else artworkState
     val containerColor = when {
         isPlaying -> MaterialTheme.colorScheme.primaryContainer
         isSelected -> MaterialTheme.colorScheme.secondaryContainer
@@ -167,13 +205,24 @@ fun ResonoteMusicItem(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         ResonoteArtwork(
-            state = artworkState,
+            state = effectiveArtworkState,
             contentDescription = stringResource(R.string.core_designsystem_song_artwork, title),
             modifier = Modifier.size(56.dp),
-            artwork = artwork,
+            artwork = {
+                if (artworkUrl.isNullOrBlank()) {
+                    artwork()
+                } else {
+                    ResonoteRemoteArtwork(
+                        model = artworkUrl,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        fallback = artwork,
+                    )
+                }
+            },
         )
         Spacer(Modifier.width(12.dp))
-        if (artworkState == ResonoteArtworkState.LOADING) {
+        if (effectiveArtworkState == ResonoteArtworkState.LOADING) {
             LoadingMusicText(modifier = Modifier.weight(1f))
         } else {
             Column(modifier = Modifier.weight(1f)) {
@@ -218,7 +267,7 @@ fun ResonoteMusicItem(
                 )
             } else {
                 Text(
-                    text = if (artworkState == ResonoteArtworkState.LOADING) "--:--" else duration,
+                    text = if (effectiveArtworkState == ResonoteArtworkState.LOADING) "--:--" else duration,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyMedium,
                     maxLines = 1,
@@ -270,24 +319,37 @@ fun ResonotePlaylistItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     artworkState: ResonoteArtworkState = ResonoteArtworkState.LOADED,
-    artwork: @Composable BoxScope.() -> Unit = {},
+    artworkUrl: String? = null,
+    artwork: @Composable BoxScope.() -> Unit = { DefaultPlaylistArtwork(metadata.title) },
     enabled: Boolean = true,
 ) {
+    val effectiveArtworkState = if (!artworkUrl.isNullOrBlank()) ResonoteArtworkState.LOADED else artworkState
     Column(
         modifier = modifier
             .clickable(enabled = enabled, onClick = onClick),
     ) {
         Box {
             ResonoteArtwork(
-                state = artworkState,
+                state = effectiveArtworkState,
                 contentDescription = stringResource(R.string.core_designsystem_playlist_artwork, metadata.title),
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
                     .clip(ResonoteTokens.artworkShapes.standard),
-                artwork = artwork,
+                artwork = {
+                    if (artworkUrl.isNullOrBlank()) {
+                        artwork()
+                    } else {
+                        ResonoteRemoteArtwork(
+                            model = artworkUrl,
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            fallback = artwork,
+                        )
+                    }
+                },
             )
-            if (artworkState == ResonoteArtworkState.LOADED && metadata.playCount != null) {
+            if (effectiveArtworkState == ResonoteArtworkState.LOADED && metadata.playCount != null) {
                 Surface(
                     modifier = Modifier
                         .align(Alignment.BottomStart)
@@ -308,7 +370,7 @@ fun ResonotePlaylistItem(
             }
         }
         Spacer(Modifier.height(8.dp))
-        if (artworkState == ResonoteArtworkState.LOADING) {
+        if (effectiveArtworkState == ResonoteArtworkState.LOADING) {
             Box(
                 Modifier
                     .fillMaxWidth(0.8f)
@@ -326,5 +388,48 @@ fun ResonotePlaylistItem(
                 overflow = TextOverflow.Ellipsis,
             )
         }
+    }
+}
+
+@Composable
+private fun DefaultSongArtwork(seed: String) {
+    DefaultArtwork(seed) {
+        Icon(
+            imageVector = Icons.Rounded.Album,
+            contentDescription = null,
+            modifier = Modifier.size(30.dp),
+            tint = Color.White.copy(alpha = 0.9f),
+        )
+    }
+}
+
+@Composable
+private fun DefaultPlaylistArtwork(seed: String) {
+    DefaultArtwork(seed) {
+        Icon(
+            imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
+            contentDescription = null,
+            modifier = Modifier.size(32.dp),
+            tint = Color.White.copy(alpha = 0.9f),
+        )
+    }
+}
+
+@Composable
+private fun DefaultArtwork(seed: String, icon: @Composable () -> Unit) {
+    val palettes = listOf(
+        listOf(Color(0xFF5A061B), Color(0xFFE31353), Color(0xFFFF8DA9)),
+        listOf(Color(0xFF042E48), Color(0xFF0879BC), Color(0xFFBBD9F4)),
+        listOf(Color(0xFF20164B), Color(0xFF786EDB), Color(0xFFF4A9BC)),
+        listOf(Color(0xFF6F2E19), Color(0xFFE38A52), Color(0xFFFFD9A8)),
+        listOf(Color(0xFF123D36), Color(0xFF3A8068), Color(0xFFC6D9A8)),
+    )
+    Box(
+        modifier = Modifier.fillMaxSize().background(
+            Brush.linearGradient(palettes[(seed.hashCode() and Int.MAX_VALUE) % palettes.size]),
+        ),
+        contentAlignment = Alignment.Center,
+    ) {
+        icon()
     }
 }

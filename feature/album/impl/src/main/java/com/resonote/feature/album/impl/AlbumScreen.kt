@@ -50,8 +50,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.resonote.core.designsystem.component.ResonoteArtworkState
 import com.resonote.core.designsystem.component.ResonoteMusicItem
+import com.resonote.core.designsystem.component.ResonoteRemoteArtwork
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.ContentFailure
@@ -166,7 +166,7 @@ private fun AlbumContent(
                 qualityLabel = song.quality.label(),
                 isVip = song.vip,
                 isPlaying = song.hash == playingMediaId,
-                artworkState = ResonoteArtworkState.MISSING,
+                artworkUrl = song.coverUrl,
                 onClick = { onSongClick(song) },
                 onMoreClick = onSongMoreClick?.let { callback -> { callback(song) } },
             )
@@ -233,16 +233,22 @@ private fun AlbumHeader(
                     shape = MaterialTheme.shapes.large,
                     shadowElevation = 6.dp,
                 ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize().background(albumGradient(metadata.id)),
-                        contentAlignment = Alignment.Center,
+                    ResonoteRemoteArtwork(
+                        model = metadata.coverUrl,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
                     ) {
-                        Icon(
-                            Icons.Rounded.Album,
-                            contentDescription = null,
-                            modifier = Modifier.size(44.dp),
-                            tint = Color.White.copy(alpha = 0.9f),
-                        )
+                        Box(
+                            modifier = Modifier.fillMaxSize().background(albumGradient(metadata.id)),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                Icons.Rounded.Album,
+                                contentDescription = null,
+                                modifier = Modifier.size(44.dp),
+                                tint = Color.White.copy(alpha = 0.9f),
+                            )
+                        }
                     }
                 }
             }

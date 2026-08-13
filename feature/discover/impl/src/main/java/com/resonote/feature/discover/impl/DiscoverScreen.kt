@@ -62,6 +62,7 @@ import com.resonote.core.designsystem.component.ResonoteArtworkState
 import com.resonote.core.designsystem.component.ResonoteMusicItem
 import com.resonote.core.designsystem.component.ResonotePlaylistItem
 import com.resonote.core.designsystem.component.ResonotePlaylistMetadata
+import com.resonote.core.designsystem.component.ResonoteRemoteArtwork
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
 import com.resonote.core.model.Album
 import com.resonote.core.model.AlbumRegion
@@ -249,6 +250,7 @@ private fun PlaylistPane(
                                 onClick = { onPlaylistClick(playlist) },
                                 modifier = Modifier.weight(1f),
                                 artworkState = ResonoteArtworkState.LOADED,
+                                artworkUrl = playlist.coverUrl,
                                 artwork = {
                                     Box(
                                         Modifier.fillMaxSize().background(entityGradient(playlist.id)),
@@ -462,7 +464,7 @@ private fun SongPane(
                         qualityLabel = song.quality.label(),
                         isVip = song.vip,
                         isPlaying = song.hash == playingMediaId,
-                        artworkState = ResonoteArtworkState.MISSING,
+                        artworkUrl = song.coverUrl,
                         onClick = { onSongClick(song) },
                         onMoreClick = onSongMoreClick?.let { callback -> { callback(song) } },
                     )
@@ -487,6 +489,14 @@ private fun RankingCard(position: Int, ranking: Ranking, onClick: () -> Unit) {
                 Modifier.size(72.dp).clip(MaterialTheme.shapes.medium).background(entityGradient(ranking.id)),
                 contentAlignment = Alignment.Center,
             ) {
+                if (!ranking.coverUrl.isNullOrBlank()) {
+                    ResonoteRemoteArtwork(
+                        model = ranking.coverUrl,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        fallback = {},
+                    )
+                }
                 Text(
                     position.toString().padStart(2, '0'),
                     style = MaterialTheme.typography.headlineSmall,
@@ -516,8 +526,14 @@ private fun AlbumCard(album: Album, onClick: () -> Unit, modifier: Modifier = Mo
             contentDescription = stringResource(R.string.discover_album_artwork, album.name),
             modifier = Modifier.fillMaxWidth().height(164.dp),
         ) {
-            Box(Modifier.fillMaxSize().background(entityGradient(album.id)), contentAlignment = Alignment.Center) {
-                Icon(Icons.Rounded.Album, null, Modifier.size(46.dp), tint = Color.White.copy(0.9f))
+            ResonoteRemoteArtwork(
+                model = album.coverUrl,
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                Box(Modifier.fillMaxSize().background(entityGradient(album.id)), contentAlignment = Alignment.Center) {
+                    Icon(Icons.Rounded.Album, null, Modifier.size(46.dp), tint = Color.White.copy(0.9f))
+                }
             }
         }
         Spacer(Modifier.height(8.dp))

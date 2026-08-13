@@ -9,7 +9,7 @@ internal fun NetworkSong.toOnlineSong(): OnlineSong =
         hash = hash,
         title = title,
         artist = artist,
-        coverUrl = coverUrl?.replace("{size}", "480"),
+        coverUrl = coverUrl.toRemoteImageUrl(480),
         albumId = albumId,
         albumAudioId = albumAudioId,
         durationMillis = durationMillis,
@@ -23,3 +23,12 @@ internal fun NetworkSong.toOnlineSong(): OnlineSong =
         albumTitle = albumTitle,
         fileId = fileId,
     )
+
+internal fun String?.toRemoteImageUrl(size: Int): String? {
+    val value = this?.trim()?.takeIf(String::isNotEmpty)?.replace("{size}", size.toString()) ?: return null
+    return when {
+        value.startsWith("//") -> "https:$value"
+        value.startsWith("http://") -> "https://${value.removePrefix("http://")}"
+        else -> value
+    }
+}

@@ -52,8 +52,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.resonote.core.designsystem.component.ResonoteArtworkState
 import com.resonote.core.designsystem.component.ResonoteMusicItem
+import com.resonote.core.designsystem.component.ResonoteRemoteArtwork
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.ContentFailure
@@ -206,7 +206,7 @@ private fun ArtistContent(
                         qualityLabel = song.quality.label(),
                         isVip = song.vip,
                         isPlaying = song.hash == playingMediaId,
-                        artworkState = ResonoteArtworkState.MISSING,
+                        artworkUrl = song.coverUrl,
                         onClick = { onSongClick(song) },
                         onMoreClick = onSongMoreClick?.let { callback -> { callback(song) } },
                     )
@@ -263,6 +263,14 @@ private fun ArtistHeader(profile: ArtistProfile?) {
                         modifier = Modifier.size(54.dp),
                         tint = Color.White.copy(alpha = 0.92f),
                     )
+                    if (!profile?.avatarUrl.isNullOrBlank()) {
+                        ResonoteRemoteArtwork(
+                            model = profile.avatarUrl,
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            fallback = {},
+                        )
+                    }
                 }
             }
             Spacer(Modifier.width(18.dp))

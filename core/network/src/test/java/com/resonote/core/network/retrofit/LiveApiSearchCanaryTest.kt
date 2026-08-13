@@ -153,6 +153,9 @@ class LiveApiSearchCanaryTest {
                     ?.takeIf { it.info != null && it.songs.isNotEmpty() }
             }
         assertWithMessage("No consumable details in the first three public playlists").that(playlistPage).isNotNull()
+        assertWithMessage("Playlist songs should expose artwork URLs")
+            .that(checkNotNull(playlistPage).songs.any { !it.coverUrl.isNullOrBlank() })
+            .isTrue()
     }
 
     private fun liveFixture(): LiveFixture {

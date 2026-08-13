@@ -57,9 +57,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.resonote.core.designsystem.component.ResonoteArtworkState
 import com.resonote.core.designsystem.component.ResonoteDestructiveButton
 import com.resonote.core.designsystem.component.ResonoteMusicItem
+import com.resonote.core.designsystem.component.ResonoteRemoteArtwork
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.ContentFailure
@@ -243,7 +243,7 @@ private fun PlaylistContent(
                 qualityLabel = song.quality.label(),
                 isVip = song.vip,
                 isPlaying = song.hash == playingMediaId,
-                artworkState = ResonoteArtworkState.MISSING,
+                artworkUrl = song.coverUrl,
                 onClick = { onSongClick(song) },
                 onMoreClick = when {
                     onSongMoreClick != null -> ({ onSongMoreClick(song, removeRequest) })
@@ -353,6 +353,14 @@ private fun PlaylistHeader(
                     modifier = Modifier.size(48.dp),
                     tint = Color.White.copy(alpha = 0.9f),
                 )
+                if (!details?.coverUrl.isNullOrBlank()) {
+                    ResonoteRemoteArtwork(
+                        model = details.coverUrl,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        fallback = {},
+                    )
+                }
             }
             Spacer(Modifier.width(20.dp))
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {

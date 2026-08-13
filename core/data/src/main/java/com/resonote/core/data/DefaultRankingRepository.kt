@@ -15,7 +15,7 @@ internal class DefaultRankingRepository @Inject constructor(
 ) : RankingRepository {
     override suspend fun loadRankings(): CollectionLoadResult<List<Ranking>> =
         loadCollection(riskChallenges) {
-            network.rankings().map { Ranking(it.id, it.title, it.coverUrl?.replace("{size}", "480")) }
+            network.rankings().map { Ranking(it.id, it.title, it.coverUrl.toRemoteImageUrl(480)) }
         }
 
     override suspend fun loadSongs(rankId: String, page: Int, pageSize: Int): CollectionLoadResult<SongPage> {

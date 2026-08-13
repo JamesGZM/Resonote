@@ -55,6 +55,7 @@ import com.resonote.core.designsystem.component.ResonoteIconButton
 import com.resonote.core.designsystem.component.ResonoteMusicItem
 import com.resonote.core.designsystem.component.ResonotePlaylistItem
 import com.resonote.core.designsystem.component.ResonotePlaylistMetadata
+import com.resonote.core.designsystem.component.ResonoteRemoteArtwork
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -157,6 +158,7 @@ fun HomeScreen(
                             metadata = ResonotePlaylistMetadata(playlist.title, playlist.playCount),
                             onClick = { onPlaylistClick(playlist) },
                             modifier = Modifier.weight(1f),
+                            artworkUrl = playlist.artworkUrl,
                             artwork = { GradientArtwork(playlist.artworkColors) },
                         )
                     }
@@ -205,7 +207,12 @@ private fun RecommendationArea(
                     state = ResonoteArtworkState.LOADED,
                     contentDescription = radio.title,
                     modifier = Modifier.size(112.dp),
-                ) { GradientArtwork(radio.artworkColors) }
+                ) {
+                    ResonoteRemoteArtwork(
+                        model = radio.artworkUrl,
+                        contentDescription = null,
+                    ) { GradientArtwork(radio.artworkColors) }
+                }
                 Spacer(Modifier.width(16.dp))
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(radio.title, style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -332,6 +339,7 @@ private fun SongCollection(
                     isPlaying = song.id == playingMediaId,
                     onClick = { onSongClick(song) },
                     onMoreClick = { onSongMoreClick(song) },
+                    artworkUrl = song.artworkUrl,
                     artwork = { GradientArtwork(song.artworkColors) },
                 )
             }

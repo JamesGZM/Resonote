@@ -626,6 +626,7 @@ class ApiNetworkDataSourceTest {
         assertThat(page.info?.title).isEqualTo("精选歌单")
         assertThat(page.info?.songCount).isEqualTo(51)
         assertThat(page.songs.single().fileId).isEqualTo("42")
+        assertThat(page.songs.single().coverUrl).isEqualTo("https://song/{size}.jpg")
         assertThat(page.hasMore).isFalse()
         val request = gatewayServer.takeRequest()
         assertThat(request.method).isEqualTo("GET")

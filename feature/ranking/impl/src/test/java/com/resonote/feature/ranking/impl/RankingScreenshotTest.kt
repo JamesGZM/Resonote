@@ -3,6 +3,7 @@ package com.resonote.feature.ranking.impl
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -70,7 +71,7 @@ class RankingScreenshotTest {
 
         composeRule.onAllNodesWithText("潮汐热歌榜 · 本周上升最快").assertCountEquals(2)
         composeRule.onNodeWithContentDescription("潮汐热歌榜 · 本周上升最快的榜单封面").assertExists()
-        composeRule.onNodeWithText("01").assertExists()
+        composeRule.onNodeWithText("01").assertIsDisplayed()
         capture("top")
 
         composeRule.onNodeWithTag("ranking-list").performScrollToIndex(6)
@@ -96,7 +97,7 @@ class RankingScreenshotTest {
         hash = id,
         title = title,
         artist = artist,
-        coverUrl = null,
+        coverUrl = "https://example.invalid/$id.jpg",
         albumId = "night-flight",
         albumAudioId = "audio-$id",
         durationMillis = 248_000,

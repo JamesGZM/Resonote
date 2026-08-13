@@ -68,8 +68,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
-import com.resonote.core.designsystem.component.ResonoteArtworkState
 import com.resonote.core.designsystem.component.ResonoteMusicItem
+import com.resonote.core.designsystem.component.ResonoteRemoteArtwork
 import com.resonote.core.designsystem.component.ResonoteTextField
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.ComplexSearchResult
@@ -442,7 +442,7 @@ private fun AggregateSearchResults(
                     duration = song.durationMillis.durationLabel(),
                     qualityLabel = song.quality.label(),
                     isVip = song.vip,
-                    artworkState = ResonoteArtworkState.MISSING,
+                    artworkUrl = song.coverUrl,
                     onClick = { onSongClick(song) },
                     onMoreClick = onSongMoreClick?.let { callback -> { callback(song) } },
                 )
@@ -461,6 +461,7 @@ private fun AggregateSearchResults(
                     title = artist.name,
                     supporting = stringResource(R.string.feature_search_impl_search_artist_metadata, artist.songCount, artist.albumCount),
                     icon = Icons.Rounded.Person,
+                    artworkUrl = artist.avatarUrl,
                     onClick = onArtistClick?.let { callback -> { callback(artist) } },
                 )
             }
@@ -527,7 +528,7 @@ private fun PagedSearchResults(
                     duration = item.value.durationMillis.durationLabel(),
                     qualityLabel = item.value.quality.label(),
                     isVip = item.value.vip,
-                    artworkState = ResonoteArtworkState.MISSING,
+                    artworkUrl = item.value.coverUrl,
                     onClick = { onSongClick(item.value) },
                     onMoreClick = onSongMoreClick?.let { callback -> { callback(item.value) } },
                 )
@@ -547,6 +548,7 @@ private fun PagedSearchResults(
                         item.value.albumCount,
                     ),
                     icon = Icons.Rounded.Person,
+                    artworkUrl = item.value.avatarUrl,
                     onClick = onArtistClick?.let { callback -> { callback(item.value) } },
                 )
                 is SearchResultItem.Mv -> MvRow(
@@ -608,6 +610,7 @@ private fun AlbumRow(album: SearchAlbum, onClick: (() -> Unit)?) = EntityRow(
     title = album.name,
     supporting = stringResource(R.string.feature_search_impl_search_album_metadata, album.artist.orEmpty(), album.songCount),
     icon = Icons.Rounded.Album,
+    artworkUrl = album.coverUrl,
     onClick = onClick,
 )
 
@@ -616,6 +619,7 @@ private fun PlaylistRow(playlist: SearchPlaylist, onClick: (() -> Unit)?) = Enti
     title = playlist.name,
     supporting = stringResource(R.string.feature_search_impl_search_playlist_metadata, playlist.creator.orEmpty(), playlist.songCount),
     icon = Icons.AutoMirrored.Rounded.PlaylistPlay,
+    artworkUrl = playlist.coverUrl,
     onClick = onClick,
 )
 
@@ -679,7 +683,13 @@ private fun MvRow(mv: SearchMv, onClick: (() -> Unit)?) {
 }
 
 @Composable
-private fun EntityRow(title: String, supporting: String, icon: ImageVector, onClick: (() -> Unit)?) {
+private fun EntityRow(
+    title: String,
+    supporting: String,
+    icon: ImageVector,
+    artworkUrl: String? = null,
+    onClick: (() -> Unit)?,
+) {
     ListItem(
         headlineContent = { Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
         supportingContent = { Text(supporting, maxLines = 1, overflow = TextOverflow.Ellipsis) },
@@ -689,6 +699,14 @@ private fun EntityRow(title: String, supporting: String, icon: ImageVector, onCl
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(icon, contentDescription = null, tint = Color.White)
+                if (!artworkUrl.isNullOrBlank()) {
+                    ResonoteRemoteArtwork(
+                        model = artworkUrl,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        fallback = {},
+                    )
+                }
             }
         },
         trailingContent = onClick?.let {

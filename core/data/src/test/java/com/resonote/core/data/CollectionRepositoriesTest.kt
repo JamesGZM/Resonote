@@ -49,6 +49,7 @@ class CollectionRepositoriesTest {
         assertThat(result.value.details?.id).isEqualTo("gid")
         assertThat(result.value.details?.coverUrl).isEqualTo("https://playlist/480.jpg")
         assertThat(result.value.songs.single().fileId).isEqualTo("file-1")
+        assertThat(result.value.songs.single().coverUrl).isEqualTo("https://song/480.jpg")
         assertThat(result.value.hasMore).isTrue()
         assertThat(network.playlistRequest).isEqualTo(Triple("gid", 1, 50))
     }
@@ -113,7 +114,7 @@ class CollectionRepositoriesTest {
                 hash = "hash",
                 title = "歌曲",
                 artist = "歌手",
-                coverUrl = null,
+                coverUrl = "http://song/{size}.jpg",
                 albumId = "1",
                 albumAudioId = "2",
                 durationMillis = 180_000,

@@ -51,6 +51,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.resonote.core.designsystem.component.ResonoteArtworkState
 import com.resonote.core.designsystem.component.ResonoteMusicItem
+import com.resonote.core.designsystem.component.ResonoteRemoteArtwork
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.ContentFailure
@@ -166,6 +167,7 @@ private fun RankingContent(
                 isVip = song.vip,
                 isPlaying = song.hash == playingMediaId,
                 artworkState = ResonoteArtworkState.LOADED,
+                artworkUrl = song.coverUrl,
                 artwork = {
                     Text(
                         text = (index + 1).toString().padStart(2, '0'),
@@ -221,6 +223,14 @@ private fun RankingHeader(
                     .semantics { contentDescription = artworkDescription },
                 contentAlignment = Alignment.Center,
             ) {
+                if (!metadata.coverUrl.isNullOrBlank()) {
+                    ResonoteRemoteArtwork(
+                        model = metadata.coverUrl,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        fallback = {},
+                    )
+                }
                 Row(
                     modifier = Modifier.height(72.dp),
                     verticalAlignment = Alignment.Bottom,
