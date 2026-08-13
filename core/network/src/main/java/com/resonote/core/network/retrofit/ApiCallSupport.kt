@@ -70,21 +70,37 @@ internal class ApiResponseVerifier @Inject constructor(
     suspend fun requireSuccess(
         response: MusicApiResponse,
         endpointId: String? = null,
-        authenticationContext: ApiAuthenticationContext? = null,
     ) {
         requireNoRiskChallenge(response)
         serviceFailureCodeOrNull(response)?.let { serviceCode ->
-            if (endpointId != null && AuthenticationFailureClassifier.capturesServiceFailure(endpointId, serviceCode)) {
-                val context = authenticationContext ?: sessions.authenticationContext()
-                AuthenticationFailureClassifier.classify(sessions, context, serviceCode)?.let { throw it }
-            }
+            if (endpointId != null) requireValidAuthentication(endpointId, serviceCode)
             throw ApiServiceException(serviceCode)
         }
     }
 
-    suspend fun requireWriteSuccess(response: MusicApiResponse) {
+    suspend fun requireValidAuthentication(
+        endpointId: String,
+        serviceCode: String,
+    ) {
+        AuthenticationFailureClassifier.requestAuthenticationFailure(endpointId, serviceCode)?.let { throw it }
+    }
+
+    suspend fun requireAuthenticatedSession(
+        serviceCode: String?,
+        authenticationContext: ApiAuthenticationContext,
+    ) {
+        AuthenticationFailureClassifier.classify(sessions, authenticationContext, serviceCode)?.let { throw it }
+    }
+
+    suspend fun requireWriteSuccess(
+        response: MusicApiResponse,
+        endpointId: String? = null,
+    ) {
         requireNoRiskChallenge(response)
-        serviceFailureCodeOrNull(response)?.let { throw ApiServiceException(it) }
+        serviceFailureCodeOrNull(response)?.let { serviceCode ->
+            if (endpointId != null) requireValidAuthentication(endpointId, serviceCode)
+            throw ApiServiceException(serviceCode)
+        }
     }
 
     suspend fun requireJsonSuccess(
@@ -100,9 +116,7 @@ internal class ApiResponseVerifier @Inject constructor(
         val failedCode = errorCode != null && errorCode.toDoubleOrNull() != 0.0
         if (status !in successStatuses || failedCode) {
             val serviceCode = errorCode ?: status
-            if (serviceCode != null && AuthenticationFailureClassifier.capturesServiceFailure(endpointId, serviceCode)) {
-                AuthenticationFailureClassifier.classify(sessions, sessions.authenticationContext(), serviceCode)?.let { throw it }
-            }
+            if (serviceCode != null) requireValidAuthentication(endpointId, serviceCode)
             throw ApiServiceException(serviceCode)
         }
     }

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.resonote.core.data.PlaybackPreferencesRepository
 import com.resonote.core.model.PlaybackSpeed
+import com.resonote.core.model.OnlinePlaybackQuality
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
@@ -11,6 +12,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 sealed interface SettingsUiState {
@@ -19,6 +21,7 @@ sealed interface SettingsUiState {
 
     data class Ready(
         val playbackSpeed: PlaybackSpeed,
+        val onlinePlaybackQuality: OnlinePlaybackQuality = OnlinePlaybackQuality.Standard,
         val isSaving: Boolean = false,
         val saveFailed: Boolean = false,
     ) : SettingsUiState
@@ -47,7 +50,25 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 playbackPreferencesRepository.setPlaybackSpeed(speed)
-                mutableUiState.value = SettingsUiState.Ready(playbackSpeed = speed)
+                mutableUiState.value = state.copy(playbackSpeed = speed, isSaving = false)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                val current = mutableUiState.value as? SettingsUiState.Ready ?: state
+                mutableUiState.value = current.copy(isSaving = false, saveFailed = true)
+            }
+        }
+    }
+
+    fun setOnlinePlaybackQuality(quality: OnlinePlaybackQuality) {
+        val state = mutableUiState.value as? SettingsUiState.Ready ?: return
+        if (state.isSaving || state.onlinePlaybackQuality == quality) return
+
+        mutableUiState.value = state.copy(isSaving = true, saveFailed = false)
+        viewModelScope.launch {
+            try {
+                playbackPreferencesRepository.setOnlinePlaybackQuality(quality)
+                mutableUiState.value = state.copy(onlinePlaybackQuality = quality, isSaving = false)
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
@@ -67,10 +88,14 @@ class SettingsViewModel @Inject constructor(
         observationJob = viewModelScope.launch {
             mutableUiState.value = SettingsUiState.Loading
             try {
-                playbackPreferencesRepository.playbackSpeed.collect { speed ->
+                combine(
+                    playbackPreferencesRepository.playbackSpeed,
+                    playbackPreferencesRepository.onlinePlaybackQuality,
+                ) { speed, quality -> speed to quality }.collect { (speed, quality) ->
                     val current = mutableUiState.value as? SettingsUiState.Ready
                     mutableUiState.value = SettingsUiState.Ready(
                         playbackSpeed = speed,
+                        onlinePlaybackQuality = quality,
                         isSaving = current?.isSaving == true,
                     )
                 }

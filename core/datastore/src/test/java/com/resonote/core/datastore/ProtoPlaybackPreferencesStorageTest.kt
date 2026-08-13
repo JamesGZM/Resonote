@@ -28,7 +28,10 @@ class ProtoPlaybackPreferencesStorageTest {
         )
 
         try {
-            ProtoPlaybackPreferencesStorage(firstStore).setPlaybackSpeedPercent(150)
+            ProtoPlaybackPreferencesStorage(firstStore).apply {
+                setPlaybackSpeedPercent(150)
+                setOnlinePlaybackQuality("HighResolution")
+            }
         } finally {
             firstScope.cancel()
         }
@@ -40,7 +43,9 @@ class ProtoPlaybackPreferencesStorageTest {
             produceFile = { file },
         )
         try {
-            assertThat(ProtoPlaybackPreferencesStorage(secondStore).playbackSpeedPercent.first()).isEqualTo(150)
+            val storage = ProtoPlaybackPreferencesStorage(secondStore)
+            assertThat(storage.playbackSpeedPercent.first()).isEqualTo(150)
+            assertThat(storage.onlinePlaybackQuality.first()).isEqualTo("HighResolution")
         } finally {
             secondScope.cancel()
         }

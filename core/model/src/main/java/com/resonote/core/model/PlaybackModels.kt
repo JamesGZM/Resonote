@@ -2,6 +2,16 @@ package com.resonote.core.model
 
 data class ResolvedSongSource(val uri: String, val durationMillis: Long, val extension: String?)
 
+enum class OnlinePlaybackQuality {
+    Standard,
+    HighQuality,
+    Lossless,
+    HighResolution,
+    ViperAtmos,
+    ViperClear,
+    ViperTape,
+}
+
 enum class PlaybackUnavailableReason {
     Copyright,
     Vip,

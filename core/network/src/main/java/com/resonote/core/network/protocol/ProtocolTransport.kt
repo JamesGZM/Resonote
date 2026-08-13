@@ -58,9 +58,7 @@ internal class ProtocolTransport @Inject constructor(
             }
         }
         raw.serviceFailureCodeOrNull()?.let { serviceCode ->
-            if (AuthenticationFailureClassifier.capturesServiceFailure(exchange.spec.id, serviceCode)) {
-                AuthenticationFailureClassifier.classify(sessionManager, authenticationContext, serviceCode)?.let { throw it }
-            }
+            AuthenticationFailureClassifier.requestAuthenticationFailure(exchange.spec.id, serviceCode)?.let { throw it }
         }
         return exchange.decode(raw)
     }

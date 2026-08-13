@@ -23,9 +23,15 @@ internal class ProtoPlaybackPreferencesStorage @Inject constructor(
     private val store: DataStore<PlaybackPreferences>,
 ) : PlaybackPreferencesStorage {
     override val playbackSpeedPercent: Flow<Int> = store.data.map { it.playbackSpeedPercent }
+    override val onlinePlaybackQuality: Flow<String> = store.data.map { it.onlinePlaybackQuality }
 
     override suspend fun setPlaybackSpeedPercent(percent: Int) {
         require(percent > 0) { "playback speed percent must be positive" }
         store.updateData { it.copy(playbackSpeedPercent = percent) }
+    }
+
+    override suspend fun setOnlinePlaybackQuality(quality: String) {
+        require(quality.isNotBlank()) { "online playback quality must not be blank" }
+        store.updateData { it.copy(onlinePlaybackQuality = quality) }
     }
 }

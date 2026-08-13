@@ -11,6 +11,7 @@ import com.resonote.core.network.ApiAuthenticationRequiredException
 import com.resonote.core.network.ApiNetworkException
 import com.resonote.core.network.ApiPlaybackUnavailableException
 import com.resonote.core.network.ApiRiskBlockedException
+import com.resonote.core.network.ApiServiceException
 import com.resonote.core.network.model.NetworkCloudPage
 import com.resonote.core.network.model.NetworkCloudStorage
 import com.resonote.core.network.model.NetworkCloudTrack
@@ -63,19 +64,68 @@ class UserRepositoriesTest {
 
     @Test
     fun detailFailureAndMissingAuthenticationRemainTyped() = runTest {
+        val offlineNetwork =
+            FakeNetwork(detailFailure = ApiNetworkException(ApiNetworkException.Kind.Offline, IOException("offline")))
         val offline =
             DefaultUserProfileRepository(
-                FakeNetwork(detailFailure = ApiNetworkException(ApiNetworkException.Kind.Offline, IOException("offline"))),
+                offlineNetwork,
                 RiskChallengeRegistry(),
             ).loadProfile() as CollectionLoadResult.Failed
+        val authenticationNetwork = FakeNetwork(detailFailure = ApiAuthenticationRequiredException())
         val authentication =
             DefaultUserProfileRepository(
-                FakeNetwork(detailFailure = ApiAuthenticationRequiredException()),
+                authenticationNetwork,
                 RiskChallengeRegistry(),
             ).loadProfile() as CollectionLoadResult.Failed
 
         assertThat(offline.failure).isEqualTo(ContentFailure.Network)
         assertThat(authentication.failure).isEqualTo(ContentFailure.AuthenticationRequired)
+        assertThat(offlineNetwork.detailCalls).isEqualTo(1)
+        assertThat(offlineNetwork.vipCalls).isEqualTo(1)
+        assertThat(authenticationNetwork.detailCalls).isEqualTo(1)
+        assertThat(authenticationNetwork.vipCalls).isEqualTo(1)
+    }
+
+    @Test
+    fun explicitVipAuthenticationFailureConfirmsFailedProfileSession() = runTest {
+        val network = FakeNetwork(
+            detailFailure = ApiServiceException("20017"),
+            vipFailure = ApiAuthenticationRequiredException(),
+        )
+        val repository = DefaultUserProfileRepository(network, RiskChallengeRegistry())
+
+        val result = repository.loadProfile() as CollectionLoadResult.Failed
+
+        assertThat(result.failure).isEqualTo(ContentFailure.AuthenticationRequired)
+        assertThat(network.detailCalls).isEqualTo(1)
+        assertThat(network.vipCalls).isEqualTo(1)
+    }
+
+    @Test
+    fun ordinaryVipFailureDoesNotOverrideFailedProfileRequest() = runTest {
+        val network = FakeNetwork(
+            detailFailure = ApiNetworkException(ApiNetworkException.Kind.Offline, IOException("detail offline")),
+            vipFailure = ApiServiceException("20017"),
+        )
+        val repository = DefaultUserProfileRepository(network, RiskChallengeRegistry())
+
+        val result = repository.loadProfile() as CollectionLoadResult.Failed
+
+        assertThat(result.failure).isEqualTo(ContentFailure.Network)
+        assertThat(network.detailCalls).isEqualTo(1)
+        assertThat(network.vipCalls).isEqualTo(1)
+    }
+
+    @Test
+    fun explicitVipAuthenticationFailureIsNotHiddenBySuccessfulProfileRequest() = runTest {
+        val network = FakeNetwork(vipFailure = ApiAuthenticationRequiredException())
+        val repository = DefaultUserProfileRepository(network, RiskChallengeRegistry())
+
+        val result = repository.loadProfile() as CollectionLoadResult.Failed
+
+        assertThat(result.failure).isEqualTo(ContentFailure.AuthenticationRequired)
+        assertThat(network.detailCalls).isEqualTo(1)
+        assertThat(network.vipCalls).isEqualTo(1)
     }
 
     @Test
@@ -229,7 +279,7 @@ class UserRepositoriesTest {
         override suspend fun recommendedPlaylists(page: Int, pageSize: Int): List<NetworkPlaylistSummary> = error("unused")
         override suspend fun newSongs(page: Int, pageSize: Int): List<NetworkSong> = error("unused")
         override suspend fun radioRecommendations(mode: NetworkRecommendationMode): List<NetworkSong> = error("unused")
-        override suspend fun resolveSongSource(hash: String, albumId: String?, albumAudioId: String?): NetworkSongSource = error("unused")
+        override suspend fun resolveSongSource(hash: String, albumId: String?, albumAudioId: String?, requestedQuality: String): NetworkSongSource = error("unused")
         override suspend fun rankings(): List<NetworkRanking> = error("unused")
         override suspend fun rankingSongs(rankId: String, page: Int, pageSize: Int): NetworkSongPage = error("unused")
         override suspend fun playlistSongs(globalCollectionId: String, page: Int, pageSize: Int): NetworkPlaylistPage = error("unused")

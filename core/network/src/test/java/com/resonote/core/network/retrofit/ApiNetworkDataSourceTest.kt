@@ -97,6 +97,8 @@ class ApiNetworkDataSourceTest {
         userId = "99",
         cookies = mapOf("token" to "existing-token", "userid" to "99", "dfid" to "fixture-dfid"),
     )
+    private val anonymousSession: ApiSession
+        get() = session.copy(token = null, userId = "0", cookies = mapOf("dfid" to "fixture-dfid"))
 
     @Before
     fun startServers() {
@@ -296,7 +298,12 @@ class ApiNetworkDataSourceTest {
     }
 
     @Test
-    fun songSourceUsesRegisteredIdentitySongKeyAndHttpsBackup() = runTest {
+    fun authenticatedSongSourceUsesPrivilegeHashFullPlaybackAndHttpsBackup() = runTest {
+        gatewayServer.enqueue(
+            jsonResponse(
+                """{"status":1,"data":[{"hash":"abcdef","quality":"flac","level":1,"relate_goods":[{"hash":"STANDARD_HASH","quality":"128","level":1}]}]}""",
+            ),
+        )
         gatewayServer.enqueue(
             jsonResponse(
                 """{"status":1,"url":["http://unsafe.example/song.mp3"],"backupUrl":["https://cdn.example/song.mp3"],"timeLength":321000,"extName":"mp3"}""",
@@ -307,17 +314,161 @@ class ApiNetworkDataSourceTest {
 
         assertThat(source.uri).isEqualTo("https://cdn.example/song.mp3")
         assertThat(source.durationMillis).isEqualTo(321_000)
-        val request = gatewayServer.takeRequest()
-        assertThat(request.method).isEqualTo("GET")
-        assertThat(request.requestUrl?.host).isEqualTo(gatewayServer.hostName)
-        assertThat(request.requestUrl?.encodedPath).isEqualTo("/v5/url")
-        assertThat(request.getHeader("x-router")).isEqualTo("trackercdn.kugou.com")
-        assertThat(request.requestUrl?.queryParameter("hash")).isEqualTo("abcdef")
-        assertThat(request.requestUrl?.queryParameter("album_id")).isEqualTo("12")
-        assertThat(request.requestUrl?.queryParameter("album_audio_id")).isEqualTo("34")
-        assertThat(request.requestUrl?.queryParameter("dfid")).isEqualTo("fixture-dfid")
-        assertThat(request.requestUrl?.queryParameter("key")).isNotEmpty()
-        assertThat(request.requestUrl?.queryParameter("signature")).isNotEmpty()
+        val privilegeRequest = gatewayServer.takeRequest()
+        assertThat(privilegeRequest.method).isEqualTo("POST")
+        assertThat(privilegeRequest.requestUrl?.encodedPath).isEqualTo("/v2/get_res_privilege/lite")
+        assertThat(privilegeRequest.getHeader("x-router")).isEqualTo("media.store.kugou.com")
+        val privilegeBody = json.parseToJsonElement(privilegeRequest.body.readUtf8()).jsonObject
+        assertThat(privilegeBody["resource"]?.jsonArray?.single()?.jsonObject?.get("hash")?.jsonPrimitive?.content)
+            .isEqualTo("abcdef")
+
+        val sourceRequest = gatewayServer.takeRequest()
+        assertThat(sourceRequest.method).isEqualTo("GET")
+        assertThat(sourceRequest.requestUrl?.host).isEqualTo(gatewayServer.hostName)
+        assertThat(sourceRequest.requestUrl?.encodedPath).isEqualTo("/v5/url")
+        assertThat(sourceRequest.getHeader("x-router")).isEqualTo("trackercdn.kugou.com")
+        assertThat(sourceRequest.requestUrl?.queryParameter("hash")).isEqualTo("standard_hash")
+        assertThat(sourceRequest.requestUrl?.queryParameter("quality")).isEqualTo("128")
+        assertThat(sourceRequest.requestUrl?.queryParameter("IsFreePart")).isEqualTo("0")
+        assertThat(sourceRequest.requestUrl?.queryParameter("ppage_id")).isEqualTo("356753938")
+        assertThat(sourceRequest.requestUrl?.queryParameter("album_id")).isEqualTo("12")
+        assertThat(sourceRequest.requestUrl?.queryParameter("album_audio_id")).isEqualTo("34")
+        assertThat(sourceRequest.requestUrl?.queryParameter("dfid")).isEqualTo("fixture-dfid")
+        assertThat(sourceRequest.requestUrl?.queryParameter("userid")).isEqualTo("99")
+        assertThat(sourceRequest.requestUrl?.queryParameter("token")).isEqualTo("existing-token")
+        assertThat(sourceRequest.getHeader("Cookie")).contains("token=existing-token")
+        assertThat(sourceRequest.requestUrl?.queryParameter("key")).isNotEmpty()
+        assertThat(sourceRequest.requestUrl?.queryParameter("signature")).isNotEmpty()
+    }
+
+    @Test
+    fun privilegeBusinessFailureFallsBackWithoutExpiringSession() = runTest {
+        gatewayServer.enqueue(jsonResponse("""{"status":0,"error_code":20010}"""))
+        gatewayServer.enqueue(jsonResponse("""{"status":1,"url":["https://cdn.example/song.mp3"],"extName":"mp3"}"""))
+        val source = dataSource()
+
+        val song = source.resolveSongSource("ABCDEF")
+
+        assertThat(song.uri).isEqualTo("https://cdn.example/song.mp3")
+        assertThat(source.authenticationClearCount).isEqualTo(0)
+        assertThat(gatewayServer.requestCount).isEqualTo(2)
+    }
+
+    @Test
+    fun privilegeHttpUnauthorizedFallsBackWithoutExpiringSession() = runTest {
+        gatewayServer.enqueue(MockResponse().setResponseCode(401))
+        gatewayServer.enqueue(jsonResponse("""{"status":1,"url":["https://cdn.example/song.mp3"],"extName":"mp3"}"""))
+        val source = dataSource()
+
+        val song = source.resolveSongSource("ABCDEF")
+
+        assertThat(song.uri).isEqualTo("https://cdn.example/song.mp3")
+        assertThat(source.authenticationClearCount).isEqualTo(0)
+        assertThat(gatewayServer.requestCount).isEqualTo(2)
+    }
+
+    @Test
+    fun privilegeStatusTwoExpiresAuthenticatedSessionWithoutCodeMapping() = runTest {
+        gatewayServer.enqueue(jsonResponse("""{"status":2,"error_code":20018}"""))
+        val source = dataSource()
+
+        val failure = runCatching { source.resolveSongSource("ABCDEF") }.exceptionOrNull()
+
+        assertThat(failure).isInstanceOf(ApiAuthenticationRequiredException::class.java)
+        failure as ApiAuthenticationRequiredException
+        assertThat(failure.reason).isEqualTo(ApiAuthenticationGateReason.SessionExpired)
+        assertThat(failure.serviceCode).isEqualTo("20018")
+        assertThat(source.authenticationClearCount).isEqualTo(1)
+        assertThat(gatewayServer.requestCount).isEqualTo(1)
+    }
+
+    @Test
+    fun songUrlInvalidTokenExpiresAuthenticatedSession() = runTest {
+        gatewayServer.enqueue(jsonResponse("""{"status":1,"data":[]}"""))
+        gatewayServer.enqueue(jsonResponse("""{"status":2,"error_code":20017}"""))
+        val source = dataSource()
+
+        val failure = runCatching { source.resolveSongSource("ABCDEF") }.exceptionOrNull()
+
+        assertThat(failure).isInstanceOf(ApiAuthenticationRequiredException::class.java)
+        failure as ApiAuthenticationRequiredException
+        assertThat(failure.reason).isEqualTo(ApiAuthenticationGateReason.SessionExpired)
+        assertThat(failure.serviceCode).isEqualTo("20017")
+        assertThat(source.authenticationClearCount).isEqualTo(1)
+        assertThat(gatewayServer.requestCount).isEqualTo(2)
+    }
+
+    @Test
+    fun privilegeFailureFallsBackToOriginalHash() = runTest {
+        gatewayServer.enqueue(MockResponse().setResponseCode(503).setBody("upstream unavailable"))
+        gatewayServer.enqueue(jsonResponse("""{"status":1,"url":["https://cdn.example/song.mp3"],"extName":"mp3"}"""))
+
+        val source = dataSource().resolveSongSource("ORIGINAL", requestedQuality = "320")
+
+        assertThat(source.uri).isEqualTo("https://cdn.example/song.mp3")
+        gatewayServer.takeRequest()
+        val fallback = gatewayServer.takeRequest()
+        assertThat(fallback.requestUrl?.queryParameter("hash")).isEqualTo("original")
+        assertThat(fallback.requestUrl?.queryParameter("quality")).isEqualTo("320")
+    }
+
+    @Test
+    fun mp4CandidateFallsBackToLowerQuality() = runTest {
+        gatewayServer.enqueue(
+            jsonResponse(
+                """{"status":1,"data":[{"hash":"FLAC_HASH","quality":"flac","level":1,"relate_goods":[{"hash":"HQ_HASH","quality":"320","level":1},{"hash":"STD_HASH","quality":"128","level":1}]}]}""",
+            ),
+        )
+        gatewayServer.enqueue(jsonResponse("""{"status":1,"url":["https://cdn.example/video.mp4"],"extName":"MP4"}"""))
+        gatewayServer.enqueue(jsonResponse("""{"status":1,"url":["https://cdn.example/song.mp3"],"extName":"mp3"}"""))
+
+        val source = dataSource().resolveSongSource("ORIGINAL", requestedQuality = "flac")
+
+        assertThat(source.uri).isEqualTo("https://cdn.example/song.mp3")
+        gatewayServer.takeRequest()
+        val flac = gatewayServer.takeRequest()
+        val high = gatewayServer.takeRequest()
+        assertThat(flac.requestUrl?.queryParameter("hash")).isEqualTo("flac_hash")
+        assertThat(flac.requestUrl?.queryParameter("quality")).isEqualTo("flac")
+        assertThat(high.requestUrl?.queryParameter("hash")).isEqualTo("hq_hash")
+        assertThat(high.requestUrl?.queryParameter("quality")).isEqualTo("320")
+    }
+
+    @Test
+    fun successfulCandidateWithoutUrlFallsBackToLowerQuality() = runTest {
+        gatewayServer.enqueue(
+            jsonResponse(
+                """{"status":1,"data":[{"hash":"HQ_HASH","quality":"320","level":1,"relate_goods":[{"hash":"STD_HASH","quality":"128","level":1}]}]}""",
+            ),
+        )
+        gatewayServer.enqueue(jsonResponse("""{"status":1,"url":[],"extName":"mp3"}"""))
+        gatewayServer.enqueue(jsonResponse("""{"status":1,"url":["https://cdn.example/song.mp3"],"extName":"mp3"}"""))
+
+        val source = dataSource().resolveSongSource("ORIGINAL", requestedQuality = "320")
+
+        assertThat(source.uri).isEqualTo("https://cdn.example/song.mp3")
+        gatewayServer.takeRequest()
+        assertThat(gatewayServer.takeRequest().requestUrl?.queryParameter("quality")).isEqualTo("320")
+        assertThat(gatewayServer.takeRequest().requestUrl?.queryParameter("quality")).isEqualTo("128")
+    }
+
+    @Test
+    fun unavailablePrivilegeVariantsUseRequestedQualityFallbackChain() = runTest {
+        gatewayServer.enqueue(jsonResponse("""{"status":1,"data":[]}"""))
+        repeat(3) { gatewayServer.enqueue(jsonResponse("""{"status":0,"error_code":31863}""")) }
+        gatewayServer.enqueue(jsonResponse("""{"status":1,"url":["https://cdn.example/song.mp3"],"extName":"mp3"}"""))
+
+        val source = dataSource().resolveSongSource("ORIGINAL", requestedQuality = "high")
+
+        assertThat(source.uri).isEqualTo("https://cdn.example/song.mp3")
+        gatewayServer.takeRequest()
+        val requests = List(4) { gatewayServer.takeRequest() }
+        assertThat(requests.map { it.requestUrl?.queryParameter("quality") })
+            .containsExactly("high", "flac", "320", "128").inOrder()
+        assertThat(requests.map { it.requestUrl?.queryParameter("hash") }.distinct())
+            .containsExactly("original")
+        assertThat(requests.map { it.requestUrl?.queryParameter("ppage_id") }.distinct())
+            .containsExactly("356753938")
     }
 
     @Test
@@ -328,9 +479,29 @@ class ApiNetworkDataSourceTest {
             ),
         )
 
-        val source = dataSource().resolveSongSource("ABCDEF", "12", "34")
+        val source = dataSource(anonymousSession).resolveSongSource("ABCDEF", "12", "34")
 
         assertThat(source.uri).isEqualTo("http://fs.youthandroid2.kugou.com/song.mp3?token=value")
+        val request = gatewayServer.takeRequest()
+        assertThat(request.requestUrl?.queryParameter("IsFreePart")).isEqualTo("1")
+        assertThat(request.requestUrl?.queryParameter("ppage_id")).isEqualTo("356753938,823673182,967485191")
+    }
+
+    @Test
+    fun authenticatedSongSourceUsesFirstPrivilegeHashForEachQuality() = runTest {
+        gatewayServer.enqueue(
+            jsonResponse(
+                """{"status":1,"data":[{"hash":"FIRST","quality":"128","level":1,"relate_goods":[{"hash":"SECOND","quality":"128","level":1}]}]}""",
+            ),
+        )
+        gatewayServer.enqueue(jsonResponse("""{"status":1,"url":["https://cdn.example/song.mp3"],"extName":"mp3"}"""))
+
+        val source = dataSource().resolveSongSource("ORIGINAL")
+
+        assertThat(source.uri).isEqualTo("https://cdn.example/song.mp3")
+        gatewayServer.takeRequest()
+        assertThat(gatewayServer.takeRequest().requestUrl?.queryParameter("hash")).isEqualTo("first")
+        assertThat(gatewayServer.requestCount).isEqualTo(2)
     }
 
     @Test
@@ -342,7 +513,7 @@ class ApiNetworkDataSourceTest {
         )
 
         val failure = assertThrows(ApiProtocolException::class.java) {
-            runTest { dataSource().resolveSongSource("ABCDEF", "12", "34") }
+            runTest { dataSource(anonymousSession).resolveSongSource("ABCDEF", "12", "34") }
         }
 
         assertThat(failure.reason).isEqualTo(ApiProtocolException.Reason.InsecureMediaUrl)
@@ -353,7 +524,7 @@ class ApiNetworkDataSourceTest {
         gatewayServer.enqueue(jsonResponse("""{"status":3,"url":[]}"""))
 
         val failure = assertThrows(ApiPlaybackUnavailableException::class.java) {
-            runTest { dataSource().resolveSongSource("ABCDEF") }
+            runTest { dataSource(anonymousSession).resolveSongSource("ABCDEF") }
         }
 
         assertThat(failure.reason).isEqualTo(ApiPlaybackUnavailableException.Reason.Copyright)
@@ -365,12 +536,12 @@ class ApiNetworkDataSourceTest {
         gatewayServer.enqueue(jsonResponse("""{"status":0,"error_code":35105,"url":[]}"""))
 
         val vip = assertThrows(ApiPlaybackUnavailableException::class.java) {
-            runTest { dataSource().resolveSongSource("ABCDEF") }
+            runTest { dataSource(anonymousSession).resolveSongSource("ABCDEF") }
         }
         assertThat(vip.reason).isEqualTo(ApiPlaybackUnavailableException.Reason.Vip)
 
         val other = assertThrows(ApiServiceException::class.java) {
-            runTest { dataSource().resolveSongSource("ABCDEF") }
+            runTest { dataSource(anonymousSession).resolveSongSource("ABCDEF") }
         }
         assertThat(other.serviceCode).isEqualTo("35105")
     }
@@ -382,14 +553,14 @@ class ApiNetworkDataSourceTest {
         gatewayServer.enqueue(jsonResponse("""{"status":1,"url":["not-a-url"]}"""))
 
         val vip = assertThrows(ApiPlaybackUnavailableException::class.java) {
-            runTest { dataSource().resolveSongSource("ABCDEF") }
+            runTest { dataSource(anonymousSession).resolveSongSource("ABCDEF") }
         }
         assertThat(vip.reason).isEqualTo(ApiPlaybackUnavailableException.Reason.Vip)
         assertThrows(ApiProtocolException::class.java) {
-            runTest { dataSource().resolveSongSource("ABCDEF") }
+            runTest { dataSource(anonymousSession).resolveSongSource("ABCDEF") }
         }
         assertThrows(ApiProtocolException::class.java) {
-            runTest { dataSource().resolveSongSource("ABCDEF") }
+            runTest { dataSource(anonymousSession).resolveSongSource("ABCDEF") }
         }
     }
 
@@ -608,14 +779,16 @@ class ApiNetworkDataSourceTest {
     }
 
     @Test
-    fun authenticatedSearchAuthenticationCodeBecomesSessionExpired() = runTest {
+    fun authenticatedSearchAuthenticationCodeDoesNotExpireSession() = runTest {
         gatewayServer.enqueue(jsonResponse("""{"status":0,"error_code":152,"data":{"lists":[]}}"""))
+        val source = dataSource()
 
-        val failure = runCatching { dataSource().searchSongs("fixture", page = 1, pageSize = 1) }
+        val failure = runCatching { source.searchSongs("fixture", page = 1, pageSize = 1) }
             .exceptionOrNull() as ApiAuthenticationRequiredException
 
-        assertThat(failure.reason).isEqualTo(ApiAuthenticationGateReason.SessionExpired)
+        assertThat(failure.reason).isEqualTo(ApiAuthenticationGateReason.LoginRequired)
         assertThat(failure.serviceCode).isEqualTo("152")
+        assertThat(source.authenticationClearCount).isEqualTo(0)
     }
 
     @Test
@@ -626,20 +799,27 @@ class ApiNetworkDataSourceTest {
         val failure = runCatching { source.searchPlaylists("fixture", page = 1, pageSize = 30) }
             .exceptionOrNull() as ApiAuthenticationRequiredException
 
-        assertThat(failure.reason).isEqualTo(ApiAuthenticationGateReason.SessionExpired)
+        assertThat(failure.reason).isEqualTo(ApiAuthenticationGateReason.LoginRequired)
         assertThat(failure.serviceCode).isEqualTo("152")
-        assertThat(source.authenticationClearCount).isEqualTo(1)
+        assertThat(source.authenticationClearCount).isEqualTo(0)
     }
 
     @Test
-    fun sessionAwareHttpUnauthorizedBecomesSessionExpired() = runTest {
+    fun songCandidateHttpUnauthorizedFallsBackWithoutExpiringSession() = runTest {
+        gatewayServer.enqueue(
+            jsonResponse(
+                """{"status":1,"data":[{"hash":"HIGH","quality":"320","level":1,"relate_goods":[{"hash":"STANDARD","quality":"128","level":1}]}]}""",
+            ),
+        )
         gatewayServer.enqueue(MockResponse().setResponseCode(401))
+        gatewayServer.enqueue(jsonResponse("""{"status":1,"url":["https://cdn.example/song.mp3"],"extName":"mp3"}"""))
+        val source = dataSource()
 
-        val failure = runCatching { dataSource().resolveSongSource("hash", null, null) }
-            .exceptionOrNull() as ApiAuthenticationRequiredException
+        val song = source.resolveSongSource("hash", requestedQuality = "320")
 
-        assertThat(failure.reason).isEqualTo(ApiAuthenticationGateReason.SessionExpired)
-        assertThat(failure.serviceCode).isNull()
+        assertThat(song.uri).isEqualTo("https://cdn.example/song.mp3")
+        assertThat(source.authenticationClearCount).isEqualTo(0)
+        assertThat(gatewayServer.requestCount).isEqualTo(3)
     }
 
     @Test
@@ -942,6 +1122,22 @@ class ApiNetworkDataSourceTest {
     }
 
     @Test
+    fun userDetailBusinessCodesRemainOrdinaryServiceFailures() = runTest {
+        listOf("152", "20010", "20017").forEach { serviceCode ->
+            gatewayServer.enqueue(jsonResponse("""{"status":0,"error_code":$serviceCode}"""))
+            val source = dataSource()
+
+            val failure = runCatching { source.userDetail() }.exceptionOrNull()
+
+            assertThat(failure).isInstanceOf(ApiServiceException::class.java)
+            failure as ApiServiceException
+            assertThat(failure.serviceCode).isEqualTo(serviceCode)
+            assertThat(source.authenticationClearCount).isEqualTo(0)
+        }
+        assertThat(vipServer.requestCount).isEqualTo(0)
+    }
+
+    @Test
     fun userVipUsesDedicatedOriginAndMapsActiveSvip() = runTest {
         vipServer.enqueue(
             jsonResponse("""{"status":1,"data":{"busi_vip":[{"is_vip":0,"product_type":"vip"},{"is_vip":"1","product_type":"SVIP"}]}}"""),
@@ -955,6 +1151,32 @@ class ApiNetworkDataSourceTest {
         assertThat(request.requestUrl?.encodedPath).isEqualTo("/v1/get_union_vip")
         assertThat(request.requestUrl?.queryParameter("busi_type")).isEqualTo("concept")
         assertThat(request.getHeader("Cookie")).contains("token=existing-token")
+    }
+
+    @Test
+    fun userVipBusinessFailureDoesNotExpireAuthenticatedSession() = runTest {
+        vipServer.enqueue(jsonResponse("""{"status":0,"error_code":20017}"""))
+        val source = dataSource()
+
+        val failure = runCatching { source.userVip() }.exceptionOrNull()
+
+        assertThat(failure).isInstanceOf(ApiServiceException::class.java)
+        failure as ApiServiceException
+        assertThat(failure.serviceCode).isEqualTo("20017")
+        assertThat(source.authenticationClearCount).isEqualTo(0)
+    }
+
+    @Test
+    fun userVipHttpUnauthorizedExpiresAuthenticatedSession() = runTest {
+        vipServer.enqueue(MockResponse().setResponseCode(401))
+        val source = dataSource()
+
+        val failure = runCatching { source.userVip() }.exceptionOrNull()
+
+        assertThat(failure).isInstanceOf(ApiAuthenticationRequiredException::class.java)
+        failure as ApiAuthenticationRequiredException
+        assertThat(failure.reason).isEqualTo(ApiAuthenticationGateReason.SessionExpired)
+        assertThat(source.authenticationClearCount).isEqualTo(1)
     }
 
     @Test
@@ -991,6 +1213,33 @@ class ApiNetworkDataSourceTest {
         }
 
         assertThat(gatewayServer.requestCount).isEqualTo(0)
+    }
+
+    @Test
+    fun unverifiedAccountEndpointCodesRemainOrdinaryServiceFailures() = runTest {
+        suspend fun assertServiceFailure(source: TestNetworkDataSource, action: suspend () -> Unit) {
+            val failure = runCatching { action() }.exceptionOrNull()
+            assertThat(failure).isInstanceOf(ApiServiceException::class.java)
+            failure as ApiServiceException
+            assertThat(failure.serviceCode).isEqualTo("20017")
+            assertThat(source.authenticationClearCount).isEqualTo(0)
+        }
+
+        gatewayServer.enqueue(jsonResponse("""{"status":0,"error_code":20017}"""))
+        val playlists = dataSource()
+        assertServiceFailure(playlists) { playlists.userPlaylists(1, 20) }
+
+        gatewayServer.enqueue(jsonResponse("""{"status":0,"error_code":20017}"""))
+        val create = dataSource()
+        assertServiceFailure(create) { create.createPlaylist("List") }
+
+        gatewayServer.enqueue(jsonResponse("""{"status":0,"error_code":20017}"""))
+        val cloud = dataSource()
+        assertServiceFailure(cloud) { cloud.resolveCloudSongSource("HASH", "1", "Song") }
+
+        gatewayServer.enqueue(jsonResponse("""{"status":0,"error_code":20017}"""))
+        val vip = dataSource()
+        assertServiceFailure(vip) { vip.claimDailyVip("2026-08-13") }
     }
 
     @Test
@@ -1322,10 +1571,12 @@ class ApiNetworkDataSourceTest {
         assertThat(runCatching { source.dailyRecommendations() }.exceptionOrNull())
             .isInstanceOf(ApiRiskException::class.java)
 
+        gatewayServer.enqueue(jsonResponse("""{"status":1,"data":[]}"""))
         gatewayServer.enqueue(jsonResponse("""{"status":0,"error_code":35104,"url":[]}"""))
         assertThat(runCatching { source.resolveSongSource("VIP") }.exceptionOrNull())
             .isInstanceOf(ApiPlaybackUnavailableException::class.java)
 
+        gatewayServer.enqueue(jsonResponse("""{"status":1,"data":[]}"""))
         gatewayServer.enqueue(jsonResponse("""{"status":3,"url":[]}"""))
         assertThat(runCatching { source.resolveSongSource("COPYRIGHT") }.exceptionOrNull())
             .isInstanceOf(ApiPlaybackUnavailableException::class.java)

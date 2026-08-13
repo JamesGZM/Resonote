@@ -48,7 +48,7 @@ internal abstract class TestApiNetworkDataSource :
     override suspend fun rankings(): List<NetworkRanking> = unused()
     override suspend fun rankingSongs(rankId: String, page: Int, pageSize: Int): NetworkSongPage = unused()
     override suspend fun playlistSongs(globalCollectionId: String, page: Int, pageSize: Int): NetworkPlaylistPage = unused()
-    override suspend fun resolveSongSource(hash: String, albumId: String?, albumAudioId: String?): NetworkSongSource = unused()
+    override suspend fun resolveSongSource(hash: String, albumId: String?, albumAudioId: String?, requestedQuality: String): NetworkSongSource = unused()
     override suspend fun sendMobileCode(mobile: String): Unit = unused()
     override suspend fun loginWithMobileCode(mobile: String, code: String, selectedUserId: String?): NetworkMobileCodeLoginResult = unused()
     override suspend fun loginWithPassword(username: String, password: String): NetworkPasswordLoginResult = unused()

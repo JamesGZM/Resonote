@@ -3,6 +3,7 @@ package com.resonote.feature.settings.impl
 import com.google.common.truth.Truth.assertThat
 import com.resonote.core.data.PlaybackPreferencesRepository
 import com.resonote.core.model.PlaybackSpeed
+import com.resonote.core.model.OnlinePlaybackQuality
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -58,10 +59,26 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun selectingOnlineQualityPersistsThroughTheSharedRepository() = runTest(dispatcher) {
+        val repository = FakePlaybackPreferencesRepository(PlaybackSpeed.Normal)
+        val viewModel = SettingsViewModel(repository)
+        advanceUntilIdle()
+
+        viewModel.setOnlinePlaybackQuality(OnlinePlaybackQuality.Lossless)
+        advanceUntilIdle()
+
+        assertThat(repository.qualityWrites).containsExactly(OnlinePlaybackQuality.Lossless)
+        assertThat((viewModel.uiState.value as SettingsUiState.Ready).onlinePlaybackQuality)
+            .isEqualTo(OnlinePlaybackQuality.Lossless)
+    }
+
+    @Test
     fun loadAndSaveFailuresRemainExplicitAndRecoverable() = runTest(dispatcher) {
         val failedLoad = object : PlaybackPreferencesRepository {
             override val playbackSpeed: Flow<PlaybackSpeed> = flow { error("broken read") }
+            override val onlinePlaybackQuality: Flow<OnlinePlaybackQuality> = flow { error("broken read") }
             override suspend fun setPlaybackSpeed(speed: PlaybackSpeed) = Unit
+            override suspend fun setOnlinePlaybackQuality(quality: OnlinePlaybackQuality) = Unit
         }
         val loadingViewModel = SettingsViewModel(failedLoad)
         advanceUntilIdle()
@@ -83,13 +100,22 @@ class SettingsViewModelTest {
         private val failWrites: Boolean = false,
     ) : PlaybackPreferencesRepository {
         val speed = MutableStateFlow(initialSpeed)
+        val quality = MutableStateFlow(OnlinePlaybackQuality.Standard)
         val writes = mutableListOf<PlaybackSpeed>()
+        val qualityWrites = mutableListOf<OnlinePlaybackQuality>()
         override val playbackSpeed: Flow<PlaybackSpeed> = speed
+        override val onlinePlaybackQuality: Flow<OnlinePlaybackQuality> = quality
 
         override suspend fun setPlaybackSpeed(speed: PlaybackSpeed) {
             writes += speed
             if (failWrites) error("broken write")
             this.speed.value = speed
+        }
+
+        override suspend fun setOnlinePlaybackQuality(quality: OnlinePlaybackQuality) {
+            qualityWrites += quality
+            if (failWrites) error("broken write")
+            this.quality.value = quality
         }
     }
 }

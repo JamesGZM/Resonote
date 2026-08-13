@@ -54,6 +54,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
 import com.resonote.core.model.PlaybackSpeed
+import com.resonote.core.model.OnlinePlaybackQuality
 
 @Composable
 fun SettingsRoute(
@@ -77,6 +78,7 @@ fun SettingsRoute(
         onBack = onBack,
         onRetry = viewModel::retry,
         onPlaybackSpeedChange = viewModel::setPlaybackSpeed,
+        onOnlinePlaybackQualityChange = viewModel::setOnlinePlaybackQuality,
     )
 }
 
@@ -86,10 +88,12 @@ internal fun SettingsScreen(
     onBack: () -> Unit,
     onRetry: () -> Unit,
     onPlaybackSpeedChange: (PlaybackSpeed) -> Unit,
+    onOnlinePlaybackQualityChange: (OnlinePlaybackQuality) -> Unit = {},
     modifier: Modifier = Modifier,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     var speedDialogOpen by remember { mutableStateOf(false) }
+    var qualityDialogOpen by remember { mutableStateOf(false) }
     val ready = state as? SettingsUiState.Ready
 
     Scaffold(
@@ -125,13 +129,21 @@ internal fun SettingsScreen(
                     fontWeight = FontWeight.Bold,
                 )
             }
-            item(key = "playback") {
+            item(key = "playback-speed") {
                 when (state) {
                     SettingsUiState.Loading -> PlaybackLoadingCard()
                     SettingsUiState.LoadFailed -> PlaybackLoadFailureCard(onRetry)
-                    is SettingsUiState.Ready -> PlaybackSettingsCard(
+                    is SettingsUiState.Ready -> PlaybackSpeedSettingsCard(
                         state = state,
                         onClick = { speedDialogOpen = true },
+                    )
+                }
+            }
+            if (state is SettingsUiState.Ready) {
+                item(key = "online-quality") {
+                    OnlineQualitySettingsCard(
+                        state = state,
+                        onClick = { qualityDialogOpen = true },
                     )
                 }
             }
@@ -146,6 +158,16 @@ internal fun SettingsScreen(
                 onPlaybackSpeedChange(it)
             },
             onDismiss = { speedDialogOpen = false },
+        )
+    }
+    if (qualityDialogOpen && ready != null) {
+        OnlineQualityDialog(
+            selected = ready.onlinePlaybackQuality,
+            onSelect = {
+                qualityDialogOpen = false
+                onOnlinePlaybackQualityChange(it)
+            },
+            onDismiss = { qualityDialogOpen = false },
         )
     }
 }
@@ -219,7 +241,7 @@ private fun SettingsIntroCard() {
 }
 
 @Composable
-private fun PlaybackSettingsCard(
+private fun PlaybackSpeedSettingsCard(
     state: SettingsUiState.Ready,
     onClick: () -> Unit,
 ) {
@@ -274,6 +296,55 @@ private fun PlaybackSettingsCard(
                 }
                 Icon(Icons.Rounded.ChevronRight, contentDescription = null, modifier = Modifier.padding(start = 6.dp))
             }
+        }
+    }
+}
+
+@Composable
+private fun OnlineQualitySettingsCard(
+    state: SettingsUiState.Ready,
+    onClick: () -> Unit,
+) {
+    Card(
+        onClick = onClick,
+        enabled = !state.isSaving,
+        modifier = Modifier.fillMaxWidth().testTag("settings-online-quality"),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        shape = MaterialTheme.shapes.extraLarge,
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(18.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Surface(
+                modifier = Modifier.size(48.dp),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(Icons.Rounded.GraphicEq, contentDescription = null, modifier = Modifier.size(24.dp))
+                }
+            }
+            Column(modifier = Modifier.weight(1f).padding(horizontal = 14.dp)) {
+                Text(
+                    text = stringResource(R.string.feature_settings_impl_online_quality),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    text = stringResource(R.string.feature_settings_impl_online_quality_body),
+                    modifier = Modifier.padding(top = 3.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+            Text(
+                text = state.onlinePlaybackQuality.label(),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+            )
+            Icon(Icons.Rounded.ChevronRight, contentDescription = null, modifier = Modifier.padding(start = 6.dp))
         }
     }
 }
@@ -358,6 +429,57 @@ private fun PlaybackSpeedDialog(
         },
     )
 }
+
+@Composable
+private fun OnlineQualityDialog(
+    selected: OnlinePlaybackQuality,
+    onSelect: (OnlinePlaybackQuality) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = { Icon(Icons.Rounded.GraphicEq, contentDescription = null) },
+        title = { Text(stringResource(R.string.feature_settings_impl_online_quality)) },
+        text = {
+            Column {
+                OnlinePlaybackQuality.entries.forEach { quality ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .selectable(
+                                selected = quality == selected,
+                                role = Role.RadioButton,
+                                onClick = { onSelect(quality) },
+                            )
+                            .padding(horizontal = 4.dp, vertical = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(selected = quality == selected, onClick = null)
+                        Text(quality.label(), modifier = Modifier.padding(start = 12.dp))
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.feature_settings_impl_cancel))
+            }
+        },
+    )
+}
+
+@Composable
+private fun OnlinePlaybackQuality.label(): String = stringResource(
+    when (this) {
+        OnlinePlaybackQuality.Standard -> R.string.feature_settings_impl_quality_standard
+        OnlinePlaybackQuality.HighQuality -> R.string.feature_settings_impl_quality_high
+        OnlinePlaybackQuality.Lossless -> R.string.feature_settings_impl_quality_lossless
+        OnlinePlaybackQuality.HighResolution -> R.string.feature_settings_impl_quality_hi_res
+        OnlinePlaybackQuality.ViperAtmos -> R.string.feature_settings_impl_quality_atmos
+        OnlinePlaybackQuality.ViperClear -> R.string.feature_settings_impl_quality_clear
+        OnlinePlaybackQuality.ViperTape -> R.string.feature_settings_impl_quality_tape
+    },
+)
 
 @Composable
 private fun PlaybackSpeed.label(): String = stringResource(

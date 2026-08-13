@@ -8,9 +8,18 @@
     <string name="feature_settings_impl_playback_speed">Playback speed</string>
     <string name="feature_settings_impl_playback_speed_body">Use the same speed in the player and across sessions</string>
     <string name="feature_settings_impl_speed_value">%1$s×</string>
+    <string name="feature_settings_impl_online_quality">Online audio quality</string>
+    <string name="feature_settings_impl_online_quality_body">Use the selected quality and fall back when unavailable</string>
+    <string name="feature_settings_impl_quality_standard">Standard · 128 Kbps</string>
+    <string name="feature_settings_impl_quality_high">High · 320 Kbps</string>
+    <string name="feature_settings_impl_quality_lossless">Lossless · FLAC</string>
+    <string name="feature_settings_impl_quality_hi_res">Hi-Res</string>
+    <string name="feature_settings_impl_quality_atmos">Viper Atmos</string>
+    <string name="feature_settings_impl_quality_clear">Viper Clear</string>
+    <string name="feature_settings_impl_quality_tape">Viper Master</string>
     <string name="feature_settings_impl_cancel">Cancel</string>
     <string name="feature_settings_impl_loading">Loading playback preferences</string>
     <string name="feature_settings_impl_load_error">Playback preferences could not be loaded.</string>
     <string name="feature_settings_impl_retry">Retry</string>
-    <string name="feature_settings_impl_save_error">Playback speed was not saved. Try again.</string>
+    <string name="feature_settings_impl_save_error">Playback preference was not saved. Try again.</string>
 </resources>

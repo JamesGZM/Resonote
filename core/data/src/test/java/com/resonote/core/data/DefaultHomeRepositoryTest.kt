@@ -9,6 +9,8 @@ import com.resonote.core.model.PlaybackUnavailableReason
 import com.resonote.core.model.RecommendationMode
 import com.resonote.core.model.ResolveSongSourceResult
 import com.resonote.core.model.OnlineSong
+import com.resonote.core.model.OnlinePlaybackQuality
+import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.network.ApiNetworkException
 import com.resonote.core.network.ApiPlaybackUnavailableException
 import com.resonote.core.network.ApiProtocolException
@@ -26,6 +28,8 @@ import com.resonote.core.network.risk.ApiRiskChallenge
 import java.io.IOException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.async
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertThrows
@@ -224,31 +228,37 @@ class DefaultHomeRepositoryTest {
 
     @Test
     fun playbackRepositoryMapsResolvedUnavailableAndNetworkResults() = runTest {
-        val network = FakeNetwork(source = { _, _, _ -> NetworkSongSource("https://cdn/song.mp3", 0, "mp3") })
-        val repository = DefaultSongPlaybackRepository(network, riskChallenges)
+        var requestedQuality: String? = null
+        val network = FakeNetwork(source = { _, _, _, quality ->
+            requestedQuality = quality
+            NetworkSongSource("https://cdn/song.mp3", 0, "mp3")
+        })
+        val preferences = FakePlaybackPreferencesRepository(OnlinePlaybackQuality.HighResolution)
+        val repository = DefaultSongPlaybackRepository(network, riskChallenges, preferences)
         val song = domainSong(durationMillis = 123_000)
 
         val resolved = repository.resolveSource(song) as ResolveSongSourceResult.Resolved
         assertThat(resolved.source.durationMillis).isEqualTo(123_000)
+        assertThat(requestedQuality).isEqualTo("high")
 
-        network.source = { _, _, _ -> throw ApiPlaybackUnavailableException(ApiPlaybackUnavailableException.Reason.Vip) }
+        network.source = { _, _, _, _ -> throw ApiPlaybackUnavailableException(ApiPlaybackUnavailableException.Reason.Vip) }
         val unavailable = repository.resolveSource(song) as ResolveSongSourceResult.Unavailable
         assertThat(unavailable.reason).isEqualTo(PlaybackUnavailableReason.Vip)
 
-        network.source = { _, _, _ -> throw ApiPlaybackUnavailableException(ApiPlaybackUnavailableException.Reason.Copyright) }
+        network.source = { _, _, _, _ -> throw ApiPlaybackUnavailableException(ApiPlaybackUnavailableException.Reason.Copyright) }
         val copyright = repository.resolveSource(song) as ResolveSongSourceResult.Unavailable
         assertThat(copyright.reason).isEqualTo(PlaybackUnavailableReason.Copyright)
 
-        network.source = { _, _, _ -> throw ApiNetworkException(ApiNetworkException.Kind.Timeout, IOException()) }
+        network.source = { _, _, _, _ -> throw ApiNetworkException(ApiNetworkException.Kind.Timeout, IOException()) }
         val failed = repository.resolveSource(song) as ResolveSongSourceResult.Failed
         assertThat(failed.failure).isEqualTo(ContentFailure.Network)
 
-        network.source = { _, _, _ -> throw ApiProtocolException(ApiProtocolException.Reason.MalformedResponse) }
+        network.source = { _, _, _, _ -> throw ApiProtocolException(ApiProtocolException.Reason.MalformedResponse) }
         val malformed = repository.resolveSource(song) as ResolveSongSourceResult.Failed
         assertThat(malformed.failure).isEqualTo(ContentFailure.Protocol)
 
         network.source = {
-                _, _, _ ->
+                _, _, _, _ ->
             throw ApiRiskException(
                 ApiRiskChallenge(eventId = "redacted"),
                 ApiRiskException.Reason.VerificationUnavailable,
@@ -258,6 +268,27 @@ class DefaultHomeRepositoryTest {
         val required = risk.failure as ContentFailure.RiskVerificationRequired
         assertThat(required.challenge.value).isNotEmpty()
         assertThat(required.challenge.toString()).doesNotContain("provider-event")
+    }
+
+    @Test
+    fun playbackRepositoryUsesStandardQualityWhenPreferenceReadFails() = runTest {
+        var requestedQuality: String? = null
+        val network = FakeNetwork(source = { _, _, _, quality ->
+            requestedQuality = quality
+            NetworkSongSource("https://cdn/song.mp3", 0, "mp3")
+        })
+        val preferences = object : PlaybackPreferencesRepository {
+            override val playbackSpeed = MutableStateFlow(PlaybackSpeed.Normal)
+            override val onlinePlaybackQuality = flow<OnlinePlaybackQuality> { throw IOException("broken preference") }
+            override suspend fun setPlaybackSpeed(speed: PlaybackSpeed) = Unit
+            override suspend fun setOnlinePlaybackQuality(quality: OnlinePlaybackQuality) = Unit
+        }
+        val repository = DefaultSongPlaybackRepository(network, riskChallenges, preferences)
+
+        val result = repository.resolveSource(domainSong(durationMillis = 123_000))
+
+        assertThat(result).isInstanceOf(ResolveSongSourceResult.Resolved::class.java)
+        assertThat(requestedQuality).isEqualTo("128")
     }
 
     private fun song(id: String, lossless: Boolean = false, highQuality: Boolean = false) =
@@ -290,14 +321,14 @@ class DefaultHomeRepositoryTest {
         var playlists: suspend (Int, Int) -> List<NetworkPlaylistSummary> = { _, _ -> emptyList() },
         var newSongLoader: suspend (Int, Int) -> List<NetworkSong> = { _, _ -> emptyList() },
         var radio: suspend (NetworkRecommendationMode) -> List<NetworkSong> = { emptyList() },
-        var source: suspend (String, String?, String?) -> NetworkSongSource = { _, _, _ -> error("unused") },
+        var source: suspend (String, String?, String?, String) -> NetworkSongSource = { _, _, _, _ -> error("unused") },
     ) : TestApiNetworkDataSource() {
         override suspend fun dailyRecommendations() = daily()
         override suspend fun recommendedPlaylists(page: Int, pageSize: Int) = playlists(page, pageSize)
         override suspend fun newSongs(page: Int, pageSize: Int): List<NetworkSong> = newSongLoader(page, pageSize)
         override suspend fun radioRecommendations(mode: NetworkRecommendationMode) = radio(mode)
-        override suspend fun resolveSongSource(hash: String, albumId: String?, albumAudioId: String?) =
-            source(hash, albumId, albumAudioId)
+        override suspend fun resolveSongSource(hash: String, albumId: String?, albumAudioId: String?, requestedQuality: String) =
+            source(hash, albumId, albumAudioId, requestedQuality)
 
         override suspend fun rankings(): List<NetworkRanking> = error("unused")
         override suspend fun rankingSongs(rankId: String, page: Int, pageSize: Int): NetworkSongPage = error("unused")
@@ -333,5 +364,12 @@ class DefaultHomeRepositoryTest {
         override suspend fun checkQrLogin(key: String): com.resonote.core.network.model.NetworkQrLoginStatus = error("unused")
         override suspend fun claimDailyVip(receiveDay: String): com.resonote.core.network.model.NetworkVipRewardResult = error("unused")
         override suspend fun upgradeDailyVip(): com.resonote.core.network.model.NetworkVipRewardResult = error("unused")
+    }
+
+    private class FakePlaybackPreferencesRepository(initialQuality: OnlinePlaybackQuality) : PlaybackPreferencesRepository {
+        override val playbackSpeed = MutableStateFlow(PlaybackSpeed.Normal)
+        override val onlinePlaybackQuality = MutableStateFlow(initialQuality)
+        override suspend fun setPlaybackSpeed(speed: PlaybackSpeed) { playbackSpeed.value = speed }
+        override suspend fun setOnlinePlaybackQuality(quality: OnlinePlaybackQuality) { onlinePlaybackQuality.value = quality }
     }
 }

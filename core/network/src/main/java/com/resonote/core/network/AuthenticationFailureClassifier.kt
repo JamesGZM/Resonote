@@ -2,6 +2,7 @@ package com.resonote.core.network
 
 import com.resonote.core.network.protocol.ApiSessionPropagation
 import com.resonote.core.network.session.ApiAuthenticationContext
+import com.resonote.core.network.session.ApiAuthenticationGateReason
 import com.resonote.core.network.session.ApiSessionManager
 
 internal object AuthenticationFailureClassifier {
@@ -10,6 +11,13 @@ internal object AuthenticationFailureClassifier {
 
     fun capturesServiceFailure(endpointId: String, serviceCode: String): Boolean =
         serviceCode in AUTHENTICATION_SERVICE_CODES[endpointId].orEmpty()
+
+    fun requestAuthenticationFailure(
+        endpointId: String,
+        serviceCode: String,
+    ): ApiAuthenticationRequiredException? =
+        ApiAuthenticationRequiredException(ApiAuthenticationGateReason.LoginRequired, serviceCode)
+            .takeIf { capturesServiceFailure(endpointId, serviceCode) }
 
     suspend fun classify(
         sessions: ApiSessionManager,

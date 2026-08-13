@@ -4,6 +4,30 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
+internal data class SongPrivilegeRequest(
+    val appid: Int,
+    @SerialName("area_code") val areaCode: Int = 1,
+    val behavior: String = "play",
+    val clientver: Int,
+    @SerialName("need_hash_offset") val needHashOffset: Int = 1,
+    val relate: Int = 1,
+    @SerialName("support_verify") val supportVerify: Int = 1,
+    val resource: List<SongPrivilegeResource>,
+    val qualities: List<String> = SONG_PRIVILEGE_QUALITIES,
+)
+
+@Serializable
+internal data class SongPrivilegeResource(
+    val type: String = "audio",
+    @SerialName("page_id") val pageId: Int = 0,
+    val hash: String,
+    @SerialName("album_id") val albumId: Long = 0,
+)
+
+internal val SONG_PRIVILEGE_QUALITIES =
+    listOf("128", "320", "flac", "high", "viper_atmos", "viper_tape", "viper_clear", "super", "multitrack")
+
+@Serializable
 internal data class SongSourceResponse(
     @Serializable(with = FlexibleStringSerializer::class) override val status: String? = null,
     @SerialName("error_code") @Serializable(with = FlexibleStringSerializer::class) override val errorCode: String? = null,

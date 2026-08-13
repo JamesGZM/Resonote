@@ -65,4 +65,5 @@ internal class RealCloudNetworkDataSource @Inject constructor(
         registration.requireAuthenticatedSession()
 
     private fun missingField() = ApiProtocolException(ApiProtocolException.Reason.MissingRequiredField)
+
 }

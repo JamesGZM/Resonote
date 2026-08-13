@@ -2,6 +2,7 @@ package com.resonote.core.data
 
 import com.resonote.core.model.CollectionLoadResult
 import com.resonote.core.model.UserProfile
+import com.resonote.core.network.ApiAuthenticationRequiredException
 import com.resonote.core.network.ApiException
 import com.resonote.core.network.UserProfileNetworkDataSource
 import javax.inject.Inject
@@ -20,15 +21,29 @@ internal class DefaultUserProfileRepository @Inject constructor(
             supervisorScope {
                 val detailRequest = async { network.userDetail() }
                 val vipRequest = async { network.userVip() }
-                val detail = detailRequest.await()
-                val vip =
+                val detailResult =
                     try {
-                        vipRequest.await()
+                        Result.success(detailRequest.await())
                     } catch (cancellation: CancellationException) {
                         throw cancellation
-                    } catch (_: ApiException) {
-                        null
+                    } catch (failure: ApiException) {
+                        Result.failure(failure)
                     }
+                val vipResult =
+                    try {
+                        Result.success(vipRequest.await())
+                    } catch (cancellation: CancellationException) {
+                        throw cancellation
+                    } catch (failure: ApiException) {
+                        Result.failure(failure)
+                    }
+                val detail = detailResult.getOrElse { detailFailure ->
+                    throw (vipResult.exceptionOrNull() as? ApiAuthenticationRequiredException ?: detailFailure)
+                }
+                val vip = vipResult.getOrElse { vipFailure ->
+                    if (vipFailure is ApiAuthenticationRequiredException) throw vipFailure
+                    null
+                }
                 CollectionLoadResult.Available(
                     UserProfile(
                         userId = detail.userId,
