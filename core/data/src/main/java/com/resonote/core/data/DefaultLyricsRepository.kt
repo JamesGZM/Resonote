@@ -14,8 +14,10 @@ internal class DefaultLyricsRepository @Inject constructor(
     override suspend fun loadLyrics(hash: String, albumAudioId: String?) = loadCollection(riskChallenges) {
         require(hash.isNotBlank()) { "hash must not be blank" }
         val candidate = network.searchLyric(hash, albumAudioId) ?: return@loadCollection emptyList()
-        network.downloadLyric(candidate)?.parseLrc().orEmpty()
+        network.downloadLyric(candidate)?.parseLyrics().orEmpty()
     }
+
+    private fun String.parseLyrics(): List<LyricLine> = parseLrc().ifEmpty { parseKrc() }
 
     private fun String.parseLrc(): List<LyricLine> = buildList {
         lineSequence().forEach { raw ->
@@ -30,7 +32,15 @@ internal class DefaultLyricsRepository @Inject constructor(
         }
     }.sortedBy(LyricLine::timeMillis).distinctBy { it.timeMillis to it.text }
 
+    private fun String.parseKrc(): List<LyricLine> = lineSequence().mapNotNull { raw ->
+        val match = KRC_LINE_PATTERN.matchEntire(raw.trim()) ?: return@mapNotNull null
+        val text = match.groupValues[2].replace(KRC_SYLLABLE_PATTERN, "").trim()
+        text.takeIf(String::isNotEmpty)?.let { LyricLine(match.groupValues[1].toLong(), it) }
+    }.toList().sortedBy(LyricLine::timeMillis).distinctBy { it.timeMillis to it.text }
+
     private companion object {
         val LRC_PATTERN = Regex("\\[(\\d{1,3}):(\\d{1,2})(?:[.:](\\d{1,3}))?]")
+        val KRC_LINE_PATTERN = Regex("\\[(\\d+),\\d+](.*)")
+        val KRC_SYLLABLE_PATTERN = Regex("<\\d+,\\d+,\\d+>")
     }
 }

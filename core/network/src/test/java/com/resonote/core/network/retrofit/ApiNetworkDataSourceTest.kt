@@ -1249,29 +1249,49 @@ class ApiNetworkDataSourceTest {
     }
 
     @Test
-    fun lyricSearchMatchesRuntimeLiteSignatureAndDownloadDecodesBase64Lrc() = runTest {
+    fun lyricEndpointsMatchAnonymousV2ContractAndDecodeKrc() = runTest {
         lyricsServer.enqueue(jsonResponse("""{"status":200,"candidates":[{"id":7,"accesskey":"access"}]}"""))
-        val encoded = Base64.getEncoder().encodeToString("[00:01.00]Fixture lyric".encodeToByteArray())
-        lyricsServer.enqueue(jsonResponse("""{"status":200,"content":"$encoded","contenttype":1}"""))
+        val krc = "[0,1200]<0,600,0>Moe<600,600,0>Koe\\n[language:W10=]"
+        val encoded = "a3JjMTjb6kGOA0B1Yb6EHB7jXVmQdtGEk33BRuAWDcIyBvbVqNuly6rgsLMFnUFuzQk2aQpfb3Q="
+        lyricsServer.enqueue(jsonResponse("""{"status":200,"content":"$encoded","contenttype":0}"""))
 
         val candidate = dataSource().searchLyric("HASH", "321")
         val lyric = dataSource().downloadLyric(checkNotNull(candidate))
 
         assertThat(candidate.id).isEqualTo("7")
-        assertThat(lyric).isEqualTo("[00:01.00]Fixture lyric")
+        assertThat(lyric).isEqualTo(krc)
         val search = lyricsServer.takeRequest()
-        assertThat(search.requestUrl?.encodedPath).isEqualTo("/v1/search")
-        assertThat(search.requestUrl?.queryParameter("appid")).isEqualTo("3116")
-        assertThat(search.requestUrl?.queryParameter("clientver")).isEqualTo("11440")
-        assertThat(search.requestUrl?.queryParameter("signature")).isNotEmpty()
+        assertThat(search.requestUrl?.encodedPath).isEqualTo("/search")
+        assertThat(search.requestUrl?.queryParameter("ver")).isEqualTo("1")
+        assertThat(search.requestUrl?.queryParameter("man")).isEqualTo("yes")
+        assertThat(search.requestUrl?.queryParameter("client")).isEqualTo("pc")
+        assertThat(search.requestUrl?.queryParameter("hash")).isEqualTo("HASH")
+        assertThat(search.requestUrl?.queryParameter("signature")).isNull()
         assertThat(search.requestUrl?.queryParameter("dfid")).isNull()
         assertThat(search.requestUrl?.queryParameter("token")).isNull()
         assertThat(search.requestUrl?.queryParameter("userid")).isNull()
-        assertThat(search.getHeader("Cookie")).contains("token=existing-token")
-        assertThat(search.getHeader("Cookie")).contains("userid=99")
+        assertThat(search.getHeader("Cookie")).isNull()
         val download = lyricsServer.takeRequest()
-        assertThat(download.requestUrl?.queryParameter("fmt")).isEqualTo("lrc")
-        assertThat(download.requestUrl?.queryParameter("signature")).isNotEmpty()
+        assertThat(download.requestUrl?.queryParameter("fmt")).isEqualTo("krc")
+        assertThat(download.requestUrl?.queryParameter("signature")).isNull()
+        assertThat(download.getHeader("Cookie")).isNull()
+    }
+
+    @Test
+    fun emptyCloudListScalarIsTreatedAsAnAvailableEmptyPage() = runTest {
+        cloudServer.enqueue(
+            encryptedCloudResponse(
+                """{"status":1,"error_code":0,"data":{"list":"","list_count":0,"used_size":"100","max_size":"1000"}}""",
+            ),
+        )
+
+        val page = dataSource().cloudTracks(page = 1, pageSize = 50)
+
+        assertThat(page.tracks).isEmpty()
+        assertThat(page.total).isEqualTo(0)
+        assertThat(page.hasMore).isFalse()
+        assertThat(page.storage?.usedBytes).isEqualTo(100)
+        assertThat(page.storage?.maxBytes).isEqualTo(1_000)
     }
 
     @Test

@@ -3,6 +3,7 @@ package com.resonote.core.data
 import com.google.common.truth.Truth.assertThat
 import com.resonote.core.model.CollectionLoadResult
 import com.resonote.core.model.AudioQuality
+import com.resonote.core.model.LyricLine
 import com.resonote.core.network.CatalogNetworkDataSource
 import com.resonote.core.network.HomeNetworkDataSource
 import com.resonote.core.network.LyricsNetworkDataSource
@@ -85,6 +86,27 @@ class MobileBusinessVariantsRepositoryTest {
         val result = repository.loadLyrics("hash") as CollectionLoadResult.Available
 
         assertThat(result.value.map { it.timeMillis }).containsExactly(1_500L, 2_500L, 3_500L).inOrder()
+    }
+
+    @Test
+    fun lyricRepositoryMapsDecodedKrcLines() = runTest {
+        val repository = DefaultLyricsRepository(
+            object : LyricsNetworkDataSource {
+                override suspend fun searchLyric(hash: String, albumAudioId: String?) =
+                    NetworkLyricCandidate("lyric-id", "access-key")
+
+                override suspend fun downloadLyric(candidate: NetworkLyricCandidate) =
+                    "[0,1200]<0,600,0>Moe<600,600,0>Koe\n[1200,800]<0,800,0>Music"
+            },
+            RiskChallengeRegistry(),
+        )
+
+        val result = repository.loadLyrics("hash") as CollectionLoadResult.Available
+
+        assertThat(result.value).containsExactly(
+            LyricLine(0, "MoeKoe"),
+            LyricLine(1_200, "Music"),
+        ).inOrder()
     }
 
     private class FakeCatalog : CatalogNetworkDataSource {

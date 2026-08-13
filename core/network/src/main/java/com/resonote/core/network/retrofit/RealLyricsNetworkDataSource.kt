@@ -6,7 +6,10 @@ import com.resonote.core.network.api.MusicApi
 import com.resonote.core.network.model.NetworkLyricCandidate
 import com.resonote.core.network.protocol.ApiEndpointOrigins
 import com.resonote.core.network.protocol.DeviceRegistrationCoordinator
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.util.Base64
+import java.util.zip.InflaterInputStream
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.serialization.json.JsonArray
@@ -27,7 +30,7 @@ internal class RealLyricsNetworkDataSource @Inject constructor(
         require(hash.isNotBlank()) { "hash must not be blank" }
         registration.ensureRegisteredSession()
         val root = calls.execute {
-            musicApi.searchLyric("${origins.lyrics}/v1/search", (albumAudioId?.toLongOrNull() ?: 0).toString(), hash = hash.trim())
+            musicApi.searchLyric("${origins.lyrics}/search", hash = hash.trim())
         }.obj() ?: throw malformedResponse()
         responses.requireJsonSuccess(root, SEARCH_LYRIC_ENDPOINT_ID, setOf("200"))
         val first = root.array("candidates").orEmpty().firstOrNull().obj() ?: return null
@@ -45,9 +48,34 @@ internal class RealLyricsNetworkDataSource @Inject constructor(
         }.obj() ?: throw malformedResponse()
         responses.requireJsonSuccess(root, DOWNLOAD_LYRIC_ENDPOINT_ID, setOf("200"))
         val encoded = root.text("content")?.takeIf(String::isNotBlank) ?: return null
-        return runCatching { Base64.getDecoder().decode(encoded).decodeToString() }
+        return runCatching {
+            if (root.text("contenttype") == "0") decodeKrc(encoded)
+            else Base64.getDecoder().decode(encoded).decodeToString()
+        }
             .getOrElse { throw malformedResponse() }
             .takeIf(String::isNotBlank)
+    }
+
+    private fun decodeKrc(encoded: String): String {
+        require(encoded.length <= MAX_ENCODED_LYRIC_CHARS)
+        val encrypted = Base64.getDecoder().decode(encoded)
+        require(encrypted.size > KRC_HEADER.size && encrypted.copyOfRange(0, KRC_HEADER.size).contentEquals(KRC_HEADER))
+        val compressed = ByteArray(encrypted.size - KRC_HEADER.size) { index ->
+            (encrypted[index + KRC_HEADER.size].toInt() xor KRC_XOR_KEY[index % KRC_XOR_KEY.size].toInt()).toByte()
+        }
+        val output = ByteArrayOutputStream()
+        InflaterInputStream(ByteArrayInputStream(compressed)).use { input ->
+            val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+            var total = 0
+            while (true) {
+                val count = input.read(buffer)
+                if (count < 0) break
+                total += count
+                require(total <= MAX_DECODED_LYRIC_BYTES)
+                output.write(buffer, 0, count)
+            }
+        }
+        return output.toByteArray().decodeToString()
     }
 
     private fun JsonElement?.obj(): JsonObject? = this as? JsonObject
@@ -58,5 +86,9 @@ internal class RealLyricsNetworkDataSource @Inject constructor(
     private companion object {
         const val SEARCH_LYRIC_ENDPOINT_ID = "API-SEARCH-005"
         const val DOWNLOAD_LYRIC_ENDPOINT_ID = "API-LYRICS-001"
+        val KRC_HEADER = "krc1".encodeToByteArray()
+        val KRC_XOR_KEY = byteArrayOf(64, 71, 97, 119, 94, 50, 116, 71, 81, 54, 49, 45, -50, -46, 110, 105)
+        const val MAX_ENCODED_LYRIC_CHARS = 2 * 1024 * 1024
+        const val MAX_DECODED_LYRIC_BYTES = 8 * 1024 * 1024
     }
 }

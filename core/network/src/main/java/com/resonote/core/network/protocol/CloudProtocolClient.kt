@@ -83,16 +83,17 @@ internal class CloudProtocolClient @Inject constructor(
     private fun decodePage(root: JsonObject, page: Int, pageSize: Int): NetworkCloudPage {
         if (root.text("status") != "1") throw ApiServiceException(root.text("error_code") ?: root.text("status"))
         val data = root["data"] as? JsonObject ?: throw missingField()
-        val raw = (data["list"] as? JsonArray) ?: (data["info"] as? JsonArray) ?: throw missingField()
+        val total = data.long("list_count")?.coerceIn(0, Int.MAX_VALUE.toLong())?.toInt()
+        val raw = data.cloudTrackList() ?: if (total == 0) JsonArray(emptyList()) else throw missingField()
         val tracks = raw.mapNotNull(::decodeTrack)
         if (raw.isNotEmpty() && tracks.isEmpty()) throw missingField()
-        val total = data.long("list_count")?.coerceIn(0, Int.MAX_VALUE.toLong())?.toInt() ?: tracks.size
+        val resolvedTotal = total ?: tracks.size
         val max = data.long("max_size")?.coerceAtLeast(0) ?: 0
         val used = data.long("used_size")?.coerceAtLeast(0) ?: 0
         return NetworkCloudPage(
             tracks = tracks,
-            total = total,
-            hasMore = if (total > 0) page.toLong() * pageSize < total else tracks.size >= pageSize,
+            total = resolvedTotal,
+            hasMore = if (resolvedTotal > 0) page.toLong() * pageSize < resolvedTotal else tracks.size >= pageSize,
             storage = max.takeIf { it > 0 }?.let { NetworkCloudStorage(used, it) },
         )
     }
@@ -124,6 +125,21 @@ internal class CloudProtocolClient @Inject constructor(
 
     private fun JsonObject.text(name: String): String? = (get(name) as? JsonPrimitive)?.contentOrNull
     private fun JsonObject.long(name: String): Long? = text(name)?.toDoubleOrNull()?.toLong()
+    private fun JsonObject.cloudTrackList(): JsonArray? =
+        listOfNotNull(get("list"), get("info")).firstNotNullOfOrNull { value ->
+            when (value) {
+                is JsonArray -> value
+                is JsonPrimitive -> {
+                    val encoded = value.contentOrNull?.trim().orEmpty()
+                    if (encoded.isEmpty() || encoded == "0" || encoded == "null") {
+                        JsonArray(emptyList())
+                    } else {
+                        runCatching { json.parseToJsonElement(encoded) as? JsonArray }.getOrNull()
+                    }
+                }
+                else -> null
+            }
+        }
     private fun missingField() = ApiProtocolException(ApiProtocolException.Reason.MissingRequiredField)
 
     private companion object {
