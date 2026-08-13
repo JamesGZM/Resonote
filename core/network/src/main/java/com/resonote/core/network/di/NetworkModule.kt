@@ -15,6 +15,7 @@ import com.resonote.core.network.RankingNetworkDataSource
 import com.resonote.core.network.SearchNetworkDataSource
 import com.resonote.core.network.UserProfileNetworkDataSource
 import com.resonote.core.network.VipNetworkDataSource
+import com.resonote.core.network.connection.NetworkConnectionRecovery
 import com.resonote.core.network.api.MusicApi
 import com.resonote.core.network.protocol.ApiDefaultsInterceptor
 import com.resonote.core.network.protocol.ApiResponseMetadataInterceptor
@@ -96,14 +97,15 @@ internal object NetworkModule {
         signingInterceptor: ApiSigningInterceptor,
         responseMetadataInterceptor: ApiResponseMetadataInterceptor,
         loggingInterceptor: RedactedNetworkLoggingInterceptor,
+        connectionRecovery: NetworkConnectionRecovery,
     ): OkHttpClient =
-        OkHttpClient.Builder()
-            .retryOnConnectionFailure(false)
+        apiHttpClientBuilder()
             .addInterceptor(defaultsInterceptor)
             .addInterceptor(signingInterceptor)
             .addInterceptor(responseMetadataInterceptor)
             .addInterceptor(loggingInterceptor)
             .build()
+            .also(connectionRecovery::register)
 
     @Provides
     @Singleton
@@ -128,6 +130,9 @@ internal object NetworkModule {
 
     private fun String.ensureTrailingSlash(): String = if (endsWith('/')) this else "$this/"
 }
+
+internal fun apiHttpClientBuilder(): OkHttpClient.Builder =
+    OkHttpClient.Builder().retryOnConnectionFailure(true)
 
 @Module
 @InstallIn(SingletonComponent::class)

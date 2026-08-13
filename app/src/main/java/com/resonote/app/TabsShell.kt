@@ -5,21 +5,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AccountCircle
-import androidx.compose.material.icons.outlined.Explore
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.rounded.AccountCircle
-import androidx.compose.material.icons.rounded.Explore
-import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -27,17 +17,16 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.annotation.DrawableRes
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.resonote.core.designsystem.component.ResonoteNavigationSuiteScaffold
 import com.resonote.core.model.Album
 import com.resonote.core.model.OnlineSong
-import com.resonote.core.model.PlaybackUnavailableReason
 import com.resonote.core.model.Ranking
 import com.resonote.core.model.UserPlaylist
-import com.resonote.core.playback.PlaybackIssue
 import com.resonote.core.playback.PlaybackMode
 import com.resonote.core.playback.PlaybackState
 import com.resonote.feature.discover.impl.DiscoverRoute
@@ -54,12 +43,11 @@ import com.resonote.feature.player.impl.badgeLabel
 
 internal enum class ResonoteTab(
     val labelRes: Int,
-    val icon: ImageVector,
-    val selectedIcon: ImageVector,
+    @field:DrawableRes val iconRes: Int,
 ) {
-    HOME(R.string.tab_home, Icons.Outlined.Home, Icons.Rounded.Home),
-    DISCOVER(R.string.tab_discover, Icons.Outlined.Explore, Icons.Rounded.Explore),
-    MY(R.string.tab_my, Icons.Outlined.AccountCircle, Icons.Rounded.AccountCircle),
+    HOME(R.string.tab_home, R.drawable.ic_tab_home),
+    DISCOVER(R.string.tab_discover, R.drawable.ic_tab_discover),
+    MY(R.string.tab_my, R.drawable.ic_tab_my),
 }
 
 @Composable
@@ -94,7 +82,6 @@ internal fun TabsShell(
 ) {
     val tabsShellState = rememberTabsShellState()
     val selectedTab = tabsShellState.selectedTab
-    val snackbarHostState = remember { SnackbarHostState() }
     val rootStateHolder = rememberSaveableStateHolder()
     var requestedDiscoverSection by remember { mutableStateOf<DiscoverSection?>(null) }
     var queueOpen by remember { mutableStateOf(false) }
@@ -102,11 +89,6 @@ internal fun TabsShell(
     fun openDiscover(section: DiscoverSection) {
         requestedDiscoverSection = section
         tabsShellState.selectTab(ResonoteTab.DISCOVER)
-    }
-
-    val playbackIssueMessage = playbackState.issue?.message()
-    LaunchedEffect(playbackIssueMessage) {
-        playbackIssueMessage?.let { snackbarHostState.showSnackbar(it) }
     }
 
     BackHandler(enabled = selectedTab != ResonoteTab.HOME) { tabsShellState.handleBack() }
@@ -118,8 +100,7 @@ internal fun TabsShell(
                 item(
                     selected = selectedTab == tab,
                     onClick = { tabsShellState.selectTab(tab) },
-                    icon = { Icon(tab.icon, contentDescription = null) },
-                    selectedIcon = { Icon(tab.selectedIcon, contentDescription = null) },
+                    icon = { Icon(painterResource(tab.iconRes), contentDescription = null) },
                     label = { Text(stringResource(tab.labelRes)) },
                 )
             }
@@ -129,7 +110,6 @@ internal fun TabsShell(
             modifier = Modifier.fillMaxSize(),
             containerColor = MaterialTheme.colorScheme.background,
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
-            snackbarHost = { SnackbarHost(snackbarHostState) },
         ) { outerPadding ->
             Box(Modifier.fillMaxSize().padding(outerPadding)) {
                 rootStateHolder.SaveableStateProvider(selectedTab.name) {
@@ -231,18 +211,4 @@ private val PrototypeArtworkColors = listOf(
     androidx.compose.ui.graphics.Color(0xFF5A061B),
     androidx.compose.ui.graphics.Color(0xFFE31353),
     androidx.compose.ui.graphics.Color(0xFFFF8DA9),
-)
-
-@Composable
-private fun PlaybackIssue.message(): String = stringResource(
-    when (this) {
-        is PlaybackIssue.Unavailable -> when (reason) {
-            PlaybackUnavailableReason.Copyright -> R.string.playback_error_copyright
-            PlaybackUnavailableReason.Vip -> R.string.playback_error_vip
-            PlaybackUnavailableReason.Cloud -> R.string.playback_error_cloud
-            PlaybackUnavailableReason.Local -> R.string.playback_error_local
-        }
-        is PlaybackIssue.SourceFailure -> R.string.playback_error_source
-        is PlaybackIssue.PlayerFailure -> R.string.playback_error_player
-    },
 )

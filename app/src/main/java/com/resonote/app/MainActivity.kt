@@ -24,7 +24,6 @@ class MainActivity : ComponentActivity() {
         }
         setContent {
             ResonoteTheme(themeMode = ResonoteThemeMode.SYSTEM) {
-                SyncSystemBars()
                 ResonoteApp(viewModel = viewModel, onFinishExternalTask = ::finish)
             }
         }

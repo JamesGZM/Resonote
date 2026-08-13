@@ -27,6 +27,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.random.Random
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -294,7 +295,14 @@ internal class DefaultPlaybackController internal constructor(
         controller?.stop()
         controller?.clearMediaItems()
 
-        val result = sourceResolver.resolve(item)
+        val result = try {
+            sourceResolver.resolve(item)
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (failure: Exception) {
+            failResolution(generation, PlaybackIssue.PlayerFailure(failure.message))
+            return
+        }
         if (generation != loadGeneration) return
 
         when (result) {

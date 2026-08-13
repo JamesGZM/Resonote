@@ -100,6 +100,7 @@ class NavigationTest {
         val contentBounds = composeRule.onNodeWithTag("navigation-content").fetchSemanticsNode().boundsInRoot
 
         assertTrue(navigationBounds.top >= contentBounds.bottom)
+        composeRule.onNodeWithTag("navigation-item-0").assertTouchHeightIsEqualTo(64.dp)
     }
 
     @Test

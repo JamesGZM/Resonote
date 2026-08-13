@@ -31,6 +31,7 @@ dependencies {
     implementation(projects.core.designsystem)
     implementation(projects.core.navigation)
     implementation(projects.core.data)
+    implementation(projects.core.network)
     implementation(projects.core.playback.api)
     implementation(projects.core.playback.service)
     implementation(projects.feature.auth.impl)
@@ -74,6 +75,10 @@ dependencies {
     implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
+    implementation(platform(libs.okhttp.bom))
+    implementation(libs.okhttp.core)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

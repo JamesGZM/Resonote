@@ -3,6 +3,7 @@ package com.resonote.app
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -26,6 +27,8 @@ import com.resonote.core.navigation.LoginGateNavKey
 import com.resonote.core.navigation.TabsShellNavKey
 import com.resonote.core.model.AuthState
 import com.resonote.core.model.OnlineSong
+import com.resonote.core.model.PlaybackUnavailableReason
+import com.resonote.core.playback.PlaybackIssue
 import com.resonote.feature.album.api.AlbumNavKey
 import com.resonote.feature.album.impl.AlbumRoute
 import com.resonote.feature.artist.api.ArtistNavKey
@@ -67,6 +70,7 @@ internal fun ResonoteApp(
     onFinishExternalTask: () -> Unit = {},
 ) {
     val backStack = rememberNavBackStack(TabsShellNavKey)
+    val hasTabBar = backStack.lastOrNull().hasPrimaryNavigation()
     val playbackState by playbackViewModel.state.collectAsStateWithLifecycle()
     val authState by viewModel.authState.collectAsStateWithLifecycle()
     val externalImportRequests by viewModel.externalImportRequests.collectAsStateWithLifecycle()
@@ -86,6 +90,20 @@ internal fun ResonoteApp(
     val queueNextMessage = stringResource(R.string.song_action_added_next)
     val queueAddedMessage = stringResource(R.string.song_action_added_queue)
     val shareUnavailableMessage = stringResource(R.string.song_action_share_unavailable)
+    val playbackIssueMessage = playbackState.issue?.let { stringResource(it.messageRes()) }
+    val snackbarBottomPadding = when {
+        hasTabBar && playbackState.currentMetadata != null -> 144.dp
+        hasTabBar -> 84.dp
+        else -> 20.dp
+    }
+
+    SyncSystemBars(
+        navigationBarColor = if (hasTabBar) {
+            MaterialTheme.colorScheme.surface
+        } else {
+            MaterialTheme.colorScheme.background
+        },
+    )
 
     fun openSongActions(
         song: OnlineSong,
@@ -104,6 +122,10 @@ internal fun ResonoteApp(
         playlistPickerSong = null
         snackbarHostState.showSnackbar(message)
         myViewModel.acknowledgePlaylistAddition()
+    }
+
+    LaunchedEffect(playbackIssueMessage) {
+        playbackIssueMessage?.let { snackbarHostState.showSnackbar(it) }
     }
 
     LaunchedEffect(externalImportRequest?.id) {
@@ -360,7 +382,9 @@ internal fun ResonoteApp(
         )
         SnackbarHost(
             hostState = snackbarHostState,
-            modifier = Modifier.align(Alignment.BottomCenter).padding(20.dp),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(start = 20.dp, end = 20.dp, bottom = snackbarBottomPadding),
         )
     }
 
@@ -426,4 +450,18 @@ internal fun MutableList<NavKey>.leaveLocalMusic(key: LocalMusicNavKey): Boolean
     if (key.finishTaskOnBack) return true
     if (lastOrNull() == key) removeAt(lastIndex)
     return false
+}
+
+internal fun NavKey?.hasPrimaryNavigation(): Boolean = this is TabsShellNavKey
+
+@androidx.annotation.StringRes
+internal fun PlaybackIssue.messageRes(): Int = when (this) {
+    is PlaybackIssue.Unavailable -> when (reason) {
+        PlaybackUnavailableReason.Copyright -> R.string.playback_error_copyright
+        PlaybackUnavailableReason.Vip -> R.string.playback_error_vip
+        PlaybackUnavailableReason.Cloud -> R.string.playback_error_cloud
+        PlaybackUnavailableReason.Local -> R.string.playback_error_local
+    }
+    is PlaybackIssue.SourceFailure -> R.string.playback_error_source
+    is PlaybackIssue.PlayerFailure -> R.string.playback_error_player
 }

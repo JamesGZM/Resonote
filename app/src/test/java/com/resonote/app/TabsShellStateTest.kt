@@ -29,4 +29,15 @@ class TabsShellStateTest {
 
         assertEquals(ResonoteTab.MY, restored.selectedTab)
     }
+
+    @Test
+    fun selectingEachTab_keepsOnlyTheLatestTabSelected() {
+        val state = TabsShellState(ResonoteTab.HOME)
+
+        ResonoteTab.entries.forEach { tab ->
+            state.selectTab(tab)
+
+            assertEquals(tab, state.selectedTab)
+        }
+    }
 }

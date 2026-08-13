@@ -1,19 +1,46 @@
 package com.resonote.core.designsystem.component
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.NavigationRailItemDefaults
+import androidx.compose.material3.ProvideTextStyle
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.adaptive.WindowAdaptiveInfo
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteDefaults
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItemColors
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScope
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.dp
 
 /**
  * Resonote primary navigation that follows Material adaptive Bar/Rail selection.
@@ -29,42 +56,60 @@ fun ResonoteNavigationSuiteScaffold(
     content: @Composable () -> Unit,
 ) {
     val colors = MaterialTheme.colorScheme
+    val items = mutableListOf<ResonoteNavigationSuiteItem>()
+    ResonoteNavigationSuiteScope(items::add).navigationSuiteItems()
+    val layoutType = NavigationSuiteScaffoldDefaults.calculateFromAdaptiveInfo(windowAdaptiveInfo)
     val itemColors = NavigationSuiteItemColors(
         navigationBarItemColors = NavigationBarItemDefaults.colors(
-            selectedIconColor = colors.onSecondaryContainer,
+            selectedIconColor = colors.primary,
             unselectedIconColor = colors.onSurfaceVariant,
-            selectedTextColor = colors.onSecondaryContainer,
+            selectedTextColor = colors.primary,
             unselectedTextColor = colors.onSurfaceVariant,
-            indicatorColor = colors.secondaryContainer,
+            indicatorColor = Color.Transparent,
         ),
         navigationRailItemColors = NavigationRailItemDefaults.colors(
-            selectedIconColor = colors.onSecondaryContainer,
+            selectedIconColor = colors.primary,
             unselectedIconColor = colors.onSurfaceVariant,
-            selectedTextColor = colors.onSecondaryContainer,
+            selectedTextColor = colors.primary,
             unselectedTextColor = colors.onSurfaceVariant,
-            indicatorColor = colors.secondaryContainer,
+            indicatorColor = Color.Transparent,
         ),
         navigationDrawerItemColors = NavigationDrawerItemDefaults.colors(
-            selectedIconColor = colors.onSecondaryContainer,
+            selectedIconColor = colors.primary,
             unselectedIconColor = colors.onSurfaceVariant,
-            selectedTextColor = colors.onSecondaryContainer,
+            selectedTextColor = colors.primary,
             unselectedTextColor = colors.onSurfaceVariant,
-            selectedContainerColor = colors.secondaryContainer,
+            selectedContainerColor = Color.Transparent,
         ),
     )
 
+    if (layoutType == NavigationSuiteType.NavigationBar) {
+        ResonoteCompactNavigationScaffold(
+            items = items,
+            modifier = modifier,
+            content = content,
+        )
+        return
+    }
+
     NavigationSuiteScaffold(
         navigationSuiteItems = {
-            ResonoteNavigationSuiteScope(
-                navigationSuiteScope = this,
-                itemColors = itemColors,
-            ).run(navigationSuiteItems)
+            items.forEach { item ->
+                item(
+                    selected = item.selected,
+                    onClick = item.onClick,
+                    icon = { if (item.selected) item.selectedIcon() else item.icon() },
+                    modifier = item.modifier,
+                    label = item.label,
+                    colors = itemColors,
+                )
+            }
         },
         modifier = modifier,
-        layoutType = NavigationSuiteScaffoldDefaults.calculateFromAdaptiveInfo(windowAdaptiveInfo),
+        layoutType = layoutType,
         containerColor = Color.Transparent,
         navigationSuiteColors = NavigationSuiteDefaults.colors(
-            navigationBarContainerColor = colors.surfaceContainer,
+            navigationBarContainerColor = colors.surface,
             navigationRailContainerColor = colors.surface,
         ),
         content = content,
@@ -73,8 +118,7 @@ fun ResonoteNavigationSuiteScaffold(
 
 /** Declares items without owning their identity, selection, or navigation state. */
 class ResonoteNavigationSuiteScope internal constructor(
-    private val navigationSuiteScope: NavigationSuiteScope,
-    private val itemColors: NavigationSuiteItemColors,
+    private val addItem: (ResonoteNavigationSuiteItem) -> Unit,
 ) {
     fun item(
         selected: Boolean,
@@ -83,12 +127,106 @@ class ResonoteNavigationSuiteScope internal constructor(
         icon: @Composable () -> Unit,
         selectedIcon: @Composable () -> Unit = icon,
         label: @Composable (() -> Unit)? = null,
-    ) = navigationSuiteScope.item(
-        selected = selected,
-        onClick = onClick,
-        icon = { if (selected) selectedIcon() else icon() },
-        modifier = modifier,
-        label = label,
-        colors = itemColors,
+    ) = addItem(
+        ResonoteNavigationSuiteItem(
+            selected = selected,
+            onClick = onClick,
+            modifier = modifier,
+            icon = icon,
+            selectedIcon = selectedIcon,
+            label = label,
+        ),
     )
 }
+
+internal data class ResonoteNavigationSuiteItem(
+    val selected: Boolean,
+    val onClick: () -> Unit,
+    val modifier: Modifier,
+    val icon: @Composable () -> Unit,
+    val selectedIcon: @Composable () -> Unit,
+    val label: @Composable (() -> Unit)?,
+)
+
+@Composable
+private fun ResonoteCompactNavigationScaffold(
+    items: List<ResonoteNavigationSuiteItem>,
+    modifier: Modifier,
+    content: @Composable () -> Unit,
+) {
+    Scaffold(
+        modifier = modifier,
+        containerColor = Color.Transparent,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        bottomBar = { ResonoteCompactNavigationBar(items) },
+    ) { contentPadding ->
+        Box(Modifier.fillMaxSize().padding(contentPadding)) {
+            content()
+        }
+    }
+}
+
+@Composable
+private fun ResonoteCompactNavigationBar(items: List<ResonoteNavigationSuiteItem>) {
+    val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)
+    val itemHeight = CompactNavigationItemHeight * fontScale
+    NavigationBar(
+        modifier = Modifier.fillMaxWidth(),
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = 0.dp,
+        windowInsets = NavigationBarDefaults.windowInsets,
+    ) {
+        items.forEachIndexed { index, item ->
+            key(index) {
+                ResonoteCompactNavigationItem(item, itemHeight)
+            }
+        }
+    }
+}
+
+@Composable
+private fun RowScope.ResonoteCompactNavigationItem(
+    item: ResonoteNavigationSuiteItem,
+    itemHeight: androidx.compose.ui.unit.Dp,
+) {
+    val colors = MaterialTheme.colorScheme
+    val contentColor by animateColorAsState(
+        targetValue = if (item.selected) colors.primary else colors.onSurfaceVariant,
+        label = "Navigation item color",
+    )
+    val interactionSource = remember { MutableInteractionSource() }
+
+    Column(
+        modifier = item.modifier
+            .weight(1f)
+            .height(itemHeight)
+            .clipToBounds()
+            .selectable(
+                selected = item.selected,
+                onClick = item.onClick,
+                role = Role.Tab,
+                interactionSource = interactionSource,
+                indication = ripple(
+                    bounded = false,
+                    radius = CompactNavigationRippleRadius,
+                    color = colors.primary,
+                ),
+            ),
+        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        CompositionLocalProvider(LocalContentColor provides contentColor) {
+            if (item.selected) item.selectedIcon() else item.icon()
+            item.label?.let { label ->
+                Spacer(Modifier.height(CompactNavigationIconLabelSpacing))
+                ProvideTextStyle(MaterialTheme.typography.labelSmall) {
+                    label()
+                }
+            }
+        }
+    }
+}
+
+private val CompactNavigationItemHeight = 64.dp
+private val CompactNavigationIconLabelSpacing = 2.dp
+private val CompactNavigationRippleRadius = 42.dp
