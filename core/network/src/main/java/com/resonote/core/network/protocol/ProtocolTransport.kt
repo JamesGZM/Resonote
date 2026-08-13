@@ -18,7 +18,9 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import okhttp3.Call
@@ -122,22 +124,24 @@ internal class ProtocolTransport @Inject constructor(
             } catch (connection: IOException) {
                 throw ApiNetworkException(ApiNetworkException.Kind.Connection, connection)
             }
-        response.use {
-            val bytes = it.body?.bytes().orEmpty()
-            if (!it.isSuccessful) {
-                if (AuthenticationFailureClassifier.capturesHttpFailure(it.code, spec.sessionPropagation)) {
-                    AuthenticationFailureClassifier.classify(sessionManager, authenticationContext)?.let { throw it }
+        return withContext(Dispatchers.IO) {
+            response.use {
+                val bytes = it.body?.bytes().orEmpty()
+                if (!it.isSuccessful) {
+                    if (AuthenticationFailureClassifier.capturesHttpFailure(it.code, spec.sessionPropagation)) {
+                        AuthenticationFailureClassifier.classify(sessionManager, authenticationContext)?.let { throw it }
+                    }
+                    throw ApiHttpException(it.code)
                 }
-                throw ApiHttpException(it.code)
-            }
-            val body =
-                bytes.takeIf(ByteArray::isNotEmpty)?.let { payload ->
-                    runCatching { json.parseToJsonElement(payload.decodeToString()) as? JsonObject }.getOrNull()
+                val body =
+                    bytes.takeIf(ByteArray::isNotEmpty)?.let { payload ->
+                        runCatching { json.parseToJsonElement(payload.decodeToString()) as? JsonObject }.getOrNull()
+                    }
+                if (bytes.isNotEmpty() && body == null && responseFormat == ApiResponseFormat.Json) {
+                    throw ApiProtocolException(ApiProtocolException.Reason.MalformedResponse)
                 }
-            if (bytes.isNotEmpty() && body == null && responseFormat == ApiResponseFormat.Json) {
-                throw ApiProtocolException(ApiProtocolException.Reason.MalformedResponse)
+                ApiRawResponse(it.code, it.headers.toMultimap(), bytes, body)
             }
-            return ApiRawResponse(it.code, it.headers.toMultimap(), bytes, body)
         }
     }
 

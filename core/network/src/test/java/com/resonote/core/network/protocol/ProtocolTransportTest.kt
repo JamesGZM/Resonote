@@ -14,12 +14,19 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.Optional
+import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
+import okhttp3.MediaType
 import okhttp3.OkHttpClient
+import okhttp3.ResponseBody
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okio.Buffer
+import okio.BufferedSource
+import okio.ForwardingSource
+import okio.buffer
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -73,6 +80,55 @@ class ProtocolTransportTest {
         assertThat(failure.challenge.eventId).isEqualTo("event")
         assertThat(failure.reason).isEqualTo(ApiRiskException.Reason.VerificationUnavailable)
         assertThat(server.requestCount).isEqualTo(1)
+    }
+
+    @Test
+    fun responseBodyIsConsumedOffTheCallingThread() = runTest {
+        server.enqueue(jsonResponse("""{"status":1}"""))
+        val bodyReadThread = AtomicReference<Thread?>()
+        val client = OkHttpClient.Builder()
+            .addNetworkInterceptor { chain ->
+                val response = chain.proceed(chain.request())
+                val originalBody = checkNotNull(response.body)
+                val trackingSource = object : ForwardingSource(originalBody.source()) {
+                    override fun read(sink: Buffer, byteCount: Long): Long {
+                        bodyReadThread.compareAndSet(null, Thread.currentThread())
+                        return super.read(sink, byteCount)
+                    }
+                }
+                response.newBuilder()
+                    .body(
+                        object : ResponseBody() {
+                            override fun contentType(): MediaType? = originalBody.contentType()
+                            override fun contentLength(): Long = originalBody.contentLength()
+                            override fun source(): BufferedSource = trackingSource.buffer()
+                        },
+                    )
+                    .build()
+            }
+            .build()
+        val session = ApiSession("guid", "mid", "dev", dfid = "dfid")
+        val sessions = ApiSessionManager(Optional.of(MemoryStore(session)), ApiDeviceIdentityFactory())
+        val executor = ProtocolTransport(
+            { client },
+            Json { ignoreUnknownKeys = true },
+            StepClock(1_700_000_000_000),
+            ApiRequestSigner(),
+            sessions,
+            ApiRiskChallengeDetector(),
+            ApiOriginPolicy { true },
+        )
+        val callingThread = Thread.currentThread()
+
+        executor.execute { _, _ ->
+            ApiExchange(
+                ApiEndpointSpec("test-thread", origin = server.origin(), path = "/thread", method = ApiHttpMethod.Get),
+                ApiRawResponse::statusCode,
+            )
+        }
+
+        assertThat(bodyReadThread.get()).isNotNull()
+        assertThat(bodyReadThread.get()).isNotSameInstanceAs(callingThread)
     }
 
     @Test

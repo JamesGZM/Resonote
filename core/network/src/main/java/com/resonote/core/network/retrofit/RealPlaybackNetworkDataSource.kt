@@ -51,14 +51,14 @@ internal class RealPlaybackNetworkDataSource @Inject constructor(
             .filter(String::isNotEmpty)
             .toList()
         val parsedUrls = rawUrls.mapNotNull { it.toHttpUrlOrNull() }
-        val secureUrl = parsedUrls.firstOrNull { it.isHttps }
-        if (rawUrls.isNotEmpty() && secureUrl == null) {
+        val playableUrl = parsedUrls.firstOrNull { it.isHttps || it.isAllowedCleartextMediaUrl() }
+        if (rawUrls.isNotEmpty() && playableUrl == null) {
             if (parsedUrls.any { it.scheme == "http" }) {
                 throw ApiProtocolException(ApiProtocolException.Reason.InsecureMediaUrl)
             }
             throw ApiProtocolException(ApiProtocolException.Reason.MalformedResponse)
         }
-        if (secureUrl == null) {
+        if (playableUrl == null) {
             val reason = if (status == 3L) {
                 ApiPlaybackUnavailableException.Reason.Copyright
             } else {
@@ -67,7 +67,7 @@ internal class RealPlaybackNetworkDataSource @Inject constructor(
             throw ApiPlaybackUnavailableException(reason)
         }
         return NetworkSongSource(
-            uri = secureUrl.toString(),
+            uri = playableUrl.toString(),
             durationMillis = normalizeDurationMillis(response.timeLength),
             extension = response.extension?.takeIf(String::isNotBlank),
         )
@@ -78,7 +78,11 @@ internal class RealPlaybackNetworkDataSource @Inject constructor(
 
     private fun missingField() = ApiProtocolException(ApiProtocolException.Reason.MissingRequiredField)
 
+    private fun okhttp3.HttpUrl.isAllowedCleartextMediaUrl(): Boolean =
+        scheme == "http" && (host == KUGOU_DOMAIN || host.endsWith(".$KUGOU_DOMAIN"))
+
     private companion object {
+        const val KUGOU_DOMAIN = "kugou.com"
         const val SONG_SOURCE_VIP_REQUIRED_CODE = "35104"
     }
 }

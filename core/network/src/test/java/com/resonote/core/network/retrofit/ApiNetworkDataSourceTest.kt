@@ -321,10 +321,23 @@ class ApiNetworkDataSourceTest {
     }
 
     @Test
-    fun songSourceRejectsCleartextFallbackWhenNoHttpsUrlExists() {
+    fun songSourceAcceptsCleartextKugouCdnUrl() = runTest {
         gatewayServer.enqueue(
             jsonResponse(
-                """{"status":1,"url":["http://cdn.example/song.mp3?token=value"],"timeLength":321000,"extName":"mp3"}""",
+                """{"status":1,"url":["http://fs.youthandroid2.kugou.com/song.mp3?token=value"],"timeLength":321000,"extName":"mp3"}""",
+            ),
+        )
+
+        val source = dataSource().resolveSongSource("ABCDEF", "12", "34")
+
+        assertThat(source.uri).isEqualTo("http://fs.youthandroid2.kugou.com/song.mp3?token=value")
+    }
+
+    @Test
+    fun songSourceRejectsCleartextUrlOutsideKugouDomain() {
+        gatewayServer.enqueue(
+            jsonResponse(
+                """{"status":1,"url":["http://cdn.example/song.mp3"],"timeLength":321000,"extName":"mp3"}""",
             ),
         )
 

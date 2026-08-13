@@ -30,8 +30,11 @@ import java.util.Optional
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.Request
+import okio.Buffer
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 import retrofit2.Retrofit
@@ -107,7 +110,22 @@ class LiveApiSearchCanaryTest {
         }
 
         assertWithMessage("Playback candidate failures: $failureKinds").that(resolved).isNotNull()
-        assertThat(resolved?.uri).startsWith("https://")
+        val source = checkNotNull(resolved)
+        val mediaUrl = source.uri.toHttpUrl()
+        assertThat(mediaUrl.scheme).isAnyOf("http", "https")
+        if (mediaUrl.scheme == "http") {
+            assertThat(mediaUrl.host == "kugou.com" || mediaUrl.host.endsWith(".kugou.com")).isTrue()
+        }
+        OkHttpClient().newCall(
+            Request.Builder()
+                .url(mediaUrl)
+                .header("Range", "bytes=0-1023")
+                .build(),
+        ).execute().use { response ->
+            assertThat(response.isSuccessful).isTrue()
+            val bytesRead = response.body?.source()?.read(Buffer(), 1_024) ?: -1
+            assertThat(bytesRead).isGreaterThan(0)
+        }
     }
 
     @Test
