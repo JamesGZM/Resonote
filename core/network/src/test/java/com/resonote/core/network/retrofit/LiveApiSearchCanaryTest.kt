@@ -2,31 +2,28 @@ package com.resonote.core.network.retrofit
 
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
-import com.resonote.core.network.ApiProtocolException
 import com.resonote.core.network.ApiAuthenticationRequiredException
+import com.resonote.core.network.ApiProtocolException
 import com.resonote.core.network.ApiServiceException
 import com.resonote.core.network.api.MusicApi
-import com.resonote.core.network.protocol.ProtocolTransport
+import com.resonote.core.network.protocol.ApiDefaultsInterceptor
 import com.resonote.core.network.protocol.ApiDeviceIdentityFactory
+import com.resonote.core.network.protocol.ApiEndpointOrigins
+import com.resonote.core.network.protocol.ApiProtocolCrypto
+import com.resonote.core.network.protocol.ApiRequestSigner
+import com.resonote.core.network.protocol.ApiResponseMetadataInterceptor
+import com.resonote.core.network.protocol.ApiSigningInterceptor
 import com.resonote.core.network.protocol.DeviceRegistrationCoordinator
 import com.resonote.core.network.protocol.DeviceRegistrationProfile
 import com.resonote.core.network.protocol.DeviceRegistrationProfileProvider
-import com.resonote.core.network.protocol.ApiEndpointOrigins
-import com.resonote.core.network.protocol.ApiProtocolCrypto
-import com.resonote.core.network.protocol.ApiDefaultsInterceptor
-import com.resonote.core.network.protocol.ApiResponseMetadataInterceptor
-import com.resonote.core.network.protocol.ApiSigningInterceptor
-import com.resonote.core.network.protocol.ApiRequestSigner
 import com.resonote.core.network.protocol.ProductionApiOriginPolicy
 import com.resonote.core.network.protocol.ProtocolRandom
+import com.resonote.core.network.protocol.ProtocolTransport
 import com.resonote.core.network.risk.ApiRiskChallengeDetector
+import com.resonote.core.network.session.ApiAuthenticationGateReason
 import com.resonote.core.network.session.ApiSession
 import com.resonote.core.network.session.ApiSessionManager
 import com.resonote.core.network.session.ApiSessionStore
-import com.resonote.core.network.session.ApiAuthenticationGateReason
-import java.security.SecureRandom
-import java.time.Clock
-import java.util.Optional
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
@@ -39,6 +36,9 @@ import org.junit.Assume.assumeTrue
 import org.junit.Test
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
+import java.security.SecureRandom
+import java.time.Clock
+import java.util.Optional
 
 class LiveApiSearchCanaryTest {
     @Test
@@ -178,7 +178,13 @@ class LiveApiSearchCanaryTest {
                 .addInterceptor(ApiResponseMetadataInterceptor(json))
                 .build()
         val executor = ProtocolTransport(
-            { client }, json, clock, signer, sessions, riskDetector, ProductionApiOriginPolicy(),
+            { client },
+            json,
+            clock,
+            signer,
+            sessions,
+            riskDetector,
+            ProductionApiOriginPolicy(),
         )
         val origins = ApiEndpointOrigins()
         val musicApi =
@@ -278,12 +284,11 @@ class LiveApiSearchCanaryTest {
         com.resonote.core.network.RankingNetworkDataSource by ranking,
         com.resonote.core.network.PlaylistNetworkDataSource by playlist
 
-    private suspend fun <T> liveStep(label: String, block: suspend () -> T): T =
-        try {
-            block()
-        } catch (failure: Throwable) {
-            throw AssertionError("$label failed with ${failure::class.simpleName}", failure)
-        }
+    private suspend fun <T> liveStep(label: String, block: suspend () -> T): T = try {
+        block()
+    } catch (failure: Throwable) {
+        throw AssertionError("$label failed with ${failure::class.simpleName}", failure)
+    }
 
     private companion object {
         const val MAX_REGISTRATION_ATTEMPTS = 5
@@ -293,13 +298,15 @@ class LiveApiSearchCanaryTest {
         var cachedFixture: LiveFixture? = null
     }
 
-
-
     private class MemoryStore : ApiSessionStore {
         private val state = MutableStateFlow<ApiSession?>(null)
         override val session = state
         override suspend fun read() = state.value
-        override suspend fun write(session: ApiSession) { state.value = session }
-        override suspend fun clearAuthentication() { state.value = null }
+        override suspend fun write(session: ApiSession) {
+            state.value = session
+        }
+        override suspend fun clearAuthentication() {
+            state.value = null
+        }
     }
 }

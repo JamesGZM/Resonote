@@ -46,8 +46,7 @@ internal class RealVipNetworkDataSource @Inject constructor(
         }
     }
 
-    private suspend fun requireAuthenticatedSession() =
-        registration.requireAuthenticatedSession()
+    private suspend fun requireAuthenticatedSession() = registration.requireAuthenticatedSession()
 
     private companion object {
         val RECEIVE_DAY_PATTERN = Regex("^\\d{4}-\\d{2}-\\d{2}$")

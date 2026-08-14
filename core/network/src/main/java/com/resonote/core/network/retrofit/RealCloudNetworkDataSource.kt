@@ -9,13 +9,13 @@ import com.resonote.core.network.model.NetworkSongSource
 import com.resonote.core.network.protocol.ApiRequestSigner
 import com.resonote.core.network.protocol.CloudProtocolClient
 import com.resonote.core.network.protocol.DeviceRegistrationCoordinator
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import javax.inject.Inject
+import javax.inject.Singleton
 
 @Singleton
 internal class RealCloudNetworkDataSource @Inject constructor(
@@ -26,8 +26,7 @@ internal class RealCloudNetworkDataSource @Inject constructor(
     private val calls: ApiCallExecutor,
     private val responses: ApiResponseVerifier,
 ) : CloudNetworkDataSource {
-    override suspend fun cloudTracks(page: Int, pageSize: Int): NetworkCloudPage =
-        cloudProtocol.tracks(page, pageSize)
+    override suspend fun cloudTracks(page: Int, pageSize: Int): NetworkCloudPage = cloudProtocol.tracks(page, pageSize)
 
     override suspend fun resolveCloudSongSource(hash: String, albumAudioId: String?, name: String): NetworkSongSource {
         require(hash.isNotBlank()) { "hash must not be blank" }
@@ -61,9 +60,7 @@ internal class RealCloudNetworkDataSource @Inject constructor(
         return NetworkSongSource(secureUrl.toString(), 0, extension)
     }
 
-    private suspend fun requireAuthenticatedSession() =
-        registration.requireAuthenticatedSession()
+    private suspend fun requireAuthenticatedSession() = registration.requireAuthenticatedSession()
 
     private fun missingField() = ApiProtocolException(ApiProtocolException.Reason.MissingRequiredField)
-
 }

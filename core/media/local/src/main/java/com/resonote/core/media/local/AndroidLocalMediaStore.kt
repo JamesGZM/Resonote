@@ -138,7 +138,9 @@ internal class AndroidLocalMediaStore internal constructor(
             } catch (_: RuntimeException) {
                 return@withContext LocalMediaStoreResult.Failure(LocalMediaStoreError.StorageUnavailable)
             }
-            if (freeBytes <= SPACE_RESERVE_BYTES || request.expectedDigest.sizeBytes > freeBytes - SPACE_RESERVE_BYTES) {
+            if (freeBytes <= SPACE_RESERVE_BYTES ||
+                request.expectedDigest.sizeBytes > freeBytes - SPACE_RESERVE_BYTES
+            ) {
                 return@withContext LocalMediaStoreResult.Failure(LocalMediaStoreError.InsufficientStorage)
             }
 
@@ -281,7 +283,7 @@ internal class AndroidLocalMediaStore internal constructor(
 
     private fun String.toContentUri(): Uri? = runCatching { Uri.parse(this) }
         .getOrNull()
-        ?.takeIf { it.scheme == ContentResolverScheme && !it.authority.isNullOrBlank() }
+        ?.takeIf { it.scheme == CONTENT_RESOLVER_SCHEME && !it.authority.isNullOrBlank() }
 
     private fun String.safeExtension(): String? = substringAfterLast('.', "")
         .lowercase()
@@ -313,7 +315,7 @@ internal class AndroidLocalMediaStore internal constructor(
     private class SourceReadException(cause: IOException) : IOException(cause)
 
     private companion object {
-        const val ContentResolverScheme = "content"
+        const val CONTENT_RESOLVER_SCHEME = "content"
         const val ROOT_DIRECTORY = "local-media"
         const val STAGING_DIRECTORY = ".staging"
         const val AUDIO_DIRECTORY = "audio"

@@ -2,12 +2,7 @@ package com.resonote.core.network.model
 
 import com.resonote.core.network.session.ApiSession
 
-data class NetworkAccountOption(
-    val userId: String,
-    val nickname: String,
-    val avatarUrl: String?,
-    val grade: String?,
-) {
+data class NetworkAccountOption(val userId: String, val nickname: String, val avatarUrl: String?, val grade: String?) {
     override fun toString(): String = "NetworkAccountOption(userId=<redacted>, nickname=<redacted>)"
 }
 

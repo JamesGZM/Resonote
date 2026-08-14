@@ -158,14 +158,10 @@ internal class PlaybackQueue {
     }
 }
 
-private fun PlaybackItem.merge(update: PlaybackItem): PlaybackItem =
-    if (update.resolvedSource != null) {
-        update
-    } else {
-        copy(metadata = update.metadata, origin = update.origin)
-    }
+private fun PlaybackItem.merge(update: PlaybackItem): PlaybackItem = if (update.resolvedSource != null) {
+    update
+} else {
+    copy(metadata = update.metadata, origin = update.origin)
+}
 
-internal data class QueueRemoval(
-    val removedCurrent: Boolean,
-    val nextCurrentItem: PlaybackItem?,
-)
+internal data class QueueRemoval(val removedCurrent: Boolean, val nextCurrentItem: PlaybackItem?)

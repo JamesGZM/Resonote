@@ -8,7 +8,6 @@ import com.resonote.core.model.HomeSection
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.RadioRecommendationResult
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -16,11 +15,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @HiltViewModel
-class HomeViewModel @Inject constructor(
-    private val repository: HomeRepository,
-) : ViewModel() {
+class HomeViewModel @Inject constructor(private val repository: HomeRepository) : ViewModel() {
     private val refreshState = MutableStateFlow<RefreshState>(RefreshState.Idle)
     private val radioSongs = MutableStateFlow<List<OnlineSong>>(emptyList())
     private var refreshJob: Job? = null
@@ -62,15 +60,14 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    suspend fun radioPlaybackRequest(): HomePlaybackRequest? =
-        when (val result = repository.loadRadio()) {
-            is RadioRecommendationResult.Available -> {
-                radioSongs.value = result.songs
-                result.songs.takeIf { it.isNotEmpty() }?.let { HomePlaybackRequest(it, 0) }
-            }
-
-            is RadioRecommendationResult.Failed -> null
+    suspend fun radioPlaybackRequest(): HomePlaybackRequest? = when (val result = repository.loadRadio()) {
+        is RadioRecommendationResult.Available -> {
+            radioSongs.value = result.songs
+            result.songs.takeIf { it.isNotEmpty() }?.let { HomePlaybackRequest(it, 0) }
         }
+
+        is RadioRecommendationResult.Failed -> null
+    }
 
     fun playbackRequest(collection: HomeSongCollection, mediaId: String? = null): HomePlaybackRequest? {
         val content = repository.content.value ?: return null

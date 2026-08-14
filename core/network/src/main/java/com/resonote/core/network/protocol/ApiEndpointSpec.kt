@@ -29,17 +29,13 @@ internal data class ApiEndpointSpec(
     val riskPolicy: ApiRiskPolicy = ApiRiskPolicy.Detect,
     val authenticationServiceCodes: Set<String> = emptySet(),
 ) {
-    override fun toString(): String =
-        "ApiEndpointSpec(origin=$origin, path=$path, method=$method, " +
-            "queryNames=${query.keys.sorted()}, headerNames=${headers.keys.sorted()}, bodyBytes=${body?.size ?: 0}, " +
-            "signatureMode=$signatureMode, sessionPropagation=$sessionPropagation, responseFormat=$responseFormat, " +
-            "cleartextPolicy=$cleartextPolicy, riskPolicy=$riskPolicy, " +
-            "authenticationServiceCodes=$authenticationServiceCodes)"
+    override fun toString(): String = "ApiEndpointSpec(origin=$origin, path=$path, method=$method, " +
+        "queryNames=${query.keys.sorted()}, headerNames=${headers.keys.sorted()}, bodyBytes=${body?.size ?: 0}, " +
+        "signatureMode=$signatureMode, sessionPropagation=$sessionPropagation, responseFormat=$responseFormat, " +
+        "cleartextPolicy=$cleartextPolicy, riskPolicy=$riskPolicy, " +
+        "authenticationServiceCodes=$authenticationServiceCodes)"
 }
 
-internal data class ApiExchange<T>(
-    val spec: ApiEndpointSpec,
-    val decode: (ApiRawResponse) -> T,
-)
+internal data class ApiExchange<T>(val spec: ApiEndpointSpec, val decode: (ApiRawResponse) -> T)
 
 internal typealias ApiExchangeFactory<T> = suspend (ApiSession, Long) -> ApiExchange<T>

@@ -2,11 +2,11 @@ package com.resonote.core.network.protocol
 
 import com.resonote.core.network.session.ApiSession
 import com.resonote.core.network.session.ApiSessionManager
-import java.time.Clock
-import javax.inject.Inject
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
+import java.time.Clock
+import javax.inject.Inject
 
 /** Adds the common query, header, and cookie values required by typed Retrofit endpoints. */
 internal class ApiDefaultsInterceptor @Inject constructor(
@@ -25,11 +25,7 @@ internal class ApiDefaultsInterceptor @Inject constructor(
         return chain.proceed(request.withDefaults(policy, session, clientTimeSeconds))
     }
 
-    private fun Request.withDefaults(
-        policy: ApiRequestPolicy,
-        session: ApiSession,
-        clientTimeSeconds: Long,
-    ): Request {
+    private fun Request.withDefaults(policy: ApiRequestPolicy, session: ApiSession, clientTimeSeconds: Long): Request {
         val endpointQuery = linkedMapOf<String, String>()
         for (index in 0 until url.querySize) {
             val name = url.queryParameterName(index)
@@ -54,5 +50,4 @@ internal class ApiDefaultsInterceptor @Inject constructor(
         if (header("User-Agent") == null) builder.header("User-Agent", ApiProtocolConfig.USER_AGENT)
         return builder.build()
     }
-
 }

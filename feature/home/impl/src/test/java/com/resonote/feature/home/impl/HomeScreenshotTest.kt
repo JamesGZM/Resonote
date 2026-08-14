@@ -2,8 +2,8 @@ package com.resonote.feature.home.impl
 
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
-import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performScrollToIndex

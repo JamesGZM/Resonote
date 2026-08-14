@@ -24,9 +24,15 @@ class ResonoteDatabaseMigrationTest {
         path.parentFile?.mkdirs()
         SQLiteDatabase.openOrCreateDatabase(path, null).use { legacy ->
             legacy.execSQL(LOCAL_MEDIA_CREATE_SQL)
-            legacy.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_local_media_storagePath` ON `local_media` (`storagePath`)")
-            legacy.execSQL("CREATE INDEX IF NOT EXISTS `index_local_media_sizeBytes_sha256` ON `local_media` (`sizeBytes`, `sha256`)")
-            legacy.execSQL("CREATE INDEX IF NOT EXISTS `index_local_media_importedAtEpochMillis` ON `local_media` (`importedAtEpochMillis`)")
+            legacy.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS `index_local_media_storagePath` ON `local_media` (`storagePath`)",
+            )
+            legacy.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_local_media_sizeBytes_sha256` ON `local_media` (`sizeBytes`, `sha256`)",
+            )
+            legacy.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_local_media_importedAtEpochMillis` ON `local_media` (`importedAtEpochMillis`)",
+            )
             legacy.execSQL("CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)")
             legacy.execSQL(
                 "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, ?)",
@@ -90,18 +96,17 @@ class ResonoteDatabaseMigrationTest {
                 "`bitDepth` INTEGER, `bitrateBitsPerSecond` INTEGER, `importedAtEpochMillis` INTEGER NOT NULL, " +
                 "`pendingDeletion` INTEGER NOT NULL, PRIMARY KEY(`id`))"
 
-        fun historyEntity() =
-            DeviceHistoryEntity(
-                source = "cloud",
-                mediaId = "cloud-hash",
-                title = "Cloud song",
-                artist = "Artist",
-                albumTitle = null,
-                artworkUri = null,
-                durationMillis = 180_000,
-                albumAudioId = "123",
-                lastPlayedAtEpochMillis = 2_000,
-                playCount = 1,
-            )
+        fun historyEntity() = DeviceHistoryEntity(
+            source = "cloud",
+            mediaId = "cloud-hash",
+            title = "Cloud song",
+            artist = "Artist",
+            albumTitle = null,
+            artworkUri = null,
+            durationMillis = 180_000,
+            albumAudioId = "123",
+            lastPlayedAtEpochMillis = 2_000,
+            playCount = 1,
+        )
     }
 }

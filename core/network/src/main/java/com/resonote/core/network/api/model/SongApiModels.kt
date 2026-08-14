@@ -30,14 +30,20 @@ internal val SONG_PRIVILEGE_QUALITIES =
 @Serializable
 internal data class SongSourceResponse(
     @Serializable(with = FlexibleStringSerializer::class) override val status: String? = null,
-    @SerialName("error_code") @Serializable(with = FlexibleStringSerializer::class) override val errorCode: String? = null,
+    @SerialName(
+        "error_code",
+    ) @Serializable(with = FlexibleStringSerializer::class) override val errorCode: String? = null,
     @Serializable(with = FlexibleStringSerializer::class) override val ssaCode: String? = null,
-    @SerialName("ssa_code") @Serializable(with = FlexibleStringSerializer::class) override val legacySsaCode: String? = null,
+    @SerialName(
+        "ssa_code",
+    ) @Serializable(with = FlexibleStringSerializer::class) override val legacySsaCode: String? = null,
     @Serializable(with = FlexibleStringSerializer::class) override val sid: String? = null,
     @Serializable(with = FlexibleStringSerializer::class) override val edt: String? = null,
     @Serializable(with = StringListSerializer::class) val url: List<String> = emptyList(),
-    @SerialName("backupUrl") @Serializable(with = StringListSerializer::class) val backupUrl: List<String> = emptyList(),
-    @SerialName("backup_url") @Serializable(with = StringListSerializer::class) val legacyBackupUrl: List<String> = emptyList(),
+    @SerialName("backupUrl") @Serializable(with = StringListSerializer::class) val backupUrl: List<String> =
+        emptyList(),
+    @SerialName("backup_url") @Serializable(with = StringListSerializer::class) val legacyBackupUrl: List<String> =
+        emptyList(),
     @SerialName("timeLength") @Serializable(with = FlexibleLongSerializer::class) val timeLength: Long? = null,
     @SerialName("extName") val extension: String? = null,
     override val risk: ApiRiskFields? = null,
@@ -63,7 +69,9 @@ internal data class MusicSongDto(
     @SerialName("Image") val image: String? = null,
     val cover: String? = null,
     @SerialName("album_id") @Serializable(with = FlexibleStringSerializer::class) val albumId: String? = null,
-    @SerialName("album_audio_id") @Serializable(with = FlexibleStringSerializer::class) val albumAudioId: String? = null,
+    @SerialName(
+        "album_audio_id",
+    ) @Serializable(with = FlexibleStringSerializer::class) val albumAudioId: String? = null,
     @SerialName("audio_id") @Serializable(with = FlexibleStringSerializer::class) val audioId: String? = null,
     @Serializable(with = FlexibleStringSerializer::class) val mixsongid: String? = null,
     @SerialName("time_length") @Serializable(with = FlexibleLongSerializer::class) val timeLength: Long? = null,
@@ -110,6 +118,4 @@ internal data class SongHashOffsetDto(
 )
 
 @Serializable
-internal data class AlbumInfoDto(
-    val name: String? = null,
-)
+internal data class AlbumInfoDto(val name: String? = null)

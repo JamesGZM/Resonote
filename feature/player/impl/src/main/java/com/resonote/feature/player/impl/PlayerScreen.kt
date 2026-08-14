@@ -1,10 +1,9 @@
 package com.resonote.feature.player.impl
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,11 +20,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
+import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Pause
@@ -33,10 +33,10 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material.icons.rounded.RepeatOne
 import androidx.compose.material.icons.rounded.Share
-import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
+import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.StopCircle
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -83,6 +83,7 @@ import com.resonote.core.designsystem.component.ResonoteArtwork
 import com.resonote.core.designsystem.component.ResonoteArtworkState
 import com.resonote.core.designsystem.component.ResonoteQualityBadge
 import com.resonote.core.designsystem.component.ResonoteVipBadge
+import com.resonote.core.designsystem.tokens.ResonoteTokens
 import com.resonote.core.model.ContentFailure
 import com.resonote.core.model.LyricLine
 import com.resonote.core.model.OnlineSong
@@ -314,11 +315,7 @@ private fun PlayerTopBar(
 }
 
 @Composable
-private fun PlaybackSpeedDialog(
-    selected: PlaybackSpeed,
-    onSelect: (PlaybackSpeed) -> Unit,
-    onDismiss: () -> Unit,
-) {
+private fun PlaybackSpeedDialog(selected: PlaybackSpeed, onSelect: (PlaybackSpeed) -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.feature_player_impl_playback_speed)) },
@@ -383,8 +380,11 @@ private fun PlayerPager(
                         .height(6.dp)
                         .clip(CircleShape)
                         .background(
-                            if (pagerState.currentPage == index) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.22f),
+                            if (pagerState.currentPage == index) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.22f)
+                            },
                         ),
                 )
             }
@@ -415,7 +415,7 @@ private fun CoverPage(song: PlaybackMetadata) {
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(1f)
-                .shadow(20.dp, RoundedCornerShape(28.dp), ambientColor = MaterialTheme.colorScheme.primary),
+                .shadow(ResonoteTokens.elevation.level3.maximumShadow, RoundedCornerShape(28.dp)),
         ) {
             SignalArtwork(song.mediaId)
             if (!song.artworkUri.isNullOrBlank()) {
@@ -435,6 +435,7 @@ private fun SignalArtwork(seed: String) {
     val primary = MaterialTheme.colorScheme.primary
     val secondary = MaterialTheme.colorScheme.secondary
     val surface = MaterialTheme.colorScheme.surface
+    val onPrimary = MaterialTheme.colorScheme.onPrimary
     val phase = (seed.hashCode().ushr(1) % 90).toFloat()
     Canvas(
         Modifier
@@ -445,7 +446,7 @@ private fun SignalArtwork(seed: String) {
         val step = size.minDimension / 13f
         repeat(7) { ring ->
             drawCircle(
-                color = Color.White.copy(alpha = 0.08f + ring * 0.018f),
+                color = onPrimary.copy(alpha = 0.08f + ring * 0.018f),
                 radius = step * (ring + 1),
                 center = center,
                 style = Stroke(width = 1.2.dp.toPx()),
@@ -453,7 +454,7 @@ private fun SignalArtwork(seed: String) {
         }
         repeat(5) { arc ->
             drawArc(
-                color = Color.White.copy(alpha = 0.18f + arc * 0.07f),
+                color = onPrimary.copy(alpha = 0.18f + arc * 0.07f),
                 startAngle = phase + arc * 21f,
                 sweepAngle = 72f + arc * 12f,
                 useCenter = false,
@@ -462,21 +463,18 @@ private fun SignalArtwork(seed: String) {
                 style = Stroke(width = (1.5f + arc * 0.7f).dp.toPx()),
             )
         }
-        drawCircle(Color.White.copy(alpha = 0.92f), radius = step * 0.36f, center = center)
+        drawCircle(onPrimary.copy(alpha = 0.92f), radius = step * 0.36f, center = center)
         drawCircle(primary, radius = step * 0.15f, center = center)
     }
 }
 
 @Composable
-private fun LyricsPage(
-    lyrics: LyricsUiState,
-    positionMillis: Long,
-    onSeek: (Long) -> Unit,
-    onRetry: () -> Unit,
-) {
+private fun LyricsPage(lyrics: LyricsUiState, positionMillis: Long, onSeek: (Long) -> Unit, onRetry: () -> Unit) {
     Box(Modifier.fillMaxSize().padding(horizontal = 24.dp), contentAlignment = Alignment.Center) {
         when (lyrics) {
-            LyricsUiState.Idle, LyricsUiState.Loading -> CircularProgressIndicator(Modifier.size(32.dp), strokeWidth = 3.dp)
+            LyricsUiState.Idle,
+            LyricsUiState.Loading,
+            -> CircularProgressIndicator(Modifier.size(32.dp), strokeWidth = 3.dp)
             LyricsUiState.Empty, LyricsUiState.Unavailable ->
                 LyricsMessage(stringResource(R.string.feature_player_impl_lyrics_empty))
             is LyricsUiState.Error -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -524,16 +522,27 @@ private fun SyncedLyrics(lines: List<LyricLine>, positionMillis: Long, onSeek: (
                     .fillMaxWidth()
                     .clip(MaterialTheme.shapes.medium)
                     .background(
-                        if (active) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.52f)
-                        else Color.Transparent,
+                        if (active) {
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.52f)
+                        } else {
+                            Color.Transparent
+                        },
                     )
                     .padding(horizontal = 14.dp, vertical = 10.dp)
                     .clickable(onClick = { onSeek(line.timeMillis) }),
-                color = if (active) MaterialTheme.colorScheme.onPrimaryContainer
-                else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.72f),
+                color = if (active) {
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.72f)
+                },
                 style = if (active) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.titleMedium,
                 fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
-                lineHeight = if (active) MaterialTheme.typography.headlineSmall.lineHeight else MaterialTheme.typography.titleMedium.lineHeight,
+                lineHeight =
+                if (active) {
+                    MaterialTheme.typography.headlineSmall.lineHeight
+                } else {
+                    MaterialTheme.typography.titleMedium.lineHeight
+                },
             )
         }
     }
@@ -586,14 +595,20 @@ private fun PlayerProgress(positionMillis: Long, durationMillis: Long, onSeek: (
     Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
         Slider(
             value = progress,
-            onValueChange = { dragging = true; dragValue = it },
+            onValueChange = {
+                dragging = true
+                dragValue = it
+            },
             onValueChangeFinished = {
                 onSeek((dragValue * duration).toLong())
                 dragging = false
             },
         )
         Row(Modifier.fillMaxWidth()) {
-            Text((if (dragging) (dragValue * duration).toLong() else positionMillis).timeLabel(), style = MaterialTheme.typography.labelMedium)
+            Text(
+                (if (dragging) (dragValue * duration).toLong() else positionMillis).timeLabel(),
+                style = MaterialTheme.typography.labelMedium,
+            )
             Spacer(Modifier.weight(1f))
             Text(durationMillis.timeLabel(), style = MaterialTheme.typography.labelMedium)
         }
@@ -620,23 +635,37 @@ private fun PlaybackControls(
             Icon(mode.icon(), mode.label(), tint = MaterialTheme.colorScheme.primary)
         }
         IconButton(onClick = onPrevious, modifier = Modifier.size(56.dp)) {
-            Icon(Icons.Rounded.SkipPrevious, stringResource(R.string.feature_player_impl_previous), Modifier.size(34.dp))
+            Icon(
+                Icons.Rounded.SkipPrevious,
+                stringResource(R.string.feature_player_impl_previous),
+                Modifier.size(34.dp),
+            )
         }
         Surface(
             modifier = Modifier.size(72.dp),
             shape = CircleShape,
             color = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary,
-            shadowElevation = 10.dp,
+            shadowElevation = ResonoteTokens.elevation.level3.maximumShadow,
             onClick = onTogglePlay,
         ) {
             Box(contentAlignment = Alignment.Center) {
                 if (status == PlaybackStatus.Resolving || status == PlaybackStatus.Buffering) {
-                    CircularProgressIndicator(Modifier.size(28.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 3.dp)
+                    CircularProgressIndicator(
+                        Modifier.size(28.dp),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        strokeWidth = 3.dp,
+                    )
                 } else {
                     Icon(
                         if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                        stringResource(if (isPlaying) R.string.feature_player_impl_pause else R.string.feature_player_impl_play),
+                        stringResource(
+                            if (isPlaying) {
+                                R.string.feature_player_impl_pause
+                            } else {
+                                R.string.feature_player_impl_play
+                            },
+                        ),
                         Modifier.size(38.dp),
                     )
                 }
@@ -682,7 +711,9 @@ private fun ContentFailure.lyricsMessage(): String = stringResource(
         ContentFailure.AuthenticationRequired -> R.string.feature_player_impl_lyrics_auth
         ContentFailure.Network -> R.string.feature_player_impl_lyrics_network
         ContentFailure.ServiceRejected -> R.string.feature_player_impl_lyrics_service
-        is ContentFailure.RiskVerificationRequired, ContentFailure.RiskBlocked -> R.string.feature_player_impl_lyrics_risk
+        is ContentFailure.RiskVerificationRequired,
+        ContentFailure.RiskBlocked,
+        -> R.string.feature_player_impl_lyrics_risk
         ContentFailure.Protocol -> R.string.feature_player_impl_lyrics_protocol
     },
 )

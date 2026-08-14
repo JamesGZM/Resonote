@@ -12,9 +12,13 @@ internal interface VideoApi {
     @Headers("x-router: trackermv.kugou.com")
     @GET("v2/interface/index")
     suspend fun videoUrl(
-        @Query("backupdomain") backupDomain: Int = 1, @Query("cmd") command: Int = 123,
-        @Query("ext") extension: String = "mp4", @Query("ismp3") isMp3: Int = 0,
-        @Query("hash") hash: String, @Query("pid") pid: Int = 1, @Query("type") type: Int = 1,
+        @Query("backupdomain") backupDomain: Int = 1,
+        @Query("cmd") command: Int = 123,
+        @Query("ext") extension: String = "mp4",
+        @Query("ismp3") isMp3: Int = 0,
+        @Query("hash") hash: String,
+        @Query("pid") pid: Int = 1,
+        @Query("type") type: Int = 1,
         @Query("key") key: String,
     ): ApiResponse<JsonElement>
 }

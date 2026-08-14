@@ -29,8 +29,8 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -40,10 +40,7 @@ import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.OnlineSong
 import java.util.Locale
 
-internal data class OnlineSongActionRequest(
-    val song: OnlineSong,
-    val onRemoveRequest: (() -> Unit)? = null,
-)
+internal data class OnlineSongActionRequest(val song: OnlineSong, val onRemoveRequest: (() -> Unit)? = null)
 
 @Composable
 internal fun OnlineSongActionsSheet(

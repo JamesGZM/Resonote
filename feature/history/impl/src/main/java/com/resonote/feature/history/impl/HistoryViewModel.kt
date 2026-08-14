@@ -9,7 +9,6 @@ import com.resonote.core.model.CollectionLoadResult
 import com.resonote.core.model.DeviceHistoryItem
 import com.resonote.feature.history.api.HistoryTab
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -22,6 +21,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @HiltViewModel
 class HistoryViewModel @Inject constructor(

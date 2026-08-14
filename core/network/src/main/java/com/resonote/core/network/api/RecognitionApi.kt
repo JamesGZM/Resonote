@@ -14,8 +14,11 @@ internal interface RecognitionApi {
     @Headers("Content-Type: application/octet-stream", "User-Agent: KuGou/11490 (Android)")
     @POST("fingerprint.service/v1/music_trackid_mulit")
     suspend fun recognizeAudio(
-        @Query("fpid") fingerprintId: Long, @Query("area_code") areaCode: Int = 1,
-        @Query("include_unpublish") includeUnpublished: Int = 1, @Query("useid") userId: Long,
-        @Query("multi_result") multiResult: Int = 1, @Body body: RequestBody,
+        @Query("fpid") fingerprintId: Long,
+        @Query("area_code") areaCode: Int = 1,
+        @Query("include_unpublish") includeUnpublished: Int = 1,
+        @Query("useid") userId: Long,
+        @Query("multi_result") multiResult: Int = 1,
+        @Body body: RequestBody,
     ): ApiResponse<JsonElement>
 }

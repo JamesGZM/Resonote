@@ -26,7 +26,8 @@ internal class DefaultLyricsRepository @Inject constructor(
             LRC_PATTERN.findAll(raw).forEach { match ->
                 val fraction = match.groupValues[3].ifEmpty { "0" }
                 val fractionMillis = fraction.toLong() * 10.0.pow(3 - fraction.length).toLong()
-                val millis = match.groupValues[1].toLong() * 60_000 + match.groupValues[2].toLong() * 1_000 + fractionMillis
+                val millis =
+                    match.groupValues[1].toLong() * 60_000 + match.groupValues[2].toLong() * 1_000 + fractionMillis
                 add(LyricLine(millis, text))
             }
         }

@@ -59,13 +59,20 @@ class EncryptedApiSessionStoreTest {
         val state = MutableStateFlow(initial)
         var clearCount = 0
         override val data = state
-        override suspend fun write(envelope: EncryptedSessionEnvelope) { state.value = envelope }
-        override suspend fun clear() { clearCount += 1; state.value = null }
+        override suspend fun write(envelope: EncryptedSessionEnvelope) {
+            state.value = envelope
+        }
+        override suspend fun clear() {
+            clearCount += 1
+            state.value = null
+        }
     }
 
     private class XorCipher : SessionCipher {
-        override fun encrypt(plaintext: ByteArray) = Ciphertext(byteArrayOf(7), plaintext.map { (it.toInt() xor 0x55).toByte() }.toByteArray())
-        override fun decrypt(ciphertext: Ciphertext) = ciphertext.bytes.map { (it.toInt() xor 0x55).toByte() }.toByteArray()
+        override fun encrypt(plaintext: ByteArray) =
+            Ciphertext(byteArrayOf(7), plaintext.map { (it.toInt() xor 0x55).toByte() }.toByteArray())
+        override fun decrypt(ciphertext: Ciphertext) =
+            ciphertext.bytes.map { (it.toInt() xor 0x55).toByte() }.toByteArray()
         override fun reset() = Unit
     }
 
@@ -73,7 +80,9 @@ class EncryptedApiSessionStoreTest {
         var clearCount = 0
         override val data: Flow<EncryptedSessionEnvelope?> = flow { throw CancellationException("cancelled") }
         override suspend fun write(envelope: EncryptedSessionEnvelope) = Unit
-        override suspend fun clear() { clearCount += 1 }
+        override suspend fun clear() {
+            clearCount += 1
+        }
     }
 
     private class InvalidatableCipher : SessionCipher {
@@ -87,7 +96,10 @@ class EncryptedApiSessionStoreTest {
             check(!invalid) { "key invalidated" }
             return ciphertext.bytes
         }
-        override fun reset() { invalid = false; resetCount += 1 }
+        override fun reset() {
+            invalid = false
+            resetCount += 1
+        }
     }
 
     private fun authenticatedSession() = ApiSession(

@@ -1,8 +1,8 @@
 package com.resonote.core.data
 
 import com.google.common.truth.Truth.assertThat
-import com.resonote.core.model.CollectionLoadResult
 import com.resonote.core.model.AudioQuality
+import com.resonote.core.model.CollectionLoadResult
 import com.resonote.core.model.LyricLine
 import com.resonote.core.network.CatalogNetworkDataSource
 import com.resonote.core.network.HomeNetworkDataSource
@@ -14,15 +14,14 @@ import com.resonote.core.network.model.NetworkArtistInfo
 import com.resonote.core.network.model.NetworkArtistSongPage
 import com.resonote.core.network.model.NetworkComplexSearch
 import com.resonote.core.network.model.NetworkLyricCandidate
-import com.resonote.core.network.model.NetworkRecommendationMode
-import com.resonote.core.network.model.NetworkSong
 import com.resonote.core.network.model.NetworkPlaylistSummary
-import com.resonote.core.network.model.NetworkRecognitionMatch
+import com.resonote.core.network.model.NetworkRecommendationMode
 import com.resonote.core.network.model.NetworkSearchAlbum
 import com.resonote.core.network.model.NetworkSearchArtist
 import com.resonote.core.network.model.NetworkSearchMv
 import com.resonote.core.network.model.NetworkSearchPlaylist
 import com.resonote.core.network.model.NetworkSearchResultPage
+import com.resonote.core.network.model.NetworkSong
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -111,7 +110,11 @@ class MobileBusinessVariantsRepositoryTest {
 
     private class FakeCatalog : CatalogNetworkDataSource {
         var request: Triple<Int, Int, Int>? = null
-        override suspend fun categoryPlaylists(categoryId: Int, page: Int, pageSize: Int): List<NetworkPlaylistSummary> {
+        override suspend fun categoryPlaylists(
+            categoryId: Int,
+            page: Int,
+            pageSize: Int,
+        ): List<NetworkPlaylistSummary> {
             request = Triple(categoryId, page, pageSize)
             return listOf(NetworkPlaylistSummary("gid", "分类歌单", "https://cover/{size}", 99))
         }
@@ -119,9 +122,15 @@ class MobileBusinessVariantsRepositoryTest {
         override suspend fun banners() = error("unused")
         override suspend fun playlistCategories() = error("unused")
         override suspend fun newAlbums(page: Int, pageSize: Int): List<NetworkAlbum> = error("unused")
-        override suspend fun albumSongs(albumId: String, page: Int, pageSize: Int): NetworkAlbumSongPage = error("unused")
+        override suspend fun albumSongs(albumId: String, page: Int, pageSize: Int): NetworkAlbumSongPage =
+            error("unused")
         override suspend fun artistDetail(artistId: String): NetworkArtistInfo? = error("unused")
-        override suspend fun artistSongs(artistId: String, page: Int, pageSize: Int, newestFirst: Boolean): NetworkArtistSongPage = error("unused")
+        override suspend fun artistSongs(
+            artistId: String,
+            page: Int,
+            pageSize: Int,
+            newestFirst: Boolean,
+        ): NetworkArtistSongPage = error("unused")
     }
 
     private class FakeHome : HomeNetworkDataSource {
@@ -151,14 +160,32 @@ class MobileBusinessVariantsRepositoryTest {
 
     private class FakeSearchAndMedia : SearchNetworkDataSource {
         val keywords = mutableListOf<String>()
-        override suspend fun searchPlaylists(keywords: String, page: Int, pageSize: Int) =
-            NetworkSearchResultPage(listOf(NetworkSearchPlaylist("gid", "歌单", "作者", "https://playlist/{size}", 8, 99)), 61, true).also { this.keywords += keywords }
-        override suspend fun searchAlbums(keywords: String, page: Int, pageSize: Int) =
-            NetworkSearchResultPage(listOf(NetworkSearchAlbum("album", "专辑", "歌手", null, 7, "2026-08-12")), 1, false).also { this.keywords += keywords }
+        override suspend fun searchPlaylists(keywords: String, page: Int, pageSize: Int) = NetworkSearchResultPage(
+            listOf(NetworkSearchPlaylist("gid", "歌单", "作者", "https://playlist/{size}", 8, 99)),
+            61,
+            true,
+        ).also {
+            this.keywords +=
+                keywords
+        }
+        override suspend fun searchAlbums(keywords: String, page: Int, pageSize: Int) = NetworkSearchResultPage(
+            listOf(NetworkSearchAlbum("album", "专辑", "歌手", null, 7, "2026-08-12")),
+            1,
+            false,
+        ).also {
+            this.keywords +=
+                keywords
+        }
         override suspend fun searchArtists(keywords: String, page: Int, pageSize: Int) =
-            NetworkSearchResultPage(listOf(NetworkSearchArtist("artist", "歌手", null, 3, 9)), 1, false).also { this.keywords += keywords }
+            NetworkSearchResultPage(listOf(NetworkSearchArtist("artist", "歌手", null, 3, 9)), 1, false).also {
+                this.keywords +=
+                    keywords
+            }
         override suspend fun searchMvs(keywords: String, page: Int, pageSize: Int) =
-            NetworkSearchResultPage(listOf(NetworkSearchMv("mv", "MV", "歌手", null, 180_000)), 1, false).also { this.keywords += keywords }
+            NetworkSearchResultPage(listOf(NetworkSearchMv("mv", "MV", "歌手", null, 180_000)), 1, false).also {
+                this.keywords +=
+                    keywords
+            }
         override suspend fun searchSongs(keywords: String, page: Int, pageSize: Int) = error("unused")
         override suspend fun searchComplex(keywords: String): NetworkComplexSearch = error("unused")
         override suspend fun hotSearchKeywords() = error("unused")

@@ -10,11 +10,11 @@ import com.resonote.core.network.model.NetworkQrLoginStatus
 import com.resonote.core.network.protocol.ApiEndpointOrigins
 import com.resonote.core.network.protocol.DeviceRegistrationCoordinator
 import com.resonote.core.network.protocol.MobileAuthProtocolClient
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
+import javax.inject.Inject
+import javax.inject.Singleton
 
 @Singleton
 internal class RealAuthNetworkDataSource @Inject constructor(

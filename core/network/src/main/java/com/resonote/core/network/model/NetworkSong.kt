@@ -18,8 +18,4 @@ data class NetworkSong(
     val previewDurationMillis: Long? = null,
 )
 
-data class NetworkSongPage(
-    val songs: List<NetworkSong>,
-    val total: Int?,
-    val hasMore: Boolean,
-)
+data class NetworkSongPage(val songs: List<NetworkSong>, val total: Int?, val hasMore: Boolean)

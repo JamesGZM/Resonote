@@ -1,11 +1,11 @@
 package com.resonote.core.data
 
 import com.google.common.truth.Truth.assertThat
+import com.resonote.core.model.CloudTrack
 import com.resonote.core.model.CollectionLoadResult
 import com.resonote.core.model.ContentFailure
-import com.resonote.core.model.PlaylistTrackInput
-import com.resonote.core.model.CloudTrack
 import com.resonote.core.model.PlaybackUnavailableReason
+import com.resonote.core.model.PlaylistTrackInput
 import com.resonote.core.model.ResolveSongSourceResult
 import com.resonote.core.network.ApiAuthenticationRequiredException
 import com.resonote.core.network.ApiNetworkException
@@ -15,12 +15,11 @@ import com.resonote.core.network.ApiServiceException
 import com.resonote.core.network.model.NetworkCloudPage
 import com.resonote.core.network.model.NetworkCloudStorage
 import com.resonote.core.network.model.NetworkCloudTrack
-import com.resonote.core.network.model.NetworkVipRewardResult
 import com.resonote.core.network.model.NetworkMobileCodeLoginResult
-import com.resonote.core.network.model.NetworkPlaylistTrackInput
 import com.resonote.core.network.model.NetworkPasswordLoginResult
 import com.resonote.core.network.model.NetworkPlaylistPage
 import com.resonote.core.network.model.NetworkPlaylistSummary
+import com.resonote.core.network.model.NetworkPlaylistTrackInput
 import com.resonote.core.network.model.NetworkRanking
 import com.resonote.core.network.model.NetworkRecommendationMode
 import com.resonote.core.network.model.NetworkSearchPage
@@ -30,9 +29,10 @@ import com.resonote.core.network.model.NetworkSongSource
 import com.resonote.core.network.model.NetworkUserDetail
 import com.resonote.core.network.model.NetworkUserPlaylist
 import com.resonote.core.network.model.NetworkUserVip
-import java.io.IOException
+import com.resonote.core.network.model.NetworkVipRewardResult
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
+import java.io.IOException
 
 class UserRepositoriesTest {
     @Test
@@ -53,7 +53,8 @@ class UserRepositoriesTest {
 
     @Test
     fun vipFailureDegradesToNonVipWithoutHidingProfile() = runTest {
-        val network = FakeNetwork(vipFailure = ApiNetworkException(ApiNetworkException.Kind.Offline, IOException("offline")))
+        val network =
+            FakeNetwork(vipFailure = ApiNetworkException(ApiNetworkException.Kind.Offline, IOException("offline")))
         val repository = DefaultUserProfileRepository(network, RiskChallengeRegistry())
 
         val result = repository.loadProfile() as CollectionLoadResult.Available
@@ -164,7 +165,11 @@ class UserRepositoriesTest {
 
     @Test
     fun playlistMutationAuthenticationFailureIsTyped() = runTest {
-        val repository = DefaultLibraryRepository(FakeNetwork(mutationFailure = ApiAuthenticationRequiredException()), RiskChallengeRegistry())
+        val repository =
+            DefaultLibraryRepository(
+                FakeNetwork(mutationFailure = ApiAuthenticationRequiredException()),
+                RiskChallengeRegistry(),
+            )
 
         val result = repository.createPlaylist("name") as CollectionLoadResult.Failed
 
@@ -190,10 +195,15 @@ class UserRepositoriesTest {
     fun cloudRepositoryUsesTrackDurationAndMapsUnavailable() = runTest {
         val track = CloudTrack("hash", "Cloud Song", "Artist", null, null, 123_000, "321")
         val network = FakeNetwork()
-        val resolved = DefaultCloudRepository(network, RiskChallengeRegistry()).resolveSource(track) as ResolveSongSourceResult.Resolved
+        val resolved = DefaultCloudRepository(
+            network,
+            RiskChallengeRegistry(),
+        ).resolveSource(track) as ResolveSongSourceResult.Resolved
         val unavailable =
             DefaultCloudRepository(
-                FakeNetwork(cloudSourceFailure = ApiPlaybackUnavailableException(ApiPlaybackUnavailableException.Reason.Cloud)),
+                FakeNetwork(
+                    cloudSourceFailure = ApiPlaybackUnavailableException(ApiPlaybackUnavailableException.Reason.Cloud),
+                ),
                 RiskChallengeRegistry(),
             ).resolveSource(track) as ResolveSongSourceResult.Unavailable
 
@@ -245,7 +255,16 @@ class UserRepositoriesTest {
         override suspend fun userDetail(): NetworkUserDetail {
             detailCalls += 1
             detailFailure?.let { throw it }
-            return NetworkUserDetail("42", "Fixture", "https://avatar/{size}", "https://background/{size}", "bio", 1, 2, 3)
+            return NetworkUserDetail(
+                "42",
+                "Fixture",
+                "https://avatar/{size}",
+                "https://background/{size}",
+                "bio",
+                1,
+                2,
+                3,
+            )
         }
 
         override suspend fun userVip(): NetworkUserVip {
@@ -276,47 +295,95 @@ class UserRepositoriesTest {
         }
 
         override suspend fun dailyRecommendations(): List<NetworkSong> = error("unused")
-        override suspend fun recommendedPlaylists(page: Int, pageSize: Int): List<NetworkPlaylistSummary> = error("unused")
+        override suspend fun recommendedPlaylists(page: Int, pageSize: Int): List<NetworkPlaylistSummary> =
+            error("unused")
         override suspend fun newSongs(page: Int, pageSize: Int): List<NetworkSong> = error("unused")
         override suspend fun radioRecommendations(mode: NetworkRecommendationMode): List<NetworkSong> = error("unused")
-        override suspend fun resolveSongSource(hash: String, albumId: String?, albumAudioId: String?, requestedQuality: String): NetworkSongSource = error("unused")
+        override suspend fun resolveSongSource(
+            hash: String,
+            albumId: String?,
+            albumAudioId: String?,
+            requestedQuality: String,
+        ): NetworkSongSource = error("unused")
         override suspend fun rankings(): List<NetworkRanking> = error("unused")
         override suspend fun rankingSongs(rankId: String, page: Int, pageSize: Int): NetworkSongPage = error("unused")
-        override suspend fun playlistSongs(globalCollectionId: String, page: Int, pageSize: Int): NetworkPlaylistPage = error("unused")
-        override suspend fun searchSongs(keywords: String, page: Int, pageSize: Int): NetworkSearchPage = error("unused")
+        override suspend fun playlistSongs(globalCollectionId: String, page: Int, pageSize: Int): NetworkPlaylistPage =
+            error("unused")
+        override suspend fun searchSongs(keywords: String, page: Int, pageSize: Int): NetworkSearchPage =
+            error("unused")
         override suspend fun sendMobileCode(mobile: String) = error("unused")
-        override suspend fun loginWithMobileCode(mobile: String, code: String, selectedUserId: String?): NetworkMobileCodeLoginResult = error("unused")
-        override suspend fun loginWithPassword(username: String, password: String): NetworkPasswordLoginResult = error("unused")
+        override suspend fun loginWithMobileCode(
+            mobile: String,
+            code: String,
+            selectedUserId: String?,
+        ): NetworkMobileCodeLoginResult = error("unused")
+        override suspend fun loginWithPassword(username: String, password: String): NetworkPasswordLoginResult =
+            error("unused")
         override suspend fun cloudTracks(page: Int, pageSize: Int): NetworkCloudPage {
             cloudRequest = page to pageSize
             return NetworkCloudPage(
-                tracks = listOf(NetworkCloudTrack("hash", "Cloud Song", "Artist", "Album", "https://cloud-cover/{size}", 123_000, "321")),
+                tracks = listOf(
+                    NetworkCloudTrack(
+                        "hash",
+                        "Cloud Song",
+                        "Artist",
+                        "Album",
+                        "https://cloud-cover/{size}",
+                        123_000,
+                        "321",
+                    ),
+                ),
                 total = 101,
                 hasMore = true,
                 storage = NetworkCloudStorage(100, 1_000),
             )
         }
 
-        override suspend fun resolveCloudSongSource(hash: String, albumAudioId: String?, name: String): NetworkSongSource {
+        override suspend fun resolveCloudSongSource(
+            hash: String,
+            albumAudioId: String?,
+            name: String,
+        ): NetworkSongSource {
             cloudSourceFailure?.let { throw it }
             cloudSourceRequest = Triple(hash, albumAudioId, name)
             return NetworkSongSource("https://audio/cloud.mp3", 0, "mp3")
         }
         override suspend fun banners(): List<com.resonote.core.network.model.NetworkBanner> = error("unused")
-        override suspend fun playlistCategories(): List<com.resonote.core.network.model.NetworkPlaylistCategory> = error("unused")
-        override suspend fun newAlbums(page: Int, pageSize: Int): List<com.resonote.core.network.model.NetworkAlbum> = error("unused")
-        override suspend fun albumSongs(albumId: String, page: Int, pageSize: Int): com.resonote.core.network.model.NetworkAlbumSongPage = error("unused")
-        override suspend fun artistDetail(artistId: String): com.resonote.core.network.model.NetworkArtistInfo? = error("unused")
-        override suspend fun artistSongs(artistId: String, page: Int, pageSize: Int, newestFirst: Boolean): com.resonote.core.network.model.NetworkArtistSongPage = error("unused")
-        override suspend fun searchComplex(keywords: String): com.resonote.core.network.model.NetworkComplexSearch = error("unused")
-        override suspend fun hotSearchKeywords(): List<com.resonote.core.network.model.NetworkSearchKeyword> = error("unused")
+        override suspend fun playlistCategories(): List<com.resonote.core.network.model.NetworkPlaylistCategory> =
+            error("unused")
+        override suspend fun newAlbums(page: Int, pageSize: Int): List<com.resonote.core.network.model.NetworkAlbum> =
+            error("unused")
+        override suspend fun albumSongs(
+            albumId: String,
+            page: Int,
+            pageSize: Int,
+        ): com.resonote.core.network.model.NetworkAlbumSongPage = error("unused")
+        override suspend fun artistDetail(artistId: String): com.resonote.core.network.model.NetworkArtistInfo? =
+            error("unused")
+        override suspend fun artistSongs(
+            artistId: String,
+            page: Int,
+            pageSize: Int,
+            newestFirst: Boolean,
+        ): com.resonote.core.network.model.NetworkArtistSongPage = error("unused")
+        override suspend fun searchComplex(keywords: String): com.resonote.core.network.model.NetworkComplexSearch =
+            error("unused")
+        override suspend fun hotSearchKeywords(): List<com.resonote.core.network.model.NetworkSearchKeyword> =
+            error("unused")
         override suspend fun searchSuggestions(keywords: String): List<String> = error("unused")
-        override suspend fun searchLyric(hash: String, albumAudioId: String?): com.resonote.core.network.model.NetworkLyricCandidate? = error("unused")
-        override suspend fun downloadLyric(candidate: com.resonote.core.network.model.NetworkLyricCandidate): String? = error("unused")
+        override suspend fun searchLyric(
+            hash: String,
+            albumAudioId: String?,
+        ): com.resonote.core.network.model.NetworkLyricCandidate? = error("unused")
+        override suspend fun downloadLyric(candidate: com.resonote.core.network.model.NetworkLyricCandidate): String? =
+            error("unused")
         override suspend fun resolveVideoUrl(hash: String): String? = error("unused")
-        override suspend fun recognizeAudio(pcm: ByteArray): List<com.resonote.core.network.model.NetworkRecognitionMatch> = error("unused")
+        override suspend fun recognizeAudio(
+            pcm: ByteArray,
+        ): List<com.resonote.core.network.model.NetworkRecognitionMatch> = error("unused")
         override suspend fun createQrLoginKey(): String = error("unused")
-        override suspend fun checkQrLogin(key: String): com.resonote.core.network.model.NetworkQrLoginStatus = error("unused")
+        override suspend fun checkQrLogin(key: String): com.resonote.core.network.model.NetworkQrLoginStatus =
+            error("unused")
         override suspend fun claimDailyVip(receiveDay: String): NetworkVipRewardResult {
             rewardFailure?.let { throw it }
             return NetworkVipRewardResult(true, true)

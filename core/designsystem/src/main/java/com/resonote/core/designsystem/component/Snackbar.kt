@@ -62,18 +62,13 @@ class ResonoteSnackbarController internal constructor(
 }
 
 @Composable
-fun rememberResonoteSnackbarController(
-    hostState: SnackbarHostState,
-): ResonoteSnackbarController {
+fun rememberResonoteSnackbarController(hostState: SnackbarHostState): ResonoteSnackbarController {
     val scope = rememberCoroutineScope()
     return remember(hostState, scope) { ResonoteSnackbarController(hostState, scope) }
 }
 
 @Composable
-fun ResonoteSnackbarHost(
-    hostState: SnackbarHostState,
-    modifier: Modifier = Modifier,
-) {
+fun ResonoteSnackbarHost(hostState: SnackbarHostState, modifier: Modifier = Modifier) {
     SnackbarHost(
         hostState = hostState,
         modifier = modifier

@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -48,7 +47,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -71,10 +69,10 @@ import com.resonote.core.designsystem.component.ResonoteArtwork
 import com.resonote.core.designsystem.component.ResonoteArtworkState
 import com.resonote.core.designsystem.component.ResonoteButton
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
+import com.resonote.core.designsystem.tokens.ResonoteTokens
 import com.resonote.core.model.ContentFailure
 import com.resonote.core.model.UserPlaylist
 import com.resonote.core.model.UserProfile
-import kotlinx.coroutines.launch
 
 @Composable
 fun MyRoute(
@@ -160,7 +158,7 @@ internal fun MyScreen(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             ResonoteTopAppBar(
-                title = { Text(stringResource(R.string.my_title)) },
+                title = { Text(stringResource(R.string.feature_library_impl_my_title)) },
                 actions = {
                     if (state is MyUiState.Authenticated) {
                         if (state.isRefreshing) {
@@ -170,7 +168,10 @@ internal fun MyScreen(
                             )
                         } else {
                             IconButton(onClick = onRefresh) {
-                                Icon(Icons.Rounded.Refresh, contentDescription = stringResource(R.string.my_refresh))
+                                Icon(
+                                    Icons.Rounded.Refresh,
+                                    contentDescription = stringResource(R.string.feature_library_impl_my_refresh),
+                                )
                             }
                         }
                     }
@@ -240,7 +241,7 @@ private fun LazyListScope.checkingAccount() {
         ) {
             CircularProgressIndicator()
             Text(
-                text = stringResource(R.string.my_checking_account),
+                text = stringResource(R.string.feature_library_impl_my_checking_account),
                 modifier = Modifier.padding(top = 16.dp),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -293,19 +294,19 @@ private fun LazyListScope.anonymousAccount(
                         }
                     }
                     Text(
-                        text = stringResource(R.string.my_anonymous_title),
+                        text = stringResource(R.string.feature_library_impl_my_anonymous_title),
                         modifier = Modifier.padding(top = 24.dp),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                     )
                     Text(
-                        text = stringResource(R.string.my_anonymous_body),
+                        text = stringResource(R.string.feature_library_impl_my_anonymous_body),
                         modifier = Modifier.padding(top = 8.dp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodyLarge,
                     )
                     ResonoteButton(
-                        label = stringResource(R.string.my_login),
+                        label = stringResource(R.string.feature_library_impl_my_login),
                         onClick = onLoginClick,
                         modifier = Modifier.padding(top = 24.dp),
                     )
@@ -330,7 +331,7 @@ private fun LazyListScope.anonymousAccount(
     }
     item(key = "anonymous-note") {
         Text(
-            text = stringResource(R.string.my_anonymous_local_note),
+            text = stringResource(R.string.feature_library_impl_my_anonymous_local_note),
             modifier = Modifier.padding(horizontal = 8.dp),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             style = MaterialTheme.typography.bodyMedium,
@@ -355,7 +356,7 @@ private fun LazyListScope.authenticatedAccount(
             MySectionState.Loading -> ProfileLoadingCard()
             is MySectionState.Available -> ProfileCard(profile.value)
             is MySectionState.Failed -> SectionFailure(
-                title = stringResource(R.string.my_profile_error),
+                title = stringResource(R.string.feature_library_impl_my_profile_error),
                 failure = profile.failure,
                 onRetry = onRetryProfile,
                 modifier = Modifier.testTag("my-profile-error"),
@@ -383,7 +384,7 @@ private fun LazyListScope.authenticatedAccount(
         MySectionState.Loading -> item(key = "playlists-loading") { PlaylistsLoadingCard() }
         is MySectionState.Failed -> item(key = "playlists-error") {
             SectionFailure(
-                title = stringResource(R.string.my_playlists_error),
+                title = stringResource(R.string.feature_library_impl_my_playlists_error),
                 failure = playlists.failure,
                 onRetry = onRetryPlaylists,
                 modifier = Modifier.testTag("my-playlists-error"),
@@ -564,10 +565,7 @@ private fun SettingsEntryCard(onClick: () -> Unit) {
 }
 
 @Composable
-private fun CloudEntryCard(
-    onClick: () -> Unit,
-    requiresLogin: Boolean,
-) {
+private fun CloudEntryCard(onClick: () -> Unit, requiresLogin: Boolean) {
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth().testTag("my-cloud"),
@@ -587,12 +585,18 @@ private fun CloudEntryCard(
             }
             Column(modifier = Modifier.weight(1f).padding(start = 14.dp)) {
                 Text(
-                    stringResource(R.string.my_cloud),
+                    stringResource(R.string.feature_library_impl_my_cloud),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
-                    stringResource(if (requiresLogin) R.string.my_cloud_login else R.string.my_cloud_body),
+                    stringResource(
+                        if (requiresLogin) {
+                            R.string.feature_library_impl_my_cloud_login
+                        } else {
+                            R.string.feature_library_impl_my_cloud_body
+                        },
+                    ),
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
                     style = MaterialTheme.typography.bodyMedium,
                 )
@@ -603,10 +607,7 @@ private fun CloudEntryCard(
 }
 
 @Composable
-private fun DailyVipEntryCard(
-    onClick: () -> Unit,
-    requiresLogin: Boolean,
-) {
+private fun DailyVipEntryCard(onClick: () -> Unit, requiresLogin: Boolean) {
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth().testTag("my-daily-vip"),
@@ -626,13 +627,17 @@ private fun DailyVipEntryCard(
             }
             Column(modifier = Modifier.weight(1f).padding(start = 14.dp)) {
                 Text(
-                    stringResource(R.string.my_daily_vip),
+                    stringResource(R.string.feature_library_impl_my_daily_vip),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
                     stringResource(
-                        if (requiresLogin) R.string.my_daily_vip_login else R.string.my_daily_vip_body,
+                        if (requiresLogin) {
+                            R.string.feature_library_impl_my_daily_vip_login
+                        } else {
+                            R.string.feature_library_impl_my_daily_vip_body
+                        },
                     ),
                     color = MaterialTheme.colorScheme.onTertiaryContainer,
                     style = MaterialTheme.typography.bodyMedium,
@@ -660,8 +665,8 @@ private fun LazyListScope.playlistSections(
     }
     playlistGroup(
         keyPrefix = "created",
-        title = R.string.my_created_playlists,
-        emptyText = R.string.my_created_empty,
+        title = R.string.feature_library_impl_my_created_playlists,
+        emptyText = R.string.feature_library_impl_my_created_empty,
         playlists = created,
         onPlaylistClick = onPlaylistClick,
         onCreateClick = onCreatePlaylistClick,
@@ -669,8 +674,8 @@ private fun LazyListScope.playlistSections(
     )
     playlistGroup(
         keyPrefix = "collected",
-        title = R.string.my_collected_playlists,
-        emptyText = R.string.my_collected_empty,
+        title = R.string.feature_library_impl_my_collected_playlists,
+        emptyText = R.string.feature_library_impl_my_collected_empty,
         playlists = collected,
         onPlaylistClick = onPlaylistClick,
     )
@@ -694,7 +699,7 @@ private fun LazyListScope.playlistGroup(
                 fontWeight = FontWeight.SemiBold,
             )
             Text(
-                text = stringResource(R.string.my_playlist_count, playlists.size),
+                text = stringResource(R.string.feature_library_impl_my_playlist_count, playlists.size),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.labelLarge,
             )
@@ -752,7 +757,7 @@ private fun ProfileCard(profile: UserProfile) {
     ) {
         Box(modifier = Modifier.fillMaxWidth().height(112.dp)) {
             Box(
-                modifier = Modifier.fillMaxSize().background(profileGradient(profile.userId)),
+                modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primaryContainer),
             )
             profile.backgroundUrl?.let {
                 AsyncImage(
@@ -770,7 +775,7 @@ private fun ProfileCard(profile: UserProfile) {
         Column(modifier = Modifier.padding(start = 20.dp, top = 42.dp, end = 20.dp, bottom = 20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = profile.nickname.ifBlank { stringResource(R.string.my_unnamed_user) },
+                    text = profile.nickname.ifBlank { stringResource(R.string.feature_library_impl_my_unnamed_user) },
                     modifier = Modifier.weight(1f),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
@@ -784,7 +789,7 @@ private fun ProfileCard(profile: UserProfile) {
                         shape = CircleShape,
                     ) {
                         Text(
-                            text = profile.vipLabel.ifBlank { stringResource(R.string.my_vip) },
+                            text = profile.vipLabel.ifBlank { stringResource(R.string.feature_library_impl_my_vip) },
                             modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp),
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
@@ -793,7 +798,7 @@ private fun ProfileCard(profile: UserProfile) {
                 }
             }
             Text(
-                text = stringResource(R.string.my_user_id, profile.userId),
+                text = stringResource(R.string.feature_library_impl_my_user_id, profile.userId),
                 modifier = Modifier.padding(top = 3.dp),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodySmall,
@@ -812,9 +817,21 @@ private fun ProfileCard(profile: UserProfile) {
                 modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                ProfileStat(stringResource(R.string.my_follows), profile.follows.compactNumber(), Modifier.weight(1f))
-                ProfileStat(stringResource(R.string.my_fans), profile.fans.compactNumber(), Modifier.weight(1f))
-                ProfileStat(stringResource(R.string.my_listen_time), profile.listenMinutes.listenTime(), Modifier.weight(1f))
+                ProfileStat(
+                    stringResource(R.string.feature_library_impl_my_follows),
+                    profile.follows.compactNumber(),
+                    Modifier.weight(1f),
+                )
+                ProfileStat(
+                    stringResource(R.string.feature_library_impl_my_fans),
+                    profile.fans.compactNumber(),
+                    Modifier.weight(1f),
+                )
+                ProfileStat(
+                    stringResource(R.string.feature_library_impl_my_listen_time),
+                    profile.listenMinutes.listenTime(),
+                    Modifier.weight(1f),
+                )
             }
         }
     }
@@ -826,22 +843,23 @@ private fun Avatar(profile: UserProfile, modifier: Modifier = Modifier) {
         modifier = modifier.size(72.dp),
         shape = CircleShape,
         color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 3.dp,
+        shadowElevation = ResonoteTokens.elevation.level2.maximumShadow,
     ) {
         Box(
-            modifier = Modifier.padding(3.dp).clip(CircleShape).background(profileGradient(profile.nickname)),
+            modifier = Modifier.padding(3.dp).clip(CircleShape)
+                .background(MaterialTheme.colorScheme.secondaryContainer),
             contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = profile.nickname.take(1).ifBlank { "·" },
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
             )
             profile.avatarUrl?.let {
                 AsyncImage(
                     model = it,
-                    contentDescription = stringResource(R.string.my_avatar, profile.nickname),
+                    contentDescription = stringResource(R.string.feature_library_impl_my_avatar, profile.nickname),
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize(),
                 )
@@ -852,8 +870,15 @@ private fun Avatar(profile: UserProfile, modifier: Modifier = Modifier) {
 
 @Composable
 private fun ProfileStat(label: String, value: String, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier, color = MaterialTheme.colorScheme.surfaceContainer, shape = MaterialTheme.shapes.medium) {
-        Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+    Surface(
+        modifier = modifier,
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        shape = MaterialTheme.shapes.medium,
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
             Text(value, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, maxLines = 1)
             Text(
                 label,
@@ -886,9 +911,13 @@ private fun LikedPlaylistCard(playlist: UserPlaylist, onPlaylistClick: (UserPlay
                 }
             }
             Column(modifier = Modifier.weight(1f).padding(start = 14.dp)) {
-                Text(stringResource(R.string.my_liked), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Text(
-                    stringResource(R.string.my_song_count, playlist.count),
+                    stringResource(R.string.feature_library_impl_my_liked),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    stringResource(R.string.feature_library_impl_my_song_count, playlist.count),
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                     style = MaterialTheme.typography.bodyMedium,
                 )
@@ -920,7 +949,7 @@ private fun PlaylistRow(playlist: UserPlaylist, onClick: () -> Unit) {
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    stringResource(R.string.my_song_count, playlist.count),
+                    stringResource(R.string.feature_library_impl_my_song_count, playlist.count),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall,
                 )
@@ -937,11 +966,14 @@ private fun PlaylistRow(playlist: UserPlaylist, onClick: () -> Unit) {
 @Composable
 private fun PlaylistArtwork(playlist: UserPlaylist) {
     ResonoteArtwork(
-        state = ResonoteArtworkState.LOADED,
-        contentDescription = stringResource(R.string.my_playlist_artwork, playlist.name),
+        state = if (playlist.coverUrl.isNullOrBlank()) {
+            ResonoteArtworkState.MISSING
+        } else {
+            ResonoteArtworkState.LOADED
+        },
+        contentDescription = stringResource(R.string.feature_library_impl_my_playlist_artwork, playlist.name),
         modifier = Modifier.size(52.dp),
     ) {
-        Box(modifier = Modifier.fillMaxSize().background(profileGradient(playlist.globalId)))
         playlist.coverUrl?.let {
             AsyncImage(
                 model = it,
@@ -974,7 +1006,7 @@ private fun PlaylistsLoadingCard() {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
             CircularProgressIndicator(modifier = Modifier.size(28.dp), strokeWidth = 2.dp)
             Text(
-                stringResource(R.string.my_loading_playlists),
+                stringResource(R.string.feature_library_impl_my_loading_playlists),
                 modifier = Modifier.padding(top = 12.dp),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -1005,7 +1037,9 @@ private fun SectionFailure(
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
-            androidx.compose.material3.TextButton(onClick = onRetry) { Text(stringResource(R.string.my_retry)) }
+            androidx.compose.material3.TextButton(onClick = onRetry) {
+                Text(stringResource(R.string.feature_library_impl_my_retry))
+            }
         }
     }
 }
@@ -1013,25 +1047,14 @@ private fun SectionFailure(
 @Composable
 private fun ContentFailure.message(): String = stringResource(
     when (this) {
-        ContentFailure.AuthenticationRequired -> R.string.my_error_auth
-        ContentFailure.Network -> R.string.my_error_network
-        ContentFailure.ServiceRejected -> R.string.my_error_service
-        is ContentFailure.RiskVerificationRequired -> R.string.my_error_risk
-        ContentFailure.RiskBlocked -> R.string.my_error_risk
-        ContentFailure.Protocol -> R.string.my_error_protocol
+        ContentFailure.AuthenticationRequired -> R.string.feature_library_impl_my_error_auth
+        ContentFailure.Network -> R.string.feature_library_impl_my_error_network
+        ContentFailure.ServiceRejected -> R.string.feature_library_impl_my_error_service
+        is ContentFailure.RiskVerificationRequired -> R.string.feature_library_impl_my_error_risk
+        ContentFailure.RiskBlocked -> R.string.feature_library_impl_my_error_risk
+        ContentFailure.Protocol -> R.string.feature_library_impl_my_error_protocol
     },
 )
-
-@Composable
-private fun profileGradient(seed: String): Brush {
-    val palettes = listOf(
-        listOf(Color(0xFF7A1538), Color(0xFFD8426D), Color(0xFFF4B2C3)),
-        listOf(Color(0xFF173A4B), Color(0xFF377E92), Color(0xFFB9DDE0)),
-        listOf(Color(0xFF38305E), Color(0xFF7769A8), Color(0xFFD8CAE8)),
-        listOf(Color(0xFF5B361A), Color(0xFFB2723C), Color(0xFFE9C89C)),
-    )
-    return Brush.linearGradient(palettes[(seed.hashCode() and Int.MAX_VALUE) % palettes.size])
-}
 
 private fun Long.compactNumber(): String = when {
     this >= 100_000_000 -> "%.1f亿".format(this / 100_000_000.0)

@@ -7,8 +7,6 @@ import com.resonote.core.datastore.SessionCipher
 import com.resonote.core.network.session.ApiSession
 import com.resonote.core.network.session.ApiSessionStore
 import com.resonote.core.network.session.apiAuthenticationCookieNames
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -17,6 +15,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
+import javax.inject.Inject
+import javax.inject.Singleton
 
 @Singleton
 internal class EncryptedApiSessionStore @Inject constructor(
@@ -24,7 +24,10 @@ internal class EncryptedApiSessionStore @Inject constructor(
     private val cipher: SessionCipher,
 ) : ApiSessionStore {
     private val mutex = Mutex()
-    private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        encodeDefaults = true
+    }
 
     override val session: Flow<ApiSession?> =
         storage.data.map { envelope ->

@@ -3,15 +3,15 @@ package com.resonote.feature.recognition.impl
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
-import java.io.ByteArrayOutputStream
-import java.util.concurrent.atomic.AtomicBoolean
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
+import java.util.concurrent.atomic.AtomicBoolean
+import javax.inject.Inject
+import javax.inject.Singleton
 
 @Singleton
 internal class AndroidRecognitionRecorder @Inject constructor() : RecognitionRecorder {
@@ -24,10 +24,10 @@ internal class AndroidRecognitionRecorder @Inject constructor() : RecognitionRec
         onProgress: (elapsedMillis: Long) -> Unit,
     ): RecognitionCaptureResult = withContext(Dispatchers.IO) {
         require(maxDurationMillis > 0) { "maxDurationMillis must be positive" }
-        val bytesPerSecond = RecognitionSampleRate * Short.SIZE_BYTES
+        val bytesPerSecond = RECOGNITION_SAMPLE_RATE * Short.SIZE_BYTES
         val maximumBytes = (bytesPerSecond * maxDurationMillis / 1_000L).toInt()
         val minimumBuffer = AudioRecord.getMinBufferSize(
-            RecognitionSampleRate,
+            RECOGNITION_SAMPLE_RATE,
             AudioFormat.CHANNEL_IN_MONO,
             AudioFormat.ENCODING_PCM_16BIT,
         )
@@ -39,7 +39,7 @@ internal class AndroidRecognitionRecorder @Inject constructor() : RecognitionRec
                 .setAudioFormat(
                     AudioFormat.Builder()
                         .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                        .setSampleRate(RecognitionSampleRate)
+                        .setSampleRate(RECOGNITION_SAMPLE_RATE)
                         .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
                         .build(),
                 )

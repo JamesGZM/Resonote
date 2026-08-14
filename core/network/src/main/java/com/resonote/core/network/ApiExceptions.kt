@@ -13,10 +13,7 @@ class ApiAuthenticationRequiredException(
 
 class ApiHttpException(val statusCode: Int) : ApiException("HTTP request failed with status $statusCode")
 
-class ApiNetworkException(
-    val kind: Kind,
-    cause: Throwable,
-) : ApiException("Network request failed: $kind", cause) {
+class ApiNetworkException(val kind: Kind, cause: Throwable) : ApiException("Network request failed: $kind", cause) {
     enum class Kind {
         Offline,
         Timeout,
@@ -34,7 +31,11 @@ class ApiProtocolException(val reason: Reason) : ApiException("API protocol fail
 }
 
 class ApiServiceException(val serviceCode: String?) :
-    ApiException("API service rejected the request${serviceCode?.let { " (code=$it)" }.orEmpty()}")
+    ApiException(
+        "API service rejected the request${serviceCode?.let {
+            " (code=$it)"
+        }.orEmpty()}",
+    )
 
 class ApiPlaybackUnavailableException(val reason: Reason) : ApiException("Song playback unavailable: $reason") {
     enum class Reason {
@@ -44,10 +45,8 @@ class ApiPlaybackUnavailableException(val reason: Reason) : ApiException("Song p
     }
 }
 
-class ApiRiskException(
-    val challenge: ApiRiskChallenge,
-    val reason: Reason,
-) : ApiException("API risk verification failed: $reason") {
+class ApiRiskException(val challenge: ApiRiskChallenge, val reason: Reason) :
+    ApiException("API risk verification failed: $reason") {
     enum class Reason {
         Cancelled,
         Failed,
@@ -57,4 +56,8 @@ class ApiRiskException(
 }
 
 class ApiRiskBlockedException(val serviceCode: String?) :
-    ApiException("API operation blocked by account risk control${serviceCode?.let { " (code=$it)" }.orEmpty()}")
+    ApiException(
+        "API operation blocked by account risk control${serviceCode?.let {
+            " (code=$it)"
+        }.orEmpty()}",
+    )

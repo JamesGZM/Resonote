@@ -9,11 +9,11 @@ import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
 interface LocalMediaTreeSource {
     suspend fun scan(treeUri: String): LocalMediaTreeScanResult
@@ -32,9 +32,8 @@ enum class LocalMediaTreeScanFailure {
 }
 
 @Singleton
-internal class DocumentsLocalMediaTreeSource @Inject constructor(
-    @ApplicationContext context: Context,
-) : LocalMediaTreeSource {
+internal class DocumentsLocalMediaTreeSource @Inject constructor(@ApplicationContext context: Context) :
+    LocalMediaTreeSource {
     private val contentResolver = context.contentResolver
 
     override suspend fun scan(treeUri: String): LocalMediaTreeScanResult = withContext(Dispatchers.IO) {

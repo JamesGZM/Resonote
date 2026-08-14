@@ -23,7 +23,6 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import java.io.File
 
 class DefaultLocalMediaRepositoryTest {
     @get:Rule
@@ -179,20 +178,15 @@ class DefaultLocalMediaRepositoryTest {
         assertThat(repository.resolvePlaybackSource(LocalMediaId("existing"))).isNull()
     }
 
-    private fun repository(
-        dao: FakeLocalMediaDao,
-        store: FakeLocalMediaStore,
-        id: String = "generated-id",
-    ) = DefaultLocalMediaRepository(
-        dao = dao,
-        store = store,
-        newId = { LocalMediaId(id) },
-        now = { NOW },
-    )
+    private fun repository(dao: FakeLocalMediaDao, store: FakeLocalMediaStore, id: String = "generated-id") =
+        DefaultLocalMediaRepository(
+            dao = dao,
+            store = store,
+            newId = { LocalMediaId(id) },
+            now = { NOW },
+        )
 
-    private class FakeLocalMediaDao(
-        val rows: MutableList<LocalMediaEntity> = mutableListOf(),
-    ) : LocalMediaDao {
+    private class FakeLocalMediaDao(val rows: MutableList<LocalMediaEntity> = mutableListOf()) : LocalMediaDao {
         private val observed = MutableStateFlow(rows.toList())
         var failInsert = false
 
@@ -202,8 +196,12 @@ class DefaultLocalMediaRepositoryTest {
 
         override suspend fun findById(id: String): LocalMediaEntity? = rows.firstOrNull { it.id == id }
 
-        override suspend fun findDuplicates(sizeBytes: Long, sha256: String): List<LocalMediaEntity> =
-            rows.filter { it.sizeBytes == sizeBytes && it.sha256 == sha256 && !it.pendingDeletion }
+        override suspend fun findDuplicates(sizeBytes: Long, sha256: String): List<LocalMediaEntity> = rows.filter {
+            it.sizeBytes ==
+                sizeBytes &&
+                it.sha256 == sha256 &&
+                !it.pendingDeletion
+        }
 
         override suspend fun insert(entity: LocalMediaEntity) {
             if (failInsert) error("database unavailable")
@@ -238,9 +236,7 @@ class DefaultLocalMediaRepositoryTest {
         }
     }
 
-    private class FakeLocalMediaStore(
-        private val stored: StoredLocalMedia,
-    ) : LocalMediaStore {
+    private class FakeLocalMediaStore(private val stored: StoredLocalMedia) : LocalMediaStore {
         val persistRequests = mutableListOf<LocalMediaPersistRequest>()
         val removedFiles = mutableListOf<LocalMediaFiles>()
         var recoverResult: LocalMediaStoreResult<Unit> = LocalMediaStoreResult.Success(Unit)
@@ -302,10 +298,7 @@ class DefaultLocalMediaRepositoryTest {
             metadata = METADATA,
         )
 
-        fun entity(
-            id: String,
-            storagePath: String = "/private/$id.flac",
-        ) = LocalMediaEntity(
+        fun entity(id: String, storagePath: String = "/private/$id.flac") = LocalMediaEntity(
             id = id,
             storagePath = storagePath,
             displayName = "$id.flac",

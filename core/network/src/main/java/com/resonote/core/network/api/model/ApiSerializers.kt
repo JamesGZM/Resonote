@@ -23,7 +23,13 @@ internal object FlexibleStringSerializer : KSerializer<String?> {
     override fun deserialize(decoder: Decoder): String? {
         val element = (decoder as JsonDecoder).decodeJsonElement()
         val primitive = element as? JsonPrimitive ?: return null
-        return if (element === JsonNull || (!primitive.isString && primitive.booleanOrNull != null)) null else primitive.contentOrNull
+        return if (element === JsonNull ||
+            (!primitive.isString && primitive.booleanOrNull != null)
+        ) {
+            null
+        } else {
+            primitive.contentOrNull
+        }
     }
 
     override fun serialize(encoder: Encoder, value: String?) {

@@ -12,8 +12,8 @@ import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.model.ResolvedSongSource
 import com.resonote.core.playback.PlaybackController
-import com.resonote.core.playback.PlaybackItem
 import com.resonote.core.playback.PlaybackFormat
+import com.resonote.core.playback.PlaybackItem
 import com.resonote.core.playback.PlaybackMode
 import com.resonote.core.playback.PlaybackOrigin
 import com.resonote.core.playback.PlaybackState
@@ -143,9 +143,7 @@ class PlaybackViewModelTest {
             .isEqualTo("audio-cloud-history")
     }
 
-    private class FakePlaybackController(
-        initialState: PlaybackState = PlaybackState(),
-    ) : PlaybackController {
+    private class FakePlaybackController(initialState: PlaybackState = PlaybackState()) : PlaybackController {
         override val state = MutableStateFlow(initialState)
         var playedItems = emptyList<PlaybackItem>()
         var playedIndex = -1

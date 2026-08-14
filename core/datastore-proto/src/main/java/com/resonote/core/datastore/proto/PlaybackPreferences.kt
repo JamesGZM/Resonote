@@ -6,10 +6,7 @@ import java.io.InputStream
 import java.io.OutputStream
 
 /** Lite representation of playback_preferences.proto using the standard protobuf wire format. */
-data class PlaybackPreferences(
-    val playbackSpeedPercent: Int = 0,
-    val onlinePlaybackQuality: String = "",
-) {
+data class PlaybackPreferences(val playbackSpeedPercent: Int = 0, val onlinePlaybackQuality: String = "") {
     fun writeTo(output: OutputStream) {
         CodedOutputStream.newInstance(output).apply {
             if (playbackSpeedPercent != 0) writeUInt32(1, playbackSpeedPercent)

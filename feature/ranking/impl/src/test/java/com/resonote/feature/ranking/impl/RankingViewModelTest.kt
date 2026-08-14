@@ -111,11 +111,7 @@ class RankingViewModelTest {
 
         override suspend fun loadRankings(): CollectionLoadResult<List<Ranking>> = error("unused")
 
-        override suspend fun loadSongs(
-            rankId: String,
-            page: Int,
-            pageSize: Int,
-        ): CollectionLoadResult<SongPage> {
+        override suspend fun loadSongs(rankId: String, page: Int, pageSize: Int): CollectionLoadResult<SongPage> {
             requests += rankId to page
             if (page == 1 && failFirstPage) return CollectionLoadResult.Failed(ContentFailure.Network)
             if (page == 2 && failSecondPage) return CollectionLoadResult.Failed(ContentFailure.Network)

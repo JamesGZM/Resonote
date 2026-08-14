@@ -18,11 +18,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Equalizer
+import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Album
+import androidx.compose.material.icons.rounded.Equalizer
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -32,10 +32,10 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -44,9 +44,9 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 import com.resonote.core.designsystem.R
 import com.resonote.core.designsystem.tokens.ResonoteTokens
-import coil3.compose.AsyncImage
 
 enum class ResonoteArtworkState {
     LOADED,
@@ -62,10 +62,10 @@ fun ResonoteArtwork(
     shape: Shape = ResonoteTokens.artworkShapes.compact,
     artwork: @Composable BoxScope.() -> Unit = {},
 ) {
-    val placeholderColor = when (state) {
-        ResonoteArtworkState.LOADING -> MaterialTheme.colorScheme.surfaceContainerHigh
-        ResonoteArtworkState.MISSING -> MaterialTheme.colorScheme.surfaceContainerHighest
-        ResonoteArtworkState.LOADED -> Color.Transparent
+    val placeholderColor = if (state == ResonoteArtworkState.LOADED) {
+        Color.Transparent
+    } else {
+        MaterialTheme.colorScheme.surfaceContainerHighest
     }
     Box(
         modifier = modifier
@@ -237,15 +237,6 @@ fun ResonoteMusicItem(
                         fallback = artwork,
                     )
                 }
-                if (effectiveArtworkState == ResonoteArtworkState.LOADED) {
-                    ResonoteArtworkBadge(
-                        qualityLabel = qualityLabel,
-                        isVip = isVip,
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(4.dp),
-                    )
-                }
             },
         )
         Spacer(Modifier.width(12.dp))
@@ -256,14 +247,22 @@ fun ResonoteMusicItem(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Text(
-                    text = title,
-                    color = titleColor,
-                    style = MaterialTheme.typography.bodyLarge,
-                    maxLines = 1,
-                    softWrap = false,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(
+                        text = title,
+                        modifier = Modifier.weight(1f),
+                        color = titleColor,
+                        style = MaterialTheme.typography.bodyLarge,
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    qualityLabel?.takeIf(String::isNotBlank)?.let { ResonoteQualityBadge(it) }
+                    if (isVip) ResonoteVipBadge()
+                }
                 Text(
                     text = supportingText,
                     color = colors.onSurfaceVariant,
@@ -310,45 +309,6 @@ fun ResonoteMusicItem(
 }
 
 @Composable
-fun ResonoteArtworkBadge(
-    qualityLabel: String?,
-    isVip: Boolean,
-    modifier: Modifier = Modifier,
-) {
-    val label = listOfNotNull(
-        qualityLabel?.toCompactQualityLabel(),
-        "VIP".takeIf { isVip },
-    ).joinToString(separator = " · ")
-    if (label.isNotEmpty()) {
-        Surface(
-            modifier = modifier,
-            color = Color.Black.copy(alpha = 0.62f),
-            contentColor = Color.White,
-            shape = RoundedCornerShape(4.dp),
-        ) {
-            val badgeFontSize = with(LocalDensity.current) { 8.dp.toSp() }
-            val badgeLineHeight = with(LocalDensity.current) { 10.dp.toSp() }
-            Text(
-                text = label,
-                modifier = Modifier.padding(horizontal = 3.dp, vertical = 1.dp),
-                style = MaterialTheme.typography.labelSmall,
-                fontSize = badgeFontSize,
-                lineHeight = badgeLineHeight,
-                maxLines = 1,
-                softWrap = false,
-            )
-        }
-    }
-}
-
-private fun String.toCompactQualityLabel(): String? = when (val normalized = trim().uppercase()) {
-    "LOSSLESS", "SQ" -> "SQ"
-    "HIGH QUALITY", "HIGH_QUALITY", "HQ" -> "HQ"
-    "HI-RES", "HI RES", "HIRES", "HIGH RESOLUTION", "HIGH_RESOLUTION", "HR" -> "HR"
-    else -> normalized.takeIf { it.length <= 3 }
-}
-
-@Composable
 private fun LoadingMusicText(modifier: Modifier = Modifier) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Box(
@@ -369,10 +329,7 @@ private fun LoadingMusicText(modifier: Modifier = Modifier) {
 }
 
 @Immutable
-data class ResonotePlaylistMetadata(
-    val title: String,
-    val playCount: String? = null,
-)
+data class ResonotePlaylistMetadata(val title: String, val playCount: String? = null)
 
 @Composable
 fun ResonotePlaylistItem(
@@ -415,8 +372,8 @@ fun ResonotePlaylistItem(
                     modifier = Modifier
                         .align(Alignment.BottomStart)
                         .padding(8.dp),
-                    color = Color.Black.copy(alpha = 0.58f),
-                    contentColor = Color.White,
+                    color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.58f),
+                    contentColor = ResonoteTokens.systemColors.onScrim,
                     shape = MaterialTheme.shapes.small,
                 ) {
                     Row(
@@ -459,7 +416,7 @@ private fun DefaultSongArtwork(seed: String) {
             imageVector = Icons.Rounded.Album,
             contentDescription = null,
             modifier = Modifier.size(30.dp),
-            tint = Color.White.copy(alpha = 0.9f),
+            tint = ResonoteTokens.systemColors.onMediaCanvas.copy(alpha = 0.9f),
         )
     }
 }
@@ -471,7 +428,7 @@ private fun DefaultPlaylistArtwork(seed: String) {
             imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
             contentDescription = null,
             modifier = Modifier.size(32.dp),
-            tint = Color.White.copy(alpha = 0.9f),
+            tint = ResonoteTokens.systemColors.onMediaCanvas.copy(alpha = 0.9f),
         )
     }
 }

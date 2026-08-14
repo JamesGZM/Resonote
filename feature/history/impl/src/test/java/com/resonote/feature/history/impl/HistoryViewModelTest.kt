@@ -174,7 +174,8 @@ class HistoryViewModelTest {
             code: String,
             selectedUserId: String?,
         ): MobileCodeLoginResult = error("unused")
-        override suspend fun loginWithPassword(username: String, password: String): PasswordLoginResult = error("unused")
+        override suspend fun loginWithPassword(username: String, password: String): PasswordLoginResult =
+            error("unused")
         override suspend fun createQrLoginKey(): QrLoginKeyResult = error("unused")
         override suspend fun checkQrLogin(key: String): QrLoginCheckResult = error("unused")
     }
@@ -192,10 +193,7 @@ class HistoryViewModelTest {
             vip = false,
         )
 
-        fun deviceItem(
-            mediaId: String,
-            source: DeviceHistorySource = DeviceHistorySource.Local,
-        ) = DeviceHistoryItem(
+        fun deviceItem(mediaId: String, source: DeviceHistorySource = DeviceHistorySource.Local) = DeviceHistoryItem(
             record = DeviceHistoryRecord(
                 source = source,
                 mediaId = mediaId,

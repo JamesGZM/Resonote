@@ -4,18 +4,16 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.Network
 import dagger.hilt.android.qualifiers.ApplicationContext
+import okhttp3.ConnectionPool
+import okhttp3.OkHttpClient
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
-import okhttp3.ConnectionPool
-import okhttp3.OkHttpClient
 
 /** Discards pooled sockets after Android's default network changes. */
 @Singleton
-class NetworkConnectionRecovery @Inject constructor(
-    @ApplicationContext context: Context,
-) {
+class NetworkConnectionRecovery @Inject constructor(@ApplicationContext context: Context) {
     private val connectivityManager = context.getSystemService(ConnectivityManager::class.java)
     private val connectionPools = ConnectionPoolInvalidator()
     private val started = AtomicBoolean(false)

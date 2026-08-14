@@ -3,9 +3,9 @@ package com.resonote.core.data
 import com.resonote.core.datastore.AppearancePreferencesStorage
 import com.resonote.core.model.ThemeMode
 import com.resonote.core.model.ThemePreferences
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.flow.map
 
 @Singleton
 internal class DefaultThemePreferencesRepository @Inject constructor(

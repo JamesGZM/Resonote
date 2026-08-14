@@ -5,14 +5,14 @@ import com.resonote.core.network.ApiProtocolException
 import com.resonote.core.network.ApiServiceException
 import com.resonote.core.network.ListeningHistoryNetworkDataSource
 import com.resonote.core.network.model.NetworkSong
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.put
+import javax.inject.Inject
+import javax.inject.Singleton
 
 @Singleton
 internal class UserListenProtocolClient @Inject constructor(
@@ -46,13 +46,13 @@ internal class UserListenProtocolClient @Inject constructor(
                 }.toString().encodeToByteArray()
             ApiExchange(
                 spec =
-                    ApiEndpointSpec(
-                        origin = origins.listen,
-                        path = "/v2/get_list",
-                        method = ApiHttpMethod.Post,
-                        query = linkedMapOf("clienttime" to clientTime.toString(), "plat" to "0"),
-                        body = body,
-                    ),
+                ApiEndpointSpec(
+                    origin = origins.listen,
+                    path = "/v2/get_list",
+                    method = ApiHttpMethod.Post,
+                    query = linkedMapOf("clienttime" to clientTime.toString(), "plat" to "0"),
+                    body = body,
+                ),
                 decode = { response -> decodeHistory(response.body ?: throw malformedResponse()) },
             )
         }
@@ -78,9 +78,9 @@ internal class UserListenProtocolClient @Inject constructor(
             hash = hash,
             title = title,
             artist =
-                item.string("author_name")?.trim()?.takeIf(String::isNotEmpty)
-                    ?: item.string("singername")?.trim()?.takeIf(String::isNotEmpty)
-                    ?: nameArtist,
+            item.string("author_name")?.trim()?.takeIf(String::isNotEmpty)
+                ?: item.string("singername")?.trim()?.takeIf(String::isNotEmpty)
+                ?: nameArtist,
             coverUrl = item.string("image")?.trim()?.takeIf(String::isNotEmpty),
             albumId = null,
             albumAudioId = null,
@@ -105,8 +105,7 @@ internal class UserListenProtocolClient @Inject constructor(
     private fun JsonObject.string(name: String): String? =
         (get(name) as? JsonPrimitive)?.takeIf(JsonPrimitive::isString)?.contentOrNull
 
-    private fun JsonObject.scalar(name: String): String? =
-        (get(name) as? JsonPrimitive)?.contentOrNull
+    private fun JsonObject.scalar(name: String): String? = (get(name) as? JsonPrimitive)?.contentOrNull
 
     private fun JsonObject.long(name: String): Long? {
         val value = get(name) as? JsonPrimitive ?: return null

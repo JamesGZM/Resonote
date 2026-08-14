@@ -5,17 +5,15 @@ import androidx.lifecycle.viewModelScope
 import com.resonote.core.data.VideoRepository
 import com.resonote.core.model.CollectionLoadResult
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @HiltViewModel
-class VideoViewModel @Inject constructor(
-    private val repository: VideoRepository,
-) : ViewModel() {
+class VideoViewModel @Inject constructor(private val repository: VideoRepository) : ViewModel() {
     private val mutableUiState = MutableStateFlow<VideoUiState>(VideoUiState.Idle)
     val uiState: StateFlow<VideoUiState> = mutableUiState.asStateFlow()
 
@@ -36,10 +34,11 @@ class VideoViewModel @Inject constructor(
         loadJob = viewModelScope.launch {
             mutableUiState.value = VideoUiState.Loading
             mutableUiState.value = when (val result = repository.resolveVideoUrl(hash)) {
-                is CollectionLoadResult.Available -> result.value
-                    ?.takeIf(String::isNotBlank)
-                    ?.let(VideoUiState::Ready)
-                    ?: VideoUiState.Unavailable
+                is CollectionLoadResult.Available ->
+                    result.value
+                        ?.takeIf(String::isNotBlank)
+                        ?.let(VideoUiState::Ready)
+                        ?: VideoUiState.Unavailable
                 is CollectionLoadResult.Failed -> VideoUiState.Failed(result.failure)
             }
         }

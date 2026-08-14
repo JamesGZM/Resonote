@@ -3,12 +3,12 @@ package com.resonote.core.datastore
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
 import com.resonote.core.datastore.proto.PlaybackPreferences
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import java.io.InputStream
 import java.io.OutputStream
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 
 object PlaybackPreferencesSerializer : Serializer<PlaybackPreferences> {
     override val defaultValue: PlaybackPreferences = PlaybackPreferences.getDefaultInstance()
@@ -19,9 +19,8 @@ object PlaybackPreferencesSerializer : Serializer<PlaybackPreferences> {
 }
 
 @Singleton
-internal class ProtoPlaybackPreferencesStorage @Inject constructor(
-    private val store: DataStore<PlaybackPreferences>,
-) : PlaybackPreferencesStorage {
+internal class ProtoPlaybackPreferencesStorage @Inject constructor(private val store: DataStore<PlaybackPreferences>) :
+    PlaybackPreferencesStorage {
     override val playbackSpeedPercent: Flow<Int> = store.data.map { it.playbackSpeedPercent }
     override val onlinePlaybackQuality: Flow<String> = store.data.map { it.onlinePlaybackQuality }
 

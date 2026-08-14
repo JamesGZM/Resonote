@@ -16,6 +16,7 @@
 
 import com.android.build.api.dsl.ApplicationExtension
 import com.resonote.buildlogic.configureKotlinAndroid
+import com.resonote.buildlogic.configureSpotless
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.apply
@@ -25,6 +26,7 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
             apply(plugin = "com.android.application")
+            configureSpotless()
             extensions.configure<ApplicationExtension> {
                 configureKotlinAndroid(this)
                 defaultConfig.targetSdk = 36

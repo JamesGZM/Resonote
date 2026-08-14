@@ -10,30 +10,30 @@ import com.resonote.core.data.LocalMediaRepository
 import com.resonote.core.data.ThemePreferencesRepository
 import com.resonote.core.model.AuthGateReason
 import com.resonote.core.model.AuthState
-import com.resonote.core.model.MobileCodeLoginResult
 import com.resonote.core.model.LocalMedia
 import com.resonote.core.model.LocalMediaDeleteResult
 import com.resonote.core.model.LocalMediaDuplicateAction
 import com.resonote.core.model.LocalMediaId
 import com.resonote.core.model.LocalMediaImportResult
 import com.resonote.core.model.LocalMediaPlaybackSource
+import com.resonote.core.model.MobileCodeLoginResult
 import com.resonote.core.model.PasswordLoginResult
 import com.resonote.core.model.QrLoginCheckResult
 import com.resonote.core.model.QrLoginKeyResult
 import com.resonote.core.model.SendMobileCodeResult
 import com.resonote.core.model.ThemeMode
 import com.resonote.core.model.ThemePreferences
-import com.resonote.core.navigation.LoginGateNavKey
 import com.resonote.core.navigation.LoginContinuation
+import com.resonote.core.navigation.LoginGateNavKey
 import com.resonote.core.navigation.TabsShellNavKey
 import com.resonote.feature.cloud.api.CloudNavKey
 import com.resonote.feature.local.api.LocalMusicNavKey
 import com.resonote.feature.vip.api.DailyVipNavKey
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -238,8 +238,13 @@ class MainActivityViewModelTest {
         }
 
         override suspend fun sendMobileCode(mobile: String): SendMobileCodeResult = error("unused")
-        override suspend fun loginWithMobileCode(mobile: String, code: String, selectedUserId: String?): MobileCodeLoginResult = error("unused")
-        override suspend fun loginWithPassword(username: String, password: String): PasswordLoginResult = error("unused")
+        override suspend fun loginWithMobileCode(
+            mobile: String,
+            code: String,
+            selectedUserId: String?,
+        ): MobileCodeLoginResult = error("unused")
+        override suspend fun loginWithPassword(username: String, password: String): PasswordLoginResult =
+            error("unused")
         override suspend fun createQrLoginKey(): QrLoginKeyResult = error("unused")
         override suspend fun checkQrLogin(key: String): QrLoginCheckResult = error("unused")
     }

@@ -9,7 +9,6 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
-import com.resonote.core.model.ThemeMode
 import com.resonote.core.designsystem.tokens.LocalResonoteArtwork
 import com.resonote.core.designsystem.tokens.LocalResonoteArtworkShapes
 import com.resonote.core.designsystem.tokens.LocalResonoteBorders
@@ -34,6 +33,7 @@ import com.resonote.core.designsystem.tokens.ResonoteSpacing
 import com.resonote.core.designsystem.tokens.ResonoteStateLayers
 import com.resonote.core.designsystem.tokens.ResonoteSystemColors
 import com.resonote.core.designsystem.tokens.ResonoteTouchTargets
+import com.resonote.core.model.ThemeMode
 
 typealias ResonoteThemeMode = ThemeMode
 

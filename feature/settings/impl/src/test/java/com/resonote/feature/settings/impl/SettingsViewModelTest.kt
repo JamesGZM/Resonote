@@ -3,8 +3,8 @@ package com.resonote.feature.settings.impl
 import com.google.common.truth.Truth.assertThat
 import com.resonote.core.data.PlaybackPreferencesRepository
 import com.resonote.core.data.ThemePreferencesRepository
-import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.model.OnlinePlaybackQuality
+import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.model.ThemeMode
 import com.resonote.core.model.ThemePreferences
 import kotlinx.coroutines.Dispatchers

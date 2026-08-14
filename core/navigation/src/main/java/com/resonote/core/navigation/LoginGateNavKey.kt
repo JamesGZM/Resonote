@@ -4,10 +4,7 @@ import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class LoginGateNavKey(
-    val sessionExpired: Boolean,
-    val continuation: LoginContinuation? = null,
-) : NavKey
+data class LoginGateNavKey(val sessionExpired: Boolean, val continuation: LoginContinuation? = null) : NavKey
 
 @Serializable
-enum class LoginContinuation { Cloud }
+enum class LoginContinuation { Cloud, }

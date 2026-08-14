@@ -6,10 +6,6 @@ import com.resonote.core.network.api.model.ApiResponse
 import com.resonote.core.network.session.ApiSession
 import com.resonote.core.network.session.ApiSessionManager
 import com.resonote.core.network.session.ApiSessionStore
-import java.time.Clock
-import java.time.Instant
-import java.time.ZoneOffset
-import java.util.Optional
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
@@ -30,6 +26,10 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Query
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
+import java.util.Optional
 
 class ApiRequestInterceptorsTest {
     private lateinit var server: MockWebServer
@@ -129,7 +129,11 @@ class ApiRequestInterceptorsTest {
 
     @Test
     fun responseHeaderRiskEventIsNormalizedIntoTypedEnvelope() = runTest {
-        server.enqueue(jsonResponse("""{"status":0,"error_code":20028,"data":{"value":"blocked"}}""").addHeader("ssa-code", "event-id"))
+        server.enqueue(
+            jsonResponse(
+                """{"status":0,"error_code":20028,"data":{"value":"blocked"}}""",
+            ).addHeader("ssa-code", "event-id"),
+        )
 
         val response = fixture().api.signed(page = 1, body = TestBody(1))
 
@@ -218,6 +222,7 @@ class ApiRequestInterceptorsTest {
     }
 
     @Serializable private data class TestBody(val value: Int)
+
     @Serializable private data class TestData(val value: String)
     private data class Fixture(val client: OkHttpClient, val api: TestApi)
 
@@ -225,8 +230,12 @@ class ApiRequestInterceptorsTest {
         private val state = MutableStateFlow(initial)
         override val session = state
         override suspend fun read() = state.value
-        override suspend fun write(session: ApiSession) { state.value = session }
-        override suspend fun clearAuthentication() { state.value = null }
+        override suspend fun write(session: ApiSession) {
+            state.value = session
+        }
+        override suspend fun clearAuthentication() {
+            state.value = null
+        }
     }
 
     private companion object {

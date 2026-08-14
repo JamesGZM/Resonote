@@ -9,25 +9,13 @@ sealed interface DailyVipUiState {
 
     data class Claiming(override val receiveDay: String) : DailyVipUiState
 
-    data class UpgradeChoice(
-        override val receiveDay: String,
-        val alreadyClaimed: Boolean,
-    ) : DailyVipUiState
+    data class UpgradeChoice(override val receiveDay: String, val alreadyClaimed: Boolean) : DailyVipUiState
 
-    data class ClaimComplete(
-        override val receiveDay: String,
-        val alreadyClaimed: Boolean,
-    ) : DailyVipUiState
+    data class ClaimComplete(override val receiveDay: String, val alreadyClaimed: Boolean) : DailyVipUiState
 
-    data class Upgrading(
-        override val receiveDay: String,
-        val alreadyClaimed: Boolean,
-    ) : DailyVipUiState
+    data class Upgrading(override val receiveDay: String, val alreadyClaimed: Boolean) : DailyVipUiState
 
-    data class UpgradeComplete(
-        override val receiveDay: String,
-        val alreadyUpgraded: Boolean,
-    ) : DailyVipUiState
+    data class UpgradeComplete(override val receiveDay: String, val alreadyUpgraded: Boolean) : DailyVipUiState
 
     data class RiskBlocked(override val receiveDay: String) : DailyVipUiState
 

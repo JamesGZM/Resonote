@@ -20,7 +20,16 @@ interface ContentCatalogRepository {
     ): CollectionLoadResult<List<PlaylistSummary>>
     suspend fun loadNewAlbums(page: Int = 1, pageSize: Int = 30): CollectionLoadResult<List<Album>>
     suspend fun loadNewSongs(page: Int = 1, pageSize: Int = 30): CollectionLoadResult<SongPage>
-    suspend fun loadAlbumSongs(albumId: String, page: Int = 1, pageSize: Int = 30): CollectionLoadResult<CatalogSongPage>
+    suspend fun loadAlbumSongs(
+        albumId: String,
+        page: Int = 1,
+        pageSize: Int = 30,
+    ): CollectionLoadResult<CatalogSongPage>
     suspend fun loadArtistDetail(artistId: String): CollectionLoadResult<ArtistInfo?>
-    suspend fun loadArtistSongs(artistId: String, page: Int = 1, pageSize: Int = 30, newestFirst: Boolean = false): CollectionLoadResult<ArtistSongsPage>
+    suspend fun loadArtistSongs(
+        artistId: String,
+        page: Int = 1,
+        pageSize: Int = 30,
+        newestFirst: Boolean = false,
+    ): CollectionLoadResult<ArtistSongsPage>
 }

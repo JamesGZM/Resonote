@@ -15,14 +15,13 @@ import com.resonote.core.network.model.NetworkSearchResultPage
 import com.resonote.core.network.model.NetworkSong
 import com.resonote.core.network.protocol.ApiEndpointOrigins
 import com.resonote.core.network.protocol.DeviceRegistrationCoordinator
-import com.resonote.core.network.session.ApiAuthenticationContext
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
+import javax.inject.Inject
+import javax.inject.Singleton
 
 @Singleton
 internal class RealSearchNetworkDataSource @Inject constructor(
@@ -51,7 +50,8 @@ internal class RealSearchNetworkDataSource @Inject constructor(
         keywords: String,
         page: Int,
         pageSize: Int,
-    ): NetworkSearchResultPage<NetworkSearchPlaylist> = searchTyped(keywords, page, pageSize, "special", ::decodeSearchPlaylist)
+    ): NetworkSearchResultPage<NetworkSearchPlaylist> =
+        searchTyped(keywords, page, pageSize, "special", ::decodeSearchPlaylist)
 
     override suspend fun searchAlbums(
         keywords: String,
@@ -63,7 +63,8 @@ internal class RealSearchNetworkDataSource @Inject constructor(
         keywords: String,
         page: Int,
         pageSize: Int,
-    ): NetworkSearchResultPage<NetworkSearchArtist> = searchTyped(keywords, page, pageSize, "author", ::decodeSearchArtist)
+    ): NetworkSearchResultPage<NetworkSearchArtist> =
+        searchTyped(keywords, page, pageSize, "author", ::decodeSearchArtist)
 
     override suspend fun searchMvs(
         keywords: String,
@@ -102,7 +103,8 @@ internal class RealSearchNetworkDataSource @Inject constructor(
     override suspend fun searchComplex(keywords: String): NetworkComplexSearch {
         require(keywords.isNotBlank()) { "keywords must not be blank" }
         registration.ensureRegisteredSession()
-        val response = callApi { musicApi.searchComplex("${origins.complexSearch}/v6/search/complex", keyword = keywords.trim()) }
+        val response =
+            callApi { musicApi.searchComplex("${origins.complexSearch}/v6/search/complex", keyword = keywords.trim()) }
         responses.requireSuccess(response)
         val sections = response.data.obj()?.array("lists") ?: throw missingField()
         var artists = emptyList<NetworkSearchArtist>()
@@ -120,13 +122,35 @@ internal class RealSearchNetworkDataSource @Inject constructor(
             val total = (section.int("total") ?: 0).coerceAtLeast(0)
             when (section.text("type")) {
                 "author" -> artists = raw.mapNotNull(::decodeSearchArtist)
-                "song" -> { songs = raw.mapNotNull(::decodeSearchSong); songsTotal = total.takeIf { it > 0 } ?: songs.size }
-                "album" -> { albums = raw.mapNotNull(::decodeSearchAlbum); albumsTotal = total.takeIf { it > 0 } ?: albums.size }
-                "collect" -> { playlists = raw.mapNotNull(::decodeSearchPlaylist); playlistsTotal = total.takeIf { it > 0 } ?: playlists.size }
-                "mv" -> { mvs = raw.mapNotNull(::decodeSearchMv); mvsTotal = total.takeIf { it > 0 } ?: mvs.size }
+                "song" -> {
+                    songs = raw.mapNotNull(::decodeSearchSong)
+                    songsTotal = total.takeIf { it > 0 } ?: songs.size
+                }
+                "album" -> {
+                    albums = raw.mapNotNull(::decodeSearchAlbum)
+                    albumsTotal = total.takeIf { it > 0 } ?: albums.size
+                }
+                "collect" -> {
+                    playlists = raw.mapNotNull(::decodeSearchPlaylist)
+                    playlistsTotal = total.takeIf { it > 0 } ?: playlists.size
+                }
+                "mv" -> {
+                    mvs = raw.mapNotNull(::decodeSearchMv)
+                    mvsTotal = total.takeIf { it > 0 } ?: mvs.size
+                }
             }
         }
-        return NetworkComplexSearch(artists, songs, songsTotal, albums, albumsTotal, playlists, playlistsTotal, mvs, mvsTotal)
+        return NetworkComplexSearch(
+            artists,
+            songs,
+            songsTotal,
+            albums,
+            albumsTotal,
+            playlists,
+            playlistsTotal,
+            mvs,
+            mvsTotal,
+        )
     }
 
     override suspend fun hotSearchKeywords(): List<NetworkSearchKeyword> {
@@ -164,7 +188,13 @@ internal class RealSearchNetworkDataSource @Inject constructor(
     private fun decodeSearchSong(element: JsonElement): NetworkSong? {
         val item = element.obj() ?: return null
         val hash = item.text("FileHash")?.takeIf(String::isNotBlank) ?: return null
-        val title = (item.text("OriSongName") ?: item.text("SongName") ?: item.text("FileName"))?.stripEm()?.takeIf(String::isNotBlank) ?: return null
+        val title =
+            (
+                item.text(
+                    "OriSongName",
+                ) ?: item.text("SongName") ?: item.text("FileName")
+                )?.stripEm()?.takeIf(String::isNotBlank)
+                ?: return null
         val hq = item.text("HQFileHash") ?: item.text("FileHash320")
         val sq = item.text("SQFileHash") ?: item.text("FileHashFlac")
         val hashOffset = item.obj("trans_param")?.obj("hash_offset")
@@ -179,8 +209,15 @@ internal class RealSearchNetworkDataSource @Inject constructor(
     private fun decodeSearchArtist(element: JsonElement): NetworkSearchArtist? {
         val item = element.obj() ?: return null
         val id = (item.text("AuthorId") ?: item.text("SingerId"))?.takeIf(String::isNotBlank) ?: return null
-        val name = (item.text("AuthorName") ?: item.text("SingerName"))?.stripEm()?.takeIf(String::isNotBlank) ?: return null
-        return NetworkSearchArtist(id, name, item.text("Avatar") ?: item.text("Image"), item.int("AlbumCount") ?: 0, item.int("AudioCount") ?: 0)
+        val name =
+            (item.text("AuthorName") ?: item.text("SingerName"))?.stripEm()?.takeIf(String::isNotBlank) ?: return null
+        return NetworkSearchArtist(
+            id,
+            name,
+            item.text("Avatar") ?: item.text("Image"),
+            item.int("AlbumCount") ?: 0,
+            item.int("AudioCount") ?: 0,
+        )
     }
 
     private fun decodeSearchAlbum(element: JsonElement): NetworkSearchAlbum? {
@@ -188,8 +225,16 @@ internal class RealSearchNetworkDataSource @Inject constructor(
         val id = item.text("albumid")?.takeIf(String::isNotBlank) ?: return null
         val name = item.text("albumname")?.stripEm()?.takeIf(String::isNotBlank) ?: return null
         val singers = item.array("singers").orEmpty().mapNotNull { it.obj()?.text("name") }.joinToString("、")
-        val artist = singers.takeIf(String::isNotBlank) ?: item.text("singername")?.stripEm()?.takeIf(String::isNotBlank)
-        return NetworkSearchAlbum(id, name, artist, item.text("img") ?: item.text("imgurl"), item.int("songcount") ?: 0, item.text("publish_time").orEmpty().substringBefore(' '))
+        val artist =
+            singers.takeIf(String::isNotBlank) ?: item.text("singername")?.stripEm()?.takeIf(String::isNotBlank)
+        return NetworkSearchAlbum(
+            id,
+            name,
+            artist,
+            item.text("img") ?: item.text("imgurl"),
+            item.int("songcount") ?: 0,
+            item.text("publish_time").orEmpty().substringBefore(' '),
+        )
     }
 
     private fun decodeSearchPlaylist(element: JsonElement): NetworkSearchPlaylist? {
@@ -197,7 +242,14 @@ internal class RealSearchNetworkDataSource @Inject constructor(
         val id = (item.text("gid") ?: item.text("global_collection_id"))?.takeIf(String::isNotBlank) ?: return null
         val name = item.text("specialname")?.stripEm()?.takeIf(String::isNotBlank) ?: return null
         val creator = (item.text("nickname") ?: item.text("username"))?.stripEm()?.takeIf(String::isNotBlank)
-        return NetworkSearchPlaylist(id, name, creator, item.text("img") ?: item.text("imgurl"), item.int("song_count") ?: item.int("songcount") ?: 0, item.long("play_count") ?: 0)
+        return NetworkSearchPlaylist(
+            id,
+            name,
+            creator,
+            item.text("img") ?: item.text("imgurl"),
+            item.int("song_count") ?: item.int("songcount") ?: 0,
+            item.long("play_count") ?: 0,
+        )
     }
 
     private fun decodeSearchMv(element: JsonElement): NetworkSearchMv? {
@@ -205,14 +257,24 @@ internal class RealSearchNetworkDataSource @Inject constructor(
         val hash = (item.text("MvHash") ?: item.text("FileHash"))?.takeIf(String::isNotBlank) ?: return null
         val name = (item.text("MvName") ?: item.text("FileName"))?.stripEm()?.takeIf(String::isNotBlank) ?: return null
         val duration = item.long("Duration") ?: 0
-        return NetworkSearchMv(hash, name, item.text("SingerName")?.stripEm()?.takeIf(String::isNotBlank), resolveMvCover(item.text("Pic") ?: item.text("ErectPic")), if (duration > 1_000) duration else duration * 1_000)
+        return NetworkSearchMv(
+            hash,
+            name,
+            item.text("SingerName")?.stripEm()?.takeIf(String::isNotBlank),
+            resolveMvCover(
+                item.text("Pic") ?: item.text("ErectPic"),
+            ),
+            if (duration > 1_000) duration else duration * 1_000,
+        )
     }
 
     private fun resolveMvCover(raw: String?): String? {
         val value = raw?.takeIf(String::isNotBlank) ?: return null
         return when {
             value.startsWith("http://") || value.startsWith("https://") -> value
-            value.matches(Regex("^\\d{8,}\\.[a-zA-Z0-9]+$")) -> "https://imge.kugou.com/mvhdpic/480/${value.take(8)}/$value"
+            value.matches(
+                Regex("^\\d{8,}\\.[a-zA-Z0-9]+$"),
+            ) -> "https://imge.kugou.com/mvhdpic/480/${value.take(8)}/$value"
             value.startsWith('/') -> "https://imge.kugou.com$value"
             else -> value
         }
@@ -225,7 +287,8 @@ internal class RealSearchNetworkDataSource @Inject constructor(
     private fun JsonObject.array(name: String): JsonArray? = get(name) as? JsonArray
     private fun JsonObject.text(name: String): String? = (get(name) as? JsonPrimitive)?.contentOrNull
     private fun JsonObject.long(name: String): Long? = text(name)?.toDoubleOrNull()?.toLong()
-    private fun JsonObject.int(name: String): Int? = long(name)?.coerceIn(Int.MIN_VALUE.toLong(), Int.MAX_VALUE.toLong())?.toInt()
+    private fun JsonObject.int(name: String): Int? =
+        long(name)?.coerceIn(Int.MIN_VALUE.toLong(), Int.MAX_VALUE.toLong())?.toInt()
 
     private fun validateSearchRequest(keywords: String, page: Int, pageSize: Int) {
         require(keywords.isNotBlank()) { "keywords must not be blank" }

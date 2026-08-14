@@ -6,26 +6,26 @@ import com.resonote.core.model.AuthGateReason
 import com.resonote.core.model.AuthState
 import com.resonote.core.model.MobileCodeLoginResult
 import com.resonote.core.model.PasswordLoginResult
-import com.resonote.core.model.SendMobileCodeResult
 import com.resonote.core.model.QrLoginCheckResult
 import com.resonote.core.model.QrLoginKeyResult
+import com.resonote.core.model.SendMobileCodeResult
 import com.resonote.core.network.ApiException
 import com.resonote.core.network.ApiHttpException
-import com.resonote.core.network.AuthNetworkDataSource
 import com.resonote.core.network.ApiNetworkException
 import com.resonote.core.network.ApiProtocolException
 import com.resonote.core.network.ApiRiskException
 import com.resonote.core.network.ApiServiceException
+import com.resonote.core.network.AuthNetworkDataSource
 import com.resonote.core.network.model.NetworkMobileCodeLoginResult
 import com.resonote.core.network.model.NetworkPasswordLoginResult
 import com.resonote.core.network.model.NetworkQrLoginStatus
 import com.resonote.core.network.session.ApiAuthenticationGateReason
 import com.resonote.core.network.session.ApiSessionManager
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import javax.inject.Inject
+import javax.inject.Singleton
 
 @Singleton
 internal class DefaultAuthRepository @Inject constructor(
@@ -64,7 +64,10 @@ internal class DefaultAuthRepository @Inject constructor(
         code: String,
         selectedUserId: String?,
     ): MobileCodeLoginResult {
-        if (!MOBILE_PATTERN.matches(mobile) || code.isBlank() || selectedUserId?.let { it.isBlank() || it == "0" } == true) {
+        if (!MOBILE_PATTERN.matches(mobile) ||
+            code.isBlank() ||
+            selectedUserId?.let { it.isBlank() || it == "0" } == true
+        ) {
             return MobileCodeLoginResult.Failed(AuthFailure.InvalidInput)
         }
         return try {
@@ -115,12 +118,11 @@ internal class DefaultAuthRepository @Inject constructor(
         }
     }
 
-    override suspend fun createQrLoginKey(): QrLoginKeyResult =
-        try {
-            QrLoginKeyResult.Ready(network.createQrLoginKey())
-        } catch (failure: ApiException) {
-            QrLoginKeyResult.Failed(failure.toAuthFailure())
-        }
+    override suspend fun createQrLoginKey(): QrLoginKeyResult = try {
+        QrLoginKeyResult.Ready(network.createQrLoginKey())
+    } catch (failure: ApiException) {
+        QrLoginKeyResult.Failed(failure.toAuthFailure())
+    }
 
     override suspend fun checkQrLogin(key: String): QrLoginCheckResult {
         if (key.isBlank()) return QrLoginCheckResult.Failed(AuthFailure.InvalidInput)
@@ -144,14 +146,13 @@ internal class DefaultAuthRepository @Inject constructor(
         }
     }
 
-    private fun ApiException.toAuthFailure(): AuthFailure =
-        when (this) {
-            is ApiRiskException -> AuthFailure.RiskVerificationRequired(riskChallenges.register(challenge))
-            is ApiNetworkException -> AuthFailure.Network
-            is ApiServiceException, is ApiHttpException -> AuthFailure.ServiceRejected
-            is ApiProtocolException -> AuthFailure.Protocol
-            else -> AuthFailure.Protocol
-        }
+    private fun ApiException.toAuthFailure(): AuthFailure = when (this) {
+        is ApiRiskException -> AuthFailure.RiskVerificationRequired(riskChallenges.register(challenge))
+        is ApiNetworkException -> AuthFailure.Network
+        is ApiServiceException, is ApiHttpException -> AuthFailure.ServiceRejected
+        is ApiProtocolException -> AuthFailure.Protocol
+        else -> AuthFailure.Protocol
+    }
 
     private companion object {
         val MOBILE_PATTERN = Regex("^1\\d{10}$")

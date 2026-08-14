@@ -6,17 +6,17 @@ import com.resonote.core.network.api.MusicApi
 import com.resonote.core.network.model.NetworkLyricCandidate
 import com.resonote.core.network.protocol.ApiEndpointOrigins
 import com.resonote.core.network.protocol.DeviceRegistrationCoordinator
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.util.Base64
 import java.util.zip.InflaterInputStream
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.contentOrNull
 
 @Singleton
 internal class RealLyricsNetworkDataSource @Inject constructor(
@@ -49,8 +49,11 @@ internal class RealLyricsNetworkDataSource @Inject constructor(
         responses.requireJsonSuccess(root, setOf("200"))
         val encoded = root.text("content")?.takeIf(String::isNotBlank) ?: return null
         return runCatching {
-            if (root.text("contenttype") == "0") decodeKrc(encoded)
-            else Base64.getDecoder().decode(encoded).decodeToString()
+            if (root.text("contenttype") == "0") {
+                decodeKrc(encoded)
+            } else {
+                Base64.getDecoder().decode(encoded).decodeToString()
+            }
         }
             .getOrElse { throw malformedResponse() }
             .takeIf(String::isNotBlank)

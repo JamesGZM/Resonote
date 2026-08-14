@@ -21,8 +21,8 @@ import androidx.compose.material.icons.outlined.LibraryMusic
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Widgets
-import androidx.compose.material3.Icon
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -39,11 +39,7 @@ import com.resonote.core.designsystem.component.ResonoteTopAppBar
 import com.resonote.core.designsystem.theme.ResonoteThemeMode
 import com.resonote.core.designsystem.tokens.ResonoteTokens
 
-private data class CatalogDestination(
-    val label: String,
-    val icon: ImageVector,
-    val selectedIcon: ImageVector,
-)
+private data class CatalogDestination(val label: String, val icon: ImageVector, val selectedIcon: ImageVector)
 
 private val CatalogDestinations = listOf(
     CatalogDestination("Foundation", Icons.Outlined.Palette, Icons.Filled.Palette),
@@ -53,10 +49,7 @@ private val CatalogDestinations = listOf(
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-internal fun AdaptiveCatalogScreen(
-    themeMode: ResonoteThemeMode,
-    onThemeModeChange: (ResonoteThemeMode) -> Unit,
-) {
+internal fun AdaptiveCatalogScreen(themeMode: ResonoteThemeMode, onThemeModeChange: (ResonoteThemeMode) -> Unit) {
     var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
 
     ResonoteNavigationSuiteScaffold(

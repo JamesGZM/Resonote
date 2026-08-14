@@ -26,12 +26,7 @@ internal val ResonoteTypography = Typography(
     labelSmall = typeStyle(FontWeight.Medium, 11, 16, 0.50),
 )
 
-private fun typeStyle(
-    weight: FontWeight,
-    size: Int,
-    lineHeight: Int,
-    tracking: Double = 0.0,
-) = TextStyle(
+private fun typeStyle(weight: FontWeight, size: Int, lineHeight: Int, tracking: Double = 0.0) = TextStyle(
     fontFamily = SystemSans,
     fontWeight = weight,
     fontSize = size.sp,

@@ -93,13 +93,7 @@ class LocalMusicScreenshotTest {
         )
     }
 
-    private fun media(
-        id: String,
-        title: String,
-        artist: String?,
-        sampleRate: Int,
-        bitDepth: Int?,
-    ) = LocalMedia(
+    private fun media(id: String, title: String, artist: String?, sampleRate: Int, bitDepth: Int?) = LocalMedia(
         id = LocalMediaId(id),
         displayName = "$title.flac",
         title = title,

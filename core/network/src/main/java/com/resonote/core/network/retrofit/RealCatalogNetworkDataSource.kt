@@ -1,18 +1,17 @@
 package com.resonote.core.network.retrofit
 
-import com.resonote.core.network.CatalogNetworkDataSource
 import com.resonote.core.network.ApiProtocolException
+import com.resonote.core.network.CatalogNetworkDataSource
 import com.resonote.core.network.api.MusicApi
-import com.resonote.core.network.api.model.PlaylistRecommendationsResponse
-import com.resonote.core.network.api.model.RecommendedPlaylistsRequest
-import com.resonote.core.network.api.model.SpecialRecommendRequest
 import com.resonote.core.network.api.model.AlbumSongsRequest
 import com.resonote.core.network.api.model.ArtistAudiosRequest
 import com.resonote.core.network.api.model.ArtistDetailRequest
 import com.resonote.core.network.api.model.BannerRequest
+import com.resonote.core.network.api.model.PlaylistRecommendationsResponse
 import com.resonote.core.network.api.model.PlaylistTagsRequest
+import com.resonote.core.network.api.model.RecommendedPlaylistsRequest
+import com.resonote.core.network.api.model.SpecialRecommendRequest
 import com.resonote.core.network.api.model.TopAlbumsRequest
-import com.resonote.core.network.protocol.DeviceRegistrationCoordinator
 import com.resonote.core.network.model.NetworkAlbum
 import com.resonote.core.network.model.NetworkAlbumRegion
 import com.resonote.core.network.model.NetworkAlbumSongPage
@@ -22,16 +21,17 @@ import com.resonote.core.network.model.NetworkBanner
 import com.resonote.core.network.model.NetworkPlaylistCategory
 import com.resonote.core.network.model.NetworkPlaylistSummary
 import com.resonote.core.network.model.NetworkSong
-import com.resonote.core.network.protocol.ApiProtocolConfig
 import com.resonote.core.network.protocol.ApiEndpointOrigins
+import com.resonote.core.network.protocol.ApiProtocolConfig
 import com.resonote.core.network.protocol.ApiRequestSigner
-import java.time.Clock
-import javax.inject.Inject
-import javax.inject.Singleton
+import com.resonote.core.network.protocol.DeviceRegistrationCoordinator
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
+import java.time.Clock
+import javax.inject.Inject
+import javax.inject.Singleton
 
 @Singleton
 internal class RealCatalogNetworkDataSource @Inject constructor(
@@ -80,20 +80,42 @@ internal class RealCatalogNetworkDataSource @Inject constructor(
             returnMinimum = 5,
             returnSpecialFlag = 1,
         )
-        return decodePlaylists(callApi { musicApi.recommendedPlaylists(body) })
+        return mapPlaylists(callApi { musicApi.recommendedPlaylists(body) })
     }
 
     override suspend fun banners(): List<NetworkBanner> {
         val session = registration.ensureRegisteredSession()
-        val response = callApi { musicApi.banners(BannerRequest(0, 201, 7, 2, session.userId?.toLongOrNull() ?: 0, 0, 0, emptyList(), 5, 2, "normal")) }
+        val request = BannerRequest(
+            plat = 0,
+            channel = 201,
+            operator = 7,
+            networktype = 2,
+            userid = session.userId?.toLongOrNull() ?: 0,
+            vipType = 0,
+            mobileType = 0,
+            tags = emptyList(),
+            apiver = 5,
+            ability = 2,
+            mode = "normal",
+        )
+        val response = callApi { musicApi.banners(request) }
         responses.requireSuccess(response)
         val raw = response.data.obj()?.array("ads") ?: throw missingField()
         return raw.mapNotNull { element ->
             val item = element.obj() ?: return@mapNotNull null
-            val image = (item.text("img_url") ?: item.text("image"))?.takeIf(String::isNotBlank) ?: return@mapNotNull null
+            val image =
+                (item.text("img_url") ?: item.text("image"))?.takeIf(String::isNotBlank)
+                    ?: return@mapNotNull null
             val extra = item.obj("extra")
-            val link = (extra?.text("url") ?: item.text("url") ?: item.text("jump_url"))?.takeIf { it.startsWith("http://") || it.startsWith("https://") }
-            NetworkBanner(item.text("id")?.takeIf(String::isNotBlank) ?: image, item.text("title") ?: extra?.text("title"), image, link)
+            val link =
+                (extra?.text("url") ?: item.text("url") ?: item.text("jump_url"))
+                    ?.takeIf { it.startsWith("http://") || it.startsWith("https://") }
+            NetworkBanner(
+                item.text("id")?.takeIf(String::isNotBlank) ?: image,
+                item.text("title") ?: extra?.text("title"),
+                image,
+                link,
+            )
         }.also { requireConsumableItems(raw, it) }
     }
 
@@ -124,18 +146,30 @@ internal class RealCatalogNetworkDataSource @Inject constructor(
         val response = callApi { musicApi.newAlbums(TopAlbumsRequest(20, session.token.orEmpty(), page, pageSize, 1)) }
         responses.requireSuccess(response)
         val data = response.data.obj() ?: throw missingField()
-        val regions = listOf("chn" to NetworkAlbumRegion.Chinese, "eur" to NetworkAlbumRegion.Western, "jpn" to NetworkAlbumRegion.Japanese, "kor" to NetworkAlbumRegion.Korean)
+        val regions = listOf(
+            "chn" to NetworkAlbumRegion.Chinese,
+            "eur" to NetworkAlbumRegion.Western,
+            "jpn" to NetworkAlbumRegion.Japanese,
+            "kor" to NetworkAlbumRegion.Korean,
+        )
         val raw = regions.flatMap { (key, _) -> data.array(key).orEmpty() }
         return regions.flatMap { (key, region) ->
             data.array(key).orEmpty().mapNotNull { element ->
                 val item = element.obj() ?: return@mapNotNull null
-                val id = (item.text("albumid") ?: item.text("album_id"))?.takeIf(String::isNotBlank) ?: return@mapNotNull null
-                val name = (item.text("albumname") ?: item.text("album_name"))?.takeIf(String::isNotBlank) ?: return@mapNotNull null
+                val id =
+                    (item.text("albumid") ?: item.text("album_id"))?.takeIf(String::isNotBlank)
+                        ?: return@mapNotNull null
+                val name =
+                    (item.text("albumname") ?: item.text("album_name"))?.takeIf(String::isNotBlank)
+                        ?: return@mapNotNull null
                 NetworkAlbum(
-                    id, name, item.text("singername") ?: item.text("author_name"),
+                    id,
+                    name,
+                    item.text("singername") ?: item.text("author_name"),
                     item.text("imgurl") ?: item.text("img") ?: item.text("sizable_cover"),
                     (item.text("publishtime") ?: item.text("publish_time")).orEmpty().substringBefore(' '),
-                    (item.int("songcount") ?: 0).coerceAtLeast(0), region,
+                    (item.int("songcount") ?: 0).coerceAtLeast(0),
+                    region,
                 )
             }
         }.also { requireConsumableItems(raw, it) }
@@ -152,7 +186,8 @@ internal class RealCatalogNetworkDataSource @Inject constructor(
         val songs = raw.mapNotNull(::decodeAlbumSong)
         requireConsumableItems(raw, songs)
         val total = (data.int("total") ?: songs.size).coerceAtLeast(0)
-        return NetworkAlbumSongPage(songs, total, if (total > 0) page.toLong() * pageSize < total else raw.size >= pageSize)
+        val hasMore = if (total > 0) page.toLong() * pageSize < total else raw.size >= pageSize
+        return NetworkAlbumSongPage(songs, total, hasMore)
     }
 
     override suspend fun artistDetail(artistId: String): NetworkArtistInfo? {
@@ -163,14 +198,22 @@ internal class RealCatalogNetworkDataSource @Inject constructor(
         val data = response.data.obj() ?: throw missingField()
         val name = (data.text("author_name") ?: data.text("singername"))?.takeIf(String::isNotBlank) ?: return null
         return NetworkArtistInfo(
-            name, data.text("sizable_avatar") ?: data.text("avatar") ?: data.text("imgurl"),
-            data.text("intro") ?: data.text("description") ?: "", (data.int("song_count") ?: data.int("audio_count") ?: 0).coerceAtLeast(0),
-            (data.int("album_count") ?: 0).coerceAtLeast(0), (data.int("mv_count") ?: 0).coerceAtLeast(0),
+            name,
+            data.text("sizable_avatar") ?: data.text("avatar") ?: data.text("imgurl"),
+            data.text("intro") ?: data.text("description") ?: "",
+            (data.int("song_count") ?: data.int("audio_count") ?: 0).coerceAtLeast(0),
+            (data.int("album_count") ?: 0).coerceAtLeast(0),
+            (data.int("mv_count") ?: 0).coerceAtLeast(0),
             (data.long("fansnums") ?: data.long("fans_count") ?: 0).coerceAtLeast(0),
         )
     }
 
-    override suspend fun artistSongs(artistId: String, page: Int, pageSize: Int, newestFirst: Boolean): NetworkArtistSongPage {
+    override suspend fun artistSongs(
+        artistId: String,
+        page: Int,
+        pageSize: Int,
+        newestFirst: Boolean,
+    ): NetworkArtistSongPage {
         require(artistId.isNotBlank()) { "artistId must not be blank" }
         validatePage(page, pageSize)
         val session = registration.ensureRegisteredSession()
@@ -178,7 +221,18 @@ internal class RealCatalogNetworkDataSource @Inject constructor(
         val response = callApi {
             musicApi.artistSongs(
                 "${origins.openApi}/kmr/v1/audio_group/author",
-                ArtistAudiosRequest(ApiProtocolConfig.APP_ID.toInt(), ApiProtocolConfig.CLIENT_VERSION.toInt(), session.mid, clientTime, signer.signParamsKey(clientTime.toString()), artistId.trim(), pageSize, page, if (newestFirst) 2 else 1, "all"),
+                ArtistAudiosRequest(
+                    appid = ApiProtocolConfig.APP_ID.toInt(),
+                    clientver = ApiProtocolConfig.CLIENT_VERSION.toInt(),
+                    mid = session.mid,
+                    clienttime = clientTime,
+                    key = signer.signParamsKey(clientTime.toString()),
+                    artistId = artistId.trim(),
+                    pagesize = pageSize,
+                    page = page,
+                    sort = if (newestFirst) 2 else 1,
+                    areaCode = "all",
+                ),
             )
         }
         responses.requireSuccess(response)
@@ -190,11 +244,13 @@ internal class RealCatalogNetworkDataSource @Inject constructor(
 
     private suspend fun <T> callApi(block: suspend () -> T): T = calls.execute(block = block)
 
-    private suspend fun decodePlaylists(response: PlaylistRecommendationsResponse): List<NetworkPlaylistSummary> {
-        responses.requireSuccess(response)
-        val rawItems = response.data?.playlists ?: throw missingField()
+    private suspend fun mapPlaylists(value: PlaylistRecommendationsResponse): List<NetworkPlaylistSummary> {
+        responses.requireSuccess(value)
+        val rawItems = value.data?.playlists ?: throw missingField()
         val items = rawItems.mapNotNull { item ->
-            val id = (item.globalCollectionId ?: item.specialid)?.takeIf(String::isNotBlank) ?: return@mapNotNull null
+            val id =
+                (item.globalCollectionId ?: item.specialid)?.takeIf(String::isNotBlank)
+                    ?: return@mapNotNull null
             val title = item.specialname?.takeIf(String::isNotBlank) ?: return@mapNotNull null
             NetworkPlaylistSummary(
                 id = id,
@@ -268,7 +324,8 @@ internal class RealCatalogNetworkDataSource @Inject constructor(
     private fun JsonObject.array(name: String): JsonArray? = get(name) as? JsonArray
     private fun JsonObject.text(name: String): String? = (get(name) as? JsonPrimitive)?.contentOrNull
     private fun JsonObject.long(name: String): Long? = text(name)?.toDoubleOrNull()?.toLong()
-    private fun JsonObject.int(name: String): Int? = long(name)?.coerceIn(Int.MIN_VALUE.toLong(), Int.MAX_VALUE.toLong())?.toInt()
+    private fun JsonObject.int(name: String): Int? =
+        long(name)?.coerceIn(Int.MIN_VALUE.toLong(), Int.MAX_VALUE.toLong())?.toInt()
 
     private fun validatePage(page: Int, pageSize: Int) {
         require(page > 0) { "page must be positive" }
@@ -280,5 +337,4 @@ internal class RealCatalogNetworkDataSource @Inject constructor(
     }
 
     private fun missingField() = ApiProtocolException(ApiProtocolException.Reason.MissingRequiredField)
-
 }

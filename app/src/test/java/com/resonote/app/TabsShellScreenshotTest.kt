@@ -16,8 +16,8 @@ import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
 import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -29,10 +29,10 @@ import com.google.common.truth.Truth.assertThat
 import com.resonote.core.data.ContentCatalogRepository
 import com.resonote.core.data.HomeRepository
 import com.resonote.core.data.RankingRepository
-import com.resonote.core.designsystem.theme.ResonoteTheme
-import com.resonote.core.designsystem.theme.ResonoteThemeMode
 import com.resonote.core.designsystem.component.ResonoteSnackbarHost
 import com.resonote.core.designsystem.component.rememberResonoteSnackbarController
+import com.resonote.core.designsystem.theme.ResonoteTheme
+import com.resonote.core.designsystem.theme.ResonoteThemeMode
 import com.resonote.core.designsystem.tokens.ResonoteTokens
 import com.resonote.core.model.Album
 import com.resonote.core.model.ArtistInfo
@@ -41,13 +41,13 @@ import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.Banner
 import com.resonote.core.model.CatalogSongPage
 import com.resonote.core.model.CollectionLoadResult
-import com.resonote.core.model.HomeRefreshResult
 import com.resonote.core.model.HomeContent
+import com.resonote.core.model.HomeRefreshResult
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.PlaylistCategory
 import com.resonote.core.model.PlaylistSummary
-import com.resonote.core.model.Ranking
 import com.resonote.core.model.RadioRecommendationResult
+import com.resonote.core.model.Ranking
 import com.resonote.core.model.RecommendationMode
 import com.resonote.core.model.SongPage
 import com.resonote.core.playback.PlaybackItem
@@ -343,9 +343,18 @@ class TabsShellScreenshotTest {
         override suspend fun loadBanners(): CollectionLoadResult<List<Banner>> = unused()
         override suspend fun loadNewAlbums(page: Int, pageSize: Int): CollectionLoadResult<List<Album>> = unused()
         override suspend fun loadNewSongs(page: Int, pageSize: Int): CollectionLoadResult<SongPage> = unused()
-        override suspend fun loadAlbumSongs(albumId: String, page: Int, pageSize: Int): CollectionLoadResult<CatalogSongPage> = unused()
+        override suspend fun loadAlbumSongs(
+            albumId: String,
+            page: Int,
+            pageSize: Int,
+        ): CollectionLoadResult<CatalogSongPage> = unused()
         override suspend fun loadArtistDetail(artistId: String): CollectionLoadResult<ArtistInfo?> = unused()
-        override suspend fun loadArtistSongs(artistId: String, page: Int, pageSize: Int, newestFirst: Boolean): CollectionLoadResult<ArtistSongsPage> = unused()
+        override suspend fun loadArtistSongs(
+            artistId: String,
+            page: Int,
+            pageSize: Int,
+            newestFirst: Boolean,
+        ): CollectionLoadResult<ArtistSongsPage> = unused()
     }
 
     private class ScreenshotRankingRepository : RankingRepository {
@@ -357,23 +366,23 @@ class TabsShellScreenshotTest {
             ),
         )
 
-        override suspend fun loadSongs(rankId: String, page: Int, pageSize: Int): CollectionLoadResult<SongPage> = unused()
+        override suspend fun loadSongs(rankId: String, page: Int, pageSize: Int): CollectionLoadResult<SongPage> =
+            unused()
     }
 
     private companion object {
         fun <T> unused(): T = error("unused")
 
-        fun song(id: String) =
-            OnlineSong(
-                hash = id,
-                title = "歌曲 $id",
-                artist = "Resonote Artist",
-                coverUrl = null,
-                albumId = "1",
-                albumAudioId = "2",
-                durationMillis = 180_000,
-                quality = AudioQuality.Lossless,
-                vip = false,
-            )
+        fun song(id: String) = OnlineSong(
+            hash = id,
+            title = "歌曲 $id",
+            artist = "Resonote Artist",
+            coverUrl = null,
+            albumId = "1",
+            albumAudioId = "2",
+            durationMillis = 180_000,
+            quality = AudioQuality.Lossless,
+            vip = false,
+        )
     }
 }

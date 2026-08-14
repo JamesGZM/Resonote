@@ -1,7 +1,6 @@
 package com.resonote.core.network.retrofit
 
 import com.resonote.core.network.ApiException
-import com.resonote.core.network.ApiAuthenticationRequiredException
 import com.resonote.core.network.ApiHttpException
 import com.resonote.core.network.ApiNetworkException
 import com.resonote.core.network.ApiProtocolException
@@ -9,30 +8,25 @@ import com.resonote.core.network.ApiRiskException
 import com.resonote.core.network.ApiServiceException
 import com.resonote.core.network.AuthenticationFailureClassifier
 import com.resonote.core.network.api.model.MusicApiResponse
-import com.resonote.core.network.protocol.ApiSessionPropagation
 import com.resonote.core.network.protocol.ApiRawResponse
+import com.resonote.core.network.protocol.ApiSessionPropagation
 import com.resonote.core.network.protocol.apiRequestPolicy
 import com.resonote.core.network.risk.ApiRiskChallengeDetector
 import com.resonote.core.network.session.ApiAuthenticationContext
 import com.resonote.core.network.session.ApiSessionManager
-import java.io.IOException
-import java.net.SocketTimeoutException
-import java.net.UnknownHostException
-import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import retrofit2.Response
+import java.io.IOException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
+import javax.inject.Inject
 
-internal class ApiCallExecutor @Inject constructor(
-    private val sessions: ApiSessionManager,
-) {
-    suspend fun <T> execute(
-        detectHttpAuthenticationFailure: Boolean = true,
-        block: suspend () -> T,
-    ): T {
+internal class ApiCallExecutor @Inject constructor(private val sessions: ApiSessionManager) {
+    suspend fun <T> execute(detectHttpAuthenticationFailure: Boolean = true, block: suspend () -> T): T {
         val authenticationContext = sessions.authenticationContext()
         return try {
             block()
@@ -68,9 +62,7 @@ internal class ApiResponseVerifier @Inject constructor(
 ) {
     fun authenticationContext(): ApiAuthenticationContext = sessions.authenticationContext()
 
-    suspend fun requireSuccess(
-        response: MusicApiResponse,
-    ) {
+    suspend fun requireSuccess(response: MusicApiResponse) {
         requireNoRiskChallenge(response)
         serviceFailureCodeOrNull(response)?.let { serviceCode ->
             throw ApiServiceException(serviceCode)
@@ -112,26 +104,18 @@ internal class ApiResponseVerifier @Inject constructor(
         }
     }
 
-    suspend fun requireAuthenticatedSession(
-        serviceCode: String?,
-        authenticationContext: ApiAuthenticationContext,
-    ) {
+    suspend fun requireAuthenticatedSession(serviceCode: String?, authenticationContext: ApiAuthenticationContext) {
         AuthenticationFailureClassifier.classify(sessions, authenticationContext, serviceCode)?.let { throw it }
     }
 
-    suspend fun requireWriteSuccess(
-        response: MusicApiResponse,
-    ) {
+    suspend fun requireWriteSuccess(response: MusicApiResponse) {
         requireNoRiskChallenge(response)
         serviceFailureCodeOrNull(response)?.let { serviceCode ->
             throw ApiServiceException(serviceCode)
         }
     }
 
-    suspend fun requireJsonSuccess(
-        response: JsonObject,
-        successStatuses: Set<String>,
-    ) {
+    suspend fun requireJsonSuccess(response: JsonObject, successStatuses: Set<String>) {
         riskDetector.detect(ApiRawResponse(200, emptyMap(), byteArrayOf(), response))?.let { challenge ->
             throw ApiRiskException(challenge, ApiRiskException.Reason.VerificationUnavailable)
         }

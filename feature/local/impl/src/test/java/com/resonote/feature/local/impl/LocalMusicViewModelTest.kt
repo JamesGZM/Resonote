@@ -291,10 +291,7 @@ class LocalMusicViewModelTest {
         }
     }
 
-    private data class ImportRequest(
-        val uri: String,
-        val action: LocalMediaDuplicateAction,
-    )
+    private data class ImportRequest(val uri: String, val action: LocalMediaDuplicateAction)
 
     private companion object {
         fun duplicate(existing: LocalMedia) = LocalMediaImportResult.DuplicateConfirmationRequired(
@@ -308,12 +305,7 @@ class LocalMusicViewModelTest {
             existing = listOf(existing),
         )
 
-        fun media(
-            id: String,
-            title: String = "夜航",
-            artist: String? = "林澈",
-            importedAt: Long = 100,
-        ) = LocalMedia(
+        fun media(id: String, title: String = "夜航", artist: String? = "林澈", importedAt: Long = 100) = LocalMedia(
             id = LocalMediaId(id),
             displayName = "$title.flac",
             title = title,

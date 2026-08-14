@@ -61,11 +61,7 @@ class VideoScreenshotTest {
         capture("fullscreen_loading")
     }
 
-    private fun setScreen(
-        state: VideoUiState,
-        fullscreen: Boolean = false,
-        size: DpSize = DpSize(390.dp, 844.dp),
-    ) {
+    private fun setScreen(state: VideoUiState, fullscreen: Boolean = false, size: DpSize = DpSize(390.dp, 844.dp)) {
         composeRule.setContent {
             DeviceConfigurationOverride(override = DeviceConfigurationOverride.ForcedSize(size)) {
                 ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {

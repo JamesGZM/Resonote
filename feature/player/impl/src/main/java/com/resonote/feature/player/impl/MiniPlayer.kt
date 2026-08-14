@@ -1,6 +1,5 @@
 package com.resonote.feature.player.impl
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -25,20 +25,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.resonote.core.designsystem.component.ResonoteArtwork
-import com.resonote.core.designsystem.component.ResonoteArtworkBadge
 import com.resonote.core.designsystem.component.ResonoteArtworkState
 import com.resonote.core.designsystem.component.ResonoteIconButton
+import com.resonote.core.designsystem.component.ResonoteQualityBadge
+import com.resonote.core.designsystem.component.ResonoteRemoteArtwork
+import com.resonote.core.designsystem.component.ResonoteVipBadge
 import com.resonote.core.designsystem.tokens.ResonoteTokens
 import com.resonote.feature.player.impl.R
-import coil3.compose.AsyncImage
 
 @Immutable
 data class MiniPlayerUiState(
@@ -49,7 +49,6 @@ data class MiniPlayerUiState(
     val isVip: Boolean = false,
     val isPlaying: Boolean = false,
     val progress: Float = 0f,
-    val artworkColors: List<Color>,
     val coverUrl: String? = null,
 )
 
@@ -58,6 +57,7 @@ fun ResonoteMiniPlayer(
     state: MiniPlayerUiState,
     onOpenPlayer: () -> Unit,
     onTogglePlay: () -> Unit,
+    onNext: () -> Unit,
     onOpenQueue: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -71,7 +71,7 @@ fun ResonoteMiniPlayer(
         modifier = modifier
             .fillMaxWidth()
             .then(containerHeightModifier),
-        shape = MaterialTheme.shapes.large,
+        shape = MaterialTheme.shapes.extraLarge,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         tonalElevation = 0.dp,
         shadowElevation = ResonoteTokens.elevation.level3.maximumShadow,
@@ -88,31 +88,21 @@ fun ResonoteMiniPlayer(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     ResonoteArtwork(
-                        state = ResonoteArtworkState.LOADED,
-                        contentDescription = stringResource(R.string.feature_player_impl_artwork, state.title),
-                        modifier = Modifier.size(56.dp),
-                        shape = ResonoteTokens.artworkShapes.standard,
+                        state = if (state.coverUrl.isNullOrBlank()) {
+                            ResonoteArtworkState.MISSING
+                        } else {
+                            ResonoteArtworkState.LOADED
+                        },
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(56.dp)
+                            .testTag("resonote-mini-player-artwork"),
+                        shape = ResonoteTokens.artworkShapes.compact,
                     ) {
-                        Box(
-                            Modifier
-                                .matchParentSize()
-                                .background(Brush.linearGradient(state.artworkColors)),
-                        ) {
-                            if (!state.coverUrl.isNullOrBlank()) {
-                                AsyncImage(
-                                    model = state.coverUrl,
-                                    contentDescription = null,
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier.matchParentSize(),
-                                )
-                            }
-                        }
-                        ResonoteArtworkBadge(
-                            qualityLabel = state.qualityLabel,
-                            isVip = state.isVip,
-                            modifier = Modifier
-                                .align(Alignment.BottomStart)
-                                .padding(4.dp),
+                        ResonoteRemoteArtwork(
+                            model = state.coverUrl,
+                            contentDescription = null,
+                            modifier = Modifier.matchParentSize(),
                         )
                     }
                     Spacer(Modifier.width(12.dp))
@@ -120,17 +110,25 @@ fun ResonoteMiniPlayer(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        Text(
-                            text = state.title,
-                            style = MaterialTheme.typography.bodyLarge,
-                            maxLines = 1,
-                            softWrap = false,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            Text(
+                                text = state.title,
+                                modifier = Modifier.weight(1f),
+                                style = MaterialTheme.typography.bodyLarge,
+                                maxLines = 1,
+                                softWrap = false,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            state.qualityLabel?.takeIf(String::isNotBlank)?.let { ResonoteQualityBadge(it) }
+                            if (state.isVip) ResonoteVipBadge()
+                        }
                         Text(
                             text = state.artist,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.bodyMedium,
                             maxLines = 1,
                             softWrap = false,
                             overflow = TextOverflow.Ellipsis,
@@ -147,6 +145,17 @@ fun ResonoteMiniPlayer(
                             imageVector = if (state.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
+                        )
+                    },
+                )
+                ResonoteIconButton(
+                    label = stringResource(R.string.feature_player_impl_next),
+                    onClick = onNext,
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Rounded.SkipNext,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     },
                 )

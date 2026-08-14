@@ -105,13 +105,7 @@ class HistoryScreenshotTest {
         }
     }
 
-    private fun song(
-        hash: String,
-        title: String,
-        artist: String,
-        album: String?,
-        quality: AudioQuality,
-    ) = OnlineSong(
+    private fun song(hash: String, title: String, artist: String, album: String?, quality: AudioQuality) = OnlineSong(
         hash = hash,
         title = title,
         artist = artist,
@@ -124,26 +118,21 @@ class HistoryScreenshotTest {
         albumTitle = album,
     )
 
-    private fun device(
-        id: String,
-        title: String,
-        artist: String,
-        source: DeviceHistorySource,
-        playCount: Long,
-    ) = DeviceHistoryItem(
-        record = DeviceHistoryRecord(
-            source = source,
-            mediaId = id,
-            title = title,
-            artist = artist,
-            albumTitle = "夜航档案",
-            artworkUri = null,
-            durationMillis = 241_000,
-            albumAudioId = "audio-$id",
-        ),
-        lastPlayedAtEpochMillis = 2_000,
-        playCount = playCount,
-    )
+    private fun device(id: String, title: String, artist: String, source: DeviceHistorySource, playCount: Long) =
+        DeviceHistoryItem(
+            record = DeviceHistoryRecord(
+                source = source,
+                mediaId = id,
+                title = title,
+                artist = artist,
+                albumTitle = "夜航档案",
+                artworkUri = null,
+                durationMillis = 241_000,
+                albumAudioId = "audio-$id",
+            ),
+            lastPlayedAtEpochMillis = 2_000,
+            playCount = playCount,
+        )
 
     private fun capture(name: String) {
         composeRule.mainClock.advanceTimeByFrame()

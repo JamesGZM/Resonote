@@ -8,7 +8,6 @@ import com.resonote.core.model.CloudTrack
 import com.resonote.core.model.CollectionLoadResult
 import com.resonote.core.model.ResolveSongSourceResult
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,11 +17,10 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @HiltViewModel
-class CloudViewModel @Inject constructor(
-    private val repository: CloudRepository,
-) : ViewModel() {
+class CloudViewModel @Inject constructor(private val repository: CloudRepository) : ViewModel() {
     private val mutableUiState = MutableStateFlow(CloudUiState())
     val uiState: StateFlow<CloudUiState> = mutableUiState.asStateFlow()
 
@@ -182,7 +180,9 @@ class CloudViewModel @Inject constructor(
                     it.copy(playback = CloudPlaybackUiState.Failed(track.hash, CloudPlaybackIssue.Unavailable))
                 }
                 is ResolveSongSourceResult.Failed -> mutableUiState.update {
-                    it.copy(playback = CloudPlaybackUiState.Failed(track.hash, CloudPlaybackIssue.Failed(result.failure)))
+                    it.copy(
+                        playback = CloudPlaybackUiState.Failed(track.hash, CloudPlaybackIssue.Failed(result.failure)),
+                    )
                 }
             }
         }

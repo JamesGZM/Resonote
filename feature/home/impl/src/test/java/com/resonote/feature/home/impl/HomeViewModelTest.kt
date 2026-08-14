@@ -6,10 +6,10 @@ import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.ContentFailure
 import com.resonote.core.model.HomeContent
 import com.resonote.core.model.HomeIssue
-import com.resonote.core.model.PlaylistSummary
 import com.resonote.core.model.HomeRefreshResult
 import com.resonote.core.model.HomeSection
 import com.resonote.core.model.OnlineSong
+import com.resonote.core.model.PlaylistSummary
 import com.resonote.core.model.RadioRecommendationResult
 import com.resonote.core.model.RecommendationMode
 import kotlinx.coroutines.Dispatchers
@@ -95,7 +95,8 @@ class HomeViewModelTest {
     @Test
     fun firstLoadFailurePublishesRetryableError() = runTest(dispatcher) {
         val issue = HomeIssue(HomeSection.DailyRecommendations, ContentFailure.Network)
-        val repository = FakeHomeRepository(initialContent = null, refreshResult = HomeRefreshResult.Failed(listOf(issue)))
+        val repository =
+            FakeHomeRepository(initialContent = null, refreshResult = HomeRefreshResult.Failed(listOf(issue)))
         val viewModel = HomeViewModel(repository)
 
         advanceUntilIdle()

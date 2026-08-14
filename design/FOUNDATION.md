@@ -244,7 +244,7 @@ Brand Key Colors
 
 Fixed Roles 在 Light 与 Dark 中保持同一 Tone/Hex：`Fixed = T90`、`FixedDim = T80`、`OnFixed = T10`、`OnFixedVariant = T30`。它们用于需要跨主题保持色调不变的容器，不替代常规 Primary/Secondary/Tertiary Role。
 
-01D/01E 覆盖 Material3 1.4.0 `ColorScheme` 的全部 48 个属性；额外的 `shadow` 是 Foundation System Token，不是 Compose `ColorScheme` 属性，实现时通过独立 `ResonoteSystemColors.shadow` Alias 暴露。
+01D/01E 覆盖 Material3 1.4.0 `ColorScheme` 的全部 48 个属性；额外的固定系统色通过 `ResonoteSystemColors` 暴露：`shadow = #000000`，黑色媒体遮罩的前景使用 `onScrim = #FFFFFF`，视频画布使用 `mediaCanvas = #000000` / `onMediaCanvas = #FFFFFF`。`onScrim` 只能与 `scrim` 或等价的黑色媒体遮罩配对；视频画布不参与主题 Surface 层级，也不得用于普通页面或卡片。
 
 #### 01F — Surface Hierarchy
 

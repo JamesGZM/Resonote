@@ -6,9 +6,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.runtime.Immutable
 
 @Immutable
-class ResonoteMotionScheme internal constructor(
-    private val reducedMotion: Boolean,
-) {
+class ResonoteMotionScheme internal constructor(private val reducedMotion: Boolean) {
     internal companion object {
         val Standard = ResonoteMotionScheme(reducedMotion = false)
         val Reduced = ResonoteMotionScheme(reducedMotion = true)

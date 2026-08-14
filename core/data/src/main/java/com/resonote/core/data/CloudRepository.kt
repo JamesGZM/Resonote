@@ -6,10 +6,7 @@ import com.resonote.core.model.CollectionLoadResult
 import com.resonote.core.model.ResolveSongSourceResult
 
 interface CloudRepository {
-    suspend fun loadTracks(
-        page: Int = 1,
-        pageSize: Int = 50,
-    ): CollectionLoadResult<CloudPage>
+    suspend fun loadTracks(page: Int = 1, pageSize: Int = 50): CollectionLoadResult<CloudPage>
 
     suspend fun resolveSource(track: CloudTrack): ResolveSongSourceResult
 }

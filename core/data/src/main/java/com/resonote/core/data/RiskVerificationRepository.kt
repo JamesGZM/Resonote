@@ -8,8 +8,5 @@ import com.resonote.core.model.RiskVerificationSubmitResult
 interface RiskVerificationRepository {
     suspend fun methodFor(challenge: RiskChallengeHandle): RiskVerificationMethodResult
 
-    suspend fun submit(
-        challenge: RiskChallengeHandle,
-        proof: RiskVerificationProof,
-    ): RiskVerificationSubmitResult
+    suspend fun submit(challenge: RiskChallengeHandle, proof: RiskVerificationProof): RiskVerificationSubmitResult
 }

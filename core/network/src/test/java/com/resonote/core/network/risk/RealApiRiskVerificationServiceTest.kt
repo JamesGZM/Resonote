@@ -1,21 +1,16 @@
 package com.resonote.core.network.risk
 
 import com.google.common.truth.Truth.assertThat
-import com.resonote.core.network.protocol.ProtocolTransport
 import com.resonote.core.network.protocol.ApiDeviceIdentityFactory
 import com.resonote.core.network.protocol.ApiEndpointOrigins
 import com.resonote.core.network.protocol.ApiOriginPolicy
 import com.resonote.core.network.protocol.ApiProtocolCrypto
 import com.resonote.core.network.protocol.ApiRequestSigner
 import com.resonote.core.network.protocol.ProtocolRandom
+import com.resonote.core.network.protocol.ProtocolTransport
 import com.resonote.core.network.session.ApiSession
 import com.resonote.core.network.session.ApiSessionManager
 import com.resonote.core.network.session.ApiSessionStore
-import java.time.Clock
-import java.time.Instant
-import java.time.ZoneOffset
-import java.util.Optional
-import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
@@ -27,6 +22,11 @@ import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
+import java.util.Optional
+import java.util.concurrent.TimeUnit
 
 class RealApiRiskVerificationServiceTest {
     private lateinit var gatewayServer: MockWebServer
@@ -114,7 +114,15 @@ class RealApiRiskVerificationServiceTest {
         val session = ApiSession("guid", "mid", "dev", dfid = "dfid", userId = "42")
         val sessions = ApiSessionManager(Optional.of(MemoryStore(session)), ApiDeviceIdentityFactory())
         val executor = ProtocolTransport(
-            { OkHttpClient() }, json, clock, ApiRequestSigner(), sessions, ApiRiskChallengeDetector(), ApiOriginPolicy { true },
+            {
+                OkHttpClient()
+            },
+            json,
+            clock,
+            ApiRequestSigner(),
+            sessions,
+            ApiRiskChallengeDetector(),
+            ApiOriginPolicy { true },
         )
         return RealApiRiskVerificationService(
             executor,
@@ -136,7 +144,11 @@ class RealApiRiskVerificationServiceTest {
         private val state = MutableStateFlow(initial)
         override val session = state
         override suspend fun read() = state.value
-        override suspend fun write(session: ApiSession) { state.value = session }
-        override suspend fun clearAuthentication() { state.value = null }
+        override suspend fun write(session: ApiSession) {
+            state.value = session
+        }
+        override suspend fun clearAuthentication() {
+            state.value = null
+        }
     }
 }

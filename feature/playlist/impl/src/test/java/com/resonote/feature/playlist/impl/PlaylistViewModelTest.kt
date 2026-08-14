@@ -16,8 +16,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -276,15 +276,10 @@ class PlaylistViewModelTest {
         override suspend fun createPlaylist(name: String): CollectionLoadResult<String> =
             CollectionLoadResult.Failed(ContentFailure.Protocol)
 
-        override suspend fun addTracks(
-            listId: String,
-            tracks: List<PlaylistTrackInput>,
-        ): CollectionLoadResult<Unit> = CollectionLoadResult.Failed(ContentFailure.Protocol)
+        override suspend fun addTracks(listId: String, tracks: List<PlaylistTrackInput>): CollectionLoadResult<Unit> =
+            CollectionLoadResult.Failed(ContentFailure.Protocol)
 
-        override suspend fun removeTracks(
-            listId: String,
-            fileIds: List<String>,
-        ): CollectionLoadResult<Unit> {
+        override suspend fun removeTracks(listId: String, fileIds: List<String>): CollectionLoadResult<Unit> {
             removeRequests += listId to fileIds
             return removeGate?.await() ?: removeResult
         }

@@ -99,12 +99,7 @@ class ArtistScreenshotTest {
         )
     }
 
-    private fun song(
-        id: String,
-        title: String,
-        quality: AudioQuality,
-        vip: Boolean,
-    ) = OnlineSong(
+    private fun song(id: String, title: String, quality: AudioQuality, vip: Boolean) = OnlineSong(
         hash = id,
         title = title,
         artist = "林澈 · 潮汐记忆",

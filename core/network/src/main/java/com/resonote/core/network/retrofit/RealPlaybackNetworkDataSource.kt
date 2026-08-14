@@ -1,8 +1,8 @@
 package com.resonote.core.network.retrofit
 
-import com.resonote.core.network.ApiPlaybackUnavailableException
 import com.resonote.core.network.ApiAuthenticationRequiredException
 import com.resonote.core.network.ApiException
+import com.resonote.core.network.ApiPlaybackUnavailableException
 import com.resonote.core.network.ApiProtocolException
 import com.resonote.core.network.ApiRiskException
 import com.resonote.core.network.ApiServiceException
@@ -13,12 +13,10 @@ import com.resonote.core.network.api.model.SongPrivilegeRequest
 import com.resonote.core.network.api.model.SongPrivilegeResource
 import com.resonote.core.network.api.model.SongSourceResponse
 import com.resonote.core.network.model.NetworkSongSource
-import com.resonote.core.network.protocol.ApiRequestSigner
 import com.resonote.core.network.protocol.ApiProtocolConfig
+import com.resonote.core.network.protocol.ApiRequestSigner
 import com.resonote.core.network.protocol.DeviceRegistrationCoordinator
 import com.resonote.core.network.session.ApiAuthenticationContext
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -26,6 +24,8 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.intOrNull
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import javax.inject.Inject
+import javax.inject.Singleton
 
 @Singleton
 internal class RealPlaybackNetworkDataSource @Inject constructor(
@@ -64,7 +64,12 @@ internal class RealPlaybackNetworkDataSource @Inject constructor(
                         quality = candidate.quality,
                         albumAudioId = (albumAudioId?.toLongOrNull() ?: 0).toString(),
                         isFreePart = if (session.isAuthenticated) "0" else "1",
-                        parentPageId = if (session.isAuthenticated) AUTHENTICATED_PARENT_PAGE_ID else ANONYMOUS_PARENT_PAGE_ID,
+                        parentPageId =
+                        if (session.isAuthenticated) {
+                            AUTHENTICATED_PARENT_PAGE_ID
+                        } else {
+                            ANONYMOUS_PARENT_PAGE_ID
+                        },
                         key = signer.signSongKey(candidate.hash, session.mid, session.userId),
                     )
                 }
@@ -170,7 +175,8 @@ internal class RealPlaybackNetworkDataSource @Inject constructor(
             .mapNotNull { variant ->
                 val item = variant.asObject() ?: return@mapNotNull null
                 val quality = item.text("quality")?.takeIf(QUALITY_LEVELS::contains) ?: return@mapNotNull null
-                val candidateHash = item.text("hash")?.trim()?.lowercase()?.takeIf(String::isNotEmpty) ?: return@mapNotNull null
+                val candidateHash =
+                    item.text("hash")?.trim()?.lowercase()?.takeIf(String::isNotEmpty) ?: return@mapNotNull null
                 PlaybackCandidate(candidateHash, quality).takeIf { item.int("level") != 0 }
             }
             .distinctBy(PlaybackCandidate::quality)
@@ -179,8 +185,9 @@ internal class RealPlaybackNetworkDataSource @Inject constructor(
             .ifEmpty { fallbackQualities.map { PlaybackCandidate(hash, it) } }
     }
 
-    private fun fallbackQualities(requestedQuality: String): List<String> =
-        QUALITY_LEVELS.take(QUALITY_LEVELS.indexOf(requestedQuality) + 1).asReversed()
+    private fun fallbackQualities(requestedQuality: String): List<String> = QUALITY_LEVELS.take(
+        QUALITY_LEVELS.indexOf(requestedQuality) + 1,
+    ).asReversed()
 
     private fun normalizeDurationMillis(value: Long?): Long =
         value?.coerceAtLeast(0)?.let { if (it in 1..86_400) it * 1_000 else it } ?: 0
@@ -196,18 +203,16 @@ internal class RealPlaybackNetworkDataSource @Inject constructor(
         return listOf(this) + (item["relate_goods"] as? JsonArray).orEmpty()
     }
 
-    private fun JsonObject.text(name: String): String? =
-        (get(name) as? JsonPrimitive)?.contentOrNull
+    private fun JsonObject.text(name: String): String? = (get(name) as? JsonPrimitive)?.contentOrNull
 
-    private fun JsonObject.int(name: String): Int? =
-        (get(name) as? JsonPrimitive)?.intOrNull
+    private fun JsonObject.int(name: String): Int? = (get(name) as? JsonPrimitive)?.intOrNull
 
-    private fun SongSourceResponse.hasAnyUrl(): Boolean =
-        sequenceOf(url, backupUrl, legacyBackupUrl).flatten().any { it.isNotBlank() }
+    private fun SongSourceResponse.hasAnyUrl(): Boolean = sequenceOf(url, backupUrl, legacyBackupUrl).flatten().any {
+        it.isNotBlank()
+    }
 
-    private fun MusicApiResponse.failureCode(): String? =
-        errorCode?.trim()?.takeIf(String::isNotEmpty)
-            ?: status?.trim()?.takeIf(String::isNotEmpty)
+    private fun MusicApiResponse.failureCode(): String? = errorCode?.trim()?.takeIf(String::isNotEmpty)
+        ?: status?.trim()?.takeIf(String::isNotEmpty)
 
     private fun okhttp3.HttpUrl.isAllowedCleartextMediaUrl(): Boolean =
         scheme == "http" && (host == KUGOU_DOMAIN || host.endsWith(".$KUGOU_DOMAIN"))

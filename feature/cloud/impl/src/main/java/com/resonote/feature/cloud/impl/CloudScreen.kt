@@ -38,7 +38,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -134,7 +133,10 @@ internal fun CloudScreen(
                 title = { Text(stringResource(R.string.feature_cloud_impl_cloud_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.feature_cloud_impl_cloud_back))
+                        Icon(
+                            Icons.AutoMirrored.Rounded.ArrowBack,
+                            stringResource(R.string.feature_cloud_impl_cloud_back),
+                        )
                     }
                 },
                 actions = {
@@ -359,7 +361,11 @@ private fun CloudVaultCard(storage: CloudStorage?, total: Int) {
                     )
                     Row(modifier = Modifier.fillMaxWidth().padding(top = 9.dp)) {
                         Text(
-                            stringResource(R.string.feature_cloud_impl_cloud_storage_used, used.fileSize(), storage.maxBytes.fileSize()),
+                            stringResource(
+                                R.string.feature_cloud_impl_cloud_storage_used,
+                                used.fileSize(),
+                                storage.maxBytes.fileSize(),
+                            ),
                             modifier = Modifier.weight(1f),
                             color = MaterialTheme.colorScheme.onSecondaryContainer,
                             style = MaterialTheme.typography.bodySmall,
@@ -436,14 +442,24 @@ private fun CloudTools(
                 Icon(
                     Icons.AutoMirrored.Rounded.List,
                     stringResource(R.string.feature_cloud_impl_cloud_list_view),
-                    tint = if (state.viewMode == CloudViewMode.List) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint =
+                    if (state.viewMode == CloudViewMode.List) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
                 )
             }
             IconButton(onClick = { onViewModeChange(CloudViewMode.Grid) }) {
                 Icon(
                     Icons.Rounded.GridView,
                     stringResource(R.string.feature_cloud_impl_cloud_grid_view),
-                    tint = if (state.viewMode == CloudViewMode.Grid) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint =
+                    if (state.viewMode == CloudViewMode.Grid) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
                 )
             }
         }
@@ -462,7 +478,12 @@ private fun CloudTrackRow(
         onClick = onPlay,
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = if (isPlaying) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
+            containerColor =
+            if (isPlaying) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceContainerLow
+            },
         ),
         shape = MaterialTheme.shapes.large,
     ) {
@@ -477,8 +498,12 @@ private fun CloudTrackRow(
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    listOfNotNull(track.artist, track.album).filter(String::isNotBlank).joinToString(" · ")
-                        .ifBlank { stringResource(R.string.feature_cloud_impl_cloud_unknown_artist) },
+                    listOfNotNull(track.artist, track.album)
+                        .filter(String::isNotBlank)
+                        .joinToString(" · ")
+                        .ifBlank {
+                            stringResource(R.string.feature_cloud_impl_cloud_unknown_artist)
+                        },
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall,
                     maxLines = 1,
@@ -514,7 +539,12 @@ private fun CloudTrackGridCard(
         onClick = onPlay,
         modifier = modifier,
         colors = CardDefaults.cardColors(
-            containerColor = if (isPlaying) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
+            containerColor =
+            if (isPlaying) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceContainerLow
+            },
         ),
         shape = MaterialTheme.shapes.extraLarge,
     ) {
@@ -529,7 +559,8 @@ private fun CloudTrackGridCard(
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    track.artist?.takeIf(String::isNotBlank) ?: stringResource(R.string.feature_cloud_impl_cloud_unknown_artist),
+                    track.artist?.takeIf(String::isNotBlank)
+                        ?: stringResource(R.string.feature_cloud_impl_cloud_unknown_artist),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall,
                     maxLines = 1,
@@ -546,7 +577,10 @@ private fun CloudTrackGridCard(
                         CircularProgressIndicator(modifier = Modifier.padding(10.dp).size(20.dp), strokeWidth = 2.dp)
                     } else {
                         IconButton(onClick = onAppend) {
-                            Icon(Icons.Rounded.Add, stringResource(R.string.feature_cloud_impl_cloud_append_track, track.title))
+                            Icon(
+                                Icons.Rounded.Add,
+                                stringResource(R.string.feature_cloud_impl_cloud_append_track, track.title),
+                            )
                         }
                     }
                 }
@@ -585,11 +619,7 @@ private fun CloudArtwork(track: CloudTrack, modifier: Modifier) {
 }
 
 @Composable
-private fun PlaybackIssueCard(
-    issue: CloudPlaybackIssue,
-    onRetry: () -> Unit,
-    onDismiss: () -> Unit,
-) {
+private fun PlaybackIssueCard(issue: CloudPlaybackIssue, onRetry: () -> Unit, onDismiss: () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth().testTag("cloud-playback-error"),
         color = MaterialTheme.colorScheme.errorContainer,
@@ -601,7 +631,8 @@ private fun PlaybackIssueCard(
                 Icon(Icons.Rounded.CloudOff, contentDescription = null)
                 Text(
                     text = when (issue) {
-                        CloudPlaybackIssue.Unavailable -> stringResource(R.string.feature_cloud_impl_cloud_playback_unavailable)
+                        CloudPlaybackIssue.Unavailable ->
+                            stringResource(R.string.feature_cloud_impl_cloud_playback_unavailable)
                         is CloudPlaybackIssue.Failed -> issue.failure.playbackMessage()
                     },
                     modifier = Modifier.weight(1f).padding(start = 12.dp),
@@ -665,7 +696,12 @@ private fun EmptyState(title: String, body: String) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Icon(Icons.Rounded.Cloud, contentDescription = null, modifier = Modifier.size(40.dp))
-        Text(title, modifier = Modifier.padding(top = 14.dp), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Text(
+            title,
+            modifier = Modifier.padding(top = 14.dp),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+        )
         Text(
             body,
             modifier = Modifier.padding(top = 7.dp),
@@ -702,7 +738,9 @@ private fun ContentFailure.message(): String = stringResource(
     when (this) {
         ContentFailure.AuthenticationRequired -> R.string.feature_cloud_impl_cloud_error_auth
         ContentFailure.Network -> R.string.feature_cloud_impl_cloud_error_network
-        ContentFailure.RiskBlocked, is ContentFailure.RiskVerificationRequired -> R.string.feature_cloud_impl_cloud_error_risk
+        ContentFailure.RiskBlocked,
+        is ContentFailure.RiskVerificationRequired,
+        -> R.string.feature_cloud_impl_cloud_error_risk
         ContentFailure.ServiceRejected, ContentFailure.Protocol -> R.string.feature_cloud_impl_cloud_error_generic
     },
 )
@@ -711,8 +749,12 @@ private fun ContentFailure.message(): String = stringResource(
 private fun ContentFailure.playbackMessage(): String = when (this) {
     ContentFailure.AuthenticationRequired -> stringResource(R.string.feature_cloud_impl_cloud_error_auth)
     ContentFailure.Network -> stringResource(R.string.feature_cloud_impl_cloud_error_network)
-    ContentFailure.RiskBlocked, is ContentFailure.RiskVerificationRequired -> stringResource(R.string.feature_cloud_impl_cloud_error_risk)
-    ContentFailure.ServiceRejected, ContentFailure.Protocol -> stringResource(R.string.feature_cloud_impl_cloud_playback_failed)
+    ContentFailure.RiskBlocked,
+    is ContentFailure.RiskVerificationRequired,
+    -> stringResource(R.string.feature_cloud_impl_cloud_error_risk)
+    ContentFailure.ServiceRejected,
+    ContentFailure.Protocol,
+    -> stringResource(R.string.feature_cloud_impl_cloud_playback_failed)
 }
 
 private fun Long.durationLabel(): String {
@@ -723,7 +765,7 @@ private fun Long.durationLabel(): String {
 
 private fun Long.fileSize(): String {
     val safe = coerceAtLeast(0)
-    if (safe < 1_024) return "${safe} B"
+    if (safe < 1_024) return "$safe B"
     val units = listOf("KB", "MB", "GB", "TB")
     var value = safe.toDouble() / 1_024
     var index = 0

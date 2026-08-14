@@ -197,10 +197,7 @@ internal class DefaultLocalMediaRepository internal constructor(
         mimeType = metadata.detectedMimeType,
     )
 
-    private fun StoredLocalMedia.toEntity(
-        id: LocalMediaId,
-        importedAtEpochMillis: Long,
-    ) = LocalMediaEntity(
+    private fun StoredLocalMedia.toEntity(id: LocalMediaId, importedAtEpochMillis: Long) = LocalMediaEntity(
         id = id.value,
         storagePath = files.audioPath,
         displayName = displayName,

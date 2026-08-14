@@ -5,9 +5,6 @@ import com.resonote.core.data.VipRewardRepository
 import com.resonote.core.model.CollectionLoadResult
 import com.resonote.core.model.ContentFailure
 import com.resonote.core.model.VipReward
-import java.time.Clock
-import java.time.Instant
-import java.time.ZoneOffset
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -20,6 +17,9 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DailyVipViewModelTest {

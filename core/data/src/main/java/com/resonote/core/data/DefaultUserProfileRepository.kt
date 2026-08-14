@@ -5,62 +5,60 @@ import com.resonote.core.model.UserProfile
 import com.resonote.core.network.ApiAuthenticationRequiredException
 import com.resonote.core.network.ApiException
 import com.resonote.core.network.UserProfileNetworkDataSource
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.supervisorScope
+import javax.inject.Inject
+import javax.inject.Singleton
 
 @Singleton
 internal class DefaultUserProfileRepository @Inject constructor(
     private val network: UserProfileNetworkDataSource,
     private val riskChallenges: RiskChallengeRegistry,
 ) : UserProfileRepository {
-    override suspend fun loadProfile(): CollectionLoadResult<UserProfile> =
-        try {
-            supervisorScope {
-                val detailRequest = async { network.userDetail() }
-                val vipRequest = async { network.userVip() }
-                val detailResult =
-                    try {
-                        Result.success(detailRequest.await())
-                    } catch (cancellation: CancellationException) {
-                        throw cancellation
-                    } catch (failure: ApiException) {
-                        Result.failure(failure)
-                    }
-                val vipResult =
-                    try {
-                        Result.success(vipRequest.await())
-                    } catch (cancellation: CancellationException) {
-                        throw cancellation
-                    } catch (failure: ApiException) {
-                        Result.failure(failure)
-                    }
-                val detail = detailResult.getOrElse { detailFailure ->
-                    throw (vipResult.exceptionOrNull() as? ApiAuthenticationRequiredException ?: detailFailure)
+    override suspend fun loadProfile(): CollectionLoadResult<UserProfile> = try {
+        supervisorScope {
+            val detailRequest = async { network.userDetail() }
+            val vipRequest = async { network.userVip() }
+            val detailResult =
+                try {
+                    Result.success(detailRequest.await())
+                } catch (cancellation: CancellationException) {
+                    throw cancellation
+                } catch (failure: ApiException) {
+                    Result.failure(failure)
                 }
-                val vip = vipResult.getOrElse { vipFailure ->
-                    if (vipFailure is ApiAuthenticationRequiredException) throw vipFailure
-                    null
+            val vipResult =
+                try {
+                    Result.success(vipRequest.await())
+                } catch (cancellation: CancellationException) {
+                    throw cancellation
+                } catch (failure: ApiException) {
+                    Result.failure(failure)
                 }
-                CollectionLoadResult.Available(
-                    UserProfile(
-                        userId = detail.userId,
-                        nickname = detail.nickname,
-                        avatarUrl = detail.avatarUrl?.replace("{size}", "240"),
-                        backgroundUrl = detail.backgroundUrl?.replace("{size}", "720"),
-                        signature = detail.signature,
-                        fans = detail.fans,
-                        follows = detail.follows,
-                        listenMinutes = detail.listenMinutes,
-                        isVip = vip?.isVip == true,
-                        vipLabel = vip?.label.orEmpty(),
-                    ),
-                )
+            val detail = detailResult.getOrElse { detailFailure ->
+                throw (vipResult.exceptionOrNull() as? ApiAuthenticationRequiredException ?: detailFailure)
             }
-        } catch (failure: ApiException) {
-            CollectionLoadResult.Failed(failure.toContentFailure(riskChallenges))
+            val vip = vipResult.getOrElse { vipFailure ->
+                if (vipFailure is ApiAuthenticationRequiredException) throw vipFailure
+                null
+            }
+            CollectionLoadResult.Available(
+                UserProfile(
+                    userId = detail.userId,
+                    nickname = detail.nickname,
+                    avatarUrl = detail.avatarUrl?.replace("{size}", "240"),
+                    backgroundUrl = detail.backgroundUrl?.replace("{size}", "720"),
+                    signature = detail.signature,
+                    fans = detail.fans,
+                    follows = detail.follows,
+                    listenMinutes = detail.listenMinutes,
+                    isVip = vip?.isVip == true,
+                    vipLabel = vip?.label.orEmpty(),
+                ),
+            )
         }
-
+    } catch (failure: ApiException) {
+        CollectionLoadResult.Failed(failure.toContentFailure(riskChallenges))
+    }
 }

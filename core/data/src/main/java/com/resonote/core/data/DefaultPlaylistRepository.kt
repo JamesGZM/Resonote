@@ -23,15 +23,15 @@ internal class DefaultPlaylistRepository @Inject constructor(
             val result = network.playlistSongs(globalCollectionId, page, pageSize)
             PlaylistPage(
                 details =
-                    result.info?.let {
-                        PlaylistDetails(
-                            id = it.id,
-                            title = it.title,
-                            description = it.description,
-                            coverUrl = it.coverUrl?.replace("{size}", "480"),
-                            songCount = it.songCount,
-                        )
-                    },
+                result.info?.let {
+                    PlaylistDetails(
+                        id = it.id,
+                        title = it.title,
+                        description = it.description,
+                        coverUrl = it.coverUrl?.replace("{size}", "480"),
+                        songCount = it.songCount,
+                    )
+                },
                 songs = result.songs.map { it.toOnlineSong() },
                 page = page,
                 hasMore = result.hasMore,

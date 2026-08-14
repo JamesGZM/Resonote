@@ -6,63 +6,58 @@ import com.resonote.core.network.ApiHttpException
 import com.resonote.core.network.ApiNetworkException
 import com.resonote.core.network.ApiPlaybackUnavailableException
 import com.resonote.core.network.ApiProtocolException
-import com.resonote.core.network.ApiRiskException
 import com.resonote.core.network.ApiRiskBlockedException
+import com.resonote.core.network.ApiRiskException
 import com.resonote.core.network.ApiServiceException
 import com.resonote.core.network.AuthNetworkDataSource
 import com.resonote.core.network.CatalogNetworkDataSource
 import com.resonote.core.network.CloudNetworkDataSource
 import com.resonote.core.network.HomeNetworkDataSource
-import com.resonote.core.network.LyricsNetworkDataSource
-import com.resonote.core.network.VideoNetworkDataSource
-import com.resonote.core.network.RecognitionNetworkDataSource
 import com.resonote.core.network.LibraryNetworkDataSource
+import com.resonote.core.network.LyricsNetworkDataSource
 import com.resonote.core.network.PlaybackNetworkDataSource
 import com.resonote.core.network.PlaylistNetworkDataSource
 import com.resonote.core.network.RankingNetworkDataSource
+import com.resonote.core.network.RecognitionNetworkDataSource
 import com.resonote.core.network.SearchNetworkDataSource
 import com.resonote.core.network.UserProfileNetworkDataSource
+import com.resonote.core.network.VideoNetworkDataSource
 import com.resonote.core.network.VipNetworkDataSource
 import com.resonote.core.network.api.MusicApi
 import com.resonote.core.network.model.NetworkMobileCodeLoginResult
 import com.resonote.core.network.model.NetworkPasswordLoginResult
 import com.resonote.core.network.model.NetworkPlaylistTrackInput
 import com.resonote.core.network.model.NetworkRecommendationMode
-import com.resonote.core.network.protocol.ProtocolTransport
+import com.resonote.core.network.protocol.ApiDefaultsInterceptor
 import com.resonote.core.network.protocol.ApiDeviceIdentityFactory
-import com.resonote.core.network.protocol.DeviceRegistrationCoordinator
-import com.resonote.core.network.protocol.DeviceRegistrationProfile
-import com.resonote.core.network.protocol.DeviceRegistrationProfileProvider
 import com.resonote.core.network.protocol.ApiEndpointOrigins
 import com.resonote.core.network.protocol.ApiOriginPolicy
 import com.resonote.core.network.protocol.ApiProtocolCrypto
-import com.resonote.core.network.protocol.ApiDefaultsInterceptor
+import com.resonote.core.network.protocol.ApiRequestSigner
 import com.resonote.core.network.protocol.ApiResponseMetadataInterceptor
 import com.resonote.core.network.protocol.ApiSigningInterceptor
-import com.resonote.core.network.protocol.ApiRequestSigner
-import com.resonote.core.network.protocol.ProtocolRandom
-import com.resonote.core.network.protocol.MobileAuthProtocolClient
 import com.resonote.core.network.protocol.CloudProtocolClient
+import com.resonote.core.network.protocol.DeviceRegistrationCoordinator
+import com.resonote.core.network.protocol.DeviceRegistrationProfile
+import com.resonote.core.network.protocol.DeviceRegistrationProfileProvider
+import com.resonote.core.network.protocol.MobileAuthProtocolClient
+import com.resonote.core.network.protocol.ProtocolRandom
+import com.resonote.core.network.protocol.ProtocolTransport
 import com.resonote.core.network.risk.ApiRiskChallengeDetector
+import com.resonote.core.network.session.ApiAuthenticationGateReason
 import com.resonote.core.network.session.ApiSession
 import com.resonote.core.network.session.ApiSessionManager
 import com.resonote.core.network.session.ApiSessionStore
-import com.resonote.core.network.session.ApiAuthenticationGateReason
-import java.time.Clock
-import java.time.Instant
-import java.time.ZoneOffset
-import java.util.Base64
-import java.util.Optional
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import okhttp3.OkHttpClient
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.SocketPolicy
@@ -73,6 +68,11 @@ import org.junit.Before
 import org.junit.Test
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
+import java.util.Base64
+import java.util.Optional
 
 class ApiNetworkDataSourceTest {
     private lateinit var gatewayServer: MockWebServer
@@ -847,10 +847,26 @@ class ApiNetworkDataSourceTest {
 
     @Test
     fun typedSearchUsesMobilePathsPagingAndConsumerFields() = runTest {
-        complexSearchServer.enqueue(jsonResponse("""{"status":1,"data":{"lists":[{"gid":"gid","specialname":"<em>歌单</em>","nickname":"作者","song_count":8,"play_count":99}],"total":61}}"""))
-        complexSearchServer.enqueue(jsonResponse("""{"status":1,"data":{"lists":[{"albumid":"album","albumname":"<em>专辑</em>","singername":"歌手","songcount":7,"publish_time":"2026-08-12 00:00:00"}],"total":1}}"""))
-        complexSearchServer.enqueue(jsonResponse("""{"status":1,"data":{"lists":[{"AuthorId":"artist","AuthorName":"<em>歌手</em>","AlbumCount":3,"AudioCount":9}],"total":1}}"""))
-        complexSearchServer.enqueue(jsonResponse("""{"status":1,"data":{"lists":[{"MvHash":"mv","MvName":"<em>MV</em>","SingerName":"歌手","Duration":180}],"total":1}}"""))
+        complexSearchServer.enqueue(
+            jsonResponse(
+                """{"status":1,"data":{"lists":[{"gid":"gid","specialname":"<em>歌单</em>","nickname":"作者","song_count":8,"play_count":99}],"total":61}}""",
+            ),
+        )
+        complexSearchServer.enqueue(
+            jsonResponse(
+                """{"status":1,"data":{"lists":[{"albumid":"album","albumname":"<em>专辑</em>","singername":"歌手","songcount":7,"publish_time":"2026-08-12 00:00:00"}],"total":1}}""",
+            ),
+        )
+        complexSearchServer.enqueue(
+            jsonResponse(
+                """{"status":1,"data":{"lists":[{"AuthorId":"artist","AuthorName":"<em>歌手</em>","AlbumCount":3,"AudioCount":9}],"total":1}}""",
+            ),
+        )
+        complexSearchServer.enqueue(
+            jsonResponse(
+                """{"status":1,"data":{"lists":[{"MvHash":"mv","MvName":"<em>MV</em>","SingerName":"歌手","Duration":180}],"total":1}}""",
+            ),
+        )
 
         val playlists = dataSource().searchPlaylists(" query ", page = 2, pageSize = 30)
         val albums = dataSource().searchAlbums("query", page = 1, pageSize = 30)
@@ -875,7 +891,9 @@ class ApiNetworkDataSourceTest {
     @Test
     fun missingDfidRegistersAnonymousDeviceBeforeSignedSearch() = runTest {
         val registration = crypto.encryptPlaylist("""{"status":1,"data":{"dfid":"registered-dfid"}}""")
-        deviceRegistrationServer.enqueue(MockResponse().setResponseCode(200).setBody(Buffer().write(registration.ciphertext)))
+        deviceRegistrationServer.enqueue(
+            MockResponse().setResponseCode(200).setBody(Buffer().write(registration.ciphertext)),
+        )
         gatewayServer.enqueue(jsonResponse("""{"status":1,"data":{"lists":[],"total":0}}"""))
 
         dataSource(session.copy(dfid = null, token = null, userId = null, cookies = emptyMap()))
@@ -925,7 +943,9 @@ class ApiNetworkDataSourceTest {
     @Test
     fun contentRequestsReuseSingleDeviceRegistration() = runTest {
         val registration = crypto.encryptPlaylist("""{"status":1,"data":{"dfid":"registered-dfid"}}""")
-        deviceRegistrationServer.enqueue(MockResponse().setResponseCode(200).setBody(Buffer().write(registration.ciphertext)))
+        deviceRegistrationServer.enqueue(
+            MockResponse().setResponseCode(200).setBody(Buffer().write(registration.ciphertext)),
+        )
         gatewayServer.enqueue(jsonResponse("""{"status":1,"data":{"song_list":[]}}"""))
         gatewayServer.enqueue(jsonResponse("""{"status":1,"data":{"special_list":[]}}"""))
         gatewayServer.enqueue(jsonResponse("""{"status":1,"data":{"info":[]}}"""))
@@ -944,7 +964,9 @@ class ApiNetworkDataSourceTest {
     @Test
     fun concurrentRequestsShareOneDeviceRegistration() = runTest {
         val registration = crypto.encryptPlaylist("""{"status":1,"data":{"dfid":"registered-dfid"}}""")
-        deviceRegistrationServer.enqueue(MockResponse().setResponseCode(200).setBody(Buffer().write(registration.ciphertext)))
+        deviceRegistrationServer.enqueue(
+            MockResponse().setResponseCode(200).setBody(Buffer().write(registration.ciphertext)),
+        )
         repeat(3) {
             gatewayServer.enqueue(jsonResponse("""{"status":1,"data":{"lists":[],"total":0}}"""))
         }
@@ -989,7 +1011,9 @@ class ApiNetworkDataSourceTest {
     @Test
     fun mobileLoginAcceptsPlaintextTokenSecret() = runTest {
         val encrypted = crypto.encryptTemporary("plain-token")
-        mobileLoginServer.enqueue(jsonResponse("""{"status":1,"data":{"userid":42,"secu_params":"${encrypted.ciphertextHex}"}}"""))
+        mobileLoginServer.enqueue(
+            jsonResponse("""{"status":1,"data":{"userid":42,"secu_params":"${encrypted.ciphertextHex}"}}"""),
+        )
 
         val result = dataSource().loginWithMobileCode("13800000000", "246810")
 
@@ -1014,7 +1038,9 @@ class ApiNetworkDataSourceTest {
 
     @Test
     fun passwordLoginMatchesMobileContractAndCommitsDecodedCredentials() = runTest {
-        val encrypted = crypto.encryptTemporary("""{"token":"password-token","userid":"84","vip_type":"2","vip_token":"vip"}""")
+        val encrypted = crypto.encryptTemporary(
+            """{"token":"password-token","userid":"84","vip_type":"2","vip_token":"vip"}""",
+        )
         gatewayServer.enqueue(
             jsonResponse("""{"status":1,"data":{"secu_params":"${encrypted.ciphertextHex}"}}""")
                 .addHeader("Set-Cookie", "server_cookie=password-value; Path=/; HttpOnly"),
@@ -1065,7 +1091,9 @@ class ApiNetworkDataSourceTest {
     @Test
     fun passwordLoginSurfacesRiskBeforeServiceRejection() {
         gatewayServer.enqueue(
-            jsonResponse("""{"status":0,"error_code":20028,"data":{"ssaCode":"password-event","sid":"sid","edt":"edt"}}"""),
+            jsonResponse(
+                """{"status":0,"error_code":20028,"data":{"ssaCode":"password-event","sid":"sid","edt":"edt"}}""",
+            ),
         )
 
         val failure = assertThrows(ApiRiskException::class.java) {
@@ -1143,7 +1171,9 @@ class ApiNetworkDataSourceTest {
     @Test
     fun userVipUsesDedicatedOriginAndMapsActiveSvip() = runTest {
         vipServer.enqueue(
-            jsonResponse("""{"status":1,"data":{"busi_vip":[{"is_vip":0,"product_type":"vip"},{"is_vip":"1","product_type":"SVIP"}]}}"""),
+            jsonResponse(
+                """{"status":1,"data":{"busi_vip":[{"is_vip":0,"product_type":"vip"},{"is_vip":"1","product_type":"SVIP"}]}}""",
+            ),
         )
 
         val vip = dataSource().userVip()
@@ -1414,8 +1444,22 @@ class ApiNetworkDataSourceTest {
 
     @Test
     fun bannersAndPlaylistTagsMatchMobileContracts() = runTest {
-        gatewayServer.enqueue(jsonResponse("""{"status":1,"data":{"ads":[{"id":7,"title":"精选","img_url":"https://image/{size}","extra":{"url":"https://example/banner"}}]}}"""))
-        gatewayServer.enqueue(jsonResponse("""{"status":1,"data":[{"tag_id":1,"tag_name":"语种","son":[{"tag_id":11,"tag_name":"华语"}]}]}"""))
+        gatewayServer.enqueue(
+            jsonResponse(
+                """
+                {"status":1,"data":{"ads":[{"id":7,"title":"精选","img_url":"https://image/{size}",
+                "extra":{"url":"https://example/banner"}}]}}
+                """.trimIndent(),
+            ),
+        )
+        gatewayServer.enqueue(
+            jsonResponse(
+                """
+                {"status":1,"data":[{"tag_id":1,"tag_name":"语种",
+                "son":[{"tag_id":11,"tag_name":"华语"}]}]}
+                """.trimIndent(),
+            ),
+        )
 
         val banners = dataSource().banners()
         val categories = dataSource().playlistCategories()
@@ -1424,8 +1468,10 @@ class ApiNetworkDataSourceTest {
         assertThat(banners.single().linkUrl).isEqualTo("https://example/banner")
         assertThat(categories.single().children.single().tagId).isEqualTo(11)
         val bannerRequest = gatewayServer.takeRequest()
-        val bannerBody = json.parseToJsonElement(bannerRequest.body.readUtf8()).jsonObject
-        assertThat(bannerRequest.requestUrl?.encodedPath).isEqualTo("/ads.gateway/v3/listen_banner")
+        val bannerJson = bannerRequest.body.readUtf8()
+        val bannerBody = json.parseToJsonElement(bannerJson).jsonObject
+        assertThat(bannerRequest.requestUrl?.encodedPath)
+            .isEqualTo("/ads.gateway/v3/listen_banner")
         assertThat(bannerBody["channel"]?.jsonPrimitive?.content).isEqualTo("201")
         assertThat(bannerBody["userid"]?.jsonPrimitive?.content).isEqualTo("99")
         val tagsRequest = gatewayServer.takeRequest()
@@ -1437,8 +1483,16 @@ class ApiNetworkDataSourceTest {
 
     @Test
     fun albumsAndNestedAlbumSongsMapOnlyMobileConsumerFields() = runTest {
-        gatewayServer.enqueue(jsonResponse("""{"status":1,"data":{"chn":[{"albumid":10,"albumname":"中文专辑","singername":"歌手","imgurl":"https://album/{size}","publishtime":"2026-08-12 00:00:00","songcount":"2"}],"eur":[],"jpn":[],"kor":[]}}"""))
-        gatewayServer.enqueue(jsonResponse("""{"status":1,"data":{"songs":[{"audio_info":{"hash":"ALBUMHASH","duration":245,"hash_320":"HQ"},"base":{"audio_name":"专辑歌曲","author_name":"歌手","album_audio_id":321},"album_info":{"album_id":10,"album_name":"中文专辑","sizable_cover":"https://cover/{size}"},"copyright":{"privilege":10}}],"total":"31"}}"""))
+        gatewayServer.enqueue(
+            jsonResponse(
+                """{"status":1,"data":{"chn":[{"albumid":10,"albumname":"中文专辑","singername":"歌手","imgurl":"https://album/{size}","publishtime":"2026-08-12 00:00:00","songcount":"2"}],"eur":[],"jpn":[],"kor":[]}}""",
+            ),
+        )
+        gatewayServer.enqueue(
+            jsonResponse(
+                """{"status":1,"data":{"songs":[{"audio_info":{"hash":"ALBUMHASH","duration":245,"hash_320":"HQ"},"base":{"audio_name":"专辑歌曲","author_name":"歌手","album_audio_id":321},"album_info":{"album_id":10,"album_name":"中文专辑","sizable_cover":"https://cover/{size}"},"copyright":{"privilege":10}}],"total":"31"}}""",
+            ),
+        )
 
         val albums = dataSource().newAlbums(page = 1, pageSize = 30)
         val songs = dataSource().albumSongs("10", page = 1, pageSize = 30)
@@ -1459,8 +1513,16 @@ class ApiNetworkDataSourceTest {
 
     @Test
     fun artistDetailAndAudiosUseMobileHeadersSortAndDedicatedOrigin() = runTest {
-        gatewayServer.enqueue(jsonResponse("""{"status":1,"data":{"author_name":"Fixture Artist","sizable_avatar":"https://artist/{size}","intro":"bio","audio_count":"31","album_count":2,"mv_count":3,"fansnums":"400"}}"""))
-        openApiServer.enqueue(jsonResponse("""{"status":1,"data":[{"hash":"ARTISTHASH","audio_name":"Artist Song","author_name":"Fixture Artist","album_id":10,"album_audio_id":20,"timelength":180,"hash_flac":"SQ","trans_param":{"union_cover":"https://song/{size}"}}]}"""))
+        gatewayServer.enqueue(
+            jsonResponse(
+                """{"status":1,"data":{"author_name":"Fixture Artist","sizable_avatar":"https://artist/{size}","intro":"bio","audio_count":"31","album_count":2,"mv_count":3,"fansnums":"400"}}""",
+            ),
+        )
+        openApiServer.enqueue(
+            jsonResponse(
+                """{"status":1,"data":[{"hash":"ARTISTHASH","audio_name":"Artist Song","author_name":"Fixture Artist","album_id":10,"album_audio_id":20,"timelength":180,"hash_flac":"SQ","trans_param":{"union_cover":"https://song/{size}"}}]}""",
+            ),
+        )
 
         val detail = dataSource().artistDetail("88")
         val page = dataSource().artistSongs("88", page = 2, pageSize = 30, newestFirst = true)
@@ -1470,7 +1532,9 @@ class ApiNetworkDataSourceTest {
         assertThat(page.songs.single().losslessHash).isEqualTo("SQ")
         val detailRequest = gatewayServer.takeRequest()
         assertThat(detailRequest.getHeader("kg-tid")).isEqualTo("36")
-        assertThat(json.parseToJsonElement(detailRequest.body.readUtf8()).jsonObject["author_id"]?.jsonPrimitive?.content).isEqualTo("88")
+        assertThat(
+            json.parseToJsonElement(detailRequest.body.readUtf8()).jsonObject["author_id"]?.jsonPrimitive?.content,
+        ).isEqualTo("88")
         val audioRequest = openApiServer.takeRequest()
         val audioBody = json.parseToJsonElement(audioRequest.body.readUtf8()).jsonObject
         assertThat(audioRequest.requestUrl?.encodedPath).isEqualTo("/kmr/v1/audio_group/author")
@@ -1481,9 +1545,19 @@ class ApiNetworkDataSourceTest {
 
     @Test
     fun complexHotAndSuggestSearchMatchMobileConsumerShapes() = runTest {
-        complexSearchServer.enqueue(jsonResponse("""{"status":1,"data":{"lists":[{"type":"author","lists":[{"AuthorId":1,"AuthorName":"<em>歌手</em>","AudioCount":9}]},{"type":"song","total":31,"lists":[{"FileHash":"HASH","OriSongName":"<em>歌曲</em>","SingerName":"歌手","Duration":245}]},{"type":"album","total":1,"lists":[{"albumid":2,"albumname":"专辑","singername":"歌手"}]},{"type":"collect","total":1,"lists":[{"gid":"gid","specialname":"歌单"}]},{"type":"mv","total":1,"lists":[{"MvHash":"MVHASH","MvName":"MV","Pic":"202608121234.jpg","Duration":180}]}]}}"""))
-        gatewayServer.enqueue(jsonResponse("""{"status":1,"data":{"list":[{"keywords":[{"keyword":"热搜","reason":"热门"}]}]}}"""))
-        gatewayServer.enqueue(jsonResponse("""{"status":1,"data":[{"RecordDatas":[{"HintInfo":"建议"},{"HintInfo":"建议"},{"HintInfo":"建议二"}]}]}"""))
+        complexSearchServer.enqueue(
+            jsonResponse(
+                """{"status":1,"data":{"lists":[{"type":"author","lists":[{"AuthorId":1,"AuthorName":"<em>歌手</em>","AudioCount":9}]},{"type":"song","total":31,"lists":[{"FileHash":"HASH","OriSongName":"<em>歌曲</em>","SingerName":"歌手","Duration":245}]},{"type":"album","total":1,"lists":[{"albumid":2,"albumname":"专辑","singername":"歌手"}]},{"type":"collect","total":1,"lists":[{"gid":"gid","specialname":"歌单"}]},{"type":"mv","total":1,"lists":[{"MvHash":"MVHASH","MvName":"MV","Pic":"202608121234.jpg","Duration":180}]}]}}""",
+            ),
+        )
+        gatewayServer.enqueue(
+            jsonResponse("""{"status":1,"data":{"list":[{"keywords":[{"keyword":"热搜","reason":"热门"}]}]}}"""),
+        )
+        gatewayServer.enqueue(
+            jsonResponse(
+                """{"status":1,"data":[{"RecordDatas":[{"HintInfo":"建议"},{"HintInfo":"建议"},{"HintInfo":"建议二"}]}]}""",
+            ),
+        )
 
         val complex = dataSource().searchComplex("  query  ")
         val hot = dataSource().hotSearchKeywords()
@@ -1492,7 +1566,9 @@ class ApiNetworkDataSourceTest {
         assertThat(complex.artists.single().name).isEqualTo("歌手")
         assertThat(complex.songs.single().durationMillis).isEqualTo(245_000)
         assertThat(complex.songsTotal).isEqualTo(31)
-        assertThat(complex.mvs.single().coverUrl).isEqualTo("https://imge.kugou.com/mvhdpic/480/20260812/202608121234.jpg")
+        assertThat(
+            complex.mvs.single().coverUrl,
+        ).isEqualTo("https://imge.kugou.com/mvhdpic/480/20260812/202608121234.jpg")
         assertThat(hot.single().reason).isEqualTo("热门")
         assertThat(suggestions).containsExactly("建议", "建议二").inOrder()
         assertThat(complexSearchServer.takeRequest().requestUrl?.queryParameter("keyword")).isEqualTo("query")
@@ -1552,7 +1628,9 @@ class ApiNetworkDataSourceTest {
         lyricsServer.enqueue(jsonResponse("""{"status":0,"error_code":12346}"""))
         gatewayServer.enqueue(jsonResponse("""{"status":0,"data":[]}"""))
 
-        val searchFailure = runCatching { dataSource().searchLyric("HASH", "321") }.exceptionOrNull() as ApiServiceException
+        val searchFailure = runCatching {
+            dataSource().searchLyric("HASH", "321")
+        }.exceptionOrNull() as ApiServiceException
         val downloadFailure = runCatching {
             dataSource().downloadLyric(com.resonote.core.network.model.NetworkLyricCandidate("7", "access"))
         }.exceptionOrNull() as ApiServiceException
@@ -1570,7 +1648,9 @@ class ApiNetworkDataSourceTest {
         assertThat(runCatching { source.dailyRecommendations() }.exceptionOrNull())
             .isInstanceOf(ApiServiceException::class.java)
 
-        gatewayServer.enqueue(jsonResponse("""{"status":0,"error_code":20028,"ssaCode":"event","data":{"song_list":[]}}"""))
+        gatewayServer.enqueue(
+            jsonResponse("""{"status":0,"error_code":20028,"ssaCode":"event","data":{"song_list":[]}}"""),
+        )
         assertThat(runCatching { source.dailyRecommendations() }.exceptionOrNull())
             .isInstanceOf(ApiRiskException::class.java)
 
@@ -1585,7 +1665,9 @@ class ApiNetworkDataSourceTest {
             .isInstanceOf(ApiPlaybackUnavailableException::class.java)
 
         qrLoginServer.enqueue(jsonResponse("""{"status":1,"data":{"status":1}}"""))
-        assertThat(source.checkQrLogin("qr-key")).isEqualTo(com.resonote.core.network.model.NetworkQrLoginStatus.Waiting)
+        assertThat(
+            source.checkQrLogin("qr-key"),
+        ).isEqualTo(com.resonote.core.network.model.NetworkQrLoginStatus.Waiting)
 
         assertThat(source.authenticationClearCount).isEqualTo(0)
         assertThat(source.store.read()).isEqualTo(session)
@@ -1593,8 +1675,12 @@ class ApiNetworkDataSourceTest {
 
     @Test
     fun videoUrlUsesSongKeyAndRejectsCleartext() = runTest {
-        gatewayServer.enqueue(jsonResponse("""{"status":1,"data":{"dynamic":{"backupdownurl":["https://video.example/fixture.mp4"]}}}"""))
-        gatewayServer.enqueue(jsonResponse("""{"status":1,"data":{"dynamic":{"downurl":"http://video.example/insecure.mp4"}}}"""))
+        gatewayServer.enqueue(
+            jsonResponse("""{"status":1,"data":{"dynamic":{"backupdownurl":["https://video.example/fixture.mp4"]}}}"""),
+        )
+        gatewayServer.enqueue(
+            jsonResponse("""{"status":1,"data":{"dynamic":{"downurl":"http://video.example/insecure.mp4"}}}"""),
+        )
 
         val url = dataSource().resolveVideoUrl("MVHASH")
         val insecure = runCatching { dataSource().resolveVideoUrl("MVHASH") }.exceptionOrNull() as ApiProtocolException
@@ -1609,7 +1695,11 @@ class ApiNetworkDataSourceTest {
 
     @Test
     fun recognitionPostsRawPcmAndSortsMatchesByConfidence() = runTest {
-        gatewayServer.enqueue(jsonResponse("""{"status":1,"data":[{"hash":"LOW","songname":"Low","dist":0.8},{"hash":"HIGH","songname":"High","singername":"Artist","dist":0.1,"timelength":180,"album":[{"albumname":"Album","sizable_cover":"https://cover/{size}"}]}]}"""))
+        gatewayServer.enqueue(
+            jsonResponse(
+                """{"status":1,"data":[{"hash":"LOW","songname":"Low","dist":0.8},{"hash":"HIGH","songname":"High","singername":"Artist","dist":0.1,"timelength":180,"album":[{"albumname":"Album","sizable_cover":"https://cover/{size}"}]}]}""",
+            ),
+        )
         val pcm = byteArrayOf(1, 2, 3, 4)
 
         val matches = dataSource().recognizeAudio(pcm)
@@ -1633,7 +1723,9 @@ class ApiNetworkDataSourceTest {
 
         val key = dataSource().createQrLoginKey()
         val scanned = dataSource().checkQrLogin(key) as com.resonote.core.network.model.NetworkQrLoginStatus.Scanned
-        val authenticated = dataSource().checkQrLogin(key) as com.resonote.core.network.model.NetworkQrLoginStatus.Authenticated
+        val authenticated = dataSource().checkQrLogin(
+            key,
+        ) as com.resonote.core.network.model.NetworkQrLoginStatus.Authenticated
 
         assertThat(key).isEqualTo("qr-key")
         assertThat(scanned.nickname).isEqualTo("Fixture")
@@ -1677,7 +1769,11 @@ class ApiNetworkDataSourceTest {
         assertThat(upgrade.requestUrl?.queryParameter("kugouid")).isEqualTo("99")
         assertThat(upgrade.requestUrl?.queryParameter("ad_type")).isEqualTo("1")
         val anonymous = session.copy(token = null, userId = null, cookies = emptyMap())
-        assertThat(runCatching { dataSource(anonymous).upgradeDailyVip() }.exceptionOrNull()).isInstanceOf(ApiAuthenticationRequiredException::class.java)
+        assertThat(
+            runCatching {
+                dataSource(anonymous).upgradeDailyVip()
+            }.exceptionOrNull(),
+        ).isInstanceOf(ApiAuthenticationRequiredException::class.java)
     }
 
     @Test
@@ -1739,8 +1835,13 @@ class ApiNetworkDataSourceTest {
                 .addInterceptor(ApiResponseMetadataInterceptor(json))
                 .build()
         val executor = ProtocolTransport(
-            { client }, json, clock, signer,
-            sessions, riskDetector, ApiOriginPolicy { true },
+            { client },
+            json,
+            clock,
+            signer,
+            sessions,
+            riskDetector,
+            ApiOriginPolicy { true },
         )
         val origins =
             ApiEndpointOrigins(
@@ -1763,26 +1864,86 @@ class ApiNetworkDataSourceTest {
                 .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
                 .build()
                 .create(MusicApi::class.java)
-        val registration = DeviceRegistrationCoordinator(executor, json, crypto, sessions, origins, fixtureDeviceProfileProvider())
+        val registration = DeviceRegistrationCoordinator(
+            executor,
+            json,
+            crypto,
+            sessions,
+            origins,
+            fixtureDeviceProfileProvider(),
+        )
         val mobileAuth = MobileAuthProtocolClient(executor, registration, json, crypto, signer, origins)
-        val cloudProtocol = CloudProtocolClient(executor, registration, json, crypto, signer, origins, riskDetector)
+        val cloudProtocol = CloudProtocolClient(
+            executor,
+            registration,
+            json,
+            crypto,
+            signer,
+            origins,
+            riskDetector,
+        )
         val responses = ApiResponseVerifier(riskDetector, sessions)
         val calls = ApiCallExecutor(sessions)
         val home = RealHomeNetworkDataSource(musicApi, registration, signer, clock, responses, calls)
-        val catalog = RealCatalogNetworkDataSource(musicApi, registration, signer, clock, responses, calls, origins)
+        val catalog = RealCatalogNetworkDataSource(
+            musicApi,
+            registration,
+            signer,
+            clock,
+            responses,
+            calls,
+            origins,
+        )
         val ranking = RealRankingNetworkDataSource(musicApi, registration, responses, calls)
         val playlist = RealPlaylistNetworkDataSource(musicApi, registration, responses, calls)
         val search = RealSearchNetworkDataSource(musicApi, registration, responses, calls, origins)
         val lyrics = RealLyricsNetworkDataSource(musicApi, registration, responses, calls, origins)
         val video = RealVideoNetworkDataSource(musicApi, registration, signer, responses, calls)
-        val recognition = RealRecognitionNetworkDataSource(musicApi, registration, clock, responses, calls)
+        val recognition = RealRecognitionNetworkDataSource(
+            musicApi,
+            registration,
+            clock,
+            responses,
+            calls,
+        )
         val auth = RealAuthNetworkDataSource(musicApi, registration, mobileAuth, origins, calls, responses)
-        val cloud = RealCloudNetworkDataSource(musicApi, registration, cloudProtocol, signer, calls, responses)
+        val cloud = RealCloudNetworkDataSource(
+            musicApi,
+            registration,
+            cloudProtocol,
+            signer,
+            calls,
+            responses,
+        )
         val playback = RealPlaybackNetworkDataSource(musicApi, registration, signer, calls, responses)
-        val user = RealUserProfileNetworkDataSource(musicApi, registration, clock, crypto, origins, calls, responses)
+        val user = RealUserProfileNetworkDataSource(
+            musicApi,
+            registration,
+            clock,
+            crypto,
+            origins,
+            calls,
+            responses,
+        )
         val library = RealLibraryNetworkDataSource(musicApi, registration, clock, calls, responses)
         val vip = RealVipNetworkDataSource(musicApi, registration, calls, responses)
-        return TestNetworkDataSource(home, catalog, ranking, playlist, search, lyrics, video, recognition, auth, cloud, playback, user, library, vip, store) { store.clearCount }
+        return TestNetworkDataSource(
+            home,
+            catalog,
+            ranking,
+            playlist,
+            search,
+            lyrics,
+            video,
+            recognition,
+            auth,
+            cloud,
+            playback,
+            user,
+            library,
+            vip,
+            store,
+        ) { store.clearCount }
     }
 
     private fun MockWebServer.origin(): String = url("/").toString().removeSuffix("/")
@@ -1799,8 +1960,10 @@ class ApiNetworkDataSourceTest {
         )
     }
 
-    private fun jsonResponse(body: String) =
-        MockResponse().setResponseCode(200).addHeader("Content-Type", "application/json").setBody(body)
+    private fun jsonResponse(body: String) = MockResponse()
+        .setResponseCode(200)
+        .addHeader("Content-Type", "application/json")
+        .setBody(body)
 
     private fun encryptedCloudResponse(body: String): MockResponse {
         val encrypted = crypto.encryptPlaylist(body)
@@ -1815,8 +1978,13 @@ class ApiNetworkDataSourceTest {
         var clearCount = 0
         override val session = state
         override suspend fun read() = state.value
-        override suspend fun write(session: ApiSession) { state.value = session }
-        override suspend fun clearAuthentication() { clearCount += 1; state.value = null }
+        override suspend fun write(session: ApiSession) {
+            state.value = session
+        }
+        override suspend fun clearAuthentication() {
+            clearCount += 1
+            state.value = null
+        }
     }
 }
 

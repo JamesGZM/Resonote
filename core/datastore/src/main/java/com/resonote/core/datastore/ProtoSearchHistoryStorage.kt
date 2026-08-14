@@ -3,12 +3,12 @@ package com.resonote.core.datastore
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
 import com.resonote.core.datastore.proto.SearchHistory
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import java.io.InputStream
 import java.io.OutputStream
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 
 object SearchHistorySerializer : Serializer<SearchHistory> {
     override val defaultValue: SearchHistory = SearchHistory.getDefaultInstance()
@@ -19,9 +19,8 @@ object SearchHistorySerializer : Serializer<SearchHistory> {
 }
 
 @Singleton
-internal class ProtoSearchHistoryStorage @Inject constructor(
-    private val store: DataStore<SearchHistory>,
-) : SearchHistoryStorage {
+internal class ProtoSearchHistoryStorage @Inject constructor(private val store: DataStore<SearchHistory>) :
+    SearchHistoryStorage {
     override val queries: Flow<List<String>> = store.data.map { it.queriesList }
 
     override suspend fun add(query: String) {

@@ -17,8 +17,8 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.Cloud
+import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.DeleteSweep
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.LibraryMusic
@@ -108,9 +108,8 @@ internal fun requiresLoginForDevicePlayback(
     state: HistoryUiState,
     items: List<DeviceHistoryItem>,
     startIndex: Int,
-): Boolean =
-    state.accountState != HistoryAccountState.Authenticated &&
-        items.getOrNull(startIndex)?.record?.source == DeviceHistorySource.Cloud
+): Boolean = state.accountState != HistoryAccountState.Authenticated &&
+    items.getOrNull(startIndex)?.record?.source == DeviceHistorySource.Cloud
 
 @Composable
 internal fun HistoryScreen(
@@ -504,11 +503,7 @@ private fun DeviceHistoryRow(
 }
 
 @Composable
-private fun HistoryArtwork(
-    model: String?,
-    title: String,
-    source: DeviceHistorySource? = null,
-) {
+private fun HistoryArtwork(model: String?, title: String, source: DeviceHistorySource? = null) {
     val containerColor = when (source) {
         DeviceHistorySource.Local -> MaterialTheme.colorScheme.secondaryContainer
         DeviceHistorySource.Cloud -> MaterialTheme.colorScheme.tertiaryContainer
@@ -667,7 +662,9 @@ private fun ContentFailure.message(): String = stringResource(
     when (this) {
         ContentFailure.AuthenticationRequired -> R.string.feature_history_impl_error_auth
         ContentFailure.Network -> R.string.feature_history_impl_error_network
-        ContentFailure.RiskBlocked, is ContentFailure.RiskVerificationRequired -> R.string.feature_history_impl_error_risk
+        ContentFailure.RiskBlocked,
+        is ContentFailure.RiskVerificationRequired,
+        -> R.string.feature_history_impl_error_risk
         ContentFailure.ServiceRejected, ContentFailure.Protocol -> R.string.feature_history_impl_error_generic
     },
 )

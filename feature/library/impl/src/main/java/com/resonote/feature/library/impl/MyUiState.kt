@@ -22,11 +22,7 @@ sealed interface PlaylistCreationUiState {
 
     data class Failed(val failure: ContentFailure) : PlaylistCreationUiState
 
-    data class Created(
-        val name: String,
-        val listId: String,
-        val refreshFailed: Boolean,
-    ) : PlaylistCreationUiState
+    data class Created(val name: String, val listId: String, val refreshFailed: Boolean) : PlaylistCreationUiState
 }
 
 @Immutable

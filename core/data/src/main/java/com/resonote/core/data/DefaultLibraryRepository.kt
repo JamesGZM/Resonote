@@ -16,7 +16,15 @@ internal class DefaultLibraryRepository @Inject constructor(
         require(page > 0) { "page must be positive" }
         require(pageSize in 1..200) { "pageSize must be between 1 and 200" }
         network.userPlaylists(page, pageSize).map {
-            UserPlaylist(it.listId, it.globalId, it.name, it.coverUrl?.replace("{size}", "240"), it.count, it.isMine, it.isLike)
+            UserPlaylist(
+                it.listId,
+                it.globalId,
+                it.name,
+                it.coverUrl?.replace("{size}", "240"),
+                it.count,
+                it.isMine,
+                it.isLike,
+            )
         }
     }
 

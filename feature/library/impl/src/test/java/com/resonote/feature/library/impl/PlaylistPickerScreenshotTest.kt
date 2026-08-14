@@ -68,12 +68,7 @@ class PlaylistPickerScreenshotTest {
         )
     }
 
-    private fun playlist(
-        listId: String,
-        name: String,
-        isMine: Boolean = true,
-        isLike: Boolean = false,
-    ) = UserPlaylist(
+    private fun playlist(listId: String, name: String, isMine: Boolean = true, isLike: Boolean = false) = UserPlaylist(
         listId = listId,
         globalId = "global-$listId",
         name = name,

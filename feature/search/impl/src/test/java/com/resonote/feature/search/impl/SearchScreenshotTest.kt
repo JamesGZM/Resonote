@@ -121,15 +121,28 @@ class SearchScreenshotTest {
         capture("mvs")
     }
 
+    @Test
+    fun search_compactMvPageDark() {
+        setSearchContent(state = mvState(), themeMode = ResonoteThemeMode.DARK)
+        capture("mvs_dark")
+    }
+
+    @Test
+    fun search_compactMvPageAmoled() {
+        setSearchContent(state = mvState(), themeMode = ResonoteThemeMode.AMOLED)
+        capture("mvs_amoled")
+    }
+
     private fun setSearchContent(
         state: SearchUiState,
         onMvClick: ((SearchMv) -> Unit)? = null,
+        themeMode: ResonoteThemeMode = ResonoteThemeMode.LIGHT,
     ) {
         composeRule.setContent {
             DeviceConfigurationOverride(
                 override = DeviceConfigurationOverride.ForcedSize(DpSize(390.dp, 844.dp)),
             ) {
-                ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                ResonoteTheme(themeMode = themeMode) {
                     SearchScreen(
                         state = state,
                         onQueryChange = {},
@@ -160,13 +173,26 @@ class SearchScreenshotTest {
         )
     }
 
-    private fun song(
-        id: String,
-        title: String,
-        artist: String,
-        quality: AudioQuality,
-        vip: Boolean,
-    ) = OnlineSong(
+    private fun mvState() = SearchUiState(
+        query = "潮汐",
+        selectedCategory = SearchCategory.MVS,
+        result = SearchResultUiState.Content(
+            query = "潮汐",
+            category = SearchCategory.MVS,
+            value = SearchContentUiState.Page(
+                items = listOf(
+                    SearchResultItem.Mv(
+                        SearchMv("tide-signal", "潮汐信号：海岸线现场", "林澈", null, 265_000),
+                    ),
+                ),
+                page = 1,
+                total = 1,
+                hasMore = false,
+            ),
+        ),
+    )
+
+    private fun song(id: String, title: String, artist: String, quality: AudioQuality, vip: Boolean) = OnlineSong(
         hash = id,
         title = title,
         artist = artist,

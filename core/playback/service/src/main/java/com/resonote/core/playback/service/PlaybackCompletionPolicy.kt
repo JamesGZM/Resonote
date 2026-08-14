@@ -44,8 +44,13 @@ internal fun vipPreviewCompletionAction(
     }
 }
 
-internal fun playbackEndedCompletionAction(mode: PlaybackMode): PlaybackCompletionAction =
-    if (mode == PlaybackMode.SingleLoop) PlaybackCompletionAction.Replay else PlaybackCompletionAction.Advance
+internal fun playbackEndedCompletionAction(mode: PlaybackMode): PlaybackCompletionAction = if (mode ==
+    PlaybackMode.SingleLoop
+) {
+    PlaybackCompletionAction.Replay
+} else {
+    PlaybackCompletionAction.Advance
+}
 
 private const val VIP_PREVIEW_DURATION_TOLERANCE_MILLIS = 5_000L
 private const val VIP_PREVIEW_BOUNDARY_TOLERANCE_MILLIS = 300L

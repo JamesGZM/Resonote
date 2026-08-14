@@ -96,58 +96,54 @@ class PlaybackHistoryEligibilityTrackerTest {
     }
 
     private companion object {
-        fun localRecord(id: String = "local-id") =
-            DeviceHistoryRecord(
-                source = DeviceHistorySource.Local,
-                mediaId = id,
-                title = id,
-                artist = "Artist",
-                albumTitle = null,
-                artworkUri = null,
-                durationMillis = 60_000,
-                albumAudioId = null,
-            )
+        fun localRecord(id: String = "local-id") = DeviceHistoryRecord(
+            source = DeviceHistorySource.Local,
+            mediaId = id,
+            title = id,
+            artist = "Artist",
+            albumTitle = null,
+            artworkUri = null,
+            durationMillis = 60_000,
+            albumAudioId = null,
+        )
 
-        fun localMedia() =
-            LocalMedia(
-                id = LocalMediaId("local-id"),
-                displayName = "local.flac",
-                title = "Local song",
-                artist = "Artist",
-                albumTitle = null,
-                artworkUri = null,
-                durationMillis = 60_000,
-                mimeType = "audio/flac",
-                fileExtension = "flac",
-                sizeBytes = 4_096,
-                sampleRateHz = 96_000,
-                bitDepth = 24,
-                bitrateBitsPerSecond = 2_304_000,
-                importedAtEpochMillis = 1_000,
-            )
+        fun localMedia() = LocalMedia(
+            id = LocalMediaId("local-id"),
+            displayName = "local.flac",
+            title = "Local song",
+            artist = "Artist",
+            albumTitle = null,
+            artworkUri = null,
+            durationMillis = 60_000,
+            mimeType = "audio/flac",
+            fileExtension = "flac",
+            sizeBytes = 4_096,
+            sampleRateHz = 96_000,
+            bitDepth = 24,
+            bitrateBitsPerSecond = 2_304_000,
+            importedAtEpochMillis = 1_000,
+        )
 
-        fun cloudTrack() =
-            CloudTrack(
-                hash = "cloud-hash",
-                title = "Cloud song",
-                artist = "Artist",
-                album = "Album",
-                coverUrl = null,
-                durationMillis = 60_000,
-                albumAudioId = "cloud-audio",
-            )
+        fun cloudTrack() = CloudTrack(
+            hash = "cloud-hash",
+            title = "Cloud song",
+            artist = "Artist",
+            album = "Album",
+            coverUrl = null,
+            durationMillis = 60_000,
+            albumAudioId = "cloud-audio",
+        )
 
-        fun onlineSong() =
-            OnlineSong(
-                hash = "online-hash",
-                title = "Online song",
-                artist = "Artist",
-                coverUrl = null,
-                albumId = null,
-                albumAudioId = null,
-                durationMillis = 60_000,
-                quality = AudioQuality.Standard,
-                vip = false,
-            )
+        fun onlineSong() = OnlineSong(
+            hash = "online-hash",
+            title = "Online song",
+            artist = "Artist",
+            coverUrl = null,
+            albumId = null,
+            albumAudioId = null,
+            durationMillis = 60_000,
+            quality = AudioQuality.Standard,
+            vip = false,
+        )
     }
 }

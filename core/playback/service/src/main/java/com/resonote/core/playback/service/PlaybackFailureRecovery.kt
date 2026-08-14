@@ -4,9 +4,7 @@ import com.resonote.core.model.ContentFailure
 import com.resonote.core.playback.PlaybackIssue
 import com.resonote.core.playback.PlaybackState
 
-internal class PlaybackFailureRecovery(
-    private val maxConsecutiveSkips: Int,
-) {
+internal class PlaybackFailureRecovery(private val maxConsecutiveSkips: Int) {
     init {
         require(maxConsecutiveSkips > 0) { "maxConsecutiveSkips must be positive" }
     }
@@ -47,5 +45,4 @@ internal fun PlaybackIssue.allowsAutomaticSkip(): Boolean = when (this) {
     }
 }
 
-internal fun PlaybackState.withNonInterruptingIssue(issue: PlaybackIssue): PlaybackState =
-    copy(issue = issue)
+internal fun PlaybackState.withNonInterruptingIssue(issue: PlaybackIssue): PlaybackState = copy(issue = issue)

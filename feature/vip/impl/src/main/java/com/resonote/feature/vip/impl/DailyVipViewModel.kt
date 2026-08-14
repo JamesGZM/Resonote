@@ -6,10 +6,6 @@ import com.resonote.core.data.VipRewardRepository
 import com.resonote.core.model.CollectionLoadResult
 import com.resonote.core.model.ContentFailure
 import dagger.hilt.android.lifecycle.HiltViewModel
-import java.time.Clock
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,12 +14,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.time.Clock
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import javax.inject.Inject
 
 @HiltViewModel
-class DailyVipViewModel @Inject constructor(
-    private val repository: VipRewardRepository,
-    clock: Clock,
-) : ViewModel() {
+class DailyVipViewModel @Inject constructor(private val repository: VipRewardRepository, clock: Clock) : ViewModel() {
     private val receiveDay = LocalDate.now(clock).format(DateTimeFormatter.ISO_LOCAL_DATE)
     private val mutableUiState = MutableStateFlow<DailyVipUiState>(DailyVipUiState.Ready(receiveDay))
     val uiState: StateFlow<DailyVipUiState> = mutableUiState.asStateFlow()
@@ -38,7 +35,9 @@ class DailyVipViewModel @Inject constructor(
         val state = mutableUiState.value
         if (state !is DailyVipUiState.Ready &&
             !(state is DailyVipUiState.Failed && state.operation == DailyVipOperation.Claim)
-        ) return
+        ) {
+            return
+        }
         mutableUiState.value = DailyVipUiState.Claiming(receiveDay)
         operationJob = viewModelScope.launch {
             when (val result = repository.claimDaily(receiveDay)) {
@@ -94,14 +93,18 @@ class DailyVipViewModel @Inject constructor(
     }
 
     private fun ContentFailure.toClaimFailure(): DailyVipUiState =
-        if (this is ContentFailure.RiskVerificationRequired || this is ContentFailure.RiskBlocked) {
+        if (this is ContentFailure.RiskVerificationRequired ||
+            this is ContentFailure.RiskBlocked
+        ) {
             DailyVipUiState.RiskBlocked(receiveDay)
         } else {
             DailyVipUiState.Failed(receiveDay, DailyVipOperation.Claim, this)
         }
 
     private fun ContentFailure.toUpgradeFailure(alreadyClaimed: Boolean): DailyVipUiState =
-        if (this is ContentFailure.RiskVerificationRequired || this is ContentFailure.RiskBlocked) {
+        if (this is ContentFailure.RiskVerificationRequired ||
+            this is ContentFailure.RiskBlocked
+        ) {
             DailyVipUiState.RiskBlocked(receiveDay)
         } else {
             DailyVipUiState.Failed(

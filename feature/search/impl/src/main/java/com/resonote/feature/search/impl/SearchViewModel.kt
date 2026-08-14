@@ -6,7 +6,6 @@ import com.resonote.core.data.SearchHistoryRepository
 import com.resonote.core.data.SearchRepository
 import com.resonote.core.model.CollectionLoadResult
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @HiltViewModel
 class SearchViewModel @Inject constructor(
@@ -58,7 +58,13 @@ class SearchViewModel @Inject constructor(
             delay(SUGGESTION_DEBOUNCE_MILLIS)
             when (val result = repository.loadSuggestions(query)) {
                 is CollectionLoadResult.Available -> mutableUiState.update { state ->
-                    if (state.query.trim() == query) state.copy(suggestions = result.value.distinct().take(8)) else state
+                    if (state.query.trim() ==
+                        query
+                    ) {
+                        state.copy(suggestions = result.value.distinct().take(8))
+                    } else {
+                        state
+                    }
                 }
                 is CollectionLoadResult.Failed -> mutableUiState.update { state ->
                     if (state.query.trim() == query) state.copy(suggestions = emptyList()) else state
@@ -130,18 +136,26 @@ class SearchViewModel @Inject constructor(
         searchJob = viewModelScope.launch {
             when (val result = loadContent(query, category, page = 1)) {
                 is CollectionLoadResult.Available -> mutableUiState.update { state ->
-                    if (state.query != query || state.selectedCategory != category) state else state.copy(
-                        result = if (result.value.hasContent()) {
-                            SearchResultUiState.Content(query, category, result.value)
-                        } else {
-                            SearchResultUiState.Empty(query, category)
-                        },
-                    )
+                    if (state.query != query || state.selectedCategory != category) {
+                        state
+                    } else {
+                        state.copy(
+                            result = if (result.value.hasContent()) {
+                                SearchResultUiState.Content(query, category, result.value)
+                            } else {
+                                SearchResultUiState.Empty(query, category)
+                            },
+                        )
+                    }
                 }
                 is CollectionLoadResult.Failed -> mutableUiState.update { state ->
-                    if (state.query != query || state.selectedCategory != category) state else state.copy(
-                        result = SearchResultUiState.Error(query, category, result.failure),
-                    )
+                    if (state.query != query || state.selectedCategory != category) {
+                        state
+                    } else {
+                        state.copy(
+                            result = SearchResultUiState.Error(query, category, result.failure),
+                        )
+                    }
                 }
             }
         }
@@ -193,7 +207,9 @@ class SearchViewModel @Inject constructor(
         mutableUiState.update { state ->
             val result = state.result as? SearchResultUiState.Content
             val page = result?.value as? SearchContentUiState.Page
-            if (result?.query != query || result.category != category || page == null) state else {
+            if (result?.query != query || result.category != category || page == null) {
+                state
+            } else {
                 state.copy(result = result.copy(value = transform(page)))
             }
         }
@@ -223,13 +239,11 @@ private fun SearchResultUiState.queryOrNull(): String? = when (this) {
     is SearchResultUiState.Error -> query
 }
 
-private inline fun <T, R> CollectionLoadResult<T>.mapAvailable(
-    transform: (T) -> R,
-): CollectionLoadResult<R> = when (this) {
-    is CollectionLoadResult.Available -> CollectionLoadResult.Available(transform(value))
-    is CollectionLoadResult.Failed -> this
-}
+private inline fun <T, R> CollectionLoadResult<T>.mapAvailable(transform: (T) -> R): CollectionLoadResult<R> =
+    when (this) {
+        is CollectionLoadResult.Available -> CollectionLoadResult.Available(transform(value))
+        is CollectionLoadResult.Failed -> this
+    }
 
-private inline fun <T> com.resonote.core.model.SearchPage<T>.toPage(
-    transform: (T) -> SearchResultItem,
-) = SearchContentUiState.Page(items.map(transform), page, total, hasMore)
+private inline fun <T> com.resonote.core.model.SearchPage<T>.toPage(transform: (T) -> SearchResultItem) =
+    SearchContentUiState.Page(items.map(transform), page, total, hasMore)

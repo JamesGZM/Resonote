@@ -7,18 +7,16 @@ import com.resonote.core.model.CollectionLoadResult
 import com.resonote.core.model.OnlineSong
 import com.resonote.feature.album.api.AlbumNavKey
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @HiltViewModel
-class AlbumViewModel @Inject constructor(
-    private val repository: ContentCatalogRepository,
-) : ViewModel() {
+class AlbumViewModel @Inject constructor(private val repository: ContentCatalogRepository) : ViewModel() {
     private val mutableUiState = MutableStateFlow<AlbumUiState>(AlbumUiState.Loading)
     val uiState: StateFlow<AlbumUiState> = mutableUiState.asStateFlow()
 

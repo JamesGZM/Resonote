@@ -2,11 +2,11 @@ package com.resonote.core.network.risk
 
 import com.google.common.truth.Truth.assertThat
 import com.resonote.core.network.session.ApiSession
+import org.junit.Test
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
 import java.util.Base64
-import org.junit.Test
 
 class ApiRiskContextFactoryTest {
     private val factory = ApiRiskContextFactory(Clock.fixed(Instant.ofEpochMilli(1_700_000_000_123), ZoneOffset.UTC))

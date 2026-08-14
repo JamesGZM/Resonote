@@ -1,20 +1,14 @@
 package com.resonote.core.network.protocol
 
 import com.google.common.truth.Truth.assertThat
-import com.resonote.core.network.ApiRiskException
 import com.resonote.core.network.ApiAuthenticationRequiredException
 import com.resonote.core.network.ApiHttpException
+import com.resonote.core.network.ApiRiskException
 import com.resonote.core.network.risk.ApiRiskChallengeDetector
+import com.resonote.core.network.session.ApiAuthenticationGateReason
 import com.resonote.core.network.session.ApiSession
 import com.resonote.core.network.session.ApiSessionManager
 import com.resonote.core.network.session.ApiSessionStore
-import com.resonote.core.network.session.ApiAuthenticationGateReason
-import java.time.Clock
-import java.time.Instant
-import java.time.ZoneId
-import java.time.ZoneOffset
-import java.util.Optional
-import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
@@ -30,6 +24,12 @@ import okio.buffer
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.util.Optional
+import java.util.concurrent.atomic.AtomicReference
 
 class ProtocolTransportTest {
     private lateinit var server: MockWebServer
@@ -198,7 +198,11 @@ class ProtocolTransportTest {
         private val state = MutableStateFlow(initial)
         override val session = state
         override suspend fun read() = state.value
-        override suspend fun write(session: ApiSession) { state.value = session }
-        override suspend fun clearAuthentication() { state.value = null }
+        override suspend fun write(session: ApiSession) {
+            state.value = session
+        }
+        override suspend fun clearAuthentication() {
+            state.value = null
+        }
     }
 }

@@ -12,11 +12,8 @@ sealed interface ApiRiskProof {
         override fun toString(): String = "ApiRiskProof.Sms(code=<redacted>)"
     }
 
-    data class Tencent(
-        val ticket: String,
-        val randomString: String,
-        val appId: String,
-    ) : ApiRiskProof {
-        override fun toString(): String = "ApiRiskProof.Tencent(ticket=<redacted>, randomString=<redacted>, appId=<redacted>)"
+    data class Tencent(val ticket: String, val randomString: String, val appId: String) : ApiRiskProof {
+        override fun toString(): String =
+            "ApiRiskProof.Tencent(ticket=<redacted>, randomString=<redacted>, appId=<redacted>)"
     }
 }

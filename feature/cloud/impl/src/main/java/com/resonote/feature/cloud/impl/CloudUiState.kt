@@ -42,7 +42,13 @@ data class CloudUiState(
                         first.artist.orEmpty(),
                         second.artist.orEmpty(),
                     )
-                    if (artistOrder != 0) artistOrder else String.CASE_INSENSITIVE_ORDER.compare(first.title, second.title)
+                    if (artistOrder !=
+                        0
+                    ) {
+                        artistOrder
+                    } else {
+                        String.CASE_INSENSITIVE_ORDER.compare(first.title, second.title)
+                    }
                 }
                 CloudSort.Duration -> filtered.sortedByDescending(CloudTrack::durationMillis)
             }
@@ -64,11 +70,7 @@ sealed interface CloudPlaybackIssue {
     data class Failed(val failure: ContentFailure) : CloudPlaybackIssue
 }
 
-data class CloudPlaybackRequest(
-    val tracks: List<CloudTrack>,
-    val startIndex: Int,
-    val source: ResolvedSongSource,
-) {
+data class CloudPlaybackRequest(val tracks: List<CloudTrack>, val startIndex: Int, val source: ResolvedSongSource) {
     init {
         require(tracks.isNotEmpty()) { "tracks must not be empty" }
         require(startIndex in tracks.indices) { "startIndex must point to a track" }

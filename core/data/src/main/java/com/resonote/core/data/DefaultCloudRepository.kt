@@ -8,8 +8,8 @@ import com.resonote.core.model.PlaybackUnavailableReason
 import com.resonote.core.model.ResolveSongSourceResult
 import com.resonote.core.model.ResolvedSongSource
 import com.resonote.core.network.ApiException
-import com.resonote.core.network.CloudNetworkDataSource
 import com.resonote.core.network.ApiPlaybackUnavailableException
+import com.resonote.core.network.CloudNetworkDataSource
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -42,15 +42,20 @@ internal class DefaultCloudRepository @Inject constructor(
         }
     }
 
-    override suspend fun resolveSource(track: CloudTrack): ResolveSongSourceResult =
-        try {
-            val source = network.resolveCloudSongSource(track.hash, track.albumAudioId, track.title)
-            ResolveSongSourceResult.Resolved(
-                ResolvedSongSource(source.uri, source.durationMillis.takeIf { it > 0 } ?: track.durationMillis, source.extension),
-            )
-        } catch (unavailable: ApiPlaybackUnavailableException) {
-            ResolveSongSourceResult.Unavailable(PlaybackUnavailableReason.Cloud)
-        } catch (failure: ApiException) {
-            ResolveSongSourceResult.Failed(failure.toContentFailure(riskChallenges))
-        }
+    override suspend fun resolveSource(track: CloudTrack): ResolveSongSourceResult = try {
+        val source = network.resolveCloudSongSource(track.hash, track.albumAudioId, track.title)
+        ResolveSongSourceResult.Resolved(
+            ResolvedSongSource(
+                source.uri,
+                source.durationMillis.takeIf {
+                    it > 0
+                } ?: track.durationMillis,
+                source.extension,
+            ),
+        )
+    } catch (unavailable: ApiPlaybackUnavailableException) {
+        ResolveSongSourceResult.Unavailable(PlaybackUnavailableReason.Cloud)
+    } catch (failure: ApiException) {
+        ResolveSongSourceResult.Failed(failure.toContentFailure(riskChallenges))
+    }
 }

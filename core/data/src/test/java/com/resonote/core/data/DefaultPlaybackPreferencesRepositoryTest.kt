@@ -2,8 +2,8 @@ package com.resonote.core.data
 
 import com.google.common.truth.Truth.assertThat
 import com.resonote.core.datastore.PlaybackPreferencesStorage
-import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.model.OnlinePlaybackQuality
+import com.resonote.core.model.PlaybackSpeed
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest

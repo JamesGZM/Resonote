@@ -78,6 +78,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.resonote.core.designsystem.component.ResonoteButton
 import com.resonote.core.designsystem.component.ResonoteOutlinedButton
+import com.resonote.core.designsystem.tokens.ResonoteTokens
 import com.resonote.core.model.ContentFailure
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.RecognitionMatch
@@ -295,8 +296,11 @@ private fun PermissionContent(permanently: Boolean, onStart: () -> Unit, onOpenS
     )
     Text(
         stringResource(
-            if (permanently) R.string.feature_recognition_impl_permission_permanent_body
-            else R.string.feature_recognition_impl_permission_body,
+            if (permanently) {
+                R.string.feature_recognition_impl_permission_permanent_body
+            } else {
+                R.string.feature_recognition_impl_permission_body
+            },
         ),
         modifier = Modifier.padding(top = 10.dp).widthIn(max = 440.dp),
         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -304,8 +308,11 @@ private fun PermissionContent(permanently: Boolean, onStart: () -> Unit, onOpenS
     )
     ResonoteButton(
         label = stringResource(
-            if (permanently) R.string.feature_recognition_impl_open_settings
-            else R.string.feature_recognition_impl_request_permission,
+            if (permanently) {
+                R.string.feature_recognition_impl_open_settings
+            } else {
+                R.string.feature_recognition_impl_request_permission
+            },
         ),
         onClick = if (permanently) onOpenSettings else onStart,
         leadingIcon = {
@@ -317,7 +324,7 @@ private fun PermissionContent(permanently: Boolean, onStart: () -> Unit, onOpenS
 
 @Composable
 private fun RecordingContent(elapsedMillis: Long, onStop: () -> Unit) {
-    val progress = (elapsedMillis.toFloat() / RecognitionMaxDurationMillis).coerceIn(0f, 1f)
+    val progress = (elapsedMillis.toFloat() / RECOGNITION_MAX_DURATION_MILLIS).coerceIn(0f, 1f)
     ListeningOrb(progress = progress, icon = Icons.Rounded.GraphicEq)
     Text(
         stringResource(R.string.feature_recognition_impl_recording_title),
@@ -326,7 +333,11 @@ private fun RecordingContent(elapsedMillis: Long, onStop: () -> Unit) {
         fontWeight = FontWeight.Bold,
     )
     Text(
-        stringResource(R.string.feature_recognition_impl_recording_time, elapsedMillis / 1_000L, RecognitionMaxDurationMillis / 1_000L),
+        stringResource(
+            R.string.feature_recognition_impl_recording_time,
+            elapsedMillis / 1_000L,
+            RECOGNITION_MAX_DURATION_MILLIS / 1_000L,
+        ),
         modifier = Modifier.padding(top = 8.dp),
         color = MaterialTheme.colorScheme.primary,
         style = MaterialTheme.typography.titleMedium,
@@ -368,10 +379,22 @@ private fun RecognizingContent() {
 }
 
 @Composable
-private fun ListeningOrb(progress: Float, icon: androidx.compose.ui.graphics.vector.ImageVector, busy: Boolean = false) {
+private fun ListeningOrb(
+    progress: Float,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    busy: Boolean = false,
+) {
     Box(contentAlignment = Alignment.Center, modifier = Modifier.size(232.dp)) {
-        Surface(modifier = Modifier.size(228.dp), shape = CircleShape, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.07f)) {}
-        Surface(modifier = Modifier.size(174.dp), shape = CircleShape, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.11f)) {}
+        Surface(
+            modifier = Modifier.size(228.dp),
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.07f),
+        ) {}
+        Surface(
+            modifier = Modifier.size(174.dp),
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.11f),
+        ) {}
         CircularProgressIndicator(
             progress = { progress },
             modifier = Modifier.size(132.dp),
@@ -383,7 +406,7 @@ private fun ListeningOrb(progress: Float, icon: androidx.compose.ui.graphics.vec
             shape = CircleShape,
             color = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary,
-            shadowElevation = 10.dp,
+            shadowElevation = ResonoteTokens.elevation.level3.maximumShadow,
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(icon, contentDescription = null, modifier = Modifier.size(42.dp))
@@ -494,8 +517,11 @@ private fun MatchCard(
 ) {
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = if (index == 0) MaterialTheme.colorScheme.primaryContainer
-            else MaterialTheme.colorScheme.surfaceContainer,
+            containerColor = if (index == 0) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceContainer
+            },
         ),
         shape = MaterialTheme.shapes.extraLarge,
     ) {
@@ -567,13 +593,16 @@ private fun ContentFailure.message(): String = stringResource(
     when (this) {
         ContentFailure.AuthenticationRequired -> R.string.feature_recognition_impl_error_auth
         ContentFailure.Network -> R.string.feature_recognition_impl_error_network
-        is ContentFailure.RiskVerificationRequired, ContentFailure.RiskBlocked -> R.string.feature_recognition_impl_error_risk
+        is ContentFailure.RiskVerificationRequired,
+        ContentFailure.RiskBlocked,
+        -> R.string.feature_recognition_impl_error_risk
         ContentFailure.Protocol, ContentFailure.ServiceRejected -> R.string.feature_recognition_impl_error_generic
     },
 )
 
 private fun Context.hasMicrophonePermission(): Boolean =
-    ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+    ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) ==
+        PackageManager.PERMISSION_GRANTED
 
 private fun Context.openAppSettings() {
     startActivity(

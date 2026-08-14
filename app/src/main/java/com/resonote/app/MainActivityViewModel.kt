@@ -9,14 +9,14 @@ import com.resonote.core.data.ThemePreferencesRepository
 import com.resonote.core.model.AuthState
 import com.resonote.core.model.ThemePreferences
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @HiltViewModel
 internal class MainActivityViewModel @Inject constructor(
@@ -69,11 +69,7 @@ internal class MainActivityViewModel @Inject constructor(
     }
 }
 
-internal data class ExternalLocalImportRequest(
-    val id: Long,
-    val uris: List<String>,
-    val finishTaskOnBack: Boolean,
-) {
+internal data class ExternalLocalImportRequest(val id: Long, val uris: List<String>, val finishTaskOnBack: Boolean) {
     init {
         require(id > 0) { "id must be positive" }
         require(uris.isNotEmpty()) { "uris must not be empty" }

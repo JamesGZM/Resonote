@@ -35,20 +35,39 @@ class RankingScreenshotTest {
 
     @Test
     fun ranking_compactScrollStates() {
-        val songs = listOf(
-            song("tide", "潮汐信号", "林澈 · 潮汐记忆", AudioQuality.Lossless, true),
-            song("coast", "海岸线以北", "林澈", AudioQuality.HighResolution, true),
-            song("letter", "无人岛来信", "林澈", AudioQuality.Lossless, false),
-            song("route", "夜航路线", "林澈", AudioQuality.HighResolution, false),
-            song("light", "舷窗微光", "林澈", AudioQuality.Standard, false),
-            song("radio", "凌晨电台", "林澈", AudioQuality.HighQuality, false),
-            song("home", "回到海岸", "林澈", AudioQuality.Standard, false),
-        )
+        setRankingContent(ResonoteThemeMode.LIGHT)
+
+        composeRule.onAllNodesWithText("潮汐热歌榜 · 本周上升最快").assertCountEquals(2)
+        composeRule.onNodeWithContentDescription("潮汐热歌榜 · 本周上升最快的榜单封面").assertExists()
+        composeRule.onNodeWithText("01").assertIsDisplayed()
+        capture("top")
+
+        composeRule.onNodeWithTag("ranking-list").performScrollToIndex(6)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("加载更多").assertExists()
+        capture("songs")
+    }
+
+    @Test
+    fun ranking_compactTopDark() {
+        setRankingContent(ResonoteThemeMode.DARK)
+        composeRule.onNodeWithText("01").assertIsDisplayed()
+        capture("top_dark")
+    }
+
+    @Test
+    fun ranking_compactTopAmoled() {
+        setRankingContent(ResonoteThemeMode.AMOLED)
+        composeRule.onNodeWithText("01").assertIsDisplayed()
+        capture("top_amoled")
+    }
+
+    private fun setRankingContent(themeMode: ResonoteThemeMode) {
         composeRule.setContent {
             DeviceConfigurationOverride(
                 override = DeviceConfigurationOverride.ForcedSize(DpSize(390.dp, 844.dp)),
             ) {
-                ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                ResonoteTheme(themeMode = themeMode) {
                     RankingScreen(
                         state = RankingUiState.Content(
                             metadata = RankingMetadata("tide-chart", "潮汐热歌榜 · 本周上升最快", null),
@@ -68,16 +87,7 @@ class RankingScreenshotTest {
                 }
             }
         }
-
-        composeRule.onAllNodesWithText("潮汐热歌榜 · 本周上升最快").assertCountEquals(2)
-        composeRule.onNodeWithContentDescription("潮汐热歌榜 · 本周上升最快的榜单封面").assertExists()
-        composeRule.onNodeWithText("01").assertIsDisplayed()
-        capture("top")
-
-        composeRule.onNodeWithTag("ranking-list").performScrollToIndex(6)
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("加载更多").assertExists()
-        capture("songs")
     }
 
     private fun capture(name: String) {
@@ -87,21 +97,27 @@ class RankingScreenshotTest {
         )
     }
 
-    private fun song(
-        id: String,
-        title: String,
-        artist: String,
-        quality: AudioQuality,
-        vip: Boolean,
-    ) = OnlineSong(
-        hash = id,
-        title = title,
-        artist = artist,
-        coverUrl = "https://example.invalid/$id.jpg",
-        albumId = "night-flight",
-        albumAudioId = "audio-$id",
-        durationMillis = 248_000,
-        quality = quality,
-        vip = vip,
-    )
+    private companion object {
+        val songs = listOf(
+            song("tide", "潮汐信号", "林澈 · 潮汐记忆", AudioQuality.Lossless, true),
+            song("coast", "海岸线以北", "林澈", AudioQuality.HighResolution, true),
+            song("letter", "无人岛来信", "林澈", AudioQuality.Lossless, false),
+            song("route", "夜航路线", "林澈", AudioQuality.HighResolution, false),
+            song("light", "舷窗微光", "林澈", AudioQuality.Standard, false),
+            song("radio", "凌晨电台", "林澈", AudioQuality.HighQuality, false),
+            song("home", "回到海岸", "林澈", AudioQuality.Standard, false),
+        )
+
+        fun song(id: String, title: String, artist: String, quality: AudioQuality, vip: Boolean) = OnlineSong(
+            hash = id,
+            title = title,
+            artist = artist,
+            coverUrl = "https://example.invalid/$id.jpg",
+            albumId = "night-flight",
+            albumAudioId = "audio-$id",
+            durationMillis = 248_000,
+            quality = quality,
+            vip = vip,
+        )
+    }
 }

@@ -68,11 +68,7 @@ class MyScreenshotTest {
         assertThat(settingsClicks).isEqualTo(1)
     }
 
-    private fun setScreen(
-        state: MyUiState,
-        onLoginClick: () -> Unit = {},
-        onSettingsClick: () -> Unit = {},
-    ) {
+    private fun setScreen(state: MyUiState, onLoginClick: () -> Unit = {}, onSettingsClick: () -> Unit = {}) {
         composeRule.setContent {
             DeviceConfigurationOverride(
                 override = DeviceConfigurationOverride.ForcedSize(DpSize(390.dp, 844.dp)),

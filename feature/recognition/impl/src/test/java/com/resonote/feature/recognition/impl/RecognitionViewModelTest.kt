@@ -32,7 +32,7 @@ class RecognitionViewModelTest {
 
     @Test
     fun stopRecordingSubmitsPcmPublishesMatchesAndClearsBuffer() = runTest(dispatcher) {
-        val pcm = ByteArray(RecognitionSampleRate * Short.SIZE_BYTES * 2) { 7 }
+        val pcm = ByteArray(RECOGNITION_SAMPLE_RATE * Short.SIZE_BYTES * 2) { 7 }
         val recorder = BlockingRecorder(pcm)
         val repository = FakeRecognitionRepository(CollectionLoadResult.Available(listOf(match("signal", 0.91))))
         val viewModel = RecognitionViewModel(repository, recorder)
@@ -55,7 +55,7 @@ class RecognitionViewModelTest {
     @Test
     fun recordingShorterThanOneSecondNeverCallsApi() = runTest(dispatcher) {
         val recorder = ImmediateRecorder(
-            RecognitionCaptureResult.Captured(ByteArray(RecognitionSampleRate * Short.SIZE_BYTES - 2) { 3 }),
+            RecognitionCaptureResult.Captured(ByteArray(RECOGNITION_SAMPLE_RATE * Short.SIZE_BYTES - 2) { 3 }),
         )
         val repository = FakeRecognitionRepository(CollectionLoadResult.Available(emptyList()))
         val viewModel = RecognitionViewModel(repository, recorder)
@@ -69,7 +69,7 @@ class RecognitionViewModelTest {
 
     @Test
     fun cancellingActiveCaptureStopsRecorderAndReturnsToIdle() = runTest(dispatcher) {
-        val recorder = BlockingRecorder(ByteArray(RecognitionSampleRate * Short.SIZE_BYTES * 2))
+        val recorder = BlockingRecorder(ByteArray(RECOGNITION_SAMPLE_RATE * Short.SIZE_BYTES * 2))
         val viewModel = RecognitionViewModel(
             FakeRecognitionRepository(CollectionLoadResult.Available(emptyList())),
             recorder,
@@ -158,12 +158,13 @@ class RecognitionViewModelTest {
 
         override suspend fun capture(maxDurationMillis: Long, onProgress: (Long) -> Unit) = result
         override fun stop() = Unit
-        override fun cancel() { cancelCount += 1 }
+        override fun cancel() {
+            cancelCount += 1
+        }
     }
 
-    private class FakeRecognitionRepository(
-        private val result: CollectionLoadResult<List<RecognitionMatch>>,
-    ) : RecognitionRepository {
+    private class FakeRecognitionRepository(private val result: CollectionLoadResult<List<RecognitionMatch>>) :
+        RecognitionRepository {
         var callCount = 0
         var receivedPcm: ByteArray? = null
 
@@ -176,7 +177,7 @@ class RecognitionViewModelTest {
 
     private companion object {
         fun validRecorder() = ImmediateRecorder(
-            RecognitionCaptureResult.Captured(ByteArray(RecognitionSampleRate * Short.SIZE_BYTES) { 5 }),
+            RecognitionCaptureResult.Captured(ByteArray(RECOGNITION_SAMPLE_RATE * Short.SIZE_BYTES) { 5 }),
         )
 
         fun match(id: String, confidence: Double) = RecognitionMatch(

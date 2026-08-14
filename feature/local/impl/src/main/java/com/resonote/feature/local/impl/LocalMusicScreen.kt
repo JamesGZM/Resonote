@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -699,10 +698,9 @@ private fun LocalDirectoryImportFailure.label(): String = stringResource(
     },
 )
 
-private fun LocalImportUiState.isBusy(): Boolean =
-    this is LocalImportUiState.ScanningDirectory ||
-        this is LocalImportUiState.Running ||
-        this is LocalImportUiState.AwaitingDuplicate
+private fun LocalImportUiState.isBusy(): Boolean = this is LocalImportUiState.ScanningDirectory ||
+    this is LocalImportUiState.Running ||
+    this is LocalImportUiState.AwaitingDuplicate
 
 @Composable
 private fun LocalMediaImportFailure.label(): String = stringResource(
@@ -721,11 +719,9 @@ private fun LocalMediaImportFailure.label(): String = stringResource(
     },
 )
 
-private fun LocalMedia.formatLabel(): String {
-    return fileExtension?.uppercase(Locale.ROOT)
-        ?: mimeType?.substringAfter('/')?.uppercase(Locale.ROOT)
-        ?: "AUDIO"
-}
+private fun LocalMedia.formatLabel(): String = fileExtension?.uppercase(Locale.ROOT)
+    ?: mimeType?.substringAfter('/')?.uppercase(Locale.ROOT)
+    ?: "AUDIO"
 
 private fun LocalMedia.supportingLabel(): String {
     val details = listOfNotNull(

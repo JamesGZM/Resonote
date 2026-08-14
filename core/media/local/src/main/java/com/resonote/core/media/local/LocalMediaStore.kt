@@ -5,10 +5,7 @@ interface LocalMediaStore {
 
     suspend fun inspect(sourceUri: String): LocalMediaStoreResult<LocalMediaSourceInspection>
 
-    suspend fun calculateDigest(
-        sourceUri: String,
-        expectedSizeBytes: Long?,
-    ): LocalMediaStoreResult<LocalMediaDigest>
+    suspend fun calculateDigest(sourceUri: String, expectedSizeBytes: Long?): LocalMediaStoreResult<LocalMediaDigest>
 
     suspend fun persist(request: LocalMediaPersistRequest): LocalMediaStoreResult<StoredLocalMedia>
 
@@ -53,10 +50,7 @@ data class LocalMediaMetadata(
     val bitrateBitsPerSecond: Int?,
 )
 
-data class LocalMediaDigest(
-    val sizeBytes: Long,
-    val sha256: String,
-)
+data class LocalMediaDigest(val sizeBytes: Long, val sha256: String)
 
 data class LocalMediaPersistRequest(
     val sourceUri: String,
@@ -65,10 +59,7 @@ data class LocalMediaPersistRequest(
     val expectedDigest: LocalMediaDigest,
 )
 
-data class LocalMediaFiles(
-    val audioPath: String,
-    val artworkPath: String?,
-)
+data class LocalMediaFiles(val audioPath: String, val artworkPath: String?)
 
 data class StoredLocalMedia(
     val files: LocalMediaFiles,

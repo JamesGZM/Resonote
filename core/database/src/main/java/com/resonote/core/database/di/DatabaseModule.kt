@@ -19,9 +19,7 @@ import javax.inject.Singleton
 internal object DatabaseModule {
     @Provides
     @Singleton
-    fun provideDatabase(
-        @ApplicationContext context: Context,
-    ): ResonoteDatabase = Room.databaseBuilder(
+    fun provideDatabase(@ApplicationContext context: Context): ResonoteDatabase = Room.databaseBuilder(
         context,
         ResonoteDatabase::class.java,
         "resonote.db",

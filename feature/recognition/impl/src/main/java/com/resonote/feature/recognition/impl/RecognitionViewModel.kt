@@ -5,12 +5,12 @@ import androidx.lifecycle.viewModelScope
 import com.resonote.core.data.RecognitionRepository
 import com.resonote.core.model.CollectionLoadResult
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @HiltViewModel
 class RecognitionViewModel @Inject internal constructor(
@@ -70,13 +70,15 @@ class RecognitionViewModel @Inject internal constructor(
     private fun updateProgress(elapsedMillis: Long) {
         if (mutableUiState.value is RecognitionUiState.Recording) {
             mutableUiState.value = RecognitionUiState.Recording(
-                elapsedMillis.coerceIn(0, RecognitionMaxDurationMillis),
+                elapsedMillis.coerceIn(0, RECOGNITION_MAX_DURATION_MILLIS),
             )
         }
     }
 
     private suspend fun recognize(pcm: ByteArray) {
-        val minimumBytes = (RecognitionSampleRate * Short.SIZE_BYTES * RecognitionMinDurationMillis / 1_000L).toInt()
+        val minimumBytes =
+            (RECOGNITION_SAMPLE_RATE * Short.SIZE_BYTES * RECOGNITION_MIN_DURATION_MILLIS / 1_000L)
+                .toInt()
         if (pcm.size < minimumBytes) {
             pcm.fill(0)
             mutableUiState.value = RecognitionUiState.TooShort
@@ -85,10 +87,11 @@ class RecognitionViewModel @Inject internal constructor(
         mutableUiState.value = RecognitionUiState.Recognizing
         try {
             mutableUiState.value = when (val result = repository.recognizeAudio(pcm)) {
-                is CollectionLoadResult.Available -> result.value
-                    .takeIf { it.isNotEmpty() }
-                    ?.let { RecognitionUiState.Matches(result.value) }
-                    ?: RecognitionUiState.NoMatch
+                is CollectionLoadResult.Available ->
+                    result.value
+                        .takeIf { it.isNotEmpty() }
+                        ?.let { RecognitionUiState.Matches(result.value) }
+                        ?: RecognitionUiState.NoMatch
                 is CollectionLoadResult.Failed -> RecognitionUiState.Failed(result.failure)
             }
         } finally {

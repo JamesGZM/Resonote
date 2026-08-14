@@ -35,19 +35,12 @@ sealed interface SearchResultUiState {
 
     data class Loading(val query: String, val category: SearchCategory) : SearchResultUiState
 
-    data class Content(
-        val query: String,
-        val category: SearchCategory,
-        val value: SearchContentUiState,
-    ) : SearchResultUiState
+    data class Content(val query: String, val category: SearchCategory, val value: SearchContentUiState) :
+        SearchResultUiState
 
     data class Empty(val query: String, val category: SearchCategory) : SearchResultUiState
 
-    data class Error(
-        val query: String,
-        val category: SearchCategory,
-        val failure: ContentFailure,
-    ) : SearchResultUiState
+    data class Error(val query: String, val category: SearchCategory, val failure: ContentFailure) : SearchResultUiState
 }
 
 @Immutable
@@ -91,7 +84,10 @@ sealed interface SearchResultItem {
 
 internal fun SearchContentUiState.hasContent(): Boolean = when (this) {
     is SearchContentUiState.Aggregate ->
-        value.artists.isNotEmpty() || value.songs.isNotEmpty() || value.albums.isNotEmpty() ||
-            value.playlists.isNotEmpty() || value.mvs.isNotEmpty()
+        value.artists.isNotEmpty() ||
+            value.songs.isNotEmpty() ||
+            value.albums.isNotEmpty() ||
+            value.playlists.isNotEmpty() ||
+            value.mvs.isNotEmpty()
     is SearchContentUiState.Page -> items.isNotEmpty()
 }

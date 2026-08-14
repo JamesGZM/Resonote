@@ -35,7 +35,13 @@ data class LocalMusicUiState(
                         first.artist.orEmpty(),
                         second.artist.orEmpty(),
                     )
-                    if (artistOrder != 0) artistOrder else String.CASE_INSENSITIVE_ORDER.compare(first.title, second.title)
+                    if (artistOrder !=
+                        0
+                    ) {
+                        artistOrder
+                    } else {
+                        String.CASE_INSENSITIVE_ORDER.compare(first.title, second.title)
+                    }
                 }
                 LocalMusicSort.Duration -> filtered.sortedByDescending(LocalMedia::durationMillis)
             }
@@ -49,12 +55,7 @@ sealed interface LocalImportUiState {
 
     data object ScanningDirectory : LocalImportUiState
 
-    data class Running(
-        val completed: Int,
-        val total: Int,
-        val imported: Int,
-        val failed: Int,
-    ) : LocalImportUiState
+    data class Running(val completed: Int, val total: Int, val imported: Int, val failed: Int) : LocalImportUiState
 
     data class AwaitingDuplicate(
         val candidate: LocalMediaImportCandidate,

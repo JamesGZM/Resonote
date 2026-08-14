@@ -53,11 +53,7 @@ import com.resonote.core.designsystem.component.ResonoteTopAppBar
 import com.resonote.core.model.ContentFailure
 
 @Composable
-fun DailyVipRoute(
-    onBack: () -> Unit,
-    onRewardApplied: () -> Unit,
-    viewModel: DailyVipViewModel = hiltViewModel(),
-) {
+fun DailyVipRoute(onBack: () -> Unit, onRewardApplied: () -> Unit, viewModel: DailyVipViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(viewModel) {
         viewModel.rewardApplied.collect { onRewardApplied() }
@@ -87,10 +83,13 @@ internal fun DailyVipScreen(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             ResonoteTopAppBar(
-                title = { Text(stringResource(R.string.daily_vip_title)) },
+                title = { Text(stringResource(R.string.feature_vip_impl_daily_vip_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.daily_vip_back))
+                        Icon(
+                            Icons.AutoMirrored.Rounded.ArrowBack,
+                            stringResource(R.string.feature_vip_impl_daily_vip_back),
+                        )
                     }
                 },
             )
@@ -117,23 +116,27 @@ internal fun DailyVipScreen(
         AlertDialog(
             onDismissRequest = onDeclineUpgrade,
             icon = { Icon(Icons.Rounded.Star, contentDescription = null) },
-            title = { Text(stringResource(R.string.daily_vip_upgrade_dialog_title)) },
+            title = { Text(stringResource(R.string.feature_vip_impl_daily_vip_upgrade_dialog_title)) },
             text = {
                 Text(
                     stringResource(
                         if (choice.alreadyClaimed) {
-                            R.string.daily_vip_upgrade_dialog_already
+                            R.string.feature_vip_impl_daily_vip_upgrade_dialog_already
                         } else {
-                            R.string.daily_vip_upgrade_dialog_claimed
+                            R.string.feature_vip_impl_daily_vip_upgrade_dialog_claimed
                         },
                     ),
                 )
             },
             confirmButton = {
-                TextButton(onClick = onUpgrade) { Text(stringResource(R.string.daily_vip_upgrade_confirm)) }
+                TextButton(onClick = onUpgrade) {
+                    Text(stringResource(R.string.feature_vip_impl_daily_vip_upgrade_confirm))
+                }
             },
             dismissButton = {
-                TextButton(onClick = onDeclineUpgrade) { Text(stringResource(R.string.daily_vip_upgrade_decline)) }
+                TextButton(onClick = onDeclineUpgrade) {
+                    Text(stringResource(R.string.feature_vip_impl_daily_vip_upgrade_decline))
+                }
             },
         )
     }
@@ -164,7 +167,7 @@ private fun DailyPassTicket(receiveDay: String) {
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = stringResource(R.string.daily_vip_eyebrow),
+                        text = stringResource(R.string.feature_vip_impl_daily_vip_eyebrow),
                         color = MaterialTheme.colorScheme.onTertiaryContainer,
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
@@ -174,12 +177,12 @@ private fun DailyPassTicket(receiveDay: String) {
                         verticalAlignment = Alignment.Bottom,
                     ) {
                         Text(
-                            text = stringResource(R.string.daily_vip_one_day),
+                            text = stringResource(R.string.feature_vip_impl_daily_vip_one_day),
                             style = MaterialTheme.typography.displayMedium,
                             fontWeight = FontWeight.Black,
                         )
                         Text(
-                            text = stringResource(R.string.daily_vip_reward),
+                            text = stringResource(R.string.feature_vip_impl_daily_vip_reward),
                             modifier = Modifier.padding(start = 10.dp, bottom = 7.dp),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
@@ -199,7 +202,7 @@ private fun DailyPassTicket(receiveDay: String) {
             }
             TicketPerforation()
             Text(
-                text = stringResource(R.string.daily_vip_date, receiveDay),
+                text = stringResource(R.string.feature_vip_impl_daily_vip_date, receiveDay),
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium,
@@ -225,11 +228,7 @@ private fun TicketPerforation() {
 }
 
 @Composable
-private fun StatusCard(
-    state: DailyVipUiState,
-    onClaim: () -> Unit,
-    onRetry: () -> Unit,
-) {
+private fun StatusCard(state: DailyVipUiState, onClaim: () -> Unit, onRetry: () -> Unit) {
     val presentation = state.presentation()
     Card(
         modifier = Modifier.fillMaxWidth().testTag("daily-vip-status"),
@@ -265,13 +264,13 @@ private fun StatusCard(
             )
             when (state) {
                 is DailyVipUiState.Ready -> ResonoteButton(
-                    label = stringResource(R.string.daily_vip_claim),
+                    label = stringResource(R.string.feature_vip_impl_daily_vip_claim),
                     onClick = onClaim,
                     modifier = Modifier.fillMaxWidth().padding(top = 22.dp),
                 )
                 is DailyVipUiState.Claiming -> ResonoteButton(
-                    label = stringResource(R.string.daily_vip_claim),
-                    loadingLabel = stringResource(R.string.daily_vip_claiming),
+                    label = stringResource(R.string.feature_vip_impl_daily_vip_claim),
+                    loadingLabel = stringResource(R.string.feature_vip_impl_daily_vip_claiming),
                     loading = true,
                     enabled = false,
                     onClick = {},
@@ -281,9 +280,9 @@ private fun StatusCard(
                     ResonoteButton(
                         label = stringResource(
                             if (state.operation == DailyVipOperation.Claim) {
-                                R.string.daily_vip_retry_claim
+                                R.string.feature_vip_impl_daily_vip_retry_claim
                             } else {
-                                R.string.daily_vip_retry_upgrade
+                                R.string.feature_vip_impl_daily_vip_retry_upgrade
                             },
                         ),
                         onClick = onRetry,
@@ -305,16 +304,16 @@ private fun RulesCard() {
     ) {
         Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp)) {
             Text(
-                stringResource(R.string.daily_vip_how_title),
+                stringResource(R.string.feature_vip_impl_daily_vip_how_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
             )
             Spacer(Modifier.height(10.dp))
-            RuleRow("01", stringResource(R.string.daily_vip_rule_confirm))
+            RuleRow("01", stringResource(R.string.feature_vip_impl_daily_vip_rule_confirm))
             HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
-            RuleRow("02", stringResource(R.string.daily_vip_rule_server))
+            RuleRow("02", stringResource(R.string.feature_vip_impl_daily_vip_rule_server))
             HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
-            RuleRow("03", stringResource(R.string.daily_vip_rule_safe))
+            RuleRow("03", stringResource(R.string.feature_vip_impl_daily_vip_rule_safe))
         }
     }
 }
@@ -337,79 +336,89 @@ private fun RuleRow(number: String, text: String) {
     }
 }
 
-private data class StatusPresentation(
-    val icon: ImageVector,
-    val title: Int,
-    val body: Int,
-    val tone: StatusTone,
-)
+private data class StatusPresentation(val icon: ImageVector, val title: Int, val body: Int, val tone: StatusTone)
 
 private enum class StatusTone { Neutral, Success, Error, Risk }
 
 private fun DailyVipUiState.presentation(): StatusPresentation = when (this) {
     is DailyVipUiState.Ready -> StatusPresentation(
         Icons.Rounded.CardGiftcard,
-        R.string.daily_vip_ready_title,
-        R.string.daily_vip_ready_body,
+        R.string.feature_vip_impl_daily_vip_ready_title,
+        R.string.feature_vip_impl_daily_vip_ready_body,
         StatusTone.Neutral,
     )
     is DailyVipUiState.Claiming -> StatusPresentation(
         Icons.Rounded.CardGiftcard,
-        R.string.daily_vip_ready_title,
-        R.string.daily_vip_ready_body,
+        R.string.feature_vip_impl_daily_vip_ready_title,
+        R.string.feature_vip_impl_daily_vip_ready_body,
         StatusTone.Neutral,
     )
     is DailyVipUiState.UpgradeChoice -> successPresentation(alreadyClaimed)
     is DailyVipUiState.ClaimComplete -> successPresentation(alreadyClaimed)
     is DailyVipUiState.Upgrading -> StatusPresentation(
         Icons.Rounded.Star,
-        R.string.daily_vip_upgrading_title,
-        R.string.daily_vip_upgrading_body,
+        R.string.feature_vip_impl_daily_vip_upgrading_title,
+        R.string.feature_vip_impl_daily_vip_upgrading_body,
         StatusTone.Neutral,
     )
     is DailyVipUiState.UpgradeComplete -> StatusPresentation(
         Icons.Rounded.CheckCircle,
-        if (alreadyUpgraded) R.string.daily_vip_already_upgraded_title else R.string.daily_vip_upgraded_title,
-        if (alreadyUpgraded) R.string.daily_vip_already_upgraded_body else R.string.daily_vip_upgraded_body,
+        if (alreadyUpgraded) {
+            R.string.feature_vip_impl_daily_vip_already_upgraded_title
+        } else {
+            R.string.feature_vip_impl_daily_vip_upgraded_title
+        },
+        if (alreadyUpgraded) {
+            R.string.feature_vip_impl_daily_vip_already_upgraded_body
+        } else {
+            R.string.feature_vip_impl_daily_vip_upgraded_body
+        },
         StatusTone.Success,
     )
     is DailyVipUiState.RiskBlocked -> StatusPresentation(
         Icons.Rounded.Lock,
-        R.string.daily_vip_risk_title,
-        R.string.daily_vip_risk_body,
+        R.string.feature_vip_impl_daily_vip_risk_title,
+        R.string.feature_vip_impl_daily_vip_risk_body,
         StatusTone.Risk,
     )
     is DailyVipUiState.Failed -> StatusPresentation(
         Icons.Rounded.ErrorOutline,
-        R.string.daily_vip_error_title,
-        R.string.daily_vip_error_protocol,
+        R.string.feature_vip_impl_daily_vip_error_title,
+        R.string.feature_vip_impl_daily_vip_error_protocol,
         StatusTone.Error,
     )
 }
 
 private fun successPresentation(alreadyClaimed: Boolean) = StatusPresentation(
     Icons.Rounded.CheckCircle,
-    if (alreadyClaimed) R.string.daily_vip_already_claimed_title else R.string.daily_vip_claimed_title,
-    if (alreadyClaimed) R.string.daily_vip_already_claimed_body else R.string.daily_vip_claimed_body,
+    if (alreadyClaimed) {
+        R.string.feature_vip_impl_daily_vip_already_claimed_title
+    } else {
+        R.string.feature_vip_impl_daily_vip_claimed_title
+    },
+    if (alreadyClaimed) {
+        R.string.feature_vip_impl_daily_vip_already_claimed_body
+    } else {
+        R.string.feature_vip_impl_daily_vip_claimed_body
+    },
     StatusTone.Success,
 )
 
 @Composable
-private fun StatusPresentation.body(state: DailyVipUiState): String =
-    if (state is DailyVipUiState.Failed) {
-        stringResource(
-            when (state.failure) {
-                ContentFailure.AuthenticationRequired -> R.string.daily_vip_error_auth
-                ContentFailure.Network -> R.string.daily_vip_error_network
-                ContentFailure.ServiceRejected -> R.string.daily_vip_error_service
-                is ContentFailure.RiskVerificationRequired -> R.string.daily_vip_risk_body
-                ContentFailure.RiskBlocked -> R.string.daily_vip_risk_body
-                ContentFailure.Protocol -> R.string.daily_vip_error_protocol
-            },
-        )
-    } else {
-        stringResource(body)
-    }
+private fun StatusPresentation.body(state: DailyVipUiState): String = if (state is DailyVipUiState.Failed) {
+    stringResource(
+        when (state.failure) {
+            ContentFailure.AuthenticationRequired -> R.string.feature_vip_impl_daily_vip_error_auth
+            ContentFailure.Network -> R.string.feature_vip_impl_daily_vip_error_network
+            ContentFailure.ServiceRejected -> R.string.feature_vip_impl_daily_vip_error_service
+            is ContentFailure.RiskVerificationRequired -> R.string.feature_vip_impl_daily_vip_risk_body
+            ContentFailure.RiskBlocked -> R.string.feature_vip_impl_daily_vip_risk_body
+            ContentFailure.Protocol -> R.string.feature_vip_impl_daily_vip_error_protocol
+        },
+    )
+} else {
+    stringResource(body)
+}
 
 @Composable
 private fun StatusPresentation.containerColor() = when (tone) {

@@ -6,18 +6,16 @@ import com.resonote.core.data.RankingRepository
 import com.resonote.core.model.CollectionLoadResult
 import com.resonote.feature.ranking.api.RankingNavKey
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @HiltViewModel
-class RankingViewModel @Inject constructor(
-    private val repository: RankingRepository,
-) : ViewModel() {
+class RankingViewModel @Inject constructor(private val repository: RankingRepository) : ViewModel() {
     private val mutableUiState = MutableStateFlow<RankingUiState>(
         RankingUiState.Loading(RankingMetadata("", null, null)),
     )

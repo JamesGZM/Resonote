@@ -13,25 +13,25 @@ import com.resonote.core.network.ApiRiskException
 import com.resonote.core.network.model.NetworkAccountOption
 import com.resonote.core.network.model.NetworkMobileCodeLoginResult
 import com.resonote.core.network.model.NetworkPasswordLoginResult
-import com.resonote.core.network.model.NetworkQrLoginStatus
-import com.resonote.core.network.model.NetworkPlaylistSummary
-import com.resonote.core.network.model.NetworkRecommendationMode
-import com.resonote.core.network.model.NetworkRanking
 import com.resonote.core.network.model.NetworkPlaylistPage
-import com.resonote.core.network.model.NetworkSongPage
-import com.resonote.core.network.model.NetworkSong
-import com.resonote.core.network.model.NetworkSongSource
+import com.resonote.core.network.model.NetworkPlaylistSummary
+import com.resonote.core.network.model.NetworkQrLoginStatus
+import com.resonote.core.network.model.NetworkRanking
+import com.resonote.core.network.model.NetworkRecommendationMode
 import com.resonote.core.network.model.NetworkSearchPage
-import com.resonote.core.network.session.ApiSession
-import com.resonote.core.network.session.ApiSessionStore
-import com.resonote.core.network.session.ApiSessionManager
+import com.resonote.core.network.model.NetworkSong
+import com.resonote.core.network.model.NetworkSongPage
+import com.resonote.core.network.model.NetworkSongSource
 import com.resonote.core.network.protocol.ApiDeviceIdentityFactory
 import com.resonote.core.network.risk.ApiRiskChallenge
+import com.resonote.core.network.session.ApiSession
+import com.resonote.core.network.session.ApiSessionManager
+import com.resonote.core.network.session.ApiSessionStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
-import java.util.Optional
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
+import java.util.Optional
 
 class DefaultAuthRepositoryTest {
     @Test
@@ -65,7 +65,9 @@ class DefaultAuthRepositoryTest {
                 RiskChallengeRegistry(),
             )
 
-        assertThat(repository.loginWithMobileCode("13800000000", "246810")).isEqualTo(MobileCodeLoginResult.Authenticated)
+        assertThat(
+            repository.loginWithMobileCode("13800000000", "246810"),
+        ).isEqualTo(MobileCodeLoginResult.Authenticated)
         assertThat(repository.authState.first()).isEqualTo(AuthState.Authenticated("42"))
     }
 
@@ -108,10 +110,10 @@ class DefaultAuthRepositoryTest {
                 FakeNetwork(
                     login = NetworkMobileCodeLoginResult.Authenticated(authenticatedSession()),
                     failure =
-                        ApiRiskException(
-                            ApiRiskChallenge(eventId = "provider-event"),
-                            ApiRiskException.Reason.VerificationUnavailable,
-                        ),
+                    ApiRiskException(
+                        ApiRiskChallenge(eventId = "provider-event"),
+                        ApiRiskException.Reason.VerificationUnavailable,
+                    ),
                 ),
                 sessionManager(FakeSessionStore()),
                 RiskChallengeRegistry(),
@@ -151,7 +153,10 @@ class DefaultAuthRepositoryTest {
                 sessionManager(FakeSessionStore()),
                 RiskChallengeRegistry(),
             )
-        val multiple = accountRepository.loginWithPassword("account", "password") as PasswordLoginResult.MultipleAccounts
+        val multiple = accountRepository.loginWithPassword(
+            "account",
+            "password",
+        ) as PasswordLoginResult.MultipleAccounts
         assertThat(multiple.accounts.single().userId).isEqualTo("84")
     }
 
@@ -182,10 +187,10 @@ class DefaultAuthRepositoryTest {
                 FakeNetwork(
                     login = NetworkMobileCodeLoginResult.Authenticated(authenticatedSession()),
                     failure =
-                        ApiRiskException(
-                            ApiRiskChallenge(eventId = "password-event"),
-                            ApiRiskException.Reason.VerificationUnavailable,
-                        ),
+                    ApiRiskException(
+                        ApiRiskChallenge(eventId = "password-event"),
+                        ApiRiskException.Reason.VerificationUnavailable,
+                    ),
                 ),
                 sessionManager(FakeSessionStore()),
                 RiskChallengeRegistry(),
@@ -238,19 +243,31 @@ class DefaultAuthRepositoryTest {
         private val qrStatus: NetworkQrLoginStatus = NetworkQrLoginStatus.Waiting,
     ) : TestApiNetworkDataSource() {
         override suspend fun dailyRecommendations(): List<NetworkSong> = error("unused")
-        override suspend fun recommendedPlaylists(page: Int, pageSize: Int): List<NetworkPlaylistSummary> = error("unused")
+        override suspend fun recommendedPlaylists(page: Int, pageSize: Int): List<NetworkPlaylistSummary> =
+            error("unused")
         override suspend fun newSongs(page: Int, pageSize: Int): List<NetworkSong> = error("unused")
         override suspend fun radioRecommendations(mode: NetworkRecommendationMode): List<NetworkSong> = error("unused")
-        override suspend fun resolveSongSource(hash: String, albumId: String?, albumAudioId: String?, requestedQuality: String): NetworkSongSource = error("unused")
+        override suspend fun resolveSongSource(
+            hash: String,
+            albumId: String?,
+            albumAudioId: String?,
+            requestedQuality: String,
+        ): NetworkSongSource = error("unused")
         override suspend fun rankings(): List<NetworkRanking> = error("unused")
         override suspend fun rankingSongs(rankId: String, page: Int, pageSize: Int): NetworkSongPage = error("unused")
-        override suspend fun playlistSongs(globalCollectionId: String, page: Int, pageSize: Int): NetworkPlaylistPage = error("unused")
-        override suspend fun searchSongs(keywords: String, page: Int, pageSize: Int): NetworkSearchPage = error("unused")
+        override suspend fun playlistSongs(globalCollectionId: String, page: Int, pageSize: Int): NetworkPlaylistPage =
+            error("unused")
+        override suspend fun searchSongs(keywords: String, page: Int, pageSize: Int): NetworkSearchPage =
+            error("unused")
         override suspend fun sendMobileCode(mobile: String) {
             failure?.let { throw it }
         }
 
-        override suspend fun loginWithMobileCode(mobile: String, code: String, selectedUserId: String?): NetworkMobileCodeLoginResult {
+        override suspend fun loginWithMobileCode(
+            mobile: String,
+            code: String,
+            selectedUserId: String?,
+        ): NetworkMobileCodeLoginResult {
             failure?.let { throw it }
             return login
         }
@@ -259,43 +276,75 @@ class DefaultAuthRepositoryTest {
             failure?.let { throw it }
             return passwordLogin ?: when (login) {
                 is NetworkMobileCodeLoginResult.Authenticated -> NetworkPasswordLoginResult.Authenticated(login.session)
-                is NetworkMobileCodeLoginResult.MultipleAccounts -> NetworkPasswordLoginResult.MultipleAccounts(login.accounts)
+                is NetworkMobileCodeLoginResult.MultipleAccounts -> NetworkPasswordLoginResult.MultipleAccounts(
+                    login.accounts,
+                )
             }
         }
         override suspend fun userDetail(): com.resonote.core.network.model.NetworkUserDetail = error("unused")
         override suspend fun userVip(): com.resonote.core.network.model.NetworkUserVip = error("unused")
-        override suspend fun userPlaylists(page: Int, pageSize: Int): List<com.resonote.core.network.model.NetworkUserPlaylist> = error("unused")
+        override suspend fun userPlaylists(
+            page: Int,
+            pageSize: Int,
+        ): List<com.resonote.core.network.model.NetworkUserPlaylist> = error("unused")
         override suspend fun createPlaylist(name: String): String = error("unused")
-        override suspend fun addPlaylistTracks(listId: String, tracks: List<com.resonote.core.network.model.NetworkPlaylistTrackInput>) = error("unused")
+        override suspend fun addPlaylistTracks(
+            listId: String,
+            tracks: List<com.resonote.core.network.model.NetworkPlaylistTrackInput>,
+        ) = error("unused")
         override suspend fun deletePlaylistTracks(listId: String, fileIds: List<String>) = error("unused")
-        override suspend fun cloudTracks(page: Int, pageSize: Int): com.resonote.core.network.model.NetworkCloudPage = error("unused")
-        override suspend fun resolveCloudSongSource(hash: String, albumAudioId: String?, name: String): NetworkSongSource = error("unused")
+        override suspend fun cloudTracks(page: Int, pageSize: Int): com.resonote.core.network.model.NetworkCloudPage =
+            error("unused")
+        override suspend fun resolveCloudSongSource(
+            hash: String,
+            albumAudioId: String?,
+            name: String,
+        ): NetworkSongSource = error("unused")
         override suspend fun banners(): List<com.resonote.core.network.model.NetworkBanner> = error("unused")
-        override suspend fun playlistCategories(): List<com.resonote.core.network.model.NetworkPlaylistCategory> = error("unused")
-        override suspend fun newAlbums(page: Int, pageSize: Int): List<com.resonote.core.network.model.NetworkAlbum> = error("unused")
-        override suspend fun albumSongs(albumId: String, page: Int, pageSize: Int): com.resonote.core.network.model.NetworkAlbumSongPage = error("unused")
-        override suspend fun artistDetail(artistId: String): com.resonote.core.network.model.NetworkArtistInfo? = error("unused")
-        override suspend fun artistSongs(artistId: String, page: Int, pageSize: Int, newestFirst: Boolean): com.resonote.core.network.model.NetworkArtistSongPage = error("unused")
-        override suspend fun searchComplex(keywords: String): com.resonote.core.network.model.NetworkComplexSearch = error("unused")
-        override suspend fun hotSearchKeywords(): List<com.resonote.core.network.model.NetworkSearchKeyword> = error("unused")
+        override suspend fun playlistCategories(): List<com.resonote.core.network.model.NetworkPlaylistCategory> =
+            error("unused")
+        override suspend fun newAlbums(page: Int, pageSize: Int): List<com.resonote.core.network.model.NetworkAlbum> =
+            error("unused")
+        override suspend fun albumSongs(
+            albumId: String,
+            page: Int,
+            pageSize: Int,
+        ): com.resonote.core.network.model.NetworkAlbumSongPage = error("unused")
+        override suspend fun artistDetail(artistId: String): com.resonote.core.network.model.NetworkArtistInfo? =
+            error("unused")
+        override suspend fun artistSongs(
+            artistId: String,
+            page: Int,
+            pageSize: Int,
+            newestFirst: Boolean,
+        ): com.resonote.core.network.model.NetworkArtistSongPage = error("unused")
+        override suspend fun searchComplex(keywords: String): com.resonote.core.network.model.NetworkComplexSearch =
+            error("unused")
+        override suspend fun hotSearchKeywords(): List<com.resonote.core.network.model.NetworkSearchKeyword> =
+            error("unused")
         override suspend fun searchSuggestions(keywords: String): List<String> = error("unused")
-        override suspend fun searchLyric(hash: String, albumAudioId: String?): com.resonote.core.network.model.NetworkLyricCandidate? = error("unused")
-        override suspend fun downloadLyric(candidate: com.resonote.core.network.model.NetworkLyricCandidate): String? = error("unused")
+        override suspend fun searchLyric(
+            hash: String,
+            albumAudioId: String?,
+        ): com.resonote.core.network.model.NetworkLyricCandidate? = error("unused")
+        override suspend fun downloadLyric(candidate: com.resonote.core.network.model.NetworkLyricCandidate): String? =
+            error("unused")
         override suspend fun resolveVideoUrl(hash: String): String? = error("unused")
-        override suspend fun recognizeAudio(pcm: ByteArray): List<com.resonote.core.network.model.NetworkRecognitionMatch> = error("unused")
+        override suspend fun recognizeAudio(
+            pcm: ByteArray,
+        ): List<com.resonote.core.network.model.NetworkRecognitionMatch> = error("unused")
         override suspend fun createQrLoginKey(): String = "qr-key"
         override suspend fun checkQrLogin(key: String): NetworkQrLoginStatus = qrStatus
-        override suspend fun claimDailyVip(receiveDay: String): com.resonote.core.network.model.NetworkVipRewardResult = error("unused")
+        override suspend fun claimDailyVip(receiveDay: String): com.resonote.core.network.model.NetworkVipRewardResult =
+            error("unused")
         override suspend fun upgradeDailyVip(): com.resonote.core.network.model.NetworkVipRewardResult = error("unused")
     }
 
     private fun sessionManager(store: ApiSessionStore) =
         ApiSessionManager(Optional.of(store), ApiDeviceIdentityFactory())
 
-    private class FakeSessionStore(
-        private val failWrites: Boolean = false,
-        initial: ApiSession? = null,
-    ) : ApiSessionStore {
+    private class FakeSessionStore(private val failWrites: Boolean = false, initial: ApiSession? = null) :
+        ApiSessionStore {
         private val state = MutableStateFlow(initial)
         override val session = state
         var writes = 0
@@ -305,11 +354,17 @@ class DefaultAuthRepositoryTest {
             writes += 1
             state.value = session
         }
-        override suspend fun clearAuthentication() { state.value = null }
+        override suspend fun clearAuthentication() {
+            state.value = null
+        }
     }
 
     private fun authenticatedSession() = ApiSession(
-        guid = "fixture-guid", mid = "fixture-mid", dev = "fixture-dev", dfid = "fixture-dfid",
-        token = "fixture-token", userId = "42",
+        guid = "fixture-guid",
+        mid = "fixture-mid",
+        dev = "fixture-dev",
+        dfid = "fixture-dfid",
+        token = "fixture-token",
+        userId = "42",
     )
 }

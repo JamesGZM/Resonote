@@ -41,11 +41,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -56,7 +55,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import com.resonote.core.designsystem.component.ResonoteArtwork
 import com.resonote.core.designsystem.component.ResonoteArtworkState
 import com.resonote.core.designsystem.component.ResonoteMusicItem
@@ -64,6 +62,7 @@ import com.resonote.core.designsystem.component.ResonotePlaylistItem
 import com.resonote.core.designsystem.component.ResonotePlaylistMetadata
 import com.resonote.core.designsystem.component.ResonoteRemoteArtwork
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
+import com.resonote.core.designsystem.tokens.ResonoteTokens
 import com.resonote.core.model.Album
 import com.resonote.core.model.AlbumRegion
 import com.resonote.core.model.AudioQuality
@@ -140,7 +139,7 @@ fun DiscoverScreen(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             Column {
-                ResonoteTopAppBar(title = { Text(stringResource(R.string.discover_title)) })
+                ResonoteTopAppBar(title = { Text(stringResource(R.string.feature_discover_impl_discover_title)) })
                 PrimaryScrollableTabRow(
                     selectedTabIndex = state.selectedSection.ordinal,
                     edgePadding = 12.dp,
@@ -232,7 +231,10 @@ private fun PlaylistPane(
             DiscoverPageState.Loading,
             -> item(key = "loading") { PaneLoading() }
             DiscoverPageState.Empty -> item(key = "empty") {
-                PaneMessage(Icons.Rounded.MusicNote, stringResource(R.string.discover_empty_playlists))
+                PaneMessage(
+                    Icons.Rounded.MusicNote,
+                    stringResource(R.string.feature_discover_impl_discover_empty_playlists),
+                )
             }
             is DiscoverPageState.Error -> item(key = "error") { PaneError(page.failure, onRetry) }
             is DiscoverPageState.Content -> {
@@ -252,16 +254,12 @@ private fun PlaylistPane(
                                 ),
                                 onClick = { onPlaylistClick(playlist) },
                                 modifier = Modifier.weight(1f),
-                                artworkState = ResonoteArtworkState.LOADED,
-                                artworkUrl = playlist.coverUrl,
-                                artwork = {
-                                    Box(
-                                        Modifier.fillMaxSize().background(entityGradient(playlist.id)),
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        Icon(Icons.Rounded.MusicNote, null, Modifier.size(42.dp), tint = Color.White.copy(0.9f))
-                                    }
+                                artworkState = if (playlist.coverUrl.isNullOrBlank()) {
+                                    ResonoteArtworkState.MISSING
+                                } else {
+                                    ResonoteArtworkState.LOADED
                                 },
+                                artworkUrl = playlist.coverUrl,
                             )
                         }
                         if (row.size == 1) Spacer(Modifier.weight(1f))
@@ -293,7 +291,7 @@ private fun PlaylistFilters(
             is DiscoverLoadState.Error -> TextButton(
                 onClick = onRetry,
                 modifier = Modifier.padding(horizontal = 8.dp),
-            ) { Text(stringResource(R.string.discover_categories_unavailable)) }
+            ) { Text(stringResource(R.string.feature_discover_impl_discover_categories_unavailable)) }
             is DiscoverLoadState.Content -> {
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = 16.dp),
@@ -303,7 +301,7 @@ private fun PlaylistFilters(
                         FilterChip(
                             selected = selectedParentId == null,
                             onClick = { onSelectParent(null) },
-                            label = { Text(stringResource(R.string.discover_recommended)) },
+                            label = { Text(stringResource(R.string.feature_discover_impl_discover_recommended)) },
                         )
                     }
                     itemsIndexed(
@@ -358,7 +356,12 @@ private fun RankingPane(
             DiscoverLoadState.Idle,
             DiscoverLoadState.Loading,
             -> item { PaneLoading() }
-            DiscoverLoadState.Empty -> item { PaneMessage(Icons.Rounded.BarChart, stringResource(R.string.discover_empty_rankings)) }
+            DiscoverLoadState.Empty -> item {
+                PaneMessage(
+                    Icons.Rounded.BarChart,
+                    stringResource(R.string.feature_discover_impl_discover_empty_rankings),
+                )
+            }
             is DiscoverLoadState.Error -> item { PaneError(rankings.failure, onRetry) }
             is DiscoverLoadState.Content -> itemsIndexed(
                 items = rankings.value,
@@ -395,7 +398,7 @@ private fun AlbumPane(
                     FilterChip(
                         selected = selectedRegion == null,
                         onClick = { onSelectRegion(null) },
-                        label = { Text(stringResource(R.string.discover_recommended)) },
+                        label = { Text(stringResource(R.string.feature_discover_impl_discover_recommended)) },
                     )
                 }
                 items(AlbumRegion.entries, key = { it.name }) { region ->
@@ -411,12 +414,19 @@ private fun AlbumPane(
             DiscoverLoadState.Idle,
             DiscoverLoadState.Loading,
             -> item { PaneLoading() }
-            DiscoverLoadState.Empty -> item { PaneMessage(Icons.Rounded.Album, stringResource(R.string.discover_empty_albums)) }
+            DiscoverLoadState.Empty -> item {
+                PaneMessage(Icons.Rounded.Album, stringResource(R.string.feature_discover_impl_discover_empty_albums))
+            }
             is DiscoverLoadState.Error -> item { PaneError(albums.failure, onRetry) }
             is DiscoverLoadState.Content -> {
                 val filtered = albums.value.filter { selectedRegion == null || it.region == selectedRegion }
                 if (filtered.isEmpty()) {
-                    item { PaneMessage(Icons.Rounded.Album, stringResource(R.string.discover_empty_albums)) }
+                    item {
+                        PaneMessage(
+                            Icons.Rounded.Album,
+                            stringResource(R.string.feature_discover_impl_discover_empty_albums),
+                        )
+                    }
                 } else {
                     itemsIndexed(
                         items = filtered.chunked(2),
@@ -457,7 +467,12 @@ private fun SongPane(
             DiscoverPageState.Idle,
             DiscoverPageState.Loading,
             -> item { PaneLoading() }
-            DiscoverPageState.Empty -> item { PaneMessage(Icons.Rounded.MusicNote, stringResource(R.string.discover_empty_songs)) }
+            DiscoverPageState.Empty -> item {
+                PaneMessage(
+                    Icons.Rounded.MusicNote,
+                    stringResource(R.string.feature_discover_impl_discover_empty_songs),
+                )
+            }
             is DiscoverPageState.Error -> item { PaneError(songs.failure, onRetry) }
             is DiscoverPageState.Content -> {
                 item(key = "play-all") {
@@ -468,7 +483,7 @@ private fun SongPane(
                     ) {
                         Icon(Icons.Rounded.PlayArrow, null)
                         Spacer(Modifier.width(8.dp))
-                        Text(stringResource(R.string.discover_play_all))
+                        Text(stringResource(R.string.feature_discover_impl_discover_play_all))
                     }
                 }
                 itemsIndexed(
@@ -504,7 +519,8 @@ private fun RankingCard(position: Int, ranking: Ranking, onClick: () -> Unit) {
     ) {
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(
-                Modifier.size(72.dp).clip(MaterialTheme.shapes.medium).background(entityGradient(ranking.id)),
+                Modifier.size(72.dp).clip(MaterialTheme.shapes.medium)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHighest),
                 contentAlignment = Alignment.Center,
             ) {
                 if (!ranking.coverUrl.isNullOrBlank()) {
@@ -515,12 +531,18 @@ private fun RankingCard(position: Int, ranking: Ranking, onClick: () -> Unit) {
                         fallback = {},
                     )
                 }
-                Text(
-                    position.toString().padStart(2, '0'),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                )
+                Surface(
+                    color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.52f),
+                    contentColor = ResonoteTokens.systemColors.onScrim,
+                    shape = MaterialTheme.shapes.small,
+                ) {
+                    Text(
+                        position.toString().padStart(2, '0'),
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
             }
             Spacer(Modifier.width(16.dp))
             Text(
@@ -531,7 +553,10 @@ private fun RankingCard(position: Int, ranking: Ranking, onClick: () -> Unit) {
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
-            Icon(Icons.Rounded.BarChart, stringResource(R.string.discover_ranking_artwork, ranking.title))
+            Icon(
+                Icons.Rounded.BarChart,
+                stringResource(R.string.feature_discover_impl_discover_ranking_artwork, ranking.title),
+            )
         }
     }
 }
@@ -540,24 +565,28 @@ private fun RankingCard(position: Int, ranking: Ranking, onClick: () -> Unit) {
 private fun AlbumCard(album: Album, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Column(modifier.clickable(onClick = onClick)) {
         ResonoteArtwork(
-            state = ResonoteArtworkState.LOADED,
-            contentDescription = stringResource(R.string.discover_album_artwork, album.name),
+            state = if (album.coverUrl.isNullOrBlank()) {
+                ResonoteArtworkState.MISSING
+            } else {
+                ResonoteArtworkState.LOADED
+            },
+            contentDescription = stringResource(R.string.feature_discover_impl_discover_album_artwork, album.name),
             modifier = Modifier.fillMaxWidth().height(164.dp),
         ) {
             ResonoteRemoteArtwork(
                 model = album.coverUrl,
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
-            ) {
-                Box(Modifier.fillMaxSize().background(entityGradient(album.id)), contentAlignment = Alignment.Center) {
-                    Icon(Icons.Rounded.Album, null, Modifier.size(46.dp), tint = Color.White.copy(0.9f))
-                }
-            }
+            )
         }
         Spacer(Modifier.height(8.dp))
         Text(album.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Text(
-            stringResource(R.string.discover_album_metadata, album.artist.orEmpty(), album.songCount),
+            stringResource(
+                R.string.feature_discover_impl_discover_album_metadata,
+                album.artist.orEmpty(),
+                album.songCount,
+            ),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
@@ -574,22 +603,30 @@ private fun PaneLoading() {
 @Composable
 private fun LinearFilterLoading() {
     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        repeat(4) { Box(Modifier.width(72.dp).height(32.dp).clip(MaterialTheme.shapes.large).background(MaterialTheme.colorScheme.surfaceContainerHigh)) }
+        repeat(4) {
+            Box(
+                Modifier.width(
+                    72.dp,
+                ).height(
+                    32.dp,
+                ).clip(MaterialTheme.shapes.large).background(MaterialTheme.colorScheme.surfaceContainerHigh),
+            )
+        }
     }
 }
 
 @Composable
 private fun PaneError(failure: ContentFailure, onRetry: () -> Unit) {
     val body = when (failure) {
-        ContentFailure.Network -> stringResource(R.string.discover_error_network)
-        ContentFailure.AuthenticationRequired -> stringResource(R.string.discover_error_auth)
-        else -> stringResource(R.string.discover_error_generic)
+        ContentFailure.Network -> stringResource(R.string.feature_discover_impl_discover_error_network)
+        ContentFailure.AuthenticationRequired -> stringResource(R.string.feature_discover_impl_discover_error_auth)
+        else -> stringResource(R.string.feature_discover_impl_discover_error_generic)
     }
     PaneMessage(
         icon = Icons.Rounded.CloudOff,
         text = body,
-        title = stringResource(R.string.discover_error_title),
-        action = { Button(onClick = onRetry) { Text(stringResource(R.string.discover_retry)) } },
+        title = stringResource(R.string.feature_discover_impl_discover_error_title),
+        action = { Button(onClick = onRetry) { Text(stringResource(R.string.feature_discover_impl_discover_retry)) } },
     )
 }
 
@@ -602,7 +639,12 @@ private fun PaneMessage(
 ) {
     Box(Modifier.fillMaxWidth().height(300.dp).padding(32.dp), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Icon(icon, contentDescription = null, modifier = Modifier.size(36.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(
+                icon,
+                contentDescription = null,
+                modifier = Modifier.size(36.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             title?.let { Text(it, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold) }
             Text(text, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
             action?.invoke()
@@ -615,26 +657,30 @@ private fun PageFooter(isLoading: Boolean, failure: ContentFailure?, onLoadMore:
     Box(Modifier.fillMaxWidth().padding(20.dp), contentAlignment = Alignment.Center) {
         when {
             isLoading -> CircularProgressIndicator(Modifier.size(28.dp))
-            failure != null -> TextButton(onClick = onLoadMore) { Text(stringResource(R.string.discover_load_more_retry)) }
-            else -> TextButton(onClick = onLoadMore) { Text(stringResource(R.string.discover_load_more)) }
+            failure != null -> TextButton(onClick = onLoadMore) {
+                Text(stringResource(R.string.feature_discover_impl_discover_load_more_retry))
+            }
+            else -> TextButton(onClick = onLoadMore) {
+                Text(stringResource(R.string.feature_discover_impl_discover_load_more))
+            }
         }
     }
 }
 
 @Composable
 private fun DiscoverSection.label(): String = when (this) {
-    DiscoverSection.PLAYLISTS -> stringResource(R.string.discover_playlists)
-    DiscoverSection.RANKINGS -> stringResource(R.string.discover_rankings)
-    DiscoverSection.ALBUMS -> stringResource(R.string.discover_albums)
-    DiscoverSection.SONGS -> stringResource(R.string.discover_songs)
+    DiscoverSection.PLAYLISTS -> stringResource(R.string.feature_discover_impl_discover_playlists)
+    DiscoverSection.RANKINGS -> stringResource(R.string.feature_discover_impl_discover_rankings)
+    DiscoverSection.ALBUMS -> stringResource(R.string.feature_discover_impl_discover_albums)
+    DiscoverSection.SONGS -> stringResource(R.string.feature_discover_impl_discover_songs)
 }
 
 @Composable
 private fun AlbumRegion.label(): String = when (this) {
-    AlbumRegion.Chinese -> stringResource(R.string.discover_chinese)
-    AlbumRegion.Western -> stringResource(R.string.discover_western)
-    AlbumRegion.Japanese -> stringResource(R.string.discover_japanese)
-    AlbumRegion.Korean -> stringResource(R.string.discover_korean)
+    AlbumRegion.Chinese -> stringResource(R.string.feature_discover_impl_discover_chinese)
+    AlbumRegion.Western -> stringResource(R.string.feature_discover_impl_discover_western)
+    AlbumRegion.Japanese -> stringResource(R.string.feature_discover_impl_discover_japanese)
+    AlbumRegion.Korean -> stringResource(R.string.feature_discover_impl_discover_korean)
 }
 
 private fun PaddingValues.plusBottom(extra: Dp) = PaddingValues(
@@ -643,16 +689,6 @@ private fun PaddingValues.plusBottom(extra: Dp) = PaddingValues(
     end = calculateRightPadding(androidx.compose.ui.unit.LayoutDirection.Ltr),
     bottom = calculateBottomPadding() + extra,
 )
-
-private fun entityGradient(seed: String): Brush {
-    val palettes = listOf(
-        listOf(Color(0xFF4B0A1C), Color(0xFFC82A59), Color(0xFFF39B75)),
-        listOf(Color(0xFF073B3B), Color(0xFF15847A), Color(0xFFF0CE7D)),
-        listOf(Color(0xFF192451), Color(0xFF5C78CA), Color(0xFFE8B8D2)),
-        listOf(Color(0xFF432A0B), Color(0xFFAF741F), Color(0xFFF2D69C)),
-    )
-    return Brush.linearGradient(palettes[(seed.hashCode() and Int.MAX_VALUE) % palettes.size])
-}
 
 private fun Long.compactCount(): String = when {
     this >= 100_000_000 -> "%.1f亿".format(this / 100_000_000.0)

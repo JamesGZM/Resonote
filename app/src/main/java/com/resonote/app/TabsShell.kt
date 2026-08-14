@@ -48,10 +48,7 @@ import com.resonote.feature.player.impl.PlaybackQueueSheet
 import com.resonote.feature.player.impl.ResonoteMiniPlayer
 import com.resonote.feature.player.impl.badgeLabel
 
-internal enum class ResonoteTab(
-    val labelRes: Int,
-    @field:DrawableRes val iconRes: Int,
-) {
+internal enum class ResonoteTab(val labelRes: Int, @field:DrawableRes val iconRes: Int) {
     HOME(R.string.tab_home, R.drawable.ic_tab_home),
     DISCOVER(R.string.tab_discover, R.drawable.ic_tab_discover),
     MY(R.string.tab_my, R.drawable.ic_tab_my),
@@ -64,6 +61,7 @@ internal fun TabsShell(
     onPlaySong: (OnlineSong) -> Unit = {},
     onPlaySongs: (List<OnlineSong>, Int) -> Unit = { _, _ -> },
     onTogglePlay: () -> Unit = {},
+    onNext: () -> Unit = {},
     onOpenPlayer: () -> Unit = {},
     onSelectQueueItem: (Int) -> Unit = {},
     onRemoveQueueItem: (Int) -> Unit = {},
@@ -153,8 +151,10 @@ internal fun TabsShell(
                             val common: @Composable (HomeViewModel?) -> Unit = { suppliedViewModel ->
                                 if (suppliedViewModel == null) {
                                     HomeRoute(
-                                        playingMediaId = playbackState.currentMetadata?.mediaId, bottomContentPadding = bottomContentPadding,
-                                        onSearchClick = onSearchClick, onRecognitionClick = onRecognitionClick,
+                                        playingMediaId = playbackState.currentMetadata?.mediaId,
+                                        bottomContentPadding = bottomContentPadding,
+                                        onSearchClick = onSearchClick,
+                                        onRecognitionClick = onRecognitionClick,
                                         onPlay = { onPlaySongs(it.songs, it.startIndex) },
                                         onOpenRankings = { openDiscover(DiscoverSection.RANKINGS) },
                                         onOpenFeaturedPlaylists = { openDiscover(DiscoverSection.PLAYLISTS) },
@@ -163,8 +163,10 @@ internal fun TabsShell(
                                     )
                                 } else {
                                     HomeRoute(
-                                        playingMediaId = playbackState.currentMetadata?.mediaId, bottomContentPadding = bottomContentPadding,
-                                        onSearchClick = onSearchClick, onRecognitionClick = onRecognitionClick,
+                                        playingMediaId = playbackState.currentMetadata?.mediaId,
+                                        bottomContentPadding = bottomContentPadding,
+                                        onSearchClick = onSearchClick,
+                                        onRecognitionClick = onRecognitionClick,
                                         onPlay = { onPlaySongs(it.songs, it.startIndex) },
                                         onOpenRankings = { openDiscover(DiscoverSection.RANKINGS) },
                                         onOpenFeaturedPlaylists = { openDiscover(DiscoverSection.PLAYLISTS) },
@@ -214,11 +216,18 @@ internal fun TabsShell(
                 currentMedia?.let { song ->
                     ResonoteMiniPlayer(
                         state = MiniPlayerUiState(
-                            song.mediaId, song.title, song.artist.orEmpty(), song.format.badgeLabel(), song.isVip,
-                            playbackState.isPlaying, playbackState.progress, PrototypeArtworkColors, song.artworkUri,
+                            song.mediaId,
+                            song.title,
+                            song.artist.orEmpty(),
+                            song.format.badgeLabel(),
+                            song.isVip,
+                            playbackState.isPlaying,
+                            playbackState.progress,
+                            song.artworkUri,
                         ),
                         onOpenPlayer = onOpenPlayer,
                         onTogglePlay = onTogglePlay,
+                        onNext = onNext,
                         onOpenQueue = { queueOpen = true },
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
@@ -243,9 +252,3 @@ internal fun TabsShell(
         )
     }
 }
-
-private val PrototypeArtworkColors = listOf(
-    androidx.compose.ui.graphics.Color(0xFF5A061B),
-    androidx.compose.ui.graphics.Color(0xFFE31353),
-    androidx.compose.ui.graphics.Color(0xFFFF8DA9),
-)

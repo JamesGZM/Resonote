@@ -1,7 +1,7 @@
 package com.resonote.feature.home.impl
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,7 +22,6 @@ import androidx.compose.material.icons.rounded.BarChart
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.Radio
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -36,17 +35,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.resonote.core.designsystem.component.ResonoteArtwork
@@ -161,8 +158,12 @@ fun HomeScreen(
                             metadata = ResonotePlaylistMetadata(playlist.title, playlist.playCount),
                             onClick = { onPlaylistClick(playlist) },
                             modifier = Modifier.weight(1f),
+                            artworkState = if (playlist.artworkUrl.isNullOrBlank()) {
+                                ResonoteArtworkState.MISSING
+                            } else {
+                                ResonoteArtworkState.LOADED
+                            },
                             artworkUrl = playlist.artworkUrl,
-                            artwork = { GradientArtwork(playlist.artworkColors) },
                         )
                     }
                     if (pair.size == 1) Spacer(Modifier.weight(1f))
@@ -196,40 +197,51 @@ private fun RecommendationArea(
     onOpenFeaturedPlaylists: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        if (radio != null) Card(
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-            shape = MaterialTheme.shapes.extraLarge,
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
+        if (radio != null) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                shape = MaterialTheme.shapes.extraLarge,
             ) {
-                ResonoteArtwork(
-                    state = ResonoteArtworkState.LOADED,
-                    contentDescription = radio.title,
-                    modifier = Modifier.size(112.dp),
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    ResonoteRemoteArtwork(
-                        model = radio.artworkUrl,
-                        contentDescription = null,
-                    ) { GradientArtwork(radio.artworkColors) }
-                }
-                Spacer(Modifier.width(16.dp))
-                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(radio.title, style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(
-                        radio.artist,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Button(onClick = onPlayRadio) {
-                        Icon(Icons.Rounded.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text(stringResource(R.string.feature_home_impl_play_radio))
+                    ResonoteArtwork(
+                        state = if (radio.artworkUrl.isNullOrBlank()) {
+                            ResonoteArtworkState.MISSING
+                        } else {
+                            ResonoteArtworkState.LOADED
+                        },
+                        contentDescription = radio.title,
+                        modifier = Modifier.size(112.dp),
+                    ) {
+                        ResonoteRemoteArtwork(
+                            model = radio.artworkUrl,
+                            contentDescription = null,
+                        )
+                    }
+                    Spacer(Modifier.width(16.dp))
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            radio.title,
+                            style = MaterialTheme.typography.titleLarge,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            radio.artist,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Button(onClick = onPlayRadio) {
+                            Icon(Icons.Rounded.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text(stringResource(R.string.feature_home_impl_play_radio))
+                        }
                     }
                 }
             }
@@ -281,7 +293,12 @@ private fun RecommendationShortcut(
             }
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
                 Text(
                     supporting,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -342,27 +359,14 @@ private fun SongCollection(
                     isPlaying = song.id == playingMediaId,
                     onClick = { onSongClick(song) },
                     onMoreClick = { onSongMoreClick(song) },
+                    artworkState = if (song.artworkUrl.isNullOrBlank()) {
+                        ResonoteArtworkState.MISSING
+                    } else {
+                        ResonoteArtworkState.LOADED
+                    },
                     artworkUrl = song.artworkUrl,
-                    artwork = { GradientArtwork(song.artworkColors) },
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun GradientArtwork(colors: List<Color>) {
-    Box(
-        Modifier
-            .fillMaxSize()
-            .background(Brush.linearGradient(colors)),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            Icons.Rounded.Radio,
-            contentDescription = null,
-            tint = Color.White.copy(alpha = 0.72f),
-            modifier = Modifier.size(32.dp),
-        )
     }
 }

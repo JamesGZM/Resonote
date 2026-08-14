@@ -40,9 +40,7 @@ internal data class UserDetailData(
 )
 
 @Serializable
-internal data class UserVipData(
-    @SerialName("busi_vip") val businessVip: List<UserVipItemDto>? = null,
-)
+internal data class UserVipData(@SerialName("busi_vip") val businessVip: List<UserVipItemDto>? = null)
 
 @Serializable
 internal data class UserVipItemDto(
@@ -51,9 +49,7 @@ internal data class UserVipItemDto(
 )
 
 @Serializable
-internal data class UserPlaylistsData(
-    val info: List<UserPlaylistDto>? = null,
-)
+internal data class UserPlaylistsData(val info: List<UserPlaylistDto>? = null)
 
 @Serializable
 internal data class UserPlaylistDto(
@@ -62,7 +58,9 @@ internal data class UserPlaylistDto(
     val name: String? = null,
     val pic: String? = null,
     @Serializable(with = FlexibleLongSerializer::class) val count: Long? = null,
-    @SerialName("list_create_userid") @Serializable(with = FlexibleStringSerializer::class) val ownerUserId: String? = null,
+    @SerialName(
+        "list_create_userid",
+    ) @Serializable(with = FlexibleStringSerializer::class) val ownerUserId: String? = null,
     val authors: JsonElement? = null,
 )
 
@@ -81,9 +79,7 @@ internal data class PlaylistCreateRequest(
 )
 
 @Serializable
-internal data class PlaylistCreateData(
-    val info: PlaylistCreatedInfo? = null,
-)
+internal data class PlaylistCreateData(val info: PlaylistCreatedInfo? = null)
 
 @Serializable
 internal data class PlaylistCreatedInfo(
@@ -126,6 +122,4 @@ internal data class PlaylistTracksDeleteRequest(
 )
 
 @Serializable
-internal data class PlaylistFileResource(
-    val fileid: Long,
-)
+internal data class PlaylistFileResource(val fileid: Long)

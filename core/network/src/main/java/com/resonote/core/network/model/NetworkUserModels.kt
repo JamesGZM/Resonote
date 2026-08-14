@@ -11,10 +11,7 @@ data class NetworkUserDetail(
     val listenMinutes: Long,
 )
 
-data class NetworkUserVip(
-    val isVip: Boolean,
-    val label: String,
-)
+data class NetworkUserVip(val isVip: Boolean, val label: String)
 
 data class NetworkUserPlaylist(
     val listId: String,

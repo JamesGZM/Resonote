@@ -6,9 +6,7 @@ import java.io.InputStream
 import java.io.OutputStream
 
 /** Lite representation of search_history.proto using the standard protobuf wire format. */
-data class SearchHistory(
-    val queriesList: List<String> = emptyList(),
-) {
+data class SearchHistory(val queriesList: List<String> = emptyList()) {
     fun writeTo(output: OutputStream) {
         CodedOutputStream.newInstance(output).apply {
             queriesList.forEach { writeString(1, it) }
@@ -18,9 +16,7 @@ data class SearchHistory(
 
     fun toBuilder(): Builder = Builder(queriesList.toMutableList())
 
-    class Builder internal constructor(
-        private val queries: MutableList<String>,
-    ) {
+    class Builder internal constructor(private val queries: MutableList<String>) {
         fun clearQueries() = apply { queries.clear() }
 
         fun addAllQueries(values: Iterable<String>) = apply { queries.addAll(values) }

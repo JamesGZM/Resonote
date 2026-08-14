@@ -1,22 +1,15 @@
 package com.resonote.core.network.protocol
 
 import com.resonote.core.network.ApiHttpException
-import com.resonote.core.network.AuthenticationFailureClassifier
 import com.resonote.core.network.ApiNetworkException
 import com.resonote.core.network.ApiProtocolException
 import com.resonote.core.network.ApiRiskException
+import com.resonote.core.network.AuthenticationFailureClassifier
 import com.resonote.core.network.risk.ApiRiskChallengeDetector
-import com.resonote.core.network.session.ApiSession
 import com.resonote.core.network.session.ApiAuthenticationContext
+import com.resonote.core.network.session.ApiSession
 import com.resonote.core.network.session.ApiSessionManager
 import dagger.Lazy
-import java.io.IOException
-import java.net.SocketTimeoutException
-import java.net.UnknownHostException
-import java.time.Clock
-import javax.inject.Inject
-import javax.inject.Singleton
-import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -30,6 +23,13 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import java.io.IOException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
+import java.time.Clock
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlin.coroutines.resumeWithException
 
 @Singleton
 internal class ProtocolTransport @Inject constructor(
@@ -58,7 +58,11 @@ internal class ProtocolTransport @Inject constructor(
             }
         }
         raw.serviceFailureCodeOrNull()?.let { serviceCode ->
-            if (AuthenticationFailureClassifier.capturesServiceFailure(exchange.spec.authenticationServiceCodes, serviceCode)) {
+            if (AuthenticationFailureClassifier.capturesServiceFailure(
+                    exchange.spec.authenticationServiceCodes,
+                    serviceCode,
+                )
+            ) {
                 AuthenticationFailureClassifier.classify(
                     sessionManager,
                     authenticationContext,
@@ -70,13 +74,17 @@ internal class ProtocolTransport @Inject constructor(
     }
 
     private fun prepare(spec: ApiEndpointSpec, session: ApiSession, clientTime: Long): Request {
-        require(spec.path.startsWith('/') && '?' !in spec.path && '#' !in spec.path) { "Endpoint path must be absolute and query-free" }
+        require(spec.path.startsWith('/') && '?' !in spec.path && '#' !in spec.path) {
+            "Endpoint path must be absolute and query-free"
+        }
         val origin = spec.origin.toHttpUrl()
         require(originPolicy.isAllowed(spec)) { "Only HTTPS or the fixed login mobile-code origin is allowed" }
         require(
             spec.sessionPropagation == ApiSessionPropagation.None || ApiSessionOriginPolicy.isAllowed(origin.host),
         ) { "Session propagation is not allowed for origin ${spec.origin}" }
-        require(origin.encodedPath == "/" && origin.query == null && origin.fragment == null) { "Origin must not include path, query, or fragment" }
+        require(origin.encodedPath == "/" && origin.query == null && origin.fragment == null) {
+            "Origin must not include path, query, or fragment"
+        }
 
         val query = linkedMapOf<String, String>()
         if (spec.includeDefaultParams) {
@@ -132,7 +140,9 @@ internal class ProtocolTransport @Inject constructor(
                 val bytes = it.body?.bytes().orEmpty()
                 if (!it.isSuccessful) {
                     if (AuthenticationFailureClassifier.capturesHttpFailure(it.code, spec.sessionPropagation)) {
-                        AuthenticationFailureClassifier.classify(sessionManager, authenticationContext)?.let { throw it }
+                        AuthenticationFailureClassifier.classify(sessionManager, authenticationContext)?.let {
+                            throw it
+                        }
                     }
                     throw ApiHttpException(it.code)
                 }
@@ -170,7 +180,6 @@ internal class ProtocolTransport @Inject constructor(
             },
         )
     }
-
 }
 
 private fun ByteArray?.orEmpty(): ByteArray = this ?: byteArrayOf()

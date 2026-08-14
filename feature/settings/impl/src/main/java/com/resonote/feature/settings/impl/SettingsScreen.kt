@@ -19,8 +19,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.ChevronRight
-import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.Tune
@@ -55,15 +55,12 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.resonote.core.designsystem.component.LocalResonoteSnackbarController
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
-import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.model.OnlinePlaybackQuality
+import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.model.ThemeMode
 
 @Composable
-fun SettingsRoute(
-    onBack: () -> Unit,
-    viewModel: SettingsViewModel = hiltViewModel(),
-) {
+fun SettingsRoute(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarController = LocalResonoteSnackbarController.current
     val saveFailureMessage = stringResource(R.string.feature_settings_impl_save_error)
@@ -213,10 +210,7 @@ private fun SettingsSectionLabel(textRes: Int) {
 }
 
 @Composable
-private fun ThemeModeSettingsCard(
-    state: SettingsUiState.Ready,
-    onClick: () -> Unit,
-) {
+private fun ThemeModeSettingsCard(state: SettingsUiState.Ready, onClick: () -> Unit) {
     Card(
         onClick = onClick,
         enabled = !state.isSaving,
@@ -257,10 +251,7 @@ private fun ThemeModeSettingsCard(
 }
 
 @Composable
-private fun DynamicColorSettingsCard(
-    state: SettingsUiState.Ready,
-    onCheckedChange: (Boolean) -> Unit,
-) {
+private fun DynamicColorSettingsCard(state: SettingsUiState.Ready, onCheckedChange: (Boolean) -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth().testTag("settings-dynamic-color"),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
@@ -361,10 +352,7 @@ private fun SettingsIntroCard() {
 }
 
 @Composable
-private fun PlaybackSpeedSettingsCard(
-    state: SettingsUiState.Ready,
-    onClick: () -> Unit,
-) {
+private fun PlaybackSpeedSettingsCard(state: SettingsUiState.Ready, onClick: () -> Unit) {
     Card(
         onClick = onClick,
         enabled = !state.isSaving,
@@ -421,10 +409,7 @@ private fun PlaybackSpeedSettingsCard(
 }
 
 @Composable
-private fun OnlineQualitySettingsCard(
-    state: SettingsUiState.Ready,
-    onClick: () -> Unit,
-) {
+private fun OnlineQualitySettingsCard(state: SettingsUiState.Ready, onClick: () -> Unit) {
     Card(
         onClick = onClick,
         enabled = !state.isSaving,
@@ -513,11 +498,7 @@ private fun PlaybackLoadFailureCard(onRetry: () -> Unit) {
 }
 
 @Composable
-private fun PlaybackSpeedDialog(
-    selected: PlaybackSpeed,
-    onSelect: (PlaybackSpeed) -> Unit,
-    onDismiss: () -> Unit,
-) {
+private fun PlaybackSpeedDialog(selected: PlaybackSpeed, onSelect: (PlaybackSpeed) -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = { Icon(Icons.Rounded.Speed, contentDescription = null) },
@@ -589,11 +570,7 @@ private fun OnlineQualityDialog(
 }
 
 @Composable
-private fun ThemeModeDialog(
-    selected: ThemeMode,
-    onSelect: (ThemeMode) -> Unit,
-    onDismiss: () -> Unit,
-) {
+private fun ThemeModeDialog(selected: ThemeMode, onSelect: (ThemeMode) -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = { Icon(Icons.Rounded.DarkMode, contentDescription = null) },

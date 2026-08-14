@@ -4,9 +4,8 @@ import com.google.common.truth.Truth.assertThat
 import com.resonote.core.data.AuthRepository
 import com.resonote.core.data.LibraryRepository
 import com.resonote.core.data.UserProfileRepository
-import com.resonote.core.model.AuthFailure
-import com.resonote.core.model.AuthState
 import com.resonote.core.model.AudioQuality
+import com.resonote.core.model.AuthState
 import com.resonote.core.model.CollectionLoadResult
 import com.resonote.core.model.ContentFailure
 import com.resonote.core.model.MobileCodeLoginResult
@@ -416,14 +415,19 @@ class MyViewModelTest {
         override val authState = state
         override suspend fun acknowledgeAuthenticationGate() = Unit
         override suspend fun sendMobileCode(mobile: String): SendMobileCodeResult = unused()
-        override suspend fun loginWithMobileCode(mobile: String, code: String, selectedUserId: String?): MobileCodeLoginResult = unused()
+        override suspend fun loginWithMobileCode(
+            mobile: String,
+            code: String,
+            selectedUserId: String?,
+        ): MobileCodeLoginResult = unused()
         override suspend fun loginWithPassword(username: String, password: String): PasswordLoginResult = unused()
         override suspend fun createQrLoginKey(): QrLoginKeyResult = unused()
         override suspend fun checkQrLogin(key: String): QrLoginCheckResult = unused()
     }
 
     private class FakeProfileRepository(vararg results: CollectionLoadResult<UserProfile>) : UserProfileRepository {
-        private val results = ArrayDeque(results.toList().ifEmpty { listOf(CollectionLoadResult.Available(profile("unused"))) })
+        private val results =
+            ArrayDeque(results.toList().ifEmpty { listOf(CollectionLoadResult.Available(profile("unused"))) })
         var requests = 0
 
         override suspend fun loadProfile(): CollectionLoadResult<UserProfile> {
@@ -454,10 +458,7 @@ class MyViewModelTest {
             createGate?.await()
             return createResult
         }
-        override suspend fun addTracks(
-            listId: String,
-            tracks: List<PlaylistTrackInput>,
-        ): CollectionLoadResult<Unit> {
+        override suspend fun addTracks(listId: String, tracks: List<PlaylistTrackInput>): CollectionLoadResult<Unit> {
             addRequests += listId to tracks
             addGate?.await()
             return addResult

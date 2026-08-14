@@ -2,10 +2,10 @@ package com.resonote.core.network.protocol
 
 import android.util.Log
 import com.resonote.core.network.BuildConfig
-import javax.inject.Inject
-import kotlin.time.TimeSource
 import okhttp3.Interceptor
 import okhttp3.Response
+import javax.inject.Inject
+import kotlin.time.TimeSource
 
 internal class RedactedNetworkLoggingInterceptor @Inject constructor() : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
@@ -15,7 +15,10 @@ internal class RedactedNetworkLoggingInterceptor @Inject constructor() : Interce
         Log.d(TAG, request.redactedLabel())
         return try {
             chain.proceed(request).also { response ->
-                Log.d(TAG, "${request.method} ${request.url.host}${request.url.encodedPath} ${response.code} ${mark.elapsedNow()}")
+                Log.d(
+                    TAG,
+                    "${request.method} ${request.url.host}${request.url.encodedPath} ${response.code} ${mark.elapsedNow()}",
+                )
             }
         } catch (throwable: Throwable) {
             Log.d(
@@ -33,22 +36,20 @@ internal class RedactedNetworkLoggingInterceptor @Inject constructor() : Interce
 
 internal fun okhttp3.Request.redactedLabel(): String = "$method ${url.scheme}://${url.host}${url.encodedPath}"
 
-internal fun Throwable.redactedDescription(): String =
-    generateSequence(this) { it.cause }
-        .take(MAX_CAUSE_DEPTH)
-        .joinToString(separator = " <- ") { throwable ->
-            val type = throwable.javaClass.simpleName.ifBlank { "Throwable" }
-            throwable.message
-                ?.takeIf(String::isNotBlank)
-                ?.redactSensitiveValues()
-                ?.let { message -> "$type: $message" }
-                ?: type
-        }
+internal fun Throwable.redactedDescription(): String = generateSequence(this) { it.cause }
+    .take(MAX_CAUSE_DEPTH)
+    .joinToString(separator = " <- ") { throwable ->
+        val type = throwable.javaClass.simpleName.ifBlank { "Throwable" }
+        throwable.message
+            ?.takeIf(String::isNotBlank)
+            ?.redactSensitiveValues()
+            ?.let { message -> "$type: $message" }
+            ?: type
+    }
 
-private fun String.redactSensitiveValues(): String =
-    replace(URL_QUERY_PATTERN, "$1?<redacted>")
-        .replace(SENSITIVE_VALUE_PATTERN, "$1=<redacted>")
-        .take(MAX_MESSAGE_LENGTH)
+private fun String.redactSensitiveValues(): String = replace(URL_QUERY_PATTERN, "$1?<redacted>")
+    .replace(SENSITIVE_VALUE_PATTERN, "$1=<redacted>")
+    .take(MAX_MESSAGE_LENGTH)
 
 private const val MAX_CAUSE_DEPTH = 3
 private const val MAX_MESSAGE_LENGTH = 240

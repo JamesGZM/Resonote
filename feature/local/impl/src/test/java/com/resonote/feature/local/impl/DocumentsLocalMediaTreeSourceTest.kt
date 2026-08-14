@@ -32,8 +32,8 @@ class DocumentsLocalMediaTreeSourceTest {
     @Before
     fun setUp() {
         provider = TreeProvider().also {
-            it.attachInfo(context, ProviderInfo().apply { authority = Authority })
-            ShadowContentResolver.registerProviderInternal(Authority, it)
+            it.attachInfo(context, ProviderInfo().apply { authority = AUTHORITY })
+            ShadowContentResolver.registerProviderInternal(AUTHORITY, it)
         }
         source = DocumentsLocalMediaTreeSource(context)
     }
@@ -56,14 +56,14 @@ class DocumentsLocalMediaTreeSourceTest {
             ),
         )
 
-        val result = source.scan("content://$Authority/tree/root")
+        val result = source.scan("content://$AUTHORITY/tree/root")
 
         assertThat(result).isEqualTo(
             LocalMediaTreeScanResult.Available(
                 listOf(
-                    "content://$Authority/tree/root/document/root-song",
-                    "content://$Authority/tree/root/document/nested-song",
-                    "content://$Authority/tree/root/document/mislabelled-song",
+                    "content://$AUTHORITY/tree/root/document/root-song",
+                    "content://$AUTHORITY/tree/root/document/nested-song",
+                    "content://$AUTHORITY/tree/root/document/mislabelled-song",
                 ),
             ),
         )
@@ -74,14 +74,14 @@ class DocumentsLocalMediaTreeSourceTest {
     fun permissionFailureRemainsTyped() = runTest {
         provider.denyQueries = true
 
-        assertThat(source.scan("content://$Authority/tree/root")).isEqualTo(
+        assertThat(source.scan("content://$AUTHORITY/tree/root")).isEqualTo(
             LocalMediaTreeScanResult.Failed(LocalMediaTreeScanFailure.PermissionDenied),
         )
     }
 
     @Test
     fun nonTreeUriIsRejectedBeforeProviderAccess() = runTest {
-        assertThat(source.scan("content://$Authority/document/song")).isEqualTo(
+        assertThat(source.scan("content://$AUTHORITY/document/song")).isEqualTo(
             LocalMediaTreeScanResult.Failed(LocalMediaTreeScanFailure.InvalidTree),
         )
         assertThat(provider.queriedDirectoryIds).isEmpty()
@@ -137,13 +137,9 @@ class DocumentsLocalMediaTreeSourceTest {
         ): Cursor = query(uri, projection, null, null, null)
     }
 
-    private data class Document(
-        val id: String,
-        val mimeType: String,
-        val displayName: String = id,
-    )
+    private data class Document(val id: String, val mimeType: String, val displayName: String = id)
 
     private companion object {
-        const val Authority = "com.resonote.test.documents"
+        const val AUTHORITY = "com.resonote.test.documents"
     }
 }

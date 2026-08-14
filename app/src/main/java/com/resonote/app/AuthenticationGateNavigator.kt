@@ -3,8 +3,8 @@ package com.resonote.app
 import androidx.navigation3.runtime.NavKey
 import com.resonote.core.model.AuthGateReason
 import com.resonote.core.model.AuthState
-import com.resonote.core.navigation.LoginGateNavKey
 import com.resonote.core.navigation.LoginContinuation
+import com.resonote.core.navigation.LoginGateNavKey
 import com.resonote.feature.cloud.api.CloudNavKey
 import com.resonote.feature.vip.api.DailyVipNavKey
 

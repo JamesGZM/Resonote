@@ -43,9 +43,7 @@ internal data class AlbumSongsRequest(
 )
 
 @Serializable
-internal data class ArtistDetailRequest(
-    @SerialName("author_id") val artistId: String,
-)
+internal data class ArtistDetailRequest(@SerialName("author_id") val artistId: String)
 
 @Serializable
 internal data class ArtistAudiosRequest(

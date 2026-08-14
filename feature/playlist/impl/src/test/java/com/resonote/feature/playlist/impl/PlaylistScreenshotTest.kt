@@ -98,13 +98,7 @@ class PlaylistScreenshotTest {
         )
     }
 
-    private fun song(
-        id: String,
-        title: String,
-        artist: String,
-        quality: AudioQuality,
-        vip: Boolean,
-    ) = OnlineSong(
+    private fun song(id: String, title: String, artist: String, quality: AudioQuality, vip: Boolean) = OnlineSong(
         hash = id,
         fileId = "$id-file",
         title = title,

@@ -16,6 +16,7 @@
 
 import com.android.build.api.dsl.LibraryExtension
 import com.resonote.buildlogic.configureKotlinAndroid
+import com.resonote.buildlogic.configureSpotless
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.apply
@@ -25,6 +26,7 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
             apply(plugin = "com.android.library")
+            configureSpotless()
             extensions.configure<LibraryExtension> {
                 configureKotlinAndroid(this)
                 testOptions.targetSdk = 36

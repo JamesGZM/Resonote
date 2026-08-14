@@ -31,14 +31,9 @@ enum class ApiAuthenticationGateReason {
     SessionExpired,
 }
 
-data class ApiAuthenticationState(
-    val session: ApiSession?,
-    val gateReason: ApiAuthenticationGateReason? = null,
-)
+data class ApiAuthenticationState(val session: ApiSession?, val gateReason: ApiAuthenticationGateReason? = null)
 
-internal data class ApiAuthenticationContext(
-    val revision: Long,
-)
+internal data class ApiAuthenticationContext(val revision: Long)
 
 interface ApiSessionStore {
     val session: Flow<ApiSession?>

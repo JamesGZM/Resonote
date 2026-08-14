@@ -1,9 +1,6 @@
 package com.resonote.core.network.session
 
 import com.resonote.core.network.protocol.ApiDeviceIdentityFactory
-import java.util.Optional
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
@@ -11,6 +8,9 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.util.Optional
+import javax.inject.Inject
+import javax.inject.Singleton
 
 @Singleton
 class ApiSessionManager @Inject constructor(
@@ -22,6 +22,7 @@ class ApiSessionManager @Inject constructor(
 
     @Volatile
     private var snapshot: ApiSession? = null
+
     @Volatile
     private var revision: Long = 0
     private var lastFailureRevision: Long? = null
@@ -37,10 +38,12 @@ class ApiSessionManager @Inject constructor(
     val session: Flow<ApiSession?> = authenticationState.map { it.session }.distinctUntilChanged()
 
     suspend fun current(): ApiSession = mutex.withLock {
-        (readLatestSessionLocked() ?: ApiSession.anonymous(identityFactory).also {
-            resolvedStore.write(it)
-            revision += 1
-        }).also { snapshot = it }
+        (
+            readLatestSessionLocked() ?: ApiSession.anonymous(identityFactory).also {
+                resolvedStore.write(it)
+                revision += 1
+            }
+            ).also { snapshot = it }
     }
 
     suspend fun write(value: ApiSession) = mutex.withLock {
@@ -64,20 +67,17 @@ class ApiSessionManager @Inject constructor(
         null
     }
 
-    internal suspend fun reportAuthenticationFailure(
-        context: ApiAuthenticationContext,
-    ): ApiAuthenticationGateReason? = mutex.withLock {
-        reportAuthenticationFailureLocked(context.revision)
-    }
+    internal suspend fun reportAuthenticationFailure(context: ApiAuthenticationContext): ApiAuthenticationGateReason? =
+        mutex.withLock {
+            reportAuthenticationFailureLocked(context.revision)
+        }
 
     internal fun authenticationContext(): ApiAuthenticationContext {
         checkNotNull(snapshot) { "API session must be initialized before capturing authentication context" }
         return ApiAuthenticationContext(revision)
     }
 
-    private suspend fun reportAuthenticationFailureLocked(
-        expectedRevision: Long?,
-    ): ApiAuthenticationGateReason? {
+    private suspend fun reportAuthenticationFailureLocked(expectedRevision: Long?): ApiAuthenticationGateReason? {
         val current = readLatestSessionLocked()
         if (expectedRevision != null && expectedRevision != revision) {
             return gateReason.value.takeIf { lastFailureRevision == expectedRevision }
@@ -108,11 +108,10 @@ class ApiSessionManager @Inject constructor(
         return gateReason.value ?: reason
     }
 
-    private suspend fun readLatestSessionLocked(): ApiSession? =
-        resolvedStore.read().also { current ->
-            if (current != snapshot) revision += 1
-            snapshot = current
-        }
+    private suspend fun readLatestSessionLocked(): ApiSession? = resolvedStore.read().also { current ->
+        if (current != snapshot) revision += 1
+        snapshot = current
+    }
 
     suspend fun acknowledgeAuthenticationGate() = mutex.withLock { gateReason.value = null }
 

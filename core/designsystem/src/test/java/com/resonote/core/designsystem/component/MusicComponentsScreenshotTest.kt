@@ -95,8 +95,4 @@ class MusicComponentsScreenshotTest {
     }
 }
 
-private data class MusicScreenshotCase(
-    val name: String,
-    val themeMode: ResonoteThemeMode,
-    val fontScale: Float = 1f,
-)
+private data class MusicScreenshotCase(val name: String, val themeMode: ResonoteThemeMode, val fontScale: Float = 1f)

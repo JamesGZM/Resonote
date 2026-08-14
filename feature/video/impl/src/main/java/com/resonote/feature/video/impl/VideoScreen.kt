@@ -41,7 +41,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -55,11 +54,12 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.ui.compose.material3.Player as Media3Player
 import coil3.compose.AsyncImage
 import com.resonote.core.designsystem.component.ResonoteButton
+import com.resonote.core.designsystem.tokens.ResonoteTokens
 import com.resonote.core.model.ContentFailure
 import com.resonote.feature.video.api.VideoNavKey
+import androidx.media3.ui.compose.material3.Player as Media3Player
 
 @Composable
 fun VideoRoute(
@@ -242,7 +242,8 @@ private fun FullscreenVideo(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(modifier.fillMaxSize().background(Color.Black).testTag("video-fullscreen")) {
+    val mediaColors = ResonoteTokens.systemColors
+    Box(modifier.fillMaxSize().background(mediaColors.mediaCanvas).testTag("video-fullscreen")) {
         VideoStage(
             state = state,
             player = player,
@@ -255,12 +256,20 @@ private fun FullscreenVideo(
             modifier = Modifier.fillMaxWidth().padding(12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Surface(shape = CircleShape, color = Color.Black.copy(alpha = 0.52f), contentColor = Color.White) {
+            Surface(
+                shape = CircleShape,
+                color = mediaColors.mediaCanvas.copy(alpha = 0.52f),
+                contentColor = mediaColors.onMediaCanvas,
+            ) {
                 IconButton(onClick = onBack) {
                     Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.feature_video_impl_back))
                 }
             }
-            Surface(shape = CircleShape, color = Color.Black.copy(alpha = 0.52f), contentColor = Color.White) {
+            Surface(
+                shape = CircleShape,
+                color = mediaColors.mediaCanvas.copy(alpha = 0.52f),
+                contentColor = mediaColors.onMediaCanvas,
+            ) {
                 IconButton(onClick = onToggleFullscreen) {
                     Icon(Icons.Rounded.FullscreenExit, stringResource(R.string.feature_video_impl_exit_fullscreen))
                 }
@@ -278,10 +287,11 @@ private fun VideoStage(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val mediaColors = ResonoteTokens.systemColors
     Card(
         modifier = modifier.testTag("video-stage"),
         shape = MaterialTheme.shapes.extraLarge,
-        colors = CardDefaults.cardColors(containerColor = Color.Black),
+        colors = CardDefaults.cardColors(containerColor = mediaColors.mediaCanvas),
     ) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             if (coverUrl != null && state !is VideoUiState.Ready) {
@@ -321,19 +331,20 @@ private fun VideoStage(
 
 @Composable
 private fun LoadingStage() {
+    val onMediaCanvas = ResonoteTokens.systemColors.onMediaCanvas
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         CircularProgressIndicator(color = MaterialTheme.colorScheme.primaryContainer)
         Text(
             stringResource(R.string.feature_video_impl_loading),
             modifier = Modifier.padding(top = 18.dp),
-            color = Color.White,
+            color = onMediaCanvas,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
         )
         Text(
             stringResource(R.string.feature_video_impl_loading_body),
             modifier = Modifier.padding(top = 4.dp),
-            color = Color.White.copy(alpha = 0.68f),
+            color = onMediaCanvas.copy(alpha = 0.68f),
             style = MaterialTheme.typography.bodySmall,
         )
     }
@@ -341,22 +352,23 @@ private fun LoadingStage() {
 
 @Composable
 private fun VideoStageMessage(title: String, body: String, onRetry: () -> Unit) {
+    val onMediaCanvas = ResonoteTokens.systemColors.onMediaCanvas
     Column(
         modifier = Modifier.padding(horizontal = 28.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Icon(Icons.Rounded.CloudOff, contentDescription = null, modifier = Modifier.size(34.dp), tint = Color.White)
+        Icon(Icons.Rounded.CloudOff, contentDescription = null, modifier = Modifier.size(34.dp), tint = onMediaCanvas)
         Text(
             title,
             modifier = Modifier.padding(top = 12.dp),
-            color = Color.White,
+            color = onMediaCanvas,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
         )
         Text(
             body,
             modifier = Modifier.padding(top = 5.dp),
-            color = Color.White.copy(alpha = 0.72f),
+            color = onMediaCanvas.copy(alpha = 0.72f),
             style = MaterialTheme.typography.bodySmall,
         )
         ResonoteButton(

@@ -5,9 +5,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-internal class DefaultSearchHistoryRepository @Inject constructor(
-    private val storage: SearchHistoryStorage,
-) : SearchHistoryRepository {
+internal class DefaultSearchHistoryRepository @Inject constructor(private val storage: SearchHistoryStorage) :
+    SearchHistoryRepository {
     override val queries = storage.queries
 
     override suspend fun record(query: String) = storage.add(query)

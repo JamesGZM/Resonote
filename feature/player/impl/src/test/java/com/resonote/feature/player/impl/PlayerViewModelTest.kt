@@ -5,9 +5,9 @@ import com.resonote.core.data.LyricsRepository
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.CollectionLoadResult
 import com.resonote.core.model.ContentFailure
-import com.resonote.core.model.LyricLine
 import com.resonote.core.model.LocalMedia
 import com.resonote.core.model.LocalMediaId
+import com.resonote.core.model.LyricLine
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.playback.PlaybackController
@@ -108,9 +108,7 @@ class PlayerViewModelTest {
         collection.cancel()
     }
 
-    private class FakeLyricsRepository(
-        private val result: CollectionLoadResult<List<LyricLine>>,
-    ) : LyricsRepository {
+    private class FakeLyricsRepository(private val result: CollectionLoadResult<List<LyricLine>>) : LyricsRepository {
         val requests = mutableListOf<Pair<String, String?>>()
 
         override suspend fun loadLyrics(hash: String, albumAudioId: String?): CollectionLoadResult<List<LyricLine>> {
@@ -138,16 +136,28 @@ class PlayerViewModelTest {
         override fun playAll(items: List<PlaybackItem>, startIndex: Int) = Unit
         override fun playNext(items: List<PlaybackItem>) = Unit
         override fun append(items: List<PlaybackItem>) = Unit
-        override fun selectQueueItem(index: Int) { selectedIndex = index }
-        override fun removeQueueItem(index: Int) { removedIndex = index }
-        override fun moveQueueItem(fromIndex: Int, toIndex: Int) { moved = fromIndex to toIndex }
+        override fun selectQueueItem(index: Int) {
+            selectedIndex = index
+        }
+        override fun removeQueueItem(index: Int) {
+            removedIndex = index
+        }
+        override fun moveQueueItem(fromIndex: Int, toIndex: Int) {
+            moved = fromIndex to toIndex
+        }
         override fun togglePlayPause() = Unit
         override fun pause() = Unit
         override fun next() = Unit
         override fun previous() = Unit
-        override fun seekTo(positionMillis: Long) { seekPosition = positionMillis }
-        override fun setMode(mode: PlaybackMode) { selectedMode = mode }
-        override fun setPlaybackSpeed(speed: PlaybackSpeed) { selectedSpeed = speed }
+        override fun seekTo(positionMillis: Long) {
+            seekPosition = positionMillis
+        }
+        override fun setMode(mode: PlaybackMode) {
+            selectedMode = mode
+        }
+        override fun setPlaybackSpeed(speed: PlaybackSpeed) {
+            selectedSpeed = speed
+        }
         override fun clear() = Unit
     }
 

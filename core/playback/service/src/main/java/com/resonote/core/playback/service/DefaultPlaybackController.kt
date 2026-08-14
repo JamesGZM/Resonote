@@ -14,9 +14,9 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.resonote.core.data.ListeningHistoryRepository
 import com.resonote.core.data.PlaybackPreferencesRepository
+import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.model.ResolveSongSourceResult
 import com.resonote.core.model.ResolvedSongSource
-import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.playback.PlaybackController
 import com.resonote.core.playback.PlaybackIssue
 import com.resonote.core.playback.PlaybackItem
@@ -24,9 +24,6 @@ import com.resonote.core.playback.PlaybackMode
 import com.resonote.core.playback.PlaybackState
 import com.resonote.core.playback.PlaybackStatus
 import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
-import javax.inject.Singleton
-import kotlin.random.Random
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -38,6 +35,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlin.random.Random
 
 @Singleton
 internal class DefaultPlaybackController internal constructor(
@@ -46,7 +46,8 @@ internal class DefaultPlaybackController internal constructor(
     private val historyRepository: ListeningHistoryRepository,
     private val preferencesRepository: PlaybackPreferencesRepository,
     private val elapsedRealtime: () -> Long,
-) : PlaybackController, Player.Listener {
+) : PlaybackController,
+    Player.Listener {
     @Inject
     constructor(
         @ApplicationContext context: Context,
@@ -498,10 +499,7 @@ internal class DefaultPlaybackController internal constructor(
         resolveAndLoad(item, failureBehavior = FailureBehavior.SkipQueueItem)
     }
 
-    private fun publishQueue(
-        status: PlaybackStatus = mutableState.value.status,
-        issue: PlaybackIssue? = null,
-    ) {
+    private fun publishQueue(status: PlaybackStatus = mutableState.value.status, issue: PlaybackIssue? = null) {
         val currentDuration = queue.currentItem?.resolvedSource?.durationMillis
             ?: queue.currentItem?.metadata?.durationMillis
             ?: 0L
@@ -511,7 +509,13 @@ internal class DefaultPlaybackController internal constructor(
             status = status,
             positionMillis = if (status == PlaybackStatus.Resolving) 0 else mutableState.value.positionMillis,
             durationMillis = currentDuration,
-            bufferedPositionMillis = if (status == PlaybackStatus.Resolving) 0 else mutableState.value.bufferedPositionMillis,
+            bufferedPositionMillis = if (status ==
+                PlaybackStatus.Resolving
+            ) {
+                0
+            } else {
+                mutableState.value.bufferedPositionMillis
+            },
             issue = issue,
         )
     }
@@ -535,7 +539,8 @@ internal class DefaultPlaybackController internal constructor(
         val status = when {
             player.playerError != null -> PlaybackStatus.Failed
             player.playbackState == Player.STATE_BUFFERING -> PlaybackStatus.Buffering
-            player.playbackState == Player.STATE_ENDED && pausedPreviewGeneration == loadGeneration -> PlaybackStatus.Paused
+            player.playbackState == Player.STATE_ENDED &&
+                pausedPreviewGeneration == loadGeneration -> PlaybackStatus.Paused
             player.playbackState == Player.STATE_ENDED -> PlaybackStatus.Ended
             player.isPlaying -> PlaybackStatus.Playing
             queue.currentItem != null -> PlaybackStatus.Paused

@@ -1,11 +1,11 @@
 package com.resonote.core.data
 
 import com.resonote.core.datastore.PlaybackPreferencesStorage
-import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.model.OnlinePlaybackQuality
+import com.resonote.core.model.PlaybackSpeed
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.flow.map
 
 @Singleton
 internal class DefaultPlaybackPreferencesRepository @Inject constructor(

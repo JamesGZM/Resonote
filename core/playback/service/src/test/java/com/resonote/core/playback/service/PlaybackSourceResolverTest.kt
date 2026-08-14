@@ -18,9 +18,8 @@ import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.ResolveSongSourceResult
 import com.resonote.core.model.ResolvedSongSource
 import com.resonote.core.playback.PlaybackItem
-import com.resonote.core.playback.PlaybackOrigin
-import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 class PlaybackSourceResolverTest {
@@ -89,9 +88,7 @@ class PlaybackSourceResolverTest {
         }
     }
 
-    private class FakeLocalRepository(
-        private val source: LocalMediaPlaybackSource? = null,
-    ) : LocalMediaRepository {
+    private class FakeLocalRepository(private val source: LocalMediaPlaybackSource? = null) : LocalMediaRepository {
         val resolvedIds = mutableListOf<LocalMediaId>()
 
         override suspend fun recoverStorage(): Boolean = true

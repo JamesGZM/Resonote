@@ -39,10 +39,17 @@ internal class RealPlaylistNetworkDataSource @Inject constructor(
         val title = listInfo?.name?.takeIf(String::isNotBlank)
         if (listInfo != null && title == null) throw missingField()
         val info = title?.let {
-            NetworkPlaylistInfo(normalizedId, it, listInfo.intro.orEmpty(), listInfo.pic?.takeIf(String::isNotBlank), count ?: 0)
+            NetworkPlaylistInfo(
+                normalizedId,
+                it,
+                listInfo.intro.orEmpty(),
+                listInfo.pic?.takeIf(String::isNotBlank),
+                count ?: 0,
+            )
         }
         return NetworkPlaylistPage(
-            info, songs,
+            info,
+            songs,
             raw.size >= pageSize && (count == null || count <= 0 || page.toLong() * pageSize < count),
         )
     }

@@ -3,7 +3,6 @@ package com.resonote.core.network.protocol
 import java.security.KeyFactory
 import java.security.MessageDigest
 import java.security.PublicKey
-import java.security.SecureRandom
 import java.security.spec.X509EncodedKeySpec
 import java.util.Base64
 import javax.crypto.Cipher
@@ -16,20 +15,12 @@ internal fun interface ProtocolRandom {
     fun string(length: Int): String
 }
 
-internal data class TemporaryEncryption(
-    val ciphertextHex: String,
-    val temporaryKey: String,
-)
+internal data class TemporaryEncryption(val ciphertextHex: String, val temporaryKey: String)
 
-internal data class PlaylistEncryption(
-    val ciphertext: ByteArray,
-    val key: String,
-)
+internal data class PlaylistEncryption(val ciphertext: ByteArray, val key: String)
 
 @Singleton
-internal class ApiProtocolCrypto @Inject constructor(
-    private val random: ProtocolRandom,
-) {
+internal class ApiProtocolCrypto @Inject constructor(private val random: ProtocolRandom) {
     fun encryptTemporary(plaintext: String): TemporaryEncryption {
         val temporaryKey = random.string(16).lowercase()
         return TemporaryEncryption(
@@ -52,8 +43,7 @@ internal class ApiProtocolCrypto @Inject constructor(
         return rsa("RSA/ECB/NoPadding", padded).toHex()
     }
 
-    fun pkcs1LiteRsa(plaintext: String): String =
-        rsa("RSA/ECB/PKCS1Padding", plaintext.encodeToByteArray()).toHex()
+    fun pkcs1LiteRsa(plaintext: String): String = rsa("RSA/ECB/PKCS1Padding", plaintext.encodeToByteArray()).toHex()
 
     fun encryptPlaylist(plaintext: String): PlaylistEncryption {
         val key = random.string(6).lowercase()
@@ -90,11 +80,10 @@ internal class ApiProtocolCrypto @Inject constructor(
             doFinal(input)
         }
 
-    private fun rsa(transformation: String, plaintext: ByteArray): ByteArray =
-        Cipher.getInstance(transformation).run {
-            init(Cipher.ENCRYPT_MODE, litePublicKey)
-            doFinal(plaintext)
-        }
+    private fun rsa(transformation: String, plaintext: ByteArray): ByteArray = Cipher.getInstance(transformation).run {
+        init(Cipher.ENCRYPT_MODE, litePublicKey)
+        doFinal(plaintext)
+    }
 
     private val litePublicKey: PublicKey by lazy {
         val der = Base64.getDecoder().decode(LITE_PUBLIC_KEY_BODY)
@@ -111,6 +100,11 @@ internal class ApiProtocolCrypto @Inject constructor(
 private fun md5Bytes(value: ByteArray): ByteArray = MessageDigest.getInstance("MD5").digest(value)
 
 private fun String.hexToBytes(): ByteArray {
-    require(length % 2 == 0 && all { it.isDigit() || it.lowercaseChar() in 'a'..'f' }) { "Ciphertext must be hexadecimal" }
+    require(
+        length % 2 == 0 &&
+            all {
+                it.isDigit() || it.lowercaseChar() in 'a'..'f'
+            },
+    ) { "Ciphertext must be hexadecimal" }
     return chunked(2).map { it.toInt(16).toByte() }.toByteArray()
 }

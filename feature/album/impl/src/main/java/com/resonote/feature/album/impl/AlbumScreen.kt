@@ -38,8 +38,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -53,6 +51,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.resonote.core.designsystem.component.ResonoteMusicItem
 import com.resonote.core.designsystem.component.ResonoteRemoteArtwork
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
+import com.resonote.core.designsystem.tokens.ResonoteTokens
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.ContentFailure
 import com.resonote.core.model.OnlineSong
@@ -94,7 +93,7 @@ fun AlbumScreen(
     onSongMoreClick: ((OnlineSong) -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
-    val fallbackTitle = stringResource(R.string.album_title_fallback)
+    val fallbackTitle = stringResource(R.string.feature_album_impl_album_title_fallback)
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
@@ -109,7 +108,10 @@ fun AlbumScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.album_back))
+                        Icon(
+                            Icons.AutoMirrored.Rounded.ArrowBack,
+                            stringResource(R.string.feature_album_impl_album_back),
+                        )
                     }
                 },
             )
@@ -119,8 +121,8 @@ fun AlbumScreen(
             AlbumUiState.Loading -> LoadingState(Modifier.padding(padding))
             is AlbumUiState.Empty -> MessageState(
                 icon = Icons.Rounded.Album,
-                title = stringResource(R.string.album_empty_title),
-                body = stringResource(R.string.album_empty_body),
+                title = stringResource(R.string.feature_album_impl_album_empty_title),
+                body = stringResource(R.string.feature_album_impl_album_empty_body),
                 modifier = Modifier.padding(padding),
             )
             is AlbumUiState.Error -> ErrorState(state.failure, onRetry, Modifier.padding(padding))
@@ -183,10 +185,10 @@ private fun AlbumContent(
                     when {
                         state.isLoadingMore -> CircularProgressIndicator(modifier = Modifier.size(28.dp))
                         state.loadMoreFailure != null -> TextButton(onClick = onLoadMore) {
-                            Text(stringResource(R.string.album_load_more_retry))
+                            Text(stringResource(R.string.feature_album_impl_album_load_more_retry))
                         }
                         state.hasMore -> TextButton(onClick = onLoadMore) {
-                            Text(stringResource(R.string.album_load_more))
+                            Text(stringResource(R.string.feature_album_impl_album_load_more))
                         }
                     }
                 }
@@ -196,16 +198,14 @@ private fun AlbumContent(
 }
 
 @Composable
-private fun AlbumHeader(
-    metadata: AlbumMetadata,
-    loadedSongCount: Int,
-    onPlayAll: () -> Unit,
-) {
-    val title = metadata.title ?: stringResource(R.string.album_title_fallback)
-    val artworkDescription = stringResource(R.string.album_artwork, title)
+private fun AlbumHeader(metadata: AlbumMetadata, loadedSongCount: Int, onPlayAll: () -> Unit) {
+    val title = metadata.title ?: stringResource(R.string.feature_album_impl_album_title_fallback)
+    val artworkDescription = stringResource(R.string.feature_album_impl_album_artwork, title)
     val detailLine = listOfNotNull(
         metadata.publishDate?.substringBefore(' ')?.takeIf(String::isNotBlank),
-        (metadata.songCount ?: loadedSongCount).let { stringResource(R.string.album_song_count, it) },
+        (metadata.songCount ?: loadedSongCount).let {
+            stringResource(R.string.feature_album_impl_album_song_count, it)
+        },
     ).joinToString(" · ")
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp),
@@ -222,8 +222,8 @@ private fun AlbumHeader(
                         .size(112.dp)
                         .align(Alignment.CenterEnd)
                         .clip(CircleShape)
-                        .background(Color(0xFF211E20))
-                        .border(18.dp, Color(0xFF393437), CircleShape),
+                        .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                        .border(18.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
                     Box(
@@ -234,31 +234,19 @@ private fun AlbumHeader(
                 Surface(
                     modifier = Modifier.size(128.dp).align(Alignment.CenterStart),
                     shape = MaterialTheme.shapes.large,
-                    shadowElevation = 6.dp,
+                    shadowElevation = ResonoteTokens.elevation.level3.maximumShadow,
                 ) {
                     ResonoteRemoteArtwork(
                         model = metadata.coverUrl,
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
-                    ) {
-                        Box(
-                            modifier = Modifier.fillMaxSize().background(albumGradient(metadata.id)),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                Icons.Rounded.Album,
-                                contentDescription = null,
-                                modifier = Modifier.size(44.dp),
-                                tint = Color.White.copy(alpha = 0.9f),
-                            )
-                        }
-                    }
+                    )
                 }
             }
             Spacer(Modifier.width(18.dp))
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
-                    stringResource(R.string.album_type_label),
+                    stringResource(R.string.feature_album_impl_album_type_label),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
@@ -293,7 +281,7 @@ private fun AlbumHeader(
         ) {
             Icon(Icons.Rounded.PlayArrow, contentDescription = null)
             Spacer(Modifier.width(8.dp))
-            Text(stringResource(R.string.album_play_all))
+            Text(stringResource(R.string.feature_album_impl_album_play_all))
         }
     }
 }
@@ -306,16 +294,16 @@ private fun LoadingState(modifier: Modifier = Modifier) {
 @Composable
 private fun ErrorState(failure: ContentFailure, onRetry: () -> Unit, modifier: Modifier = Modifier) {
     val body = when (failure) {
-        ContentFailure.Network -> stringResource(R.string.album_error_network)
-        ContentFailure.AuthenticationRequired -> stringResource(R.string.album_error_auth)
-        else -> stringResource(R.string.album_error_generic)
+        ContentFailure.Network -> stringResource(R.string.feature_album_impl_album_error_network)
+        ContentFailure.AuthenticationRequired -> stringResource(R.string.feature_album_impl_album_error_auth)
+        else -> stringResource(R.string.feature_album_impl_album_error_generic)
     }
     MessageState(
         icon = Icons.Rounded.Album,
-        title = stringResource(R.string.album_error_title),
+        title = stringResource(R.string.feature_album_impl_album_error_title),
         body = body,
         modifier = modifier,
-        action = { Button(onClick = onRetry) { Text(stringResource(R.string.album_retry)) } },
+        action = { Button(onClick = onRetry) { Text(stringResource(R.string.feature_album_impl_album_retry)) } },
     )
 }
 
@@ -344,16 +332,6 @@ private fun AlbumUiState.title(): String? = when (this) {
     is AlbumUiState.Content -> metadata.title
     is AlbumUiState.Empty -> metadata.title
     is AlbumUiState.Error -> title
-}
-
-private fun albumGradient(seed: String): Brush {
-    val palettes = listOf(
-        listOf(Color(0xFF3B0816), Color(0xFFC32751), Color(0xFFF49A7C)),
-        listOf(Color(0xFF052D32), Color(0xFF16796F), Color(0xFFF2C572)),
-        listOf(Color(0xFF1A2456), Color(0xFF4F75C8), Color(0xFFE5B9D3)),
-        listOf(Color(0xFF38280D), Color(0xFFAA6C1D), Color(0xFFF1D49A)),
-    )
-    return Brush.linearGradient(palettes[(seed.hashCode() and Int.MAX_VALUE) % palettes.size])
 }
 
 private fun Long.durationLabel(): String {

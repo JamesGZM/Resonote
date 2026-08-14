@@ -213,34 +213,26 @@ class CloudViewModelTest {
     }
 
     private companion object {
-        fun availablePage(
-            page: Int,
-            tracks: List<CloudTrack>,
-            total: Int,
-            hasMore: Boolean,
-        ) = CollectionLoadResult.Available(
-            CloudPage(
-                tracks = tracks,
-                page = page,
-                total = total,
-                hasMore = hasMore,
-                storage = if (page == 1) CloudStorage(256, 1_024) else null,
-            ),
-        )
+        fun availablePage(page: Int, tracks: List<CloudTrack>, total: Int, hasMore: Boolean) =
+            CollectionLoadResult.Available(
+                CloudPage(
+                    tracks = tracks,
+                    page = page,
+                    total = total,
+                    hasMore = hasMore,
+                    storage = if (page == 1) CloudStorage(256, 1_024) else null,
+                ),
+            )
 
-        fun track(
-            hash: String,
-            title: String = "Track $hash",
-            artist: String = "Artist",
-            duration: Long = 240_000,
-        ) = CloudTrack(
-            hash = hash,
-            title = title,
-            artist = artist,
-            album = "Album",
-            coverUrl = null,
-            durationMillis = duration,
-            albumAudioId = "audio-$hash",
-        )
+        fun track(hash: String, title: String = "Track $hash", artist: String = "Artist", duration: Long = 240_000) =
+            CloudTrack(
+                hash = hash,
+                title = title,
+                artist = artist,
+                album = "Album",
+                coverUrl = null,
+                durationMillis = duration,
+                albumAudioId = "audio-$hash",
+            )
     }
 }

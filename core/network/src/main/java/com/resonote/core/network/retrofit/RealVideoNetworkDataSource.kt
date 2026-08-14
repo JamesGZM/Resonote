@@ -5,14 +5,14 @@ import com.resonote.core.network.VideoNetworkDataSource
 import com.resonote.core.network.api.MusicApi
 import com.resonote.core.network.protocol.ApiRequestSigner
 import com.resonote.core.network.protocol.DeviceRegistrationCoordinator
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import javax.inject.Inject
+import javax.inject.Singleton
 
 @Singleton
 internal class RealVideoNetworkDataSource @Inject constructor(
@@ -26,7 +26,12 @@ internal class RealVideoNetworkDataSource @Inject constructor(
         require(hash.isNotBlank()) { "hash must not be blank" }
         val session = registration.ensureRegisteredSession()
         val normalizedHash = hash.trim().lowercase()
-        val response = calls.execute { musicApi.videoUrl(hash = normalizedHash, key = signer.signSongKey(normalizedHash, session.mid, session.userId)) }
+        val response = calls.execute {
+            musicApi.videoUrl(
+                hash = normalizedHash,
+                key = signer.signSongKey(normalizedHash, session.mid, session.userId),
+            )
+        }
         responses.requireSuccess(response)
         val entry = response.data.obj()?.values?.firstOrNull().obj() ?: return null
         val backup = entry["backupdownurl"]

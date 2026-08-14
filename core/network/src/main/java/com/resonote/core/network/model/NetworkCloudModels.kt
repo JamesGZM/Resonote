@@ -1,9 +1,6 @@
 package com.resonote.core.network.model
 
-data class NetworkCloudStorage(
-    val usedBytes: Long,
-    val maxBytes: Long,
-)
+data class NetworkCloudStorage(val usedBytes: Long, val maxBytes: Long)
 
 data class NetworkCloudTrack(
     val hash: String,

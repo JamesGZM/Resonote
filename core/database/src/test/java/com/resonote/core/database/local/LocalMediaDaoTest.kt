@@ -100,11 +100,7 @@ class LocalMediaDaoTest {
     private companion object {
         const val SHA = "c7c4e0f766c17694a51f3b92a5f01d3ba2d729391bb781e4c6299f51f91aa508"
 
-        fun entity(
-            id: String,
-            storagePath: String = "/private/$id.flac",
-            importedAt: Long = 1_000,
-        ) = LocalMediaEntity(
+        fun entity(id: String, storagePath: String = "/private/$id.flac", importedAt: Long = 1_000) = LocalMediaEntity(
             id = id,
             storagePath = storagePath,
             displayName = "$id.flac",

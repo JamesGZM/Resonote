@@ -11,9 +11,9 @@ import com.resonote.core.model.DeviceHistorySource
 import com.resonote.core.network.ApiAuthenticationRequiredException
 import com.resonote.core.network.ListeningHistoryNetworkDataSource
 import com.resonote.core.network.model.NetworkSong
-import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 class DefaultListeningHistoryRepositoryTest {
@@ -79,21 +79,19 @@ class DefaultListeningHistoryRepositoryTest {
             now = { 2_000 },
         )
 
-    private fun deviceRecord(id: String = "local-id") =
-        DeviceHistoryRecord(
-            source = DeviceHistorySource.Local,
-            mediaId = id,
-            title = "Song $id",
-            artist = "Artist",
-            albumTitle = null,
-            artworkUri = null,
-            durationMillis = 120_000,
-            albumAudioId = null,
-        )
+    private fun deviceRecord(id: String = "local-id") = DeviceHistoryRecord(
+        source = DeviceHistorySource.Local,
+        mediaId = id,
+        title = "Song $id",
+        artist = "Artist",
+        albumTitle = null,
+        artworkUri = null,
+        durationMillis = 120_000,
+        albumAudioId = null,
+    )
 
-    private class FakeHistoryNetwork(
-        private val failure: ApiAuthenticationRequiredException? = null,
-    ) : ListeningHistoryNetworkDataSource {
+    private class FakeHistoryNetwork(private val failure: ApiAuthenticationRequiredException? = null) :
+        ListeningHistoryNetworkDataSource {
         override suspend fun accountHistory(): List<NetworkSong> {
             failure?.let { throw it }
             return listOf(

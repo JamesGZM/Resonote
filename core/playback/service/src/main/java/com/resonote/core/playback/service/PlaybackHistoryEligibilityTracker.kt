@@ -5,10 +5,7 @@ import com.resonote.core.model.DeviceHistorySource
 import com.resonote.core.playback.PlaybackItem
 import com.resonote.core.playback.PlaybackOrigin
 
-internal data class PlaybackHistoryQualification(
-    val sessionId: Long,
-    val record: DeviceHistoryRecord,
-)
+internal data class PlaybackHistoryQualification(val sessionId: Long, val record: DeviceHistoryRecord)
 
 internal class PlaybackHistoryEligibilityTracker(
     private val thresholdMillis: Long = HISTORY_THRESHOLD_MILLIS,
@@ -56,8 +53,8 @@ internal class PlaybackHistoryEligibilityTracker(
         wasPlaying = isPlaying
         eligible =
             eligible ||
-                activePlaybackMillis >= thresholdMillis ||
-                completedShortTrack(endedNaturally)
+            activePlaybackMillis >= thresholdMillis ||
+            completedShortTrack(endedNaturally)
         val currentRecord = record
         if (!eligible || currentRecord == null || persistencePending || persisted) return null
         persistencePending = true
@@ -70,10 +67,9 @@ internal class PlaybackHistoryEligibilityTracker(
         persisted = success
     }
 
-    private fun completedShortTrack(endedNaturally: Boolean): Boolean =
-        endedNaturally &&
-            durationMillis in 1 until thresholdMillis &&
-            activePlaybackMillis + shortCompletionToleranceMillis >= durationMillis
+    private fun completedShortTrack(endedNaturally: Boolean): Boolean = endedNaturally &&
+        durationMillis in 1 until thresholdMillis &&
+        activePlaybackMillis + shortCompletionToleranceMillis >= durationMillis
 
     private companion object {
         const val HISTORY_THRESHOLD_MILLIS = 10_000L
@@ -81,29 +77,28 @@ internal class PlaybackHistoryEligibilityTracker(
     }
 }
 
-internal fun PlaybackItem.toDeviceHistoryRecordOrNull(): DeviceHistoryRecord? =
-    when (val value = origin) {
-        is PlaybackOrigin.Local ->
-            DeviceHistoryRecord(
-                source = DeviceHistorySource.Local,
-                mediaId = value.id.value,
-                title = metadata.title,
-                artist = metadata.artist,
-                albumTitle = metadata.albumTitle,
-                artworkUri = metadata.artworkUri,
-                durationMillis = metadata.durationMillis,
-                albumAudioId = null,
-            )
-        is PlaybackOrigin.Cloud ->
-            DeviceHistoryRecord(
-                source = DeviceHistorySource.Cloud,
-                mediaId = value.track.hash,
-                title = metadata.title,
-                artist = metadata.artist,
-                albumTitle = metadata.albumTitle,
-                artworkUri = metadata.artworkUri,
-                durationMillis = metadata.durationMillis,
-                albumAudioId = value.track.albumAudioId,
-            )
-        is PlaybackOrigin.Online -> null
-    }
+internal fun PlaybackItem.toDeviceHistoryRecordOrNull(): DeviceHistoryRecord? = when (val value = origin) {
+    is PlaybackOrigin.Local ->
+        DeviceHistoryRecord(
+            source = DeviceHistorySource.Local,
+            mediaId = value.id.value,
+            title = metadata.title,
+            artist = metadata.artist,
+            albumTitle = metadata.albumTitle,
+            artworkUri = metadata.artworkUri,
+            durationMillis = metadata.durationMillis,
+            albumAudioId = null,
+        )
+    is PlaybackOrigin.Cloud ->
+        DeviceHistoryRecord(
+            source = DeviceHistorySource.Cloud,
+            mediaId = value.track.hash,
+            title = metadata.title,
+            artist = metadata.artist,
+            albumTitle = metadata.albumTitle,
+            artworkUri = metadata.artworkUri,
+            durationMillis = metadata.durationMillis,
+            albumAudioId = value.track.albumAudioId,
+        )
+    is PlaybackOrigin.Online -> null
+}

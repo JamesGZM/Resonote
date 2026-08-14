@@ -5,11 +5,7 @@ import com.resonote.core.model.ContentFailure
 import com.resonote.core.model.OnlineSong
 
 @Immutable
-data class RankingMetadata(
-    val id: String,
-    val title: String?,
-    val coverUrl: String?,
-)
+data class RankingMetadata(val id: String, val title: String?, val coverUrl: String?)
 
 @Immutable
 sealed interface RankingUiState {

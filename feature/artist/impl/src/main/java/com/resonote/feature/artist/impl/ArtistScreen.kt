@@ -39,8 +39,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -98,7 +96,7 @@ fun ArtistScreen(
     onSongMoreClick: ((OnlineSong) -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
-    val fallbackTitle = stringResource(R.string.artist_title_fallback)
+    val fallbackTitle = stringResource(R.string.feature_artist_impl_artist_title_fallback)
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
@@ -113,7 +111,10 @@ fun ArtistScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.artist_back))
+                        Icon(
+                            Icons.AutoMirrored.Rounded.ArrowBack,
+                            stringResource(R.string.feature_artist_impl_artist_back),
+                        )
                     }
                 },
             )
@@ -163,8 +164,12 @@ private fun ArtistContent(
                         text = {
                             Text(
                                 when (section) {
-                                    ArtistSongSection.POPULAR -> stringResource(R.string.artist_popular)
-                                    ArtistSongSection.LATEST -> stringResource(R.string.artist_latest)
+                                    ArtistSongSection.POPULAR -> stringResource(
+                                        R.string.feature_artist_impl_artist_popular,
+                                    )
+                                    ArtistSongSection.LATEST -> stringResource(
+                                        R.string.feature_artist_impl_artist_latest,
+                                    )
                                 },
                             )
                         },
@@ -179,8 +184,8 @@ private fun ArtistContent(
             ArtistPageUiState.Empty -> item(key = "empty") {
                 MessageState(
                     icon = Icons.Rounded.Person,
-                    title = stringResource(R.string.artist_empty_title),
-                    body = stringResource(R.string.artist_empty_body),
+                    title = stringResource(R.string.feature_artist_impl_artist_empty_title),
+                    body = stringResource(R.string.feature_artist_impl_artist_empty_body),
                 )
             }
             is ArtistPageUiState.Error -> item(key = "error") {
@@ -195,7 +200,7 @@ private fun ArtistContent(
                     ) {
                         Icon(Icons.Rounded.PlayArrow, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
-                        Text(stringResource(R.string.artist_play_all))
+                        Text(stringResource(R.string.feature_artist_impl_artist_play_all))
                     }
                 }
                 itemsIndexed(
@@ -223,10 +228,10 @@ private fun ArtistContent(
                             when {
                                 page.isLoadingMore -> CircularProgressIndicator(modifier = Modifier.size(28.dp))
                                 page.loadMoreFailure != null -> TextButton(onClick = onLoadMore) {
-                                    Text(stringResource(R.string.artist_load_more_retry))
+                                    Text(stringResource(R.string.feature_artist_impl_artist_load_more_retry))
                                 }
                                 page.hasMore -> TextButton(onClick = onLoadMore) {
-                                    Text(stringResource(R.string.artist_load_more))
+                                    Text(stringResource(R.string.feature_artist_impl_artist_load_more))
                                 }
                             }
                         }
@@ -239,8 +244,8 @@ private fun ArtistContent(
 
 @Composable
 private fun ArtistHeader(profile: ArtistProfile?) {
-    val name = profile?.name ?: stringResource(R.string.artist_title_fallback)
-    val portraitDescription = stringResource(R.string.artist_portrait, name)
+    val name = profile?.name ?: stringResource(R.string.feature_artist_impl_artist_title_fallback)
+    val portraitDescription = stringResource(R.string.feature_artist_impl_artist_portrait, name)
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
@@ -256,7 +261,7 @@ private fun ArtistHeader(profile: ArtistProfile?) {
                         .size(124.dp)
                         .align(Alignment.BottomEnd)
                         .clip(CircleShape)
-                        .background(artistGradient(profile?.id ?: name))
+                        .background(MaterialTheme.colorScheme.surfaceContainerHighest)
                         .semantics { contentDescription = portraitDescription },
                     contentAlignment = Alignment.Center,
                 ) {
@@ -264,7 +269,7 @@ private fun ArtistHeader(profile: ArtistProfile?) {
                         Icons.Rounded.Person,
                         contentDescription = null,
                         modifier = Modifier.size(54.dp),
-                        tint = Color.White.copy(alpha = 0.92f),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     if (!profile?.avatarUrl.isNullOrBlank()) {
                         ResonoteRemoteArtwork(
@@ -287,7 +292,7 @@ private fun ArtistHeader(profile: ArtistProfile?) {
                 )
                 profile?.fansCount?.takeIf { it > 0 }?.let {
                     Text(
-                        stringResource(R.string.artist_fans, it.compactCount()),
+                        stringResource(R.string.feature_artist_impl_artist_fans, it.compactCount()),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -298,9 +303,17 @@ private fun ArtistHeader(profile: ArtistProfile?) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly,
         ) {
-            ArtistMetric(profile?.songCount, stringResource(R.string.artist_songs), Modifier.weight(1f))
-            ArtistMetric(profile?.albumCount, stringResource(R.string.artist_albums), Modifier.weight(1f))
-            ArtistMetric(profile?.mvCount, stringResource(R.string.artist_mvs), Modifier.weight(1f))
+            ArtistMetric(
+                profile?.songCount,
+                stringResource(R.string.feature_artist_impl_artist_songs),
+                Modifier.weight(1f),
+            )
+            ArtistMetric(
+                profile?.albumCount,
+                stringResource(R.string.feature_artist_impl_artist_albums),
+                Modifier.weight(1f),
+            )
+            ArtistMetric(profile?.mvCount, stringResource(R.string.feature_artist_impl_artist_mvs), Modifier.weight(1f))
         }
         profile?.intro?.takeIf(String::isNotBlank)?.let { intro ->
             Surface(
@@ -342,25 +355,20 @@ private fun LoadingState() {
 @Composable
 private fun ErrorState(failure: ContentFailure, onRetry: () -> Unit) {
     val body = when (failure) {
-        ContentFailure.Network -> stringResource(R.string.artist_error_network)
-        ContentFailure.AuthenticationRequired -> stringResource(R.string.artist_error_auth)
-        else -> stringResource(R.string.artist_error_generic)
+        ContentFailure.Network -> stringResource(R.string.feature_artist_impl_artist_error_network)
+        ContentFailure.AuthenticationRequired -> stringResource(R.string.feature_artist_impl_artist_error_auth)
+        else -> stringResource(R.string.feature_artist_impl_artist_error_generic)
     }
     MessageState(
         icon = Icons.Rounded.Person,
-        title = stringResource(R.string.artist_error_title),
+        title = stringResource(R.string.feature_artist_impl_artist_error_title),
         body = body,
-        action = { Button(onClick = onRetry) { Text(stringResource(R.string.artist_retry)) } },
+        action = { Button(onClick = onRetry) { Text(stringResource(R.string.feature_artist_impl_artist_retry)) } },
     )
 }
 
 @Composable
-private fun MessageState(
-    icon: ImageVector,
-    title: String,
-    body: String,
-    action: (@Composable () -> Unit)? = null,
-) {
+private fun MessageState(icon: ImageVector, title: String, body: String, action: (@Composable () -> Unit)? = null) {
     Box(
         Modifier.fillMaxWidth().height(300.dp).padding(32.dp),
         contentAlignment = Alignment.Center,
@@ -379,16 +387,6 @@ private fun MessageState(
             action?.invoke()
         }
     }
-}
-
-private fun artistGradient(seed: String): Brush {
-    val palettes = listOf(
-        listOf(Color(0xFF46091C), Color(0xFFC32958), Color(0xFFF6A677)),
-        listOf(Color(0xFF073C3A), Color(0xFF14847A), Color(0xFFF2D287)),
-        listOf(Color(0xFF18234F), Color(0xFF5C75C8), Color(0xFFE6BBD0)),
-        listOf(Color(0xFF442A0A), Color(0xFFB37425), Color(0xFFF4D9A0)),
-    )
-    return Brush.linearGradient(palettes[(seed.hashCode() and Int.MAX_VALUE) % palettes.size])
 }
 
 private fun Long.compactCount(): String = when {

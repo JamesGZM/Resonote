@@ -9,10 +9,6 @@ import com.resonote.core.network.risk.ApiRiskChallengeDetector
 import com.resonote.core.network.session.ApiSession
 import com.resonote.core.network.session.ApiSessionManager
 import com.resonote.core.network.session.ApiSessionStore
-import java.time.Clock
-import java.time.Instant
-import java.time.ZoneOffset
-import java.util.Optional
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
@@ -25,6 +21,10 @@ import org.junit.After
 import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
+import java.util.Optional
 
 class UserListenProtocolClientTest {
     private lateinit var server: MockWebServer
@@ -170,10 +170,11 @@ class UserListenProtocolClientTest {
         return UserListenProtocolClient(transport, registration, crypto, origins)
     }
 
-    private fun fixture(name: String): String =
-        checkNotNull(javaClass.classLoader?.getResourceAsStream(name)) { "Missing fixture $name" }
-            .bufferedReader()
-            .use { it.readText() }
+    private fun fixture(name: String): String = checkNotNull(javaClass.classLoader?.getResourceAsStream(name)) {
+        "Missing fixture $name"
+    }
+        .bufferedReader()
+        .use { it.readText() }
 
     private fun fixtureDeviceProfileProvider() = DeviceRegistrationProfileProvider {
         DeviceRegistrationProfile(

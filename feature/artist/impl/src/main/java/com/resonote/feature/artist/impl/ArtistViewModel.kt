@@ -7,18 +7,16 @@ import com.resonote.core.model.ArtistInfo
 import com.resonote.core.model.CollectionLoadResult
 import com.resonote.feature.artist.api.ArtistNavKey
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @HiltViewModel
-class ArtistViewModel @Inject constructor(
-    private val repository: ContentCatalogRepository,
-) : ViewModel() {
+class ArtistViewModel @Inject constructor(private val repository: ContentCatalogRepository) : ViewModel() {
     private val mutableUiState = MutableStateFlow(ArtistUiState())
     val uiState: StateFlow<ArtistUiState> = mutableUiState.asStateFlow()
 
@@ -50,75 +48,85 @@ class ArtistViewModel @Inject constructor(
         mutableUiState.update {
             it.withPage(section, current.copy(isLoadingMore = true, loadMoreFailure = null))
         }
-        setJob(section, viewModelScope.launch {
-            when (
-                val result = repository.loadArtistSongs(
-                    artistId = key.artistId,
-                    page = current.page + 1,
-                    newestFirst = section == ArtistSongSection.LATEST,
-                )
-            ) {
-                is CollectionLoadResult.Available -> mutableUiState.update { state ->
-                    val latest = state.page(section) as? ArtistPageUiState.Content ?: return@update state
-                    val existing = latest.songs.mapTo(mutableSetOf()) { it.hash }
-                    state.withPage(
-                        section,
-                        latest.copy(
-                            songs = latest.songs + result.value.songs.filter { existing.add(it.hash) },
-                            page = result.value.page,
-                            total = maxOf(latest.total, result.value.total, latest.songs.size + result.value.songs.size),
-                            hasMore = result.value.hasMore,
-                            isLoadingMore = false,
-                            loadMoreFailure = null,
-                        ),
+        setJob(
+            section,
+            viewModelScope.launch {
+                when (
+                    val result = repository.loadArtistSongs(
+                        artistId = key.artistId,
+                        page = current.page + 1,
+                        newestFirst = section == ArtistSongSection.LATEST,
                     )
+                ) {
+                    is CollectionLoadResult.Available -> mutableUiState.update { state ->
+                        val latest = state.page(section) as? ArtistPageUiState.Content ?: return@update state
+                        val existing = latest.songs.mapTo(mutableSetOf()) { it.hash }
+                        state.withPage(
+                            section,
+                            latest.copy(
+                                songs = latest.songs + result.value.songs.filter { existing.add(it.hash) },
+                                page = result.value.page,
+                                total = maxOf(
+                                    latest.total,
+                                    result.value.total,
+                                    latest.songs.size + result.value.songs.size,
+                                ),
+                                hasMore = result.value.hasMore,
+                                isLoadingMore = false,
+                                loadMoreFailure = null,
+                            ),
+                        )
+                    }
+                    is CollectionLoadResult.Failed -> mutableUiState.update { state ->
+                        val latest = state.page(section) as? ArtistPageUiState.Content ?: return@update state
+                        state.withPage(
+                            section,
+                            latest.copy(isLoadingMore = false, loadMoreFailure = result.failure),
+                        )
+                    }
                 }
-                is CollectionLoadResult.Failed -> mutableUiState.update { state ->
-                    val latest = state.page(section) as? ArtistPageUiState.Content ?: return@update state
-                    state.withPage(
-                        section,
-                        latest.copy(isLoadingMore = false, loadMoreFailure = result.failure),
-                    )
-                }
-            }
-        })
+            },
+        )
     }
 
     private fun loadFirstPage(section: ArtistSongSection) {
         val key = artistKey ?: return
         job(section)?.cancel()
         mutableUiState.update { it.withPage(section, ArtistPageUiState.Loading) }
-        setJob(section, viewModelScope.launch {
-            when (
-                val result = repository.loadArtistSongs(
-                    artistId = key.artistId,
-                    page = 1,
-                    newestFirst = section == ArtistSongSection.LATEST,
-                )
-            ) {
-                is CollectionLoadResult.Available -> mutableUiState.update { state ->
-                    val profile = state.profile.merge(result.value.info)
-                    val songs = result.value.songs
-                    val total = maxOf(result.value.total, profile?.songCount ?: 0, songs.size)
-                    state.copy(profile = profile).withPage(
-                        section,
-                        if (songs.isEmpty()) {
-                            ArtistPageUiState.Empty
-                        } else {
-                            ArtistPageUiState.Content(
-                                songs = songs,
-                                page = result.value.page,
-                                total = total,
-                                hasMore = result.value.hasMore,
-                            )
-                        },
+        setJob(
+            section,
+            viewModelScope.launch {
+                when (
+                    val result = repository.loadArtistSongs(
+                        artistId = key.artistId,
+                        page = 1,
+                        newestFirst = section == ArtistSongSection.LATEST,
                     )
+                ) {
+                    is CollectionLoadResult.Available -> mutableUiState.update { state ->
+                        val profile = state.profile.merge(result.value.info)
+                        val songs = result.value.songs
+                        val total = maxOf(result.value.total, profile?.songCount ?: 0, songs.size)
+                        state.copy(profile = profile).withPage(
+                            section,
+                            if (songs.isEmpty()) {
+                                ArtistPageUiState.Empty
+                            } else {
+                                ArtistPageUiState.Content(
+                                    songs = songs,
+                                    page = result.value.page,
+                                    total = total,
+                                    hasMore = result.value.hasMore,
+                                )
+                            },
+                        )
+                    }
+                    is CollectionLoadResult.Failed -> mutableUiState.update {
+                        it.withPage(section, ArtistPageUiState.Error(result.failure))
+                    }
                 }
-                is CollectionLoadResult.Failed -> mutableUiState.update {
-                    it.withPage(section, ArtistPageUiState.Error(result.failure))
-                }
-            }
-        })
+            },
+        )
     }
 
     private fun job(section: ArtistSongSection): Job? = when (section) {

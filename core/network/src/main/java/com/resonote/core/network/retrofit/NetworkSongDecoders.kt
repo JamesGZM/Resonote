@@ -19,7 +19,9 @@ internal fun MusicSongDto.toNetworkSongOrNull(): NetworkSong? {
         coverUrl = transform?.unionCover ?: sizableCover ?: albumSizableCover ?: image ?: cover,
         albumId = albumId,
         albumAudioId = albumAudioId ?: audioId ?: mixsongid,
-        durationMillis = normalizeDurationMillis(timeLength ?: duration ?: deprecated?.duration ?: timelength ?: timelen ?: searchDuration),
+        durationMillis = normalizeDurationMillis(
+            timeLength ?: duration ?: deprecated?.duration ?: timelength ?: timelen ?: searchDuration,
+        ),
         highQualityHash = resolvedHighQualityHash,
         losslessHash = resolvedLosslessHash,
         vip = (privilege ?: searchPrivilege ?: deprecated?.payType ?: 0) >= 10,

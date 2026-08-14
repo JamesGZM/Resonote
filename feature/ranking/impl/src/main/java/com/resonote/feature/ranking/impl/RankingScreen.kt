@@ -36,8 +36,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -53,6 +51,7 @@ import com.resonote.core.designsystem.component.ResonoteArtworkState
 import com.resonote.core.designsystem.component.ResonoteMusicItem
 import com.resonote.core.designsystem.component.ResonoteRemoteArtwork
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
+import com.resonote.core.designsystem.tokens.ResonoteTokens
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.ContentFailure
 import com.resonote.core.model.OnlineSong
@@ -94,7 +93,7 @@ fun RankingScreen(
     onSongMoreClick: ((OnlineSong) -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
-    val fallbackTitle = stringResource(R.string.ranking_title_fallback)
+    val fallbackTitle = stringResource(R.string.feature_ranking_impl_ranking_title_fallback)
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
@@ -109,7 +108,10 @@ fun RankingScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.ranking_back))
+                        Icon(
+                            Icons.AutoMirrored.Rounded.ArrowBack,
+                            stringResource(R.string.feature_ranking_impl_ranking_back),
+                        )
                     }
                 },
             )
@@ -119,8 +121,8 @@ fun RankingScreen(
             is RankingUiState.Loading -> LoadingState(Modifier.padding(padding))
             is RankingUiState.Empty -> MessageState(
                 icon = Icons.Rounded.BarChart,
-                title = stringResource(R.string.ranking_empty_title),
-                body = stringResource(R.string.ranking_empty_body),
+                title = stringResource(R.string.feature_ranking_impl_ranking_empty_title),
+                body = stringResource(R.string.feature_ranking_impl_ranking_empty_body),
                 modifier = Modifier.padding(padding),
             )
             is RankingUiState.Error -> ErrorState(state.failure, onRetry, Modifier.padding(padding))
@@ -172,7 +174,13 @@ private fun RankingContent(
                     Text(
                         text = (index + 1).toString().padStart(2, '0'),
                         modifier = Modifier.align(Alignment.Center),
-                        color = if (index < 3) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = if (index <
+                            3
+                        ) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                     )
@@ -190,10 +198,10 @@ private fun RankingContent(
                     when {
                         state.isLoadingMore -> CircularProgressIndicator(modifier = Modifier.size(28.dp))
                         state.loadMoreFailure != null -> TextButton(onClick = onLoadMore) {
-                            Text(stringResource(R.string.ranking_load_more_retry))
+                            Text(stringResource(R.string.feature_ranking_impl_ranking_load_more_retry))
                         }
                         state.hasMore -> TextButton(onClick = onLoadMore) {
-                            Text(stringResource(R.string.ranking_load_more))
+                            Text(stringResource(R.string.feature_ranking_impl_ranking_load_more))
                         }
                     }
                 }
@@ -203,13 +211,9 @@ private fun RankingContent(
 }
 
 @Composable
-private fun RankingHeader(
-    metadata: RankingMetadata,
-    songCount: Int,
-    onPlayAll: () -> Unit,
-) {
-    val title = metadata.title ?: stringResource(R.string.ranking_title_fallback)
-    val artworkDescription = stringResource(R.string.ranking_artwork, title)
+private fun RankingHeader(metadata: RankingMetadata, songCount: Int, onPlayAll: () -> Unit) {
+    val title = metadata.title ?: stringResource(R.string.feature_ranking_impl_ranking_title_fallback)
+    val artworkDescription = stringResource(R.string.feature_ranking_impl_ranking_artwork, title)
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
@@ -219,7 +223,7 @@ private fun RankingHeader(
                 modifier = Modifier
                     .size(136.dp)
                     .clip(MaterialTheme.shapes.extraLarge)
-                    .background(rankingGradient(metadata.id))
+                    .background(MaterialTheme.colorScheme.primaryContainer)
                     .semantics { contentDescription = artworkDescription },
                 contentAlignment = Alignment.Center,
             ) {
@@ -231,6 +235,10 @@ private fun RankingHeader(
                         fallback = {},
                     )
                 }
+                Box(
+                    Modifier.matchParentSize()
+                        .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.32f)),
+                )
                 Row(
                     modifier = Modifier.height(72.dp),
                     verticalAlignment = Alignment.Bottom,
@@ -240,7 +248,7 @@ private fun RankingHeader(
                         Box(
                             Modifier.width(18.dp).height(height)
                                 .clip(MaterialTheme.shapes.small)
-                                .background(Color.White.copy(alpha = 0.9f)),
+                                .background(ResonoteTokens.systemColors.onScrim),
                         )
                     }
                 }
@@ -248,7 +256,7 @@ private fun RankingHeader(
             Spacer(Modifier.width(20.dp))
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    stringResource(R.string.ranking_chart_label),
+                    stringResource(R.string.feature_ranking_impl_ranking_chart_label),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
@@ -261,7 +269,7 @@ private fun RankingHeader(
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    stringResource(R.string.ranking_song_count, songCount),
+                    stringResource(R.string.feature_ranking_impl_ranking_song_count, songCount),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -274,7 +282,7 @@ private fun RankingHeader(
         ) {
             Icon(Icons.Rounded.PlayArrow, contentDescription = null)
             Spacer(Modifier.width(8.dp))
-            Text(stringResource(R.string.ranking_play_all))
+            Text(stringResource(R.string.feature_ranking_impl_ranking_play_all))
         }
     }
 }
@@ -287,16 +295,16 @@ private fun LoadingState(modifier: Modifier = Modifier) {
 @Composable
 private fun ErrorState(failure: ContentFailure, onRetry: () -> Unit, modifier: Modifier = Modifier) {
     val body = when (failure) {
-        ContentFailure.Network -> stringResource(R.string.ranking_error_network)
-        ContentFailure.AuthenticationRequired -> stringResource(R.string.ranking_error_auth)
-        else -> stringResource(R.string.ranking_error_generic)
+        ContentFailure.Network -> stringResource(R.string.feature_ranking_impl_ranking_error_network)
+        ContentFailure.AuthenticationRequired -> stringResource(R.string.feature_ranking_impl_ranking_error_auth)
+        else -> stringResource(R.string.feature_ranking_impl_ranking_error_generic)
     }
     MessageState(
         icon = Icons.Rounded.BarChart,
-        title = stringResource(R.string.ranking_error_title),
+        title = stringResource(R.string.feature_ranking_impl_ranking_error_title),
         body = body,
         modifier = modifier,
-        action = { Button(onClick = onRetry) { Text(stringResource(R.string.ranking_retry)) } },
+        action = { Button(onClick = onRetry) { Text(stringResource(R.string.feature_ranking_impl_ranking_retry)) } },
     )
 }
 
@@ -330,16 +338,6 @@ private fun RankingUiState.metadata(): RankingMetadata = when (this) {
     is RankingUiState.Content -> metadata
     is RankingUiState.Empty -> metadata
     is RankingUiState.Error -> metadata
-}
-
-private fun rankingGradient(seed: String): Brush {
-    val palettes = listOf(
-        listOf(Color(0xFF420918), Color(0xFFC22653), Color(0xFFF28D68)),
-        listOf(Color(0xFF063D3D), Color(0xFF14887E), Color(0xFFF1CE79)),
-        listOf(Color(0xFF172351), Color(0xFF5877CD), Color(0xFFE9B5D1)),
-        listOf(Color(0xFF452B08), Color(0xFFB9761D), Color(0xFFF5D797)),
-    )
-    return Brush.linearGradient(palettes[(seed.hashCode() and Int.MAX_VALUE) % palettes.size])
 }
 
 private fun Long.durationLabel(): String {

@@ -37,5 +37,7 @@ data class LoginUiState(
         get() = when (method) {
             LoginMethod.MobileCode -> mobile.matches(Regex("1\\d{10}")) && code.isNotBlank()
             LoginMethod.Password -> username.isNotBlank() && password.isNotEmpty()
-        } && !isSendingCode && !isLoggingIn
+        } &&
+            !isSendingCode &&
+            !isLoggingIn
 }

@@ -24,9 +24,23 @@ data class DeviceHistoryEntity(
     val playCount: Long,
 )
 
-fun DeviceHistoryRecord.toEntity(playedAtEpochMillis: Long) =
-    DeviceHistoryEntity(
-        source = source.storageValue,
+fun DeviceHistoryRecord.toEntity(playedAtEpochMillis: Long) = DeviceHistoryEntity(
+    source = source.storageValue,
+    mediaId = mediaId,
+    title = title,
+    artist = artist,
+    albumTitle = albumTitle,
+    artworkUri = artworkUri,
+    durationMillis = durationMillis,
+    albumAudioId = albumAudioId,
+    lastPlayedAtEpochMillis = playedAtEpochMillis,
+    playCount = 1,
+)
+
+fun DeviceHistoryEntity.asExternalModel() = DeviceHistoryItem(
+    record =
+    DeviceHistoryRecord(
+        source = source.asHistorySource(),
         mediaId = mediaId,
         title = title,
         artist = artist,
@@ -34,26 +48,10 @@ fun DeviceHistoryRecord.toEntity(playedAtEpochMillis: Long) =
         artworkUri = artworkUri,
         durationMillis = durationMillis,
         albumAudioId = albumAudioId,
-        lastPlayedAtEpochMillis = playedAtEpochMillis,
-        playCount = 1,
-    )
-
-fun DeviceHistoryEntity.asExternalModel() =
-    DeviceHistoryItem(
-        record =
-            DeviceHistoryRecord(
-                source = source.asHistorySource(),
-                mediaId = mediaId,
-                title = title,
-                artist = artist,
-                albumTitle = albumTitle,
-                artworkUri = artworkUri,
-                durationMillis = durationMillis,
-                albumAudioId = albumAudioId,
-            ),
-        lastPlayedAtEpochMillis = lastPlayedAtEpochMillis,
-        playCount = playCount,
-    )
+    ),
+    lastPlayedAtEpochMillis = lastPlayedAtEpochMillis,
+    playCount = playCount,
+)
 
 private val DeviceHistorySource.storageValue: String
     get() = when (this) {
@@ -61,9 +59,8 @@ private val DeviceHistorySource.storageValue: String
         DeviceHistorySource.Cloud -> "cloud"
     }
 
-private fun String.asHistorySource(): DeviceHistorySource =
-    when (this) {
-        "local" -> DeviceHistorySource.Local
-        "cloud" -> DeviceHistorySource.Cloud
-        else -> error("Unknown device history source")
-    }
+private fun String.asHistorySource(): DeviceHistorySource = when (this) {
+    "local" -> DeviceHistorySource.Local
+    "cloud" -> DeviceHistorySource.Cloud
+    else -> error("Unknown device history source")
+}

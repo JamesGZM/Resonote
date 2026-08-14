@@ -59,6 +59,24 @@ class DiscoverScreenshotTest {
     }
 
     @Test
+    fun discover_compactRankingsDark() {
+        render(
+            rankingState,
+            "rankings_dark",
+            ResonoteThemeMode.DARK,
+        )
+    }
+
+    @Test
+    fun discover_compactRankingsAmoled() {
+        render(
+            rankingState,
+            "rankings_amoled",
+            ResonoteThemeMode.AMOLED,
+        )
+    }
+
+    @Test
     fun discover_compactAlbums() {
         render(
             baseState.copy(
@@ -83,12 +101,12 @@ class DiscoverScreenshotTest {
         composeRule.onNodeWithText("潮汐信号").assertExists()
     }
 
-    private fun render(state: DiscoverUiState, name: String) {
+    private fun render(state: DiscoverUiState, name: String, themeMode: ResonoteThemeMode = ResonoteThemeMode.LIGHT) {
         composeRule.setContent {
             DeviceConfigurationOverride(
                 override = DeviceConfigurationOverride.ForcedSize(DpSize(390.dp, 844.dp)),
             ) {
-                ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                ResonoteTheme(themeMode = themeMode) {
                     DiscoverScreen(
                         state = state,
                         bottomContentPadding = 24.dp,
@@ -128,6 +146,11 @@ class DiscoverScreenshotTest {
 
     private companion object {
         val baseState = DiscoverUiState()
+        val rankingState: DiscoverUiState
+            get() = baseState.copy(
+                selectedSection = DiscoverSection.RANKINGS,
+                rankings = DiscoverLoadState.Content(rankings),
+            )
         val categories = listOf(
             PlaylistCategory(10, "风格", listOf(PlaylistCategory(11, "流行", emptyList()))),
             PlaylistCategory(20, "场景", listOf(PlaylistCategory(21, "通勤", emptyList()))),

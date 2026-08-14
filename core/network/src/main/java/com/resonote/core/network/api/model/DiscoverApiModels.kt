@@ -11,9 +11,13 @@ internal typealias PlaylistRecommendationsResponse = ApiResponse<PlaylistRecomme
 internal data class SongListData(
     @SerialName("song_list") val songs: List<MusicSongDto>? = null,
     @Serializable(with = FlexibleStringSerializer::class) override val status: String? = null,
-    @SerialName("error_code") @Serializable(with = FlexibleStringSerializer::class) override val errorCode: String? = null,
+    @SerialName(
+        "error_code",
+    ) @Serializable(with = FlexibleStringSerializer::class) override val errorCode: String? = null,
     @Serializable(with = FlexibleStringSerializer::class) override val ssaCode: String? = null,
-    @SerialName("ssa_code") @Serializable(with = FlexibleStringSerializer::class) override val legacySsaCode: String? = null,
+    @SerialName(
+        "ssa_code",
+    ) @Serializable(with = FlexibleStringSerializer::class) override val legacySsaCode: String? = null,
     @Serializable(with = FlexibleStringSerializer::class) override val sid: String? = null,
     @Serializable(with = FlexibleStringSerializer::class) override val edt: String? = null,
 ) : ApiRiskFieldsContract
@@ -22,16 +26,21 @@ internal data class SongListData(
 internal data class PlaylistRecommendationsData(
     @SerialName("special_list") val playlists: List<MusicPlaylistDto>? = null,
     @Serializable(with = FlexibleStringSerializer::class) override val status: String? = null,
-    @SerialName("error_code") @Serializable(with = FlexibleStringSerializer::class) override val errorCode: String? = null,
+    @SerialName(
+        "error_code",
+    ) @Serializable(with = FlexibleStringSerializer::class) override val errorCode: String? = null,
     @Serializable(with = FlexibleStringSerializer::class) override val ssaCode: String? = null,
-    @SerialName("ssa_code") @Serializable(with = FlexibleStringSerializer::class) override val legacySsaCode: String? = null,
+    @SerialName(
+        "ssa_code",
+    ) @Serializable(with = FlexibleStringSerializer::class) override val legacySsaCode: String? = null,
     @Serializable(with = FlexibleStringSerializer::class) override val sid: String? = null,
     @Serializable(with = FlexibleStringSerializer::class) override val edt: String? = null,
 ) : ApiRiskFieldsContract
 
 @Serializable
 internal data class MusicPlaylistDto(
-    @SerialName("global_collection_id") @Serializable(with = FlexibleStringSerializer::class) val globalCollectionId: String? = null,
+    @SerialName("global_collection_id") @Serializable(with = FlexibleStringSerializer::class) val globalCollectionId:
+    String? = null,
     @Serializable(with = FlexibleStringSerializer::class) val specialid: String? = null,
     val specialname: String? = null,
     @SerialName("flexible_cover") val flexibleCover: String? = null,

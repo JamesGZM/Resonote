@@ -2,8 +2,8 @@ package com.resonote.core.designsystem.component
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Icon
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.Posture
 import androidx.compose.material3.adaptive.WindowAdaptiveInfo
@@ -16,8 +16,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
-import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertIsNotSelected
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTouchHeightIsEqualTo
 import androidx.compose.ui.test.assertTouchWidthIsEqualTo
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -178,11 +178,7 @@ class NavigationTest {
 }
 
 @androidx.compose.runtime.Composable
-private fun NavigationExample(
-    selectedIndex: Int,
-    onSelected: (Int) -> Unit,
-    adaptiveInfo: WindowAdaptiveInfo,
-) {
+private fun NavigationExample(selectedIndex: Int, onSelected: (Int) -> Unit, adaptiveInfo: WindowAdaptiveInfo) {
     ResonoteNavigationSuiteScaffold(
         navigationSuiteItems = {
             listOf("Foundation", "Components", "Music").forEachIndexed { index, label ->

@@ -7,8 +7,6 @@ import com.resonote.core.network.model.NetworkCloudPage
 import com.resonote.core.network.model.NetworkCloudStorage
 import com.resonote.core.network.model.NetworkCloudTrack
 import com.resonote.core.network.risk.ApiRiskChallengeDetector
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -16,6 +14,8 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.put
+import javax.inject.Inject
+import javax.inject.Singleton
 
 @Singleton
 internal class CloudProtocolClient @Inject constructor(
@@ -32,7 +32,13 @@ internal class CloudProtocolClient @Inject constructor(
         require(pageSize in 1..100) { "pageSize must be between 1 and 100" }
         registration.requireAuthenticatedSession()
         return transport.execute { session, nowMillis ->
-            val encrypted = crypto.encryptPlaylist(buildJsonObject { put("page", page); put("pagesize", pageSize); put("getkmr", 1) }.toString())
+            val encrypted = crypto.encryptPlaylist(
+                buildJsonObject {
+                    put("page", page)
+                    put("pagesize", pageSize)
+                    put("getkmr", 1)
+                }.toString(),
+            )
             val p =
                 crypto.pkcs1LiteRsa(
                     buildJsonObject {
@@ -44,25 +50,25 @@ internal class CloudProtocolClient @Inject constructor(
             val clientTime = nowMillis / 1_000
             ApiExchange(
                 spec =
-                    ApiEndpointSpec(
-                        origin = origins.cloud,
-                        path = "/v1/get_list",
-                        method = ApiHttpMethod.Post,
-                        query =
-                            linkedMapOf(
-                                "clienttime" to clientTime.toString(),
-                                "mid" to session.mid,
-                                "key" to signer.signParamsKey(clientTime.toString()),
-                                "clientver" to ApiProtocolConfig.CLIENT_VERSION,
-                                "appid" to ApiProtocolConfig.APP_ID,
-                                "p" to p,
-                            ),
-                        body = encrypted.ciphertext,
-                        contentType = "application/octet-stream",
-                        signatureMode = ApiSignatureMode.None,
-                        includeDefaultParams = false,
-                        responseFormat = ApiResponseFormat.Bytes,
+                ApiEndpointSpec(
+                    origin = origins.cloud,
+                    path = "/v1/get_list",
+                    method = ApiHttpMethod.Post,
+                    query =
+                    linkedMapOf(
+                        "clienttime" to clientTime.toString(),
+                        "mid" to session.mid,
+                        "key" to signer.signParamsKey(clientTime.toString()),
+                        "clientver" to ApiProtocolConfig.CLIENT_VERSION,
+                        "appid" to ApiProtocolConfig.APP_ID,
+                        "p" to p,
                     ),
+                    body = encrypted.ciphertext,
+                    contentType = "application/octet-stream",
+                    signatureMode = ApiSignatureMode.None,
+                    includeDefaultParams = false,
+                    responseFormat = ApiResponseFormat.Bytes,
+                ),
                 decode = { response ->
                     val plaintext =
                         runCatching { crypto.decryptPlaylist(response.bytes, encrypted.key) }
@@ -109,7 +115,9 @@ internal class CloudProtocolClient @Inject constructor(
             title = item.text("name")?.takeIf(String::isNotBlank) ?: filenameTitle.ifBlank { hash },
             artist = item.text("author_name")?.takeIf(String::isNotBlank) ?: filenameArtist.takeIf(String::isNotBlank),
             album = item.text("album_name")?.takeIf(String::isNotBlank),
-            coverUrl = albumInfo?.text("sizable_cover")?.takeIf(String::isNotBlank) ?: firstAuthor?.text("sizable_avatar")?.takeIf(String::isNotBlank),
+            coverUrl =
+            albumInfo?.text("sizable_cover")?.takeIf(String::isNotBlank)
+                ?: firstAuthor?.text("sizable_avatar")?.takeIf(String::isNotBlank),
             durationMillis = normalizeDuration(item.long("timelen")),
             albumAudioId = item.text("album_audio_id")?.takeIf(String::isNotBlank),
         )
@@ -120,7 +128,8 @@ internal class CloudProtocolClient @Inject constructor(
         return if (separator > 0) value.substring(0, separator) to value.substring(separator + 3) else "" to value
     }
 
-    private fun normalizeDuration(value: Long?): Long = value?.takeIf { it > 0 }?.let { if (it < 10_000) it * 1_000 else it } ?: 0
+    private fun normalizeDuration(value: Long?): Long =
+        value?.takeIf { it > 0 }?.let { if (it < 10_000) it * 1_000 else it } ?: 0
 
     private fun JsonObject.text(name: String): String? = (get(name) as? JsonPrimitive)?.contentOrNull
     private fun JsonObject.long(name: String): Long? = text(name)?.toDoubleOrNull()?.toLong()

@@ -26,8 +26,8 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
 import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.Clear
-import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.DeleteOutline
+import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.MusicNote
@@ -43,8 +43,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.PrimaryScrollableTabRow
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -54,8 +54,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -70,6 +68,7 @@ import coil3.compose.AsyncImage
 import com.resonote.core.designsystem.component.ResonoteMusicItem
 import com.resonote.core.designsystem.component.ResonoteRemoteArtwork
 import com.resonote.core.designsystem.component.ResonoteTextField
+import com.resonote.core.designsystem.tokens.ResonoteTokens
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.ComplexSearchResult
 import com.resonote.core.model.ContentFailure
@@ -190,10 +189,7 @@ fun SearchScreen(
 }
 
 @Composable
-private fun SearchCategoryBar(
-    selectedCategory: SearchCategory,
-    onSelectCategory: (SearchCategory) -> Unit,
-) {
+private fun SearchCategoryBar(selectedCategory: SearchCategory, onSelectCategory: (SearchCategory) -> Unit) {
     PrimaryScrollableTabRow(
         selectedTabIndex = selectedCategory.ordinal,
         edgePadding = 12.dp,
@@ -243,11 +239,17 @@ private fun SearchHeader(
             modifier = Modifier.weight(1f),
             label = if (query.isBlank()) stringResource(R.string.feature_search_impl_search_hint) else "",
             leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
-            trailingIcon = if (query.isBlank()) null else ({
-                IconButton(onClick = { onQueryChange("") }) {
-                    Icon(Icons.Rounded.Clear, stringResource(R.string.feature_search_impl_search_clear))
-                }
-            }),
+            trailingIcon = if (query.isBlank()) {
+                null
+            } else {
+                (
+                    {
+                        IconButton(onClick = { onQueryChange("") }) {
+                            Icon(Icons.Rounded.Clear, stringResource(R.string.feature_search_impl_search_clear))
+                        }
+                    }
+                    )
+            },
             singleLine = true,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
             keyboardActions = KeyboardActions(onSearch = { onSubmit() }),
@@ -329,7 +331,10 @@ private fun LoadingState(query: String) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
             CircularProgressIndicator()
-            Text(stringResource(R.string.feature_search_impl_search_loading, query), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                stringResource(R.string.feature_search_impl_search_loading, query),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
@@ -357,12 +362,7 @@ private fun ErrorState(failure: ContentFailure, onRetry: () -> Unit) {
 }
 
 @Composable
-private fun MessageState(
-    icon: ImageVector,
-    title: String,
-    body: String,
-    action: (@Composable () -> Unit)? = null,
-) {
+private fun MessageState(icon: ImageVector, title: String, body: String, action: (@Composable () -> Unit)? = null) {
     Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Surface(shape = CircleShape, color = MaterialTheme.colorScheme.secondaryContainer) {
@@ -458,7 +458,11 @@ private fun AggregateSearchResults(
             itemsIndexed(result.artists, key = { index, artist -> "artist-${artist.id}-$index" }) { _, artist ->
                 EntityRow(
                     title = artist.name,
-                    supporting = stringResource(R.string.feature_search_impl_search_artist_metadata, artist.songCount, artist.albumCount),
+                    supporting = stringResource(
+                        R.string.feature_search_impl_search_artist_metadata,
+                        artist.songCount,
+                        artist.albumCount,
+                    ),
                     icon = Icons.Rounded.Person,
                     artworkUrl = artist.avatarUrl,
                     onClick = onArtistClick?.let { callback -> { callback(artist) } },
@@ -610,7 +614,11 @@ private fun SectionTitle(
 @Composable
 private fun AlbumRow(album: SearchAlbum, onClick: (() -> Unit)?) = EntityRow(
     title = album.name,
-    supporting = stringResource(R.string.feature_search_impl_search_album_metadata, album.artist.orEmpty(), album.songCount),
+    supporting = stringResource(
+        R.string.feature_search_impl_search_album_metadata,
+        album.artist.orEmpty(),
+        album.songCount,
+    ),
     icon = Icons.Rounded.Album,
     artworkUrl = album.coverUrl,
     onClick = onClick,
@@ -619,7 +627,11 @@ private fun AlbumRow(album: SearchAlbum, onClick: (() -> Unit)?) = EntityRow(
 @Composable
 private fun PlaylistRow(playlist: SearchPlaylist, onClick: (() -> Unit)?) = EntityRow(
     title = playlist.name,
-    supporting = stringResource(R.string.feature_search_impl_search_playlist_metadata, playlist.creator.orEmpty(), playlist.songCount),
+    supporting = stringResource(
+        R.string.feature_search_impl_search_playlist_metadata,
+        playlist.creator.orEmpty(),
+        playlist.songCount,
+    ),
     icon = Icons.AutoMirrored.Rounded.PlaylistPlay,
     artworkUrl = playlist.coverUrl,
     onClick = onClick,
@@ -642,7 +654,7 @@ private fun MvRow(mv: SearchMv, onClick: (() -> Unit)?) {
         leadingContent = {
             Box(
                 modifier = Modifier.width(112.dp).height(63.dp)
-                    .background(entityGradient(mv.name), MaterialTheme.shapes.medium),
+                    .background(MaterialTheme.colorScheme.surfaceContainerHighest, MaterialTheme.shapes.medium),
                 contentAlignment = Alignment.Center,
             ) {
                 if (!mv.coverUrl.isNullOrBlank()) {
@@ -653,15 +665,23 @@ private fun MvRow(mv: SearchMv, onClick: (() -> Unit)?) {
                         contentScale = ContentScale.Crop,
                     )
                 }
-                Surface(shape = CircleShape, color = Color.Black.copy(alpha = 0.52f), contentColor = Color.White) {
-                    Icon(Icons.Rounded.PlayArrow, contentDescription = null, modifier = Modifier.padding(6.dp).size(18.dp))
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.52f),
+                    contentColor = ResonoteTokens.systemColors.onScrim,
+                ) {
+                    Icon(
+                        Icons.Rounded.PlayArrow,
+                        contentDescription = null,
+                        modifier = Modifier.padding(6.dp).size(18.dp),
+                    )
                 }
                 if (mv.durationMillis > 0) {
                     Surface(
                         modifier = Modifier.align(Alignment.BottomEnd).padding(5.dp),
                         shape = MaterialTheme.shapes.extraSmall,
-                        color = Color.Black.copy(alpha = 0.66f),
-                        contentColor = Color.White,
+                        color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.66f),
+                        contentColor = ResonoteTokens.systemColors.onScrim,
                     ) {
                         Text(
                             stringResource(
@@ -697,10 +717,11 @@ private fun EntityRow(
         supportingContent = { Text(supporting, maxLines = 1, overflow = TextOverflow.Ellipsis) },
         leadingContent = {
             Box(
-                modifier = Modifier.size(56.dp).background(entityGradient(title), MaterialTheme.shapes.medium),
+                modifier = Modifier.size(56.dp)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHighest, MaterialTheme.shapes.medium),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(icon, contentDescription = null, tint = Color.White)
+                Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 if (!artworkUrl.isNullOrBlank()) {
                     ResonoteRemoteArtwork(
                         model = artworkUrl,
@@ -717,16 +738,6 @@ private fun EntityRow(
         modifier = if (onClick == null) Modifier else Modifier.clickable(onClick = onClick),
     )
     HorizontalDivider(modifier = Modifier.padding(start = 88.dp), color = MaterialTheme.colorScheme.outlineVariant)
-}
-
-private fun entityGradient(seed: String): Brush {
-    val palettes = listOf(
-        listOf(Color(0xFF5A061B), Color(0xFFE31353)),
-        listOf(Color(0xFF042E48), Color(0xFF0879BC)),
-        listOf(Color(0xFF20164B), Color(0xFF786EDB)),
-        listOf(Color(0xFF123D36), Color(0xFF3A8068)),
-    )
-    return Brush.linearGradient(palettes[(seed.hashCode() and Int.MAX_VALUE) % palettes.size])
 }
 
 private fun Long.durationLabel(): String {

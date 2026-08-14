@@ -13,16 +13,16 @@ import com.resonote.core.playback.PlaybackMode
 import com.resonote.core.playback.PlaybackOrigin
 import com.resonote.core.playback.PlaybackState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 sealed interface LyricsUiState {
     data object Idle : LyricsUiState
@@ -33,10 +33,7 @@ sealed interface LyricsUiState {
     data class Error(val failure: ContentFailure) : LyricsUiState
 }
 
-data class PlayerUiState(
-    val playback: PlaybackState = PlaybackState(),
-    val lyrics: LyricsUiState = LyricsUiState.Idle,
-)
+data class PlayerUiState(val playback: PlaybackState = PlaybackState(), val lyrics: LyricsUiState = LyricsUiState.Idle)
 
 @HiltViewModel
 class PlayerViewModel @Inject constructor(

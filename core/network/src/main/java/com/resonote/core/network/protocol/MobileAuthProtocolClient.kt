@@ -6,8 +6,6 @@ import com.resonote.core.network.model.NetworkAccountOption
 import com.resonote.core.network.model.NetworkMobileCodeLoginResult
 import com.resonote.core.network.model.NetworkPasswordLoginResult
 import com.resonote.core.network.session.ApiSession
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -15,6 +13,8 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.put
+import javax.inject.Inject
+import javax.inject.Singleton
 
 @Singleton
 internal class MobileAuthProtocolClient @Inject constructor(
@@ -29,19 +29,23 @@ internal class MobileAuthProtocolClient @Inject constructor(
         require(MOBILE_PATTERN.matches(mobile)) { "mobile must be an 11-digit mainland number" }
         registration.ensureRegisteredSession()
         transport.execute { _, _ ->
-            val body = buildJsonObject { put("businessid", 5); put("mobile", mobile); put("plat", 3) }
+            val body = buildJsonObject {
+                put("businessid", 5)
+                put("mobile", mobile)
+                put("plat", 3)
+            }
                 .toString()
                 .encodeToByteArray()
             ApiExchange(
                 spec =
-                    ApiEndpointSpec(
-                        origin = origins.mobileCode,
-                        path = "/v7/send_mobile_code",
-                        method = ApiHttpMethod.Post,
-                        body = body,
-                        sessionPropagation = ApiSessionPropagation.DeviceOnly,
-                        cleartextPolicy = ApiCleartextPolicy.LoginMobileCode,
-                    ),
+                ApiEndpointSpec(
+                    origin = origins.mobileCode,
+                    path = "/v7/send_mobile_code",
+                    method = ApiHttpMethod.Post,
+                    body = body,
+                    sessionPropagation = ApiSessionPropagation.DeviceOnly,
+                    cleartextPolicy = ApiCleartextPolicy.LoginMobileCode,
+                ),
                 decode = { response ->
                     val root = response.requireBody()
                     if (root.text("status") != "1") {
@@ -66,10 +70,7 @@ internal class MobileAuthProtocolClient @Inject constructor(
         }
     }
 
-    suspend fun loginWithPassword(
-        username: String,
-        password: String,
-    ): NetworkPasswordLoginResult {
+    suspend fun loginWithPassword(username: String, password: String): NetworkPasswordLoginResult {
         require(username.isNotBlank()) { "username must not be blank" }
         require(password.isNotEmpty()) { "password must not be empty" }
         registration.ensureRegisteredSession()
@@ -85,7 +86,12 @@ internal class MobileAuthProtocolClient @Inject constructor(
         code: String,
         selectedUserId: String?,
     ): ApiExchange<NetworkMobileCodeLoginResult> {
-        val encrypted = crypto.encryptTemporary(buildJsonObject { put("mobile", mobile); put("code", code) }.toString())
+        val encrypted = crypto.encryptTemporary(
+            buildJsonObject {
+                put("mobile", mobile)
+                put("code", code)
+            }.toString(),
+        )
         val t1 = crypto.fixedAesHex("|$nowMillis", LITE_T1_KEY, LITE_T1_IV)
         val t2 =
             crypto.fixedAesHex(
@@ -93,7 +99,10 @@ internal class MobileAuthProtocolClient @Inject constructor(
                 LITE_T2_KEY,
                 LITE_T2_IV,
             )
-        val envelope = buildJsonObject { put("clienttime_ms", nowMillis); put("key", encrypted.temporaryKey) }.toString()
+        val envelope = buildJsonObject {
+            put("clienttime_ms", nowMillis)
+            put("key", encrypted.temporaryKey)
+        }.toString()
         val body =
             buildJsonObject {
                 put("plat", 1)
@@ -112,14 +121,14 @@ internal class MobileAuthProtocolClient @Inject constructor(
             }.toString().encodeToByteArray()
         return ApiExchange(
             spec =
-                ApiEndpointSpec(
-                    origin = origins.mobileLogin,
-                    path = "/v7/login_by_verifycode",
-                    method = ApiHttpMethod.Post,
-                    headers = mapOf("support-calm" to "1", "User-Agent" to ApiProtocolConfig.LOGIN_USER_AGENT),
-                    body = body,
-                    sessionPropagation = ApiSessionPropagation.DeviceOnly,
-                ),
+            ApiEndpointSpec(
+                origin = origins.mobileLogin,
+                path = "/v7/login_by_verifycode",
+                method = ApiHttpMethod.Post,
+                headers = mapOf("support-calm" to "1", "User-Agent" to ApiProtocolConfig.LOGIN_USER_AGENT),
+                body = body,
+                sessionPropagation = ApiSessionPropagation.DeviceOnly,
+            ),
             decode = { response -> decodeLogin(response, session, encrypted.temporaryKey) },
         )
     }
@@ -138,7 +147,10 @@ internal class MobileAuthProtocolClient @Inject constructor(
                     put("clienttime_ms", nowMillis)
                 }.toString(),
             )
-        val envelope = buildJsonObject { put("clienttime_ms", nowMillis); put("key", encrypted.temporaryKey) }.toString()
+        val envelope = buildJsonObject {
+            put("clienttime_ms", nowMillis)
+            put("key", encrypted.temporaryKey)
+        }.toString()
         val body =
             buildJsonObject {
                 put("plat", 1)
@@ -153,14 +165,14 @@ internal class MobileAuthProtocolClient @Inject constructor(
             }.toString().encodeToByteArray()
         return ApiExchange(
             spec =
-                ApiEndpointSpec(
-                    origin = origins.gateway,
-                    path = "/v9/login_by_pwd",
-                    method = ApiHttpMethod.Post,
-                    headers = mapOf("x-router" to "login.user.kugou.com"),
-                    body = body,
-                    sessionPropagation = ApiSessionPropagation.DeviceOnly,
-                ),
+            ApiEndpointSpec(
+                origin = origins.gateway,
+                path = "/v9/login_by_pwd",
+                method = ApiHttpMethod.Post,
+                headers = mapOf("x-router" to "login.user.kugou.com"),
+                body = body,
+                sessionPropagation = ApiSessionPropagation.DeviceOnly,
+            ),
             decode = { response -> decodePasswordLogin(response, session, encrypted.temporaryKey) },
         )
     }
@@ -206,25 +218,25 @@ internal class MobileAuthProtocolClient @Inject constructor(
         response: ApiRawResponse,
         baseSession: ApiSession,
         temporaryKey: String,
-    ): NetworkPasswordLoginResult =
-        when (val result = decodeLogin(response, baseSession, temporaryKey)) {
-            is NetworkMobileCodeLoginResult.Authenticated -> NetworkPasswordLoginResult.Authenticated(result.session)
-            is NetworkMobileCodeLoginResult.MultipleAccounts -> NetworkPasswordLoginResult.MultipleAccounts(result.accounts)
-        }
+    ): NetworkPasswordLoginResult = when (val result = decodeLogin(response, baseSession, temporaryKey)) {
+        is NetworkMobileCodeLoginResult.Authenticated -> NetworkPasswordLoginResult.Authenticated(result.session)
+        is NetworkMobileCodeLoginResult.MultipleAccounts -> NetworkPasswordLoginResult.MultipleAccounts(
+            result.accounts,
+        )
+    }
 
-    private fun readAccounts(root: JsonObject): List<NetworkAccountOption> =
-        runCatching {
-            (root["data"] as? JsonObject)?.get("info_list")?.jsonArray.orEmpty().mapNotNull { element ->
-                val account = element as? JsonObject ?: return@mapNotNull null
-                val userId = account.text("userid")?.takeIf { it.isNotBlank() && it != "0" } ?: return@mapNotNull null
-                NetworkAccountOption(
-                    userId = userId,
-                    nickname = account.text("nickname").orEmpty(),
-                    avatarUrl = account.text("pic")?.takeIf(String::isNotBlank),
-                    grade = account.text("p_grade")?.takeIf(String::isNotBlank),
-                )
-            }
-        }.getOrDefault(emptyList())
+    private fun readAccounts(root: JsonObject): List<NetworkAccountOption> = runCatching {
+        (root["data"] as? JsonObject)?.get("info_list")?.jsonArray.orEmpty().mapNotNull { element ->
+            val account = element as? JsonObject ?: return@mapNotNull null
+            val userId = account.text("userid")?.takeIf { it.isNotBlank() && it != "0" } ?: return@mapNotNull null
+            NetworkAccountOption(
+                userId = userId,
+                nickname = account.text("nickname").orEmpty(),
+                avatarUrl = account.text("pic")?.takeIf(String::isNotBlank),
+                grade = account.text("p_grade")?.takeIf(String::isNotBlank),
+            )
+        }
+    }.getOrDefault(emptyList())
 
     private fun ApiRawResponse.requireBody(): JsonObject =
         body ?: throw ApiProtocolException(ApiProtocolException.Reason.MalformedResponse)

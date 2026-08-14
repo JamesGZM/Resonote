@@ -4,12 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.resonote.core.data.PlaybackPreferencesRepository
 import com.resonote.core.data.ThemePreferencesRepository
-import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.model.OnlinePlaybackQuality
+import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.model.ThemeMode
 import com.resonote.core.model.ThemePreferences
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 sealed interface SettingsUiState {
     data object Loading : SettingsUiState

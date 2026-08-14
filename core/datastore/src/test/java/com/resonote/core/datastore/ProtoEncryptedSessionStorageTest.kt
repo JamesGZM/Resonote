@@ -2,7 +2,6 @@ package com.resonote.core.datastore
 
 import androidx.datastore.core.DataStoreFactory
 import com.google.common.truth.Truth.assertThat
-import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -12,6 +11,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.io.File
 
 class ProtoEncryptedSessionStorageTest {
     @get:Rule
@@ -28,7 +28,8 @@ class ProtoEncryptedSessionStorageTest {
                 produceFile = { file },
             )
         val storage = ProtoEncryptedSessionStorage(dataStore)
-        val envelope = EncryptedSessionEnvelope(schemaVersion = 1, iv = byteArrayOf(1, 2), ciphertext = byteArrayOf(3, 4))
+        val envelope =
+            EncryptedSessionEnvelope(schemaVersion = 1, iv = byteArrayOf(1, 2), ciphertext = byteArrayOf(3, 4))
 
         try {
             storage.write(envelope)

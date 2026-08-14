@@ -4,7 +4,7 @@
 
 | 范围 | 证据 | 状态 |
 |---|---|---|
-| Retrofit Path、Query、Body、Header、签名与 Session | [ApiProtocolInterceptorTest](../../core/network/src/test/java/com/resonote/core/network/protocol/ApiProtocolInterceptorTest.kt)、[ApiNetworkDataSourceTest](../../core/network/src/test/java/com/resonote/core/network/retrofit/ApiNetworkDataSourceTest.kt) | 本地 JUnit |
+| Retrofit Path、Query、Body、Header、签名与 Session | [ApiRequestInterceptorsTest](../../core/network/src/test/java/com/resonote/core/network/protocol/ApiRequestInterceptorsTest.kt)、[ApiNetworkDataSourceTest](../../core/network/src/test/java/com/resonote/core/network/retrofit/ApiNetworkDataSourceTest.kt) | 本地 JUnit |
 | 特殊协议 Method/Origin/Path、加密与取消 | [protocol tests](../../core/network/src/test/java/com/resonote/core/network/protocol/) | 本地 JUnit |
 | Search 业务码认证分类及非 Search 隔离 | [AuthenticationFailureClassifierTest](../../core/network/src/test/java/com/resonote/core/network/AuthenticationFailureClassifierTest.kt)、[ApiNetworkDataSourceTest](../../core/network/src/test/java/com/resonote/core/network/retrofit/ApiNetworkDataSourceTest.kt) | 本地 JUnit |
 | DTO 到领域模型与 Repository 错误映射 | [core:data tests](../../core/data/src/test/) | 本地 JUnit |

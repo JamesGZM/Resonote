@@ -1,14 +1,11 @@
 package com.resonote.core.network.protocol
 
-import com.resonote.core.network.ApiProtocolException
 import com.resonote.core.network.ApiAuthenticationRequiredException
+import com.resonote.core.network.ApiProtocolException
 import com.resonote.core.network.ApiServiceException
-import com.resonote.core.network.session.ApiSession
 import com.resonote.core.network.session.ApiAuthenticationGateReason
+import com.resonote.core.network.session.ApiSession
 import com.resonote.core.network.session.ApiSessionManager
-import java.util.Base64
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
@@ -17,6 +14,9 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.put
+import java.util.Base64
+import javax.inject.Inject
+import javax.inject.Singleton
 
 @Singleton
 internal class DeviceRegistrationCoordinator @Inject constructor(
@@ -65,18 +65,22 @@ internal class DeviceRegistrationCoordinator @Inject constructor(
                 }
             }.toString()
         val encrypted = crypto.encryptPlaylist(deviceBody)
-        val keyEnvelope = buildJsonObject { put("aes", encrypted.key); put("uid", 0); put("token", "") }.toString()
+        val keyEnvelope = buildJsonObject {
+            put("aes", encrypted.key)
+            put("uid", 0)
+            put("token", "")
+        }.toString()
         val body = Base64.getEncoder().encode(encrypted.ciphertext)
         return ApiExchange(
             spec =
-                ApiEndpointSpec(
-                    origin = origins.deviceRegistration,
-                    path = "/risk/v2/r_register_dev",
-                    method = ApiHttpMethod.Post,
-                    query = mapOf("part" to "1", "platid" to "1", "p" to crypto.pkcs1LiteRsa(keyEnvelope)),
-                    body = body,
-                    responseFormat = ApiResponseFormat.Bytes,
-                ),
+            ApiEndpointSpec(
+                origin = origins.deviceRegistration,
+                path = "/risk/v2/r_register_dev",
+                method = ApiHttpMethod.Post,
+                query = mapOf("part" to "1", "platid" to "1", "p" to crypto.pkcs1LiteRsa(keyEnvelope)),
+                body = body,
+                responseFormat = ApiResponseFormat.Bytes,
+            ),
             decode = { response ->
                 val decrypted = crypto.decryptPlaylist(response.bytes, encrypted.key)
                 val root = json.parseToJsonElement(decrypted) as? JsonObject

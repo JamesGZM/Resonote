@@ -2,16 +2,11 @@ package com.resonote.core.datastore
 
 import kotlinx.coroutines.flow.Flow
 
-data class EncryptedSessionEnvelope(
-    val schemaVersion: Int,
-    val iv: ByteArray,
-    val ciphertext: ByteArray,
-) {
-    override fun equals(other: Any?): Boolean =
-        other is EncryptedSessionEnvelope &&
-            schemaVersion == other.schemaVersion &&
-            iv.contentEquals(other.iv) &&
-            ciphertext.contentEquals(other.ciphertext)
+data class EncryptedSessionEnvelope(val schemaVersion: Int, val iv: ByteArray, val ciphertext: ByteArray) {
+    override fun equals(other: Any?): Boolean = other is EncryptedSessionEnvelope &&
+        schemaVersion == other.schemaVersion &&
+        iv.contentEquals(other.iv) &&
+        ciphertext.contentEquals(other.ciphertext)
 
     override fun hashCode(): Int = 31 * (31 * schemaVersion + iv.contentHashCode()) + ciphertext.contentHashCode()
 
@@ -27,10 +22,7 @@ interface EncryptedSessionStorage {
     suspend fun clear()
 }
 
-data class Ciphertext(
-    val iv: ByteArray,
-    val bytes: ByteArray,
-)
+data class Ciphertext(val iv: ByteArray, val bytes: ByteArray)
 
 interface SessionCipher {
     fun encrypt(plaintext: ByteArray): Ciphertext

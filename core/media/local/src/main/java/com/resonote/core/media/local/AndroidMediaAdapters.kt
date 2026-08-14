@@ -13,11 +13,7 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.io.InputStream
 
-internal data class SourceDescription(
-    val displayName: String,
-    val sizeBytes: Long?,
-    val mimeType: String?,
-)
+internal data class SourceDescription(val displayName: String, val sizeBytes: Long?, val mimeType: String?)
 
 internal interface LocalMediaSourceGateway {
     fun describe(uri: Uri): SourceDescription
@@ -25,9 +21,7 @@ internal interface LocalMediaSourceGateway {
     fun open(uri: Uri): InputStream
 }
 
-internal class ContentResolverSourceGateway(
-    private val resolver: ContentResolver,
-) : LocalMediaSourceGateway {
+internal class ContentResolverSourceGateway(private val resolver: ContentResolver) : LocalMediaSourceGateway {
     override fun describe(uri: Uri): SourceDescription {
         var displayName = uri.lastPathSegment?.substringAfterLast('/')?.takeIf(String::isNotBlank)
             ?: DEFAULT_DISPLAY_NAME
@@ -68,10 +62,7 @@ internal class ContentResolverSourceGateway(
     }
 }
 
-internal data class MediaProbeResult(
-    val metadata: LocalMediaMetadata,
-    val artwork: ByteArray?,
-)
+internal data class MediaProbeResult(val metadata: LocalMediaMetadata, val artwork: ByteArray?)
 
 internal interface LocalMediaProbe {
     fun inspect(uri: Uri, displayName: String): MediaProbeResult
@@ -79,9 +70,7 @@ internal interface LocalMediaProbe {
     fun inspect(file: File, displayName: String): MediaProbeResult
 }
 
-internal class PlatformLocalMediaProbe(
-    private val context: Context,
-) : LocalMediaProbe {
+internal class PlatformLocalMediaProbe(private val context: Context) : LocalMediaProbe {
     override fun inspect(uri: Uri, displayName: String): MediaProbeResult = inspectMedia(
         displayName = displayName,
         includeArtwork = false,
@@ -152,9 +141,21 @@ internal class PlatformLocalMediaProbe(
     private fun MediaFormat.string(key: String): String? =
         if (containsKey(key)) getString(key)?.trim()?.takeIf(String::isNotEmpty) else null
 
-    private fun MediaFormat.int(key: String): Int? = if (containsKey(key)) runCatching { getInteger(key) }.getOrNull() else null
+    private fun MediaFormat.int(key: String): Int? = if (containsKey(key)) {
+        runCatching {
+            getInteger(key)
+        }.getOrNull()
+    } else {
+        null
+    }
 
-    private fun MediaFormat.long(key: String): Long? = if (containsKey(key)) runCatching { getLong(key) }.getOrNull() else null
+    private fun MediaFormat.long(key: String): Long? = if (containsKey(key)) {
+        runCatching {
+            getLong(key)
+        }.getOrNull()
+    } else {
+        null
+    }
 
     private fun MediaFormat.bitDepth(): Int? {
         int(BITS_PER_SAMPLE_KEY)?.positiveOrNull()?.let { return it }

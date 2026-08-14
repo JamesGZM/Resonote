@@ -156,17 +156,39 @@ private fun QueueItem(
             .fillMaxWidth()
             .semantics {
                 customActions = buildList {
-                    if (index > 0) add(CustomAccessibilityAction(moveUpLabel) { onMove(index, index - 1); true })
-                    if (index < lastIndex) add(CustomAccessibilityAction(moveDownLabel) { onMove(index, index + 1); true })
+                    if (index > 0) {
+                        add(
+                            CustomAccessibilityAction(moveUpLabel) {
+                                onMove(index, index - 1)
+                                true
+                            },
+                        )
+                    }
+                    if (index < lastIndex) {
+                        add(
+                            CustomAccessibilityAction(moveDownLabel) {
+                                onMove(index, index + 1)
+                                true
+                            },
+                        )
+                    }
                 }
             },
-        color = if (selected) MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.58f)
-        else MaterialTheme.colorScheme.surfaceContainerLow,
+        color = if (selected) {
+            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.58f)
+        } else {
+            MaterialTheme.colorScheme.surfaceContainerLow
+        },
         onClick = onSelect,
     ) {
         ListItem(
             headlineContent = {
-                Text(title, fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    title,
+                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             },
             supportingContent = {
                 Text(
@@ -184,7 +206,10 @@ private fun QueueItem(
                         .padding(12.dp)
                         .pointerInput(index, lastIndex) {
                             detectDragGesturesAfterLongPress(
-                                onDragStart = { draggedIndex = index; dragOffset = 0f },
+                                onDragStart = {
+                                    draggedIndex = index
+                                    dragOffset = 0f
+                                },
                                 onDragEnd = { dragOffset = 0f },
                                 onDragCancel = { dragOffset = 0f },
                             ) { change, amount ->

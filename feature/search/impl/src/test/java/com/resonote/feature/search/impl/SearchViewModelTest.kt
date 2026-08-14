@@ -167,8 +167,7 @@ class SearchViewModelTest {
         assertThat(page.isLoadingMore).isFalse()
     }
 
-    private fun viewModel(repository: FakeSearchRepository) =
-        SearchViewModel(repository, FakeSearchHistoryRepository())
+    private fun viewModel(repository: FakeSearchRepository) = SearchViewModel(repository, FakeSearchHistoryRepository())
 
     private class FakeSearchHistoryRepository(initial: List<String> = emptyList()) : SearchHistoryRepository {
         override val queries = MutableStateFlow(initial)
@@ -209,7 +208,11 @@ class SearchViewModelTest {
             return complexResult
         }
 
-        override suspend fun searchSongs(keywords: String, page: Int, pageSize: Int): CollectionLoadResult<SearchPage<OnlineSong>> {
+        override suspend fun searchSongs(
+            keywords: String,
+            page: Int,
+            pageSize: Int,
+        ): CollectionLoadResult<SearchPage<OnlineSong>> {
             songRequests += keywords to page
             if (page == 2 && failSecondSongPage) return CollectionLoadResult.Failed(ContentFailure.Network)
             return CollectionLoadResult.Available(

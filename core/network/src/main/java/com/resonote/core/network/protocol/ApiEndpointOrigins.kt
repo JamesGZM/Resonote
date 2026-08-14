@@ -26,7 +26,9 @@ internal class ProductionApiOriginPolicy : ApiOriginPolicy {
         val origin = spec.origin.toHttpUrl()
         val allowedLoginHttp =
             spec.cleartextPolicy == ApiCleartextPolicy.LoginMobileCode &&
-                origin.scheme == "http" && origin.host == LOGIN_MOBILE_CODE_HOST && origin.port == 80
+                origin.scheme == "http" &&
+                origin.host == LOGIN_MOBILE_CODE_HOST &&
+                origin.port == 80
         return origin.scheme == "https" || allowedLoginHttp
     }
 

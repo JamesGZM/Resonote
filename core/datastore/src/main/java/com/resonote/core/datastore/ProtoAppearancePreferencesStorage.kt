@@ -3,12 +3,12 @@ package com.resonote.core.datastore
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
 import com.resonote.core.datastore.proto.AppearancePreferences
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import java.io.InputStream
 import java.io.OutputStream
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 
 object AppearancePreferencesSerializer : Serializer<AppearancePreferences> {
     override val defaultValue: AppearancePreferences = AppearancePreferences.getDefaultInstance()
@@ -35,8 +35,7 @@ internal class ProtoAppearancePreferencesStorage @Inject constructor(
     }
 }
 
-private fun AppearancePreferences.toStoredPreferences() =
-    StoredAppearancePreferences(
-        themeMode = themeMode,
-        dynamicColorEnabled = dynamicColorEnabled,
-    )
+private fun AppearancePreferences.toStoredPreferences() = StoredAppearancePreferences(
+    themeMode = themeMode,
+    dynamicColorEnabled = dynamicColorEnabled,
+)

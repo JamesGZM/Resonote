@@ -46,15 +46,13 @@ internal class DefaultRiskVerificationRepository @Inject constructor(
     private fun missingChallengeSubmit() = RiskVerificationSubmitResult.Failed(ContentFailure.Protocol)
 }
 
-private fun ApiRiskMethod.toDomain(): RiskVerificationMethod =
-    when (this) {
-        ApiRiskMethod.Sms -> RiskVerificationMethod.Sms
-        is ApiRiskMethod.Tencent -> RiskVerificationMethod.Tencent(appId)
-        is ApiRiskMethod.Unsupported -> RiskVerificationMethod.Unsupported(type)
-    }
+private fun ApiRiskMethod.toDomain(): RiskVerificationMethod = when (this) {
+    ApiRiskMethod.Sms -> RiskVerificationMethod.Sms
+    is ApiRiskMethod.Tencent -> RiskVerificationMethod.Tencent(appId)
+    is ApiRiskMethod.Unsupported -> RiskVerificationMethod.Unsupported(type)
+}
 
-private fun RiskVerificationProof.toNetwork(): ApiRiskProof =
-    when (this) {
-        is RiskVerificationProof.Sms -> ApiRiskProof.Sms(code)
-        is RiskVerificationProof.Tencent -> ApiRiskProof.Tencent(ticket, randomString, applicationId)
-    }
+private fun RiskVerificationProof.toNetwork(): ApiRiskProof = when (this) {
+    is RiskVerificationProof.Sms -> ApiRiskProof.Sms(code)
+    is RiskVerificationProof.Tencent -> ApiRiskProof.Tencent(ticket, randomString, applicationId)
+}

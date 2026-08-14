@@ -22,11 +22,7 @@ data class DeviceHistoryRecord(
     }
 }
 
-data class DeviceHistoryItem(
-    val record: DeviceHistoryRecord,
-    val lastPlayedAtEpochMillis: Long,
-    val playCount: Long,
-) {
+data class DeviceHistoryItem(val record: DeviceHistoryRecord, val lastPlayedAtEpochMillis: Long, val playCount: Long) {
     init {
         require(lastPlayedAtEpochMillis >= 0) { "lastPlayedAtEpochMillis must not be negative" }
         require(playCount > 0) { "playCount must be positive" }

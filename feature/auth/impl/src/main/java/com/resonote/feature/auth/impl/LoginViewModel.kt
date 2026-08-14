@@ -8,17 +8,15 @@ import com.resonote.core.model.MobileCodeLoginResult
 import com.resonote.core.model.PasswordLoginResult
 import com.resonote.core.model.SendMobileCodeResult
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @HiltViewModel
-class LoginViewModel @Inject constructor(
-    private val repository: AuthRepository,
-) : ViewModel() {
+class LoginViewModel @Inject constructor(private val repository: AuthRepository) : ViewModel() {
     private val mutableUiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = mutableUiState.asStateFlow()
 

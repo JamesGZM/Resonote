@@ -7,13 +7,13 @@ import com.resonote.core.data.PlaylistRepository
 import com.resonote.core.model.CollectionLoadResult
 import com.resonote.core.model.OnlineSong
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @HiltViewModel
 class PlaylistViewModel @Inject constructor(

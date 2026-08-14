@@ -81,12 +81,7 @@ class DeviceHistoryDaoTest {
     }
 
     private companion object {
-        fun entity(
-            source: String,
-            mediaId: String,
-            playedAt: Long,
-            title: String = mediaId,
-        ) = DeviceHistoryEntity(
+        fun entity(source: String, mediaId: String, playedAt: Long, title: String = mediaId) = DeviceHistoryEntity(
             source = source,
             mediaId = mediaId,
             title = title,
@@ -99,24 +94,23 @@ class DeviceHistoryDaoTest {
             playCount = 1,
         )
 
-        fun localMedia(id: String) =
-            LocalMediaEntity(
-                id = id,
-                storagePath = "/private/$id.flac",
-                displayName = "$id.flac",
-                title = id,
-                artist = "Artist",
-                albumTitle = null,
-                artworkPath = null,
-                durationMillis = 180_000,
-                mimeType = "audio/flac",
-                fileExtension = "flac",
-                sizeBytes = 4_096,
-                sha256 = "c7c4e0f766c17694a51f3b92a5f01d3ba2d729391bb781e4c6299f51f91aa508",
-                sampleRateHz = 96_000,
-                bitDepth = 24,
-                bitrateBitsPerSecond = 2_304_000,
-                importedAtEpochMillis = 1_000,
-            )
+        fun localMedia(id: String) = LocalMediaEntity(
+            id = id,
+            storagePath = "/private/$id.flac",
+            displayName = "$id.flac",
+            title = id,
+            artist = "Artist",
+            albumTitle = null,
+            artworkPath = null,
+            durationMillis = 180_000,
+            mimeType = "audio/flac",
+            fileExtension = "flac",
+            sizeBytes = 4_096,
+            sha256 = "c7c4e0f766c17694a51f3b92a5f01d3ba2d729391bb781e4c6299f51f91aa508",
+            sampleRateHz = 96_000,
+            bitDepth = 24,
+            bitrateBitsPerSecond = 2_304_000,
+            importedAtEpochMillis = 1_000,
+        )
     }
 }

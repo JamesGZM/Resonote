@@ -114,9 +114,7 @@ fun ResonoteNavigationSuiteScaffold(
 }
 
 /** Declares items without owning their identity, selection, or navigation state. */
-class ResonoteNavigationSuiteScope internal constructor(
-    private val addItem: (ResonoteNavigationSuiteItem) -> Unit,
-) {
+class ResonoteNavigationSuiteScope internal constructor(private val addItem: (ResonoteNavigationSuiteItem) -> Unit) {
     fun item(
         selected: Boolean,
         onClick: () -> Unit,

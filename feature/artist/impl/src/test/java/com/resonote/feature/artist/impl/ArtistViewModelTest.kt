@@ -190,10 +190,21 @@ class ArtistViewModelTest {
 
         override suspend fun loadBanners(): CollectionLoadResult<List<Banner>> = unused()
         override suspend fun loadPlaylistCategories(): CollectionLoadResult<List<PlaylistCategory>> = unused()
-        override suspend fun loadCategoryPlaylists(categoryId: Int, page: Int, pageSize: Int): CollectionLoadResult<List<PlaylistSummary>> = unused()
+        override suspend fun loadCategoryPlaylists(
+            categoryId: Int,
+            page: Int,
+            pageSize: Int,
+        ): CollectionLoadResult<List<PlaylistSummary>> = unused()
         override suspend fun loadNewAlbums(page: Int, pageSize: Int): CollectionLoadResult<List<Album>> = unused()
-        override suspend fun loadNewSongs(page: Int, pageSize: Int): CollectionLoadResult<com.resonote.core.model.SongPage> = unused()
-        override suspend fun loadAlbumSongs(albumId: String, page: Int, pageSize: Int): CollectionLoadResult<CatalogSongPage> = unused()
+        override suspend fun loadNewSongs(
+            page: Int,
+            pageSize: Int,
+        ): CollectionLoadResult<com.resonote.core.model.SongPage> = unused()
+        override suspend fun loadAlbumSongs(
+            albumId: String,
+            page: Int,
+            pageSize: Int,
+        ): CollectionLoadResult<CatalogSongPage> = unused()
         override suspend fun loadArtistDetail(artistId: String): CollectionLoadResult<ArtistInfo?> = unused()
     }
 

@@ -7,11 +7,13 @@ import coil3.SingletonImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import com.resonote.core.network.connection.NetworkConnectionRecovery
 import dagger.hilt.android.HiltAndroidApp
-import javax.inject.Inject
 import okhttp3.OkHttpClient
+import javax.inject.Inject
 
 @HiltAndroidApp
-class ResonoteApplication : Application(), SingletonImageLoader.Factory {
+class ResonoteApplication :
+    Application(),
+    SingletonImageLoader.Factory {
     @Inject lateinit var networkConnectionRecovery: NetworkConnectionRecovery
 
     private val imageHttpClient: OkHttpClient by lazy {
@@ -41,12 +43,11 @@ class ResonoteApplication : Application(), SingletonImageLoader.Factory {
         networkConnectionRecovery.start()
     }
 
-    override fun newImageLoader(context: coil3.PlatformContext): ImageLoader =
-        ImageLoader.Builder(context)
-            .components {
-                add(OkHttpNetworkFetcherFactory(imageHttpClient))
-            }
-            .build()
+    override fun newImageLoader(context: coil3.PlatformContext): ImageLoader = ImageLoader.Builder(context)
+        .components {
+            add(OkHttpNetworkFetcherFactory(imageHttpClient))
+        }
+        .build()
 
     private companion object {
         const val IMAGE_LOG_TAG = "ResonoteImage"

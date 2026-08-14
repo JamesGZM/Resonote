@@ -4,17 +4,48 @@ import com.resonote.core.network.AuthNetworkDataSource
 import com.resonote.core.network.CatalogNetworkDataSource
 import com.resonote.core.network.CloudNetworkDataSource
 import com.resonote.core.network.HomeNetworkDataSource
-import com.resonote.core.network.LyricsNetworkDataSource
-import com.resonote.core.network.VideoNetworkDataSource
-import com.resonote.core.network.RecognitionNetworkDataSource
 import com.resonote.core.network.LibraryNetworkDataSource
+import com.resonote.core.network.LyricsNetworkDataSource
 import com.resonote.core.network.PlaybackNetworkDataSource
 import com.resonote.core.network.PlaylistNetworkDataSource
 import com.resonote.core.network.RankingNetworkDataSource
+import com.resonote.core.network.RecognitionNetworkDataSource
 import com.resonote.core.network.SearchNetworkDataSource
 import com.resonote.core.network.UserProfileNetworkDataSource
+import com.resonote.core.network.VideoNetworkDataSource
 import com.resonote.core.network.VipNetworkDataSource
-import com.resonote.core.network.model.*
+import com.resonote.core.network.model.NetworkAlbum
+import com.resonote.core.network.model.NetworkAlbumSongPage
+import com.resonote.core.network.model.NetworkArtistInfo
+import com.resonote.core.network.model.NetworkArtistSongPage
+import com.resonote.core.network.model.NetworkBanner
+import com.resonote.core.network.model.NetworkCloudPage
+import com.resonote.core.network.model.NetworkComplexSearch
+import com.resonote.core.network.model.NetworkLyricCandidate
+import com.resonote.core.network.model.NetworkMobileCodeLoginResult
+import com.resonote.core.network.model.NetworkPasswordLoginResult
+import com.resonote.core.network.model.NetworkPlaylistCategory
+import com.resonote.core.network.model.NetworkPlaylistPage
+import com.resonote.core.network.model.NetworkPlaylistSummary
+import com.resonote.core.network.model.NetworkPlaylistTrackInput
+import com.resonote.core.network.model.NetworkQrLoginStatus
+import com.resonote.core.network.model.NetworkRanking
+import com.resonote.core.network.model.NetworkRecognitionMatch
+import com.resonote.core.network.model.NetworkRecommendationMode
+import com.resonote.core.network.model.NetworkSearchAlbum
+import com.resonote.core.network.model.NetworkSearchArtist
+import com.resonote.core.network.model.NetworkSearchKeyword
+import com.resonote.core.network.model.NetworkSearchMv
+import com.resonote.core.network.model.NetworkSearchPage
+import com.resonote.core.network.model.NetworkSearchPlaylist
+import com.resonote.core.network.model.NetworkSearchResultPage
+import com.resonote.core.network.model.NetworkSong
+import com.resonote.core.network.model.NetworkSongPage
+import com.resonote.core.network.model.NetworkSongSource
+import com.resonote.core.network.model.NetworkUserDetail
+import com.resonote.core.network.model.NetworkUserPlaylist
+import com.resonote.core.network.model.NetworkUserVip
+import com.resonote.core.network.model.NetworkVipRewardResult
 
 /** Test-only convenience base while individual repository fakes migrate to narrow contracts. */
 internal abstract class TestApiNetworkDataSource :
@@ -38,19 +69,35 @@ internal abstract class TestApiNetworkDataSource :
     override suspend fun newSongs(page: Int, pageSize: Int): List<NetworkSong> = unused()
     override suspend fun radioRecommendations(mode: NetworkRecommendationMode): List<NetworkSong> = unused()
     override suspend fun recommendedPlaylists(page: Int, pageSize: Int): List<NetworkPlaylistSummary> = unused()
-    override suspend fun categoryPlaylists(categoryId: Int, page: Int, pageSize: Int): List<NetworkPlaylistSummary> = unused()
+    override suspend fun categoryPlaylists(categoryId: Int, page: Int, pageSize: Int): List<NetworkPlaylistSummary> =
+        unused()
     override suspend fun banners(): List<NetworkBanner> = unused()
     override suspend fun playlistCategories(): List<NetworkPlaylistCategory> = unused()
     override suspend fun newAlbums(page: Int, pageSize: Int): List<NetworkAlbum> = unused()
     override suspend fun albumSongs(albumId: String, page: Int, pageSize: Int): NetworkAlbumSongPage = unused()
     override suspend fun artistDetail(artistId: String): NetworkArtistInfo? = unused()
-    override suspend fun artistSongs(artistId: String, page: Int, pageSize: Int, newestFirst: Boolean): NetworkArtistSongPage = unused()
+    override suspend fun artistSongs(
+        artistId: String,
+        page: Int,
+        pageSize: Int,
+        newestFirst: Boolean,
+    ): NetworkArtistSongPage = unused()
     override suspend fun rankings(): List<NetworkRanking> = unused()
     override suspend fun rankingSongs(rankId: String, page: Int, pageSize: Int): NetworkSongPage = unused()
-    override suspend fun playlistSongs(globalCollectionId: String, page: Int, pageSize: Int): NetworkPlaylistPage = unused()
-    override suspend fun resolveSongSource(hash: String, albumId: String?, albumAudioId: String?, requestedQuality: String): NetworkSongSource = unused()
+    override suspend fun playlistSongs(globalCollectionId: String, page: Int, pageSize: Int): NetworkPlaylistPage =
+        unused()
+    override suspend fun resolveSongSource(
+        hash: String,
+        albumId: String?,
+        albumAudioId: String?,
+        requestedQuality: String,
+    ): NetworkSongSource = unused()
     override suspend fun sendMobileCode(mobile: String): Unit = unused()
-    override suspend fun loginWithMobileCode(mobile: String, code: String, selectedUserId: String?): NetworkMobileCodeLoginResult = unused()
+    override suspend fun loginWithMobileCode(
+        mobile: String,
+        code: String,
+        selectedUserId: String?,
+    ): NetworkMobileCodeLoginResult = unused()
     override suspend fun loginWithPassword(username: String, password: String): NetworkPasswordLoginResult = unused()
     override suspend fun createQrLoginKey(): String = unused()
     override suspend fun checkQrLogin(key: String): NetworkQrLoginStatus = unused()
@@ -61,12 +108,29 @@ internal abstract class TestApiNetworkDataSource :
     override suspend fun addPlaylistTracks(listId: String, tracks: List<NetworkPlaylistTrackInput>): Unit = unused()
     override suspend fun deletePlaylistTracks(listId: String, fileIds: List<String>): Unit = unused()
     override suspend fun cloudTracks(page: Int, pageSize: Int): NetworkCloudPage = unused()
-    override suspend fun resolveCloudSongSource(hash: String, albumAudioId: String?, name: String): NetworkSongSource = unused()
+    override suspend fun resolveCloudSongSource(hash: String, albumAudioId: String?, name: String): NetworkSongSource =
+        unused()
     override suspend fun searchSongs(keywords: String, page: Int, pageSize: Int): NetworkSearchPage = unused()
-    override suspend fun searchPlaylists(keywords: String, page: Int, pageSize: Int): NetworkSearchResultPage<NetworkSearchPlaylist> = unused()
-    override suspend fun searchAlbums(keywords: String, page: Int, pageSize: Int): NetworkSearchResultPage<NetworkSearchAlbum> = unused()
-    override suspend fun searchArtists(keywords: String, page: Int, pageSize: Int): NetworkSearchResultPage<NetworkSearchArtist> = unused()
-    override suspend fun searchMvs(keywords: String, page: Int, pageSize: Int): NetworkSearchResultPage<NetworkSearchMv> = unused()
+    override suspend fun searchPlaylists(
+        keywords: String,
+        page: Int,
+        pageSize: Int,
+    ): NetworkSearchResultPage<NetworkSearchPlaylist> = unused()
+    override suspend fun searchAlbums(
+        keywords: String,
+        page: Int,
+        pageSize: Int,
+    ): NetworkSearchResultPage<NetworkSearchAlbum> = unused()
+    override suspend fun searchArtists(
+        keywords: String,
+        page: Int,
+        pageSize: Int,
+    ): NetworkSearchResultPage<NetworkSearchArtist> = unused()
+    override suspend fun searchMvs(
+        keywords: String,
+        page: Int,
+        pageSize: Int,
+    ): NetworkSearchResultPage<NetworkSearchMv> = unused()
     override suspend fun searchComplex(keywords: String): NetworkComplexSearch = unused()
     override suspend fun hotSearchKeywords(): List<NetworkSearchKeyword> = unused()
     override suspend fun searchSuggestions(keywords: String): List<String> = unused()

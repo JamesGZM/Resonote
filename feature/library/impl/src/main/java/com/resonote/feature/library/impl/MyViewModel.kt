@@ -11,7 +11,6 @@ import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.PlaylistTrackInput
 import com.resonote.core.model.UserPlaylist
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +20,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
+import javax.inject.Inject
 
 @HiltViewModel
 class MyViewModel @Inject constructor(
@@ -257,11 +257,7 @@ class MyViewModel @Inject constructor(
         updateAuthenticated(userId) { it.copy(playlists = section) }
     }
 
-    private suspend fun refreshAfterPlaylistCreation(
-        userId: String,
-        name: String,
-        listId: String,
-    ) {
+    private suspend fun refreshAfterPlaylistCreation(userId: String, name: String, listId: String) {
         when (val refreshed = libraryRepository.loadPlaylists()) {
             is CollectionLoadResult.Available -> updateAuthenticated(userId) {
                 it.copy(

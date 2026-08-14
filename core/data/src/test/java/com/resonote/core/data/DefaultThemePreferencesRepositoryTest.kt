@@ -39,7 +39,8 @@ class DefaultThemePreferencesRepositoryTest {
         assertThat(repository.themePreferences.first()).isEqualTo(ThemePreferences(ThemeMode.SYSTEM, true))
     }
 
-    private class FakeAppearancePreferencesStorage(initial: StoredAppearancePreferences) : AppearancePreferencesStorage {
+    private class FakeAppearancePreferencesStorage(initial: StoredAppearancePreferences) :
+        AppearancePreferencesStorage {
         private val state = MutableStateFlow(initial)
         override val preferences = state
 

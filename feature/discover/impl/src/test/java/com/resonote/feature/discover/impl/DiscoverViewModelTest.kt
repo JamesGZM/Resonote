@@ -213,9 +213,18 @@ class DiscoverViewModelTest {
         }
 
         override suspend fun loadBanners(): CollectionLoadResult<List<Banner>> = unused()
-        override suspend fun loadAlbumSongs(albumId: String, page: Int, pageSize: Int): CollectionLoadResult<CatalogSongPage> = unused()
+        override suspend fun loadAlbumSongs(
+            albumId: String,
+            page: Int,
+            pageSize: Int,
+        ): CollectionLoadResult<CatalogSongPage> = unused()
         override suspend fun loadArtistDetail(artistId: String): CollectionLoadResult<ArtistInfo?> = unused()
-        override suspend fun loadArtistSongs(artistId: String, page: Int, pageSize: Int, newestFirst: Boolean): CollectionLoadResult<ArtistSongsPage> = unused()
+        override suspend fun loadArtistSongs(
+            artistId: String,
+            page: Int,
+            pageSize: Int,
+            newestFirst: Boolean,
+        ): CollectionLoadResult<ArtistSongsPage> = unused()
     }
 
     private class FakeRankingRepository : RankingRepository {
@@ -226,12 +235,17 @@ class DiscoverViewModelTest {
             return CollectionLoadResult.Available(listOf(Ranking("ranking", "热歌榜", null)))
         }
 
-        override suspend fun loadSongs(rankId: String, page: Int, pageSize: Int): CollectionLoadResult<SongPage> = unused()
+        override suspend fun loadSongs(rankId: String, page: Int, pageSize: Int): CollectionLoadResult<SongPage> =
+            unused()
     }
 
     private companion object {
         fun categories() = listOf(
-            PlaylistCategory(10, "风格", listOf(PlaylistCategory(11, "流行", emptyList()), PlaylistCategory(12, "摇滚", emptyList()))),
+            PlaylistCategory(
+                10,
+                "风格",
+                listOf(PlaylistCategory(11, "流行", emptyList()), PlaylistCategory(12, "摇滚", emptyList())),
+            ),
             PlaylistCategory(20, "场景", listOf(PlaylistCategory(21, "通勤", emptyList()))),
         )
 

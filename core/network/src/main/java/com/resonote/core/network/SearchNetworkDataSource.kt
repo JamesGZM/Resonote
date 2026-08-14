@@ -11,9 +11,21 @@ import com.resonote.core.network.model.NetworkSearchResultPage
 
 interface SearchNetworkDataSource {
     suspend fun searchSongs(keywords: String, page: Int = 1, pageSize: Int = 30): NetworkSearchPage
-    suspend fun searchPlaylists(keywords: String, page: Int = 1, pageSize: Int = 30): NetworkSearchResultPage<NetworkSearchPlaylist>
-    suspend fun searchAlbums(keywords: String, page: Int = 1, pageSize: Int = 30): NetworkSearchResultPage<NetworkSearchAlbum>
-    suspend fun searchArtists(keywords: String, page: Int = 1, pageSize: Int = 30): NetworkSearchResultPage<NetworkSearchArtist>
+    suspend fun searchPlaylists(
+        keywords: String,
+        page: Int = 1,
+        pageSize: Int = 30,
+    ): NetworkSearchResultPage<NetworkSearchPlaylist>
+    suspend fun searchAlbums(
+        keywords: String,
+        page: Int = 1,
+        pageSize: Int = 30,
+    ): NetworkSearchResultPage<NetworkSearchAlbum>
+    suspend fun searchArtists(
+        keywords: String,
+        page: Int = 1,
+        pageSize: Int = 30,
+    ): NetworkSearchResultPage<NetworkSearchArtist>
     suspend fun searchMvs(keywords: String, page: Int = 1, pageSize: Int = 30): NetworkSearchResultPage<NetworkSearchMv>
     suspend fun searchComplex(keywords: String): NetworkComplexSearch
     suspend fun hotSearchKeywords(): List<NetworkSearchKeyword>

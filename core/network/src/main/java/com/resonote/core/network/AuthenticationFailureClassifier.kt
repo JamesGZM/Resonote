@@ -2,7 +2,6 @@ package com.resonote.core.network
 
 import com.resonote.core.network.protocol.ApiSessionPropagation
 import com.resonote.core.network.session.ApiAuthenticationContext
-import com.resonote.core.network.session.ApiAuthenticationGateReason
 import com.resonote.core.network.session.ApiSessionManager
 
 internal object AuthenticationFailureClassifier {
@@ -16,10 +15,9 @@ internal object AuthenticationFailureClassifier {
         sessions: ApiSessionManager,
         context: ApiAuthenticationContext,
         serviceCode: String? = null,
-    ): ApiAuthenticationRequiredException? =
-        sessions.reportAuthenticationFailure(context)?.let { reason ->
-            ApiAuthenticationRequiredException(reason, serviceCode)
-        }
+    ): ApiAuthenticationRequiredException? = sessions.reportAuthenticationFailure(context)?.let { reason ->
+        ApiAuthenticationRequiredException(reason, serviceCode)
+    }
 
     private val AUTHENTICATION_HTTP_CODES = setOf(401, 403)
 }

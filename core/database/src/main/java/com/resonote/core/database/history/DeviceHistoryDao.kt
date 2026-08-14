@@ -76,18 +76,17 @@ interface DeviceHistoryDao {
         trimToLimit(limit)
     }
 
-    private suspend fun DeviceHistoryEntity.incrementExisting(): Int =
-        increment(
-            source = source,
-            mediaId = mediaId,
-            title = title,
-            artist = artist,
-            albumTitle = albumTitle,
-            artworkUri = artworkUri,
-            durationMillis = durationMillis,
-            albumAudioId = albumAudioId,
-            playedAtEpochMillis = lastPlayedAtEpochMillis,
-        )
+    private suspend fun DeviceHistoryEntity.incrementExisting(): Int = increment(
+        source = source,
+        mediaId = mediaId,
+        title = title,
+        artist = artist,
+        albumTitle = albumTitle,
+        artworkUri = artworkUri,
+        durationMillis = durationMillis,
+        albumAudioId = albumAudioId,
+        playedAtEpochMillis = lastPlayedAtEpochMillis,
+    )
 
     companion object {
         const val MAX_HISTORY_ITEMS = 500

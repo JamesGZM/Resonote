@@ -292,11 +292,7 @@ private fun ResonoteButtonContent(
 }
 
 @Composable
-private fun ButtonContentRow(
-    label: String,
-    visible: Boolean,
-    leading: (@Composable () -> Unit)?,
-) {
+private fun ButtonContentRow(label: String, visible: Boolean, leading: (@Composable () -> Unit)?) {
     Row(
         modifier = Modifier
             .alpha(if (visible) 1f else 0f)

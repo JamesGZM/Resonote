@@ -19,8 +19,8 @@ import androidx.compose.ui.platform.LocalView
 internal fun SyncSystemBars(navigationBarColor: Color) {
     val view = LocalView.current
     val activity = LocalContext.current.findComponentActivity()
-    val statusBarIsDark = MaterialTheme.colorScheme.background.luminance() < DarkSurfaceLuminanceThreshold
-    val navigationBarIsDark = navigationBarColor.luminance() < DarkSurfaceLuminanceThreshold
+    val statusBarIsDark = MaterialTheme.colorScheme.background.luminance() < DARK_SURFACE_LUMINANCE_THRESHOLD
+    val navigationBarIsDark = navigationBarColor.luminance() < DARK_SURFACE_LUMINANCE_THRESHOLD
     if (!view.isInEditMode && activity != null) {
         SideEffect {
             activity.enableEdgeToEdge(
@@ -43,14 +43,13 @@ private fun ComponentActivity.applyNavigationBarColor(color: Color) {
     }
 }
 
-private fun Color.toSystemBarStyle(isDark: Boolean): SystemBarStyle =
-    if (isDark) {
-        SystemBarStyle.dark(toArgb())
-    } else {
-        SystemBarStyle.light(scrim = toArgb(), darkScrim = toArgb())
-    }
+private fun Color.toSystemBarStyle(isDark: Boolean): SystemBarStyle = if (isDark) {
+    SystemBarStyle.dark(toArgb())
+} else {
+    SystemBarStyle.light(scrim = toArgb(), darkScrim = toArgb())
+}
 
-private const val DarkSurfaceLuminanceThreshold = 0.5f
+private const val DARK_SURFACE_LUMINANCE_THRESHOLD = 0.5f
 
 private tailrec fun Context.findComponentActivity(): ComponentActivity? = when (this) {
     is ComponentActivity -> this

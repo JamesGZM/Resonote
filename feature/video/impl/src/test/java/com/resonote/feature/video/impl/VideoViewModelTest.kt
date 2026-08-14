@@ -81,9 +81,8 @@ class VideoViewModelTest {
         assertThat(repository.hashes).containsExactly("mv-hash", "mv-hash").inOrder()
     }
 
-    private class FakeVideoRepository(
-        private val results: ArrayDeque<CollectionLoadResult<String?>>,
-    ) : VideoRepository {
+    private class FakeVideoRepository(private val results: ArrayDeque<CollectionLoadResult<String?>>) :
+        VideoRepository {
         val hashes = mutableListOf<String>()
 
         override suspend fun resolveVideoUrl(hash: String): CollectionLoadResult<String?> {

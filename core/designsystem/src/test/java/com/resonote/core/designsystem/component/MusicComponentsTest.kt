@@ -81,7 +81,7 @@ class MusicComponentsTest {
     }
 
     @Test
-    fun longQualityLabel_isAbbreviatedOnArtwork() {
+    fun qualityAndVipLabels_areRenderedSeparatelyBesideTitle() {
         composeRule.setContent {
             ResonoteTheme {
                 Column {
@@ -122,10 +122,10 @@ class MusicComponentsTest {
             }
         }
 
-        composeRule.onNodeWithText("LOSSLESS").assertDoesNotExist()
-        composeRule.onNodeWithText("SQ · VIP").assertExists()
+        composeRule.onNodeWithText("LOSSLESS").assertExists()
+        composeRule.onNodeWithText("VIP").assertExists()
         composeRule.onNodeWithText("HQ").assertExists()
-        composeRule.onNodeWithText("HR").assertExists()
-        composeRule.onNodeWithText("MASTER").assertDoesNotExist()
+        composeRule.onNodeWithText("HIGH RESOLUTION").assertExists()
+        composeRule.onNodeWithText("MASTER").assertExists()
     }
 }

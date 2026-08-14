@@ -11,7 +11,4 @@ sealed interface NetworkQrLoginStatus {
     data class Authenticated(val session: ApiSession) : NetworkQrLoginStatus
 }
 
-data class NetworkVipRewardResult(
-    val alreadyDone: Boolean,
-    val canUpgrade: Boolean,
-)
+data class NetworkVipRewardResult(val alreadyDone: Boolean, val canUpgrade: Boolean)

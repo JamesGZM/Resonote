@@ -9,11 +9,11 @@ import com.resonote.core.network.model.NetworkUserVip
 import com.resonote.core.network.protocol.ApiEndpointOrigins
 import com.resonote.core.network.protocol.ApiProtocolCrypto
 import com.resonote.core.network.protocol.DeviceRegistrationCoordinator
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import java.time.Clock
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 
 @Singleton
 internal class RealUserProfileNetworkDataSource @Inject constructor(
@@ -64,13 +64,19 @@ internal class RealUserProfileNetworkDataSource @Inject constructor(
         val active = response.data?.businessVip.orEmpty().firstOrNull { it.isVip == 1L }
         return NetworkUserVip(
             isVip = active != null,
-            label = if (active?.productType.equals("svip", ignoreCase = true)) "SVIP" else if (active != null) "VIP" else "",
+            label = if (active?.productType.equals("svip", ignoreCase = true)) {
+                "SVIP"
+            } else if (active !=
+                null
+            ) {
+                "VIP"
+            } else {
+                ""
+            },
         )
     }
 
-    private suspend fun requireAuthenticatedSession() =
-        registration.requireAuthenticatedSession()
+    private suspend fun requireAuthenticatedSession() = registration.requireAuthenticatedSession()
 
     private fun missingField() = ApiProtocolException(ApiProtocolException.Reason.MissingRequiredField)
-
 }

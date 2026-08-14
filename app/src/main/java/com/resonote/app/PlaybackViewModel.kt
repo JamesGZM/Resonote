@@ -11,13 +11,11 @@ import com.resonote.core.playback.PlaybackItem
 import com.resonote.core.playback.PlaybackMode
 import com.resonote.core.playback.PlaybackState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.flow.StateFlow
+import javax.inject.Inject
 
 @HiltViewModel
-internal class PlaybackViewModel @Inject constructor(
-    private val playbackController: PlaybackController,
-) : ViewModel() {
+internal class PlaybackViewModel @Inject constructor(private val playbackController: PlaybackController) : ViewModel() {
     val state: StateFlow<PlaybackState> = playbackController.state
 
     fun play(song: OnlineSong) {

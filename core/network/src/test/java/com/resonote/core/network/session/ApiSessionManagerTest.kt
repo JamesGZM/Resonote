@@ -2,11 +2,10 @@ package com.resonote.core.network.session
 
 import com.google.common.truth.Truth.assertThat
 import com.resonote.core.network.protocol.ApiDeviceIdentityFactory
-import java.util.Optional
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.toList
@@ -15,6 +14,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
+import java.util.Optional
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ApiSessionManagerTest {
@@ -142,7 +142,13 @@ class ApiSessionManagerTest {
         val manager = ApiSessionManager(Optional.of(store), ApiDeviceIdentityFactory())
         manager.current()
         val staleRequest = manager.authenticationContext()
-        val newerSession = authenticatedSession().copy(token = "new-token", cookies = mapOf("token" to "new-token", "userid" to "42"))
+        val newerSession = authenticatedSession().copy(
+            token = "new-token",
+            cookies = mapOf(
+                "token" to "new-token",
+                "userid" to "42",
+            ),
+        )
 
         manager.write(newerSession)
         val reason = manager.reportAuthenticationFailure(staleRequest)
@@ -197,29 +203,27 @@ class ApiSessionManagerTest {
         }
     }
 
-    private fun authenticatedSession() =
-        anonymousSession().copy(
-            token = "secret-token",
-            userId = "42",
-            cookies = mapOf(
-                "token" to "secret-token",
-                "userid" to "42",
-                "t1" to "secret-t1",
-                "vip_type" to "1",
-                "vip_token" to "secret-vip",
-                "dfid" to "fixture-dfid",
-                "device" to "kept",
-            ),
-        )
+    private fun authenticatedSession() = anonymousSession().copy(
+        token = "secret-token",
+        userId = "42",
+        cookies = mapOf(
+            "token" to "secret-token",
+            "userid" to "42",
+            "t1" to "secret-t1",
+            "vip_type" to "1",
+            "vip_token" to "secret-vip",
+            "dfid" to "fixture-dfid",
+            "device" to "kept",
+        ),
+    )
 
-    private fun anonymousSession() =
-        ApiSession(
-            guid = "fixture-guid",
-            mid = "fixture-mid",
-            dev = "fixture-dev",
-            dfid = "fixture-dfid",
-            cookies = mapOf("dfid" to "fixture-dfid", "device" to "kept"),
-        )
+    private fun anonymousSession() = ApiSession(
+        guid = "fixture-guid",
+        mid = "fixture-mid",
+        dev = "fixture-dev",
+        dfid = "fixture-dfid",
+        cookies = mapOf("dfid" to "fixture-dfid", "device" to "kept"),
+    )
 
     private companion object {
         val AUTH_KEYS = setOf("token", "userid", "t1", "vip_type", "vip_token")

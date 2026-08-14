@@ -83,7 +83,4 @@ sealed interface LocalMediaDeleteResult {
     data object Failed : LocalMediaDeleteResult
 }
 
-data class LocalMediaPlaybackSource(
-    val uri: String,
-    val media: LocalMedia,
-)
+data class LocalMediaPlaybackSource(val uri: String, val media: LocalMedia)

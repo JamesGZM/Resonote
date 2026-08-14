@@ -9,7 +9,6 @@ import com.resonote.core.model.LocalMediaDuplicateAction
 import com.resonote.core.model.LocalMediaImportFailure
 import com.resonote.core.model.LocalMediaImportResult
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,6 +17,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @HiltViewModel
 class LocalMusicViewModel @Inject constructor(
@@ -68,7 +68,11 @@ class LocalMusicViewModel @Inject constructor(
     }
 
     fun importDirectory(treeUri: String): Boolean {
-        if (treeUri.isBlank() || importJob?.isActive == true || scanJob?.isActive == true || pendingDuplicateUri != null) {
+        if (treeUri.isBlank() ||
+            importJob?.isActive == true ||
+            scanJob?.isActive == true ||
+            pendingDuplicateUri != null
+        ) {
             return false
         }
         scanJob = viewModelScope.launch {
@@ -124,8 +128,9 @@ class LocalMusicViewModel @Inject constructor(
                 ) {
                     is LocalMediaImportResult.Imported -> imported += 1
                     is LocalMediaImportResult.Failed -> failures += result.reason
-                    is LocalMediaImportResult.DuplicateConfirmationRequired -> failures +=
-                        LocalMediaImportFailure.IndexUnavailable
+                    is LocalMediaImportResult.DuplicateConfirmationRequired ->
+                        failures +=
+                            LocalMediaImportFailure.IndexUnavailable
                 }
                 completed += 1
                 continueImport()

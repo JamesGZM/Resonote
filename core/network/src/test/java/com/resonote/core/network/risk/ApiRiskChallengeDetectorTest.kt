@@ -55,8 +55,6 @@ class ApiRiskChallengeDetectorTest {
         assertThat(detector.detect(response)).isNull()
     }
 
-    private fun response(
-        body: String,
-        headers: Map<String, List<String>> = emptyMap(),
-    ) = ApiRawResponse(200, headers, body.encodeToByteArray(), Json.parseToJsonElement(body).jsonObject)
+    private fun response(body: String, headers: Map<String, List<String>> = emptyMap()) =
+        ApiRawResponse(200, headers, body.encodeToByteArray(), Json.parseToJsonElement(body).jsonObject)
 }

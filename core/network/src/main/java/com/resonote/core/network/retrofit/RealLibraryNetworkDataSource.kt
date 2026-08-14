@@ -32,7 +32,8 @@ internal class RealLibraryNetworkDataSource @Inject constructor(
         val token = requireNotNull(session.token)
         val response = calls.execute {
             musicApi.userPlaylists(
-                userId = userId.toLongOrNull() ?: throw missingField(), token = token,
+                userId = userId.toLongOrNull() ?: throw missingField(),
+                token = token,
                 body = UserPlaylistsRequest(userId, token, 979, 2, page, pageSize),
             )
         }
@@ -43,7 +44,15 @@ internal class RealLibraryNetworkDataSource @Inject constructor(
             val globalId = item.globalId?.takeIf(String::isNotBlank) ?: return@mapNotNull null
             val name = item.name?.takeIf(String::isNotBlank) ?: return@mapNotNull null
             if (item.authors != null) return@mapNotNull null
-            NetworkUserPlaylist(listId, globalId, name, item.pic?.takeIf(String::isNotBlank), item.count?.coerceAtLeast(0) ?: 0, item.ownerUserId == userId, name == LIKE_PLAYLIST_NAME)
+            NetworkUserPlaylist(
+                listId,
+                globalId,
+                name,
+                item.pic?.takeIf(String::isNotBlank),
+                item.count?.coerceAtLeast(0) ?: 0,
+                item.ownerUserId == userId,
+                name == LIKE_PLAYLIST_NAME,
+            )
         }.also { if (raw.isNotEmpty() && it.isEmpty()) throw malformedResponse() }
     }
 
@@ -55,7 +64,9 @@ internal class RealLibraryNetworkDataSource @Inject constructor(
         val token = requireNotNull(session.token)
         val response = calls.execute {
             musicApi.createPlaylist(
-                lastTime = clock.millis() / 1_000, userId = userId.toLongOrNull() ?: throw missingField(), token = token,
+                lastTime = clock.millis() / 1_000,
+                userId = userId.toLongOrNull() ?: throw missingField(),
+                token = token,
                 body = PlaylistCreateRequest(userId, token, 0, normalized, 0, 1, 0, userId, "", 0),
             )
         }
@@ -69,13 +80,18 @@ internal class RealLibraryNetworkDataSource @Inject constructor(
         val session = registration.requireAuthenticatedSession()
         val resources = tracks.map { track ->
             require(track.hash.isNotBlank()) { "track hash must not be blank" }
-            PlaylistTrackResource(1, "${track.artist} - ${track.title}".replace(PLAYLIST_SEPARATOR_PATTERN, " "), track.hash, 0, 0, 0, 0, track.albumId?.toLongOrNull() ?: 0, track.albumAudioId?.toLongOrNull() ?: 0)
+            PlaylistTrackResource(
+                1, "${track.artist} - ${track.title}".replace(PLAYLIST_SEPARATOR_PATTERN, " "), track.hash, 0, 0, 0, 0,
+                track.albumId?.toLongOrNull() ?: 0, track.albumAudioId?.toLongOrNull() ?: 0,
+            )
         }
         val userId = requireNotNull(session.userId)
         val token = requireNotNull(session.token)
         val response = calls.execute {
             musicApi.addPlaylistTracks(
-                lastTime = clock.millis() / 1_000, userId = userId.toLongOrNull() ?: throw missingField(), token = token,
+                lastTime = clock.millis() / 1_000,
+                userId = userId.toLongOrNull() ?: throw missingField(),
+                token = token,
                 body = PlaylistTracksAddRequest(userId, token, listId, 0, 0, 1, "false;null", resources),
             )
         }
@@ -85,10 +101,24 @@ internal class RealLibraryNetworkDataSource @Inject constructor(
     override suspend fun deletePlaylistTracks(listId: String, fileIds: List<String>) {
         require(listId.isNotBlank()) { "listId must not be blank" }
         require(fileIds.isNotEmpty()) { "fileIds must not be empty" }
-        val resources = fileIds.map { PlaylistFileResource(it.toLongOrNull()?.takeIf { value -> value > 0 } ?: throw IllegalArgumentException("fileIds must be positive numbers")) }
+        val resources = fileIds.map {
+            PlaylistFileResource(
+                it.toLongOrNull()?.takeIf { value -> value > 0 }
+                    ?: throw IllegalArgumentException("fileIds must be positive numbers"),
+            )
+        }
         val session = registration.requireAuthenticatedSession()
         val response = calls.execute {
-            musicApi.deletePlaylistTracks(PlaylistTracksDeleteRequest(listId, requireNotNull(session.userId), resources, 0, requireNotNull(session.token), 0))
+            musicApi.deletePlaylistTracks(
+                PlaylistTracksDeleteRequest(
+                    listId,
+                    requireNotNull(session.userId),
+                    resources,
+                    0,
+                    requireNotNull(session.token),
+                    0,
+                ),
+            )
         }
         responses.requireWriteSuccess(response)
     }

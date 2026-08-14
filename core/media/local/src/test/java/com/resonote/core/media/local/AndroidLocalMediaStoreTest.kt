@@ -226,12 +226,9 @@ class AndroidLocalMediaStoreTest {
         ioDispatcher = UnconfinedTestDispatcher(),
     )
 
-    private fun <T> LocalMediaStoreResult<T>.successValue(): T =
-        (this as LocalMediaStoreResult.Success<T>).value
+    private fun <T> LocalMediaStoreResult<T>.successValue(): T = (this as LocalMediaStoreResult.Success<T>).value
 
-    private class FakeSourceGateway(
-        var bytes: ByteArray,
-    ) : LocalMediaSourceGateway {
+    private class FakeSourceGateway(var bytes: ByteArray) : LocalMediaSourceGateway {
         var openCount = 0
         var openOverride: (() -> InputStream)? = null
 
@@ -247,9 +244,7 @@ class AndroidLocalMediaStoreTest {
         }
     }
 
-    private class FakeMediaProbe(
-        private val artwork: ByteArray?,
-    ) : LocalMediaProbe {
+    private class FakeMediaProbe(private val artwork: ByteArray?) : LocalMediaProbe {
         var fileFailure: RuntimeException? = null
 
         override fun inspect(uri: Uri, displayName: String) = MediaProbeResult(METADATA, artwork = null)
@@ -260,10 +255,7 @@ class AndroidLocalMediaStoreTest {
         }
     }
 
-    private class FailingInputStream(
-        private val bytes: ByteArray,
-        private val failAfterBytes: Int,
-    ) : InputStream() {
+    private class FailingInputStream(private val bytes: ByteArray, private val failAfterBytes: Int) : InputStream() {
         private var position = 0
 
         override fun read(): Int {

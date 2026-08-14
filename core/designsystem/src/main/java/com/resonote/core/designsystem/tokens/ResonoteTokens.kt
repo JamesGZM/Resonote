@@ -14,6 +14,9 @@ import androidx.compose.ui.unit.dp
 @Immutable
 data class ResonoteSystemColors internal constructor(
     val shadow: Color = Color.Black,
+    val onScrim: Color = Color.White,
+    val mediaCanvas: Color = Color.Black,
+    val onMediaCanvas: Color = Color.White,
 )
 
 @Immutable
@@ -24,10 +27,7 @@ data class ResonoteArtworkShapes internal constructor(
 )
 
 @Immutable
-data class ResonoteExtendedShapes internal constructor(
-    val none: Shape = RectangleShape,
-    val full: Shape = CircleShape,
-)
+data class ResonoteExtendedShapes internal constructor(val none: Shape = RectangleShape, val full: Shape = CircleShape)
 
 internal val LocalResonoteSpacing = staticCompositionLocalOf { ResonoteSpacing() }
 internal val LocalResonoteBorders = staticCompositionLocalOf { ResonoteBorders() }
@@ -44,27 +44,39 @@ internal val LocalResonoteSystemColors = staticCompositionLocalOf { ResonoteSyst
 
 object ResonoteTokens {
     val spacing: ResonoteSpacing
-        @Composable @ReadOnlyComposable get() = LocalResonoteSpacing.current
+        @Composable @ReadOnlyComposable
+        get() = LocalResonoteSpacing.current
     val borders: ResonoteBorders
-        @Composable @ReadOnlyComposable get() = LocalResonoteBorders.current
+        @Composable @ReadOnlyComposable
+        get() = LocalResonoteBorders.current
     val touchTargets: ResonoteTouchTargets
-        @Composable @ReadOnlyComposable get() = LocalResonoteTouchTargets.current
+        @Composable @ReadOnlyComposable
+        get() = LocalResonoteTouchTargets.current
     val elevation: ResonoteElevation
-        @Composable @ReadOnlyComposable get() = LocalResonoteElevation.current
+        @Composable @ReadOnlyComposable
+        get() = LocalResonoteElevation.current
     val layout: ResonoteLayoutTokens
-        @Composable @ReadOnlyComposable get() = LocalResonoteLayout.current
+        @Composable @ReadOnlyComposable
+        get() = LocalResonoteLayout.current
     val icons: ResonoteIconTokens
-        @Composable @ReadOnlyComposable get() = LocalResonoteIcons.current
+        @Composable @ReadOnlyComposable
+        get() = LocalResonoteIcons.current
     val artwork: ResonoteArtworkTokens
-        @Composable @ReadOnlyComposable get() = LocalResonoteArtwork.current
+        @Composable @ReadOnlyComposable
+        get() = LocalResonoteArtwork.current
     val artworkShapes: ResonoteArtworkShapes
-        @Composable @ReadOnlyComposable get() = LocalResonoteArtworkShapes.current
+        @Composable @ReadOnlyComposable
+        get() = LocalResonoteArtworkShapes.current
     val shapes: ResonoteExtendedShapes
-        @Composable @ReadOnlyComposable get() = LocalResonoteExtendedShapes.current
+        @Composable @ReadOnlyComposable
+        get() = LocalResonoteExtendedShapes.current
     val motion: ResonoteMotionScheme
-        @Composable @ReadOnlyComposable get() = LocalResonoteMotion.current
+        @Composable @ReadOnlyComposable
+        get() = LocalResonoteMotion.current
     val stateLayers: ResonoteStateLayers
-        @Composable @ReadOnlyComposable get() = LocalResonoteStateLayers.current
+        @Composable @ReadOnlyComposable
+        get() = LocalResonoteStateLayers.current
     val systemColors: ResonoteSystemColors
-        @Composable @ReadOnlyComposable get() = LocalResonoteSystemColors.current
+        @Composable @ReadOnlyComposable
+        get() = LocalResonoteSystemColors.current
 }

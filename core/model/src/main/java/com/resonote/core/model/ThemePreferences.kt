@@ -7,7 +7,4 @@ enum class ThemeMode {
     AMOLED,
 }
 
-data class ThemePreferences(
-    val themeMode: ThemeMode = ThemeMode.SYSTEM,
-    val dynamicColorEnabled: Boolean = false,
-)
+data class ThemePreferences(val themeMode: ThemeMode = ThemeMode.SYSTEM, val dynamicColorEnabled: Boolean = false)
