@@ -106,6 +106,14 @@ design/validation/
 ./gradlew :core:designsystem:verifyRoborazziDebug
 ```
 
+### 6.1 Roborazzi 回归规则
+
+- PR 和 `main` 的 GitHub `Build` 必须执行全项目 `verifyRoborazziDebug`；Release 不是首次发现截图差异的环境。
+- Linux CI 是跨平台验证权威环境。本机通过、CI 失败时，必须先审查 `roborazzi-failure-*` Artifact 中的 actual、compare 和 report。
+- `DefaultRoborazziOptions` 的 `changeThreshold` 固定为 `0.00001`（`0.001%`），只用于容忍跨平台 Skia 的极少像素噪声。任何阈值放宽都必须有 CI diff percentage 与人工图像审查证据。
+- Golden 只因已批准的视觉变更而更新。单像素噪声不重录 Golden，真实布局、颜色、文字或状态变化不得用阈值或盲目覆盖基线规避。
+- 交互后截图必须等待 Compose 达到稳定帧，避免捕获 Ripple、Dialog 或 Sheet 的过渡中间帧。
+
 06A Golden 覆盖 Light、Dark、AMOLED、200% 字号、Disabled、Loading 与 Toggle。06B-1 Golden 覆盖 Text Field 持久状态、Metadata/Action、Light、Dark、AMOLED、100%/130%/200% 字号、RTL 与五档窗口成对矩阵；200% Metadata/Action 基线验证 Prefix/Suffix 独立行以及 Error、Disabled、Read-only 和 Trailing Action。行为测试另覆盖状态提升、IME Action、单/多行、Password Semantics、Unicode Code Point 长度限制、错误优先级、24dp 装饰图标和 48dp Trailing Action。
 
 00B 的 API 32 Light `1×` 实现证据保存在 `design/validation/recordings/v-10_resonote-splash_api32_light_1x.mp4` 与 `design/validation/screenshots/v-10_resonote-splash_api32_light_1x_frame.png`；环境和结果见 `design/validation/reports/00b-startup-evidence.md`。

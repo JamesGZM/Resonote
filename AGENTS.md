@@ -24,6 +24,8 @@
 
 - Network 行为：`./gradlew :core:network:testDebugUnitTest`
 - Data 映射：`./gradlew :core:data:testDebugUnitTest`
+- Compose 外观或截图基线：运行相关 Roborazzi Task；PR 和 `main` 的 Linux CI 必须通过 `verifyRoborazziDebug`。
 - 文档治理：`./gradlew checkDocumentation`
 - Kotlin/KTS 格式：对所有改动模块运行对应的 `spotlessCheck`。
 - 提交前：运行最相关测试、改动模块的 Spotless 检查及 `git diff --check`，并说明未运行的较慢检查。
+- 发布前：Tag 只能指向已通过完整 Build 与 Roborazzi 门禁的 `main` 提交；Release 不能是该提交首次执行完整验证的地方。

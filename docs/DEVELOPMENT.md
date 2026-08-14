@@ -90,7 +90,17 @@ Feature -> Repository interface -> Repository implementation
 
 优先使用 Fake 和确定性输入验证状态与输出。Mock 调用次数只在调用本身就是合同的时候使用。提交前至少运行最相关测试、改动模块的 Spotless 检查与 `git diff --check`。
 
-## 9. 何时查看参考仓库
+## 9. Release 发布门禁
+
+1. 合并所有发布改动，确认目标 `main` SHA 已通过 GitHub `Build`；该 Build 必须包含 Assemble、Lint 和 `verifyRoborazziDebug`。
+2. 确认 `versionName` / `versionCode` 与待创建的 `v<versionName>` 一致，且远程不存在同名 Tag 或 Release。
+3. 只在已验证的 `main` SHA 上创建 annotated Tag。Release 工作流用于复验、签名、打包和创建 Draft Release，不承担首次回归检查。
+4. 工作流成功后核对 APK、AAB、`SHA256SUMS.txt` 和 Tag 目标，再人工发布 Draft。
+5. 已公开或已被外部消费的 Tag 不得移动。只有在 Release 未创建、无发布附件且已确认失败的情况下，才可删除同名 Tag 后在新的已验证 SHA 上重建。
+
+Roborazzi 与 Release 门禁的根因和取舍见 [ADR-0004](adr/0004-roborazzi-release-gate.md)。
+
+## 10. 何时查看参考仓库
 
 以下情况才需要回看固定参考：
 
