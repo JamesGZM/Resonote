@@ -18,12 +18,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.RippleConfiguration
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -55,53 +58,76 @@ fun PlaybackQueueSheet(
     onClear: () -> Unit,
     onModeChange: (PlaybackMode) -> Unit,
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
-        Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        stringResource(R.string.feature_player_impl_queue_title),
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        stringResource(R.string.feature_player_impl_queue_count, playback.queue.size),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                TextButton(onClick = { onModeChange(playback.mode.nextQueueMode()) }) {
-                    Text(playback.mode.queueModeLabel())
-                }
-                TextButton(onClick = onClear, enabled = playback.queue.isNotEmpty()) {
-                    Text(stringResource(R.string.feature_player_impl_clear))
-                }
+    CompositionLocalProvider(LocalRippleConfiguration provides null) {
+        ModalBottomSheet(onDismissRequest = onDismiss) {
+            CompositionLocalProvider(LocalRippleConfiguration provides RippleConfiguration()) {
+                QueueSheetContent(
+                    playback = playback,
+                    onSelect = onSelect,
+                    onRemove = onRemove,
+                    onMove = onMove,
+                    onClear = onClear,
+                    onModeChange = onModeChange,
+                )
             }
-            Spacer(Modifier.height(8.dp))
-            if (playback.queue.isEmpty()) {
+        }
+    }
+}
+
+@Composable
+private fun QueueSheetContent(
+    playback: PlaybackState,
+    onSelect: (Int) -> Unit,
+    onRemove: (Int) -> Unit,
+    onMove: (Int, Int) -> Unit,
+    onClear: () -> Unit,
+    onModeChange: (PlaybackMode) -> Unit,
+) {
+    Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f)) {
                 Text(
-                    stringResource(R.string.feature_player_impl_empty_queue),
-                    modifier = Modifier.padding(24.dp),
+                    stringResource(R.string.feature_player_impl_queue_title),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    stringResource(R.string.feature_player_impl_queue_count, playback.queue.size),
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-            } else {
-                LazyColumn {
-                    itemsIndexed(playback.queue, key = { _, item -> item.queueKey }) { index, item ->
-                        val selected = index == playback.currentIndex
-                        QueueItem(
-                            title = item.metadata.title,
-                            artist = item.metadata.artist.orEmpty(),
-                            selected = selected,
-                            index = index,
-                            lastIndex = playback.queue.lastIndex,
-                            onSelect = { onSelect(index) },
-                            onRemove = { onRemove(index) },
-                            onMove = onMove,
-                        )
-                    }
+            }
+            TextButton(onClick = { onModeChange(playback.mode.nextQueueMode()) }) {
+                Text(playback.mode.queueModeLabel())
+            }
+            TextButton(onClick = onClear, enabled = playback.queue.isNotEmpty()) {
+                Text(stringResource(R.string.feature_player_impl_clear))
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        if (playback.queue.isEmpty()) {
+            Text(
+                stringResource(R.string.feature_player_impl_empty_queue),
+                modifier = Modifier.padding(24.dp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        } else {
+            LazyColumn {
+                itemsIndexed(playback.queue, key = { _, item -> item.queueKey }) { index, item ->
+                    val selected = index == playback.currentIndex
+                    QueueItem(
+                        title = item.metadata.title,
+                        artist = item.metadata.artist.orEmpty(),
+                        selected = selected,
+                        index = index,
+                        lastIndex = playback.queue.lastIndex,
+                        onSelect = { onSelect(index) },
+                        onRemove = { onRemove(index) },
+                        onMove = onMove,
+                    )
                 }
             }
         }

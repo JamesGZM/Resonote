@@ -64,7 +64,6 @@ internal fun TabsShell(
     onPlaySong: (OnlineSong) -> Unit = {},
     onPlaySongs: (List<OnlineSong>, Int) -> Unit = { _, _ -> },
     onTogglePlay: () -> Unit = {},
-    onNext: () -> Unit = {},
     onOpenPlayer: () -> Unit = {},
     onSelectQueueItem: (Int) -> Unit = {},
     onRemoveQueueItem: (Int) -> Unit = {},
@@ -220,13 +219,12 @@ internal fun TabsShell(
                         ),
                         onOpenPlayer = onOpenPlayer,
                         onTogglePlay = onTogglePlay,
-                        onNext = onNext,
                         onOpenQueue = { queueOpen = true },
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
+                            .padding(horizontal = 16.dp, vertical = 16.dp)
                             .testTag("resonote-mini-player")
-                            .onGloballyPositioned { miniPlayerTopPx = it.boundsInRoot().top }
-                            .padding(horizontal = 16.dp, vertical = 16.dp),
+                            .onGloballyPositioned { miniPlayerTopPx = it.boundsInRoot().top },
                     )
                 }
             }

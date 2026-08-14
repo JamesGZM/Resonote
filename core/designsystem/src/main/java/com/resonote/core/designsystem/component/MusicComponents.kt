@@ -35,6 +35,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -58,6 +59,7 @@ fun ResonoteArtwork(
     state: ResonoteArtworkState,
     contentDescription: String?,
     modifier: Modifier = Modifier,
+    shape: Shape = ResonoteTokens.artworkShapes.compact,
     artwork: @Composable BoxScope.() -> Unit = {},
 ) {
     val placeholderColor = when (state) {
@@ -67,7 +69,7 @@ fun ResonoteArtwork(
     }
     Box(
         modifier = modifier
-            .clip(ResonoteTokens.artworkShapes.compact)
+            .clip(shape)
             .background(placeholderColor)
             .semantics {
                 if (contentDescription != null) this.contentDescription = contentDescription
@@ -222,7 +224,8 @@ fun ResonoteMusicItem(
         ResonoteArtwork(
             state = effectiveArtworkState,
             contentDescription = stringResource(R.string.core_designsystem_song_artwork, title),
-            modifier = Modifier.size(64.dp).clip(ResonoteTokens.artworkShapes.standard),
+            modifier = Modifier.size(64.dp),
+            shape = ResonoteTokens.artworkShapes.standard,
             artwork = {
                 if (artworkUrl.isNullOrBlank()) {
                     artwork()
@@ -235,9 +238,12 @@ fun ResonoteMusicItem(
                     )
                 }
                 if (effectiveArtworkState == ResonoteArtworkState.LOADED) {
-                    ArtworkBadges(
-                        qualityLabel = qualityLabel?.toCompactQualityLabel(),
+                    ResonoteArtworkBadge(
+                        qualityLabel = qualityLabel,
                         isVip = isVip,
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(4.dp),
                     )
                 }
             },
@@ -248,7 +254,7 @@ fun ResonoteMusicItem(
         } else {
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
                     text = title,
@@ -304,40 +310,34 @@ fun ResonoteMusicItem(
 }
 
 @Composable
-private fun BoxScope.ArtworkBadges(qualityLabel: String?, isVip: Boolean) {
+fun ResonoteArtworkBadge(
+    qualityLabel: String?,
+    isVip: Boolean,
+    modifier: Modifier = Modifier,
+) {
     val label = listOfNotNull(
-        qualityLabel,
+        qualityLabel?.toCompactQualityLabel(),
         "VIP".takeIf { isVip },
     ).joinToString(separator = " · ")
     if (label.isNotEmpty()) {
-        ArtworkBadge(
-            label = label,
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(4.dp),
-        )
-    }
-}
-
-@Composable
-private fun ArtworkBadge(label: String, modifier: Modifier = Modifier) {
-    val badgeFontSize = with(LocalDensity.current) { 8.dp.toSp() }
-    val badgeLineHeight = with(LocalDensity.current) { 10.dp.toSp() }
-    Surface(
-        modifier = modifier,
-        color = Color.Black.copy(alpha = 0.62f),
-        contentColor = Color.White,
-        shape = RoundedCornerShape(4.dp),
-    ) {
-        Text(
-            text = label,
-            modifier = Modifier.padding(horizontal = 3.dp, vertical = 1.dp),
-            style = MaterialTheme.typography.labelSmall,
-            fontSize = badgeFontSize,
-            lineHeight = badgeLineHeight,
-            maxLines = 1,
-            softWrap = false,
-        )
+        Surface(
+            modifier = modifier,
+            color = Color.Black.copy(alpha = 0.62f),
+            contentColor = Color.White,
+            shape = RoundedCornerShape(4.dp),
+        ) {
+            val badgeFontSize = with(LocalDensity.current) { 8.dp.toSp() }
+            val badgeLineHeight = with(LocalDensity.current) { 10.dp.toSp() }
+            Text(
+                text = label,
+                modifier = Modifier.padding(horizontal = 3.dp, vertical = 1.dp),
+                style = MaterialTheme.typography.labelSmall,
+                fontSize = badgeFontSize,
+                lineHeight = badgeLineHeight,
+                maxLines = 1,
+                softWrap = false,
+            )
+        }
     }
 }
 

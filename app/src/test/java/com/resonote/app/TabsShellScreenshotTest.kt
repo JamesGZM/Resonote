@@ -190,8 +190,9 @@ class TabsShellScreenshotTest {
             .fetchSemanticsNode().boundsInRoot.bottom
         val miniPlayerTop = composeRule.onNodeWithTag("resonote-mini-player")
             .fetchSemanticsNode().boundsInRoot.top
+        val expectedGapPx = with(composeRule.density) { 8.dp.toPx() }
 
-        assertThat(snackbarBottom).isAtMost(miniPlayerTop)
+        assertThat(miniPlayerTop - snackbarBottom).isWithin(1f).of(expectedGapPx)
     }
 
     @Test
