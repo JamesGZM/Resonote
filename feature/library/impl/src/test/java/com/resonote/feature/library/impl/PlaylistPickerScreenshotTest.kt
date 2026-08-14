@@ -62,6 +62,8 @@ class PlaylistPickerScreenshotTest {
         composeRule.onNodeWithText("他人的收藏").assertDoesNotExist()
         composeRule.onNodeWithText("深夜独白").performClick()
         assertThat(selectedListId).isEqualTo("night")
+        composeRule.mainClock.advanceTimeByFrame()
+        composeRule.waitForIdle()
         composeRule.onRoot().captureRoboImage(
             filePath = "src/test/screenshots/PlaylistPicker/PlaylistPickerCompact_available.png",
             roborazziOptions = DefaultRoborazziOptions,
