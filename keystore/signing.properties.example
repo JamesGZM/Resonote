@@ -1,0 +1,4 @@
+storeFile=keystore/resonote-release.jks
+storePassword=<local-secret>
+keyAlias=resonote-release
+keyPassword=<local-secret>

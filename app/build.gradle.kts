@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.resonote.android.application)
     alias(libs.plugins.resonote.android.application.compose)
@@ -6,14 +8,44 @@ plugins {
     alias(libs.plugins.roborazzi)
 }
 
+val localSigningPropertiesFile = rootProject.file("keystore/signing.properties")
+val localSigningProperties = Properties().apply {
+    if (localSigningPropertiesFile.isFile) {
+        localSigningPropertiesFile.inputStream().use(::load)
+    }
+}
+
+fun signingValue(propertyName: String, environmentName: String): String? =
+    providers.environmentVariable(environmentName).orNull
+        ?: localSigningProperties.getProperty(propertyName)?.takeIf(String::isNotBlank)
+
+val releaseStorePath = signingValue("storeFile", "RESONOTE_KEYSTORE_PATH")
+val releaseStorePassword = signingValue("storePassword", "RESONOTE_KEYSTORE_PASSWORD")
+val releaseKeyAlias = signingValue("keyAlias", "RESONOTE_KEY_ALIAS")
+val releaseKeyPassword = signingValue("keyPassword", "RESONOTE_KEY_PASSWORD")
+val releaseSigningValues = listOf(releaseStorePath, releaseStorePassword, releaseKeyAlias, releaseKeyPassword)
+
+check(releaseSigningValues.all { it == null } || releaseSigningValues.all { it != null }) {
+    "Release signing is partially configured. Provide every signing.properties value or every RESONOTE_* variable."
+}
+
 android {
     namespace = "com.resonote.app"
     testOptions.unitTests.isIncludeAndroidResources = true
 
     defaultConfig {
         applicationId = "com.resonote.app"
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = providers.gradleProperty("resonoteVersionCode").get().toInt()
+        versionName = providers.gradleProperty("resonoteVersionName").get()
+    }
+
+    signingConfigs {
+        create("release") {
+            releaseStorePath?.let { storeFile = rootProject.file(it) }
+            storePassword = releaseStorePassword
+            keyAlias = releaseKeyAlias
+            keyPassword = releaseKeyPassword
+        }
     }
 
     buildTypes {
@@ -22,6 +54,7 @@ android {
         }
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.named("release").get()
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
