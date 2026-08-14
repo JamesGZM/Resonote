@@ -15,6 +15,7 @@ import com.resonote.core.network.model.NetworkSearchResultPage
 import com.resonote.core.network.model.NetworkSong
 import com.resonote.core.network.protocol.ApiEndpointOrigins
 import com.resonote.core.network.protocol.DeviceRegistrationCoordinator
+import com.resonote.core.network.session.ApiAuthenticationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.serialization.json.JsonArray
@@ -34,13 +35,15 @@ internal class RealSearchNetworkDataSource @Inject constructor(
     override suspend fun searchSongs(keywords: String, page: Int, pageSize: Int): NetworkSearchPage {
         validateSearchRequest(keywords, page, pageSize)
         registration.ensureRegisteredSession()
-        val response = callApi {
+        val authenticationContext = responses.authenticationContext()
+        val rawResponse = callApi {
             musicApi.searchSongs(
                 keywords = keywords.trim(),
                 page = page,
                 pageSize = pageSize,
             )
         }
+        val response = responses.requireSuccess(rawResponse, authenticationContext)
         return decodeSearchPage(response)
     }
 
@@ -77,7 +80,8 @@ internal class RealSearchNetworkDataSource @Inject constructor(
     ): NetworkSearchResultPage<T> {
         validateSearchRequest(keywords, page, pageSize)
         registration.ensureRegisteredSession()
-        val response = callApi {
+        val authenticationContext = responses.authenticationContext()
+        val rawResponse = callApi {
             musicApi.searchTyped(
                 url = "${origins.complexSearch}/v1/search/$type",
                 keywords = keywords.trim(),
@@ -85,7 +89,7 @@ internal class RealSearchNetworkDataSource @Inject constructor(
                 pageSize = pageSize,
             )
         }
-        responses.requireSuccess(response, SEARCH_ENDPOINT_ID)
+        val response = responses.requireSuccess(rawResponse, authenticationContext)
         val data = response.data.obj() ?: throw missingField()
         val raw = data.array("lists") ?: throw missingField()
         val items = raw.mapNotNull(decode)
@@ -149,8 +153,7 @@ internal class RealSearchNetworkDataSource @Inject constructor(
             .distinct().take(8)
     }
 
-    private suspend fun decodeSearchPage(response: SearchSongsResponse): NetworkSearchPage {
-        responses.requireSuccess(response, SEARCH_ENDPOINT_ID)
+    private fun decodeSearchPage(response: SearchSongsResponse): NetworkSearchPage {
         val rawItems = response.data?.songs ?: throw missingField()
         val items = rawItems.mapNotNull { it.toNetworkSongOrNull() }
         requireConsumableItems(rawItems, items)
@@ -235,7 +238,4 @@ internal class RealSearchNetworkDataSource @Inject constructor(
     }
 
     private fun missingField() = ApiProtocolException(ApiProtocolException.Reason.MissingRequiredField)
-    private companion object {
-        const val SEARCH_ENDPOINT_ID = "API-SEARCH-001"
-    }
 }

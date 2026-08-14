@@ -9,15 +9,8 @@ internal object AuthenticationFailureClassifier {
     fun capturesHttpFailure(statusCode: Int, propagation: ApiSessionPropagation): Boolean =
         propagation == ApiSessionPropagation.Full && statusCode in AUTHENTICATION_HTTP_CODES
 
-    fun capturesServiceFailure(endpointId: String, serviceCode: String): Boolean =
-        serviceCode in AUTHENTICATION_SERVICE_CODES[endpointId].orEmpty()
-
-    fun requestAuthenticationFailure(
-        endpointId: String,
-        serviceCode: String,
-    ): ApiAuthenticationRequiredException? =
-        ApiAuthenticationRequiredException(ApiAuthenticationGateReason.LoginRequired, serviceCode)
-            .takeIf { capturesServiceFailure(endpointId, serviceCode) }
+    fun capturesServiceFailure(authenticationServiceCodes: Set<String>, serviceCode: String): Boolean =
+        serviceCode in authenticationServiceCodes
 
     suspend fun classify(
         sessions: ApiSessionManager,
@@ -29,7 +22,4 @@ internal object AuthenticationFailureClassifier {
         }
 
     private val AUTHENTICATION_HTTP_CODES = setOf(401, 403)
-    private val AUTHENTICATION_SERVICE_CODES = mapOf(
-        "API-SEARCH-001" to setOf("152"),
-    )
 }

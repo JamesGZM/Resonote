@@ -3,11 +3,13 @@ package com.resonote.core.network.api
 import com.resonote.core.network.api.model.ApiResponse
 import com.resonote.core.network.api.model.SearchSongsData
 import com.resonote.core.network.protocol.ApiRequestPolicy
+import com.resonote.core.network.protocol.ApiServiceAuthenticationPolicy
 import kotlinx.serialization.json.JsonElement
+import retrofit2.Response
 import retrofit2.http.*
 
 internal interface SearchApi {
-    @ApiRequestPolicy("API-SEARCH-001")
+    @ApiRequestPolicy(serviceAuthentication = ApiServiceAuthenticationPolicy.SearchLoginRequired)
     @Headers("x-router: complexsearch.kugou.com")
     @GET("v3/search/song")
     suspend fun searchSongs(
@@ -15,9 +17,9 @@ internal interface SearchApi {
         @Query("keyword") keywords: String, @Query("nocollect") noCollect: Int = 0,
         @Query("page") page: Int, @Query("pagesize") pageSize: Int,
         @Query("platform") platform: String = "AndroidFilter",
-    ): ApiResponse<SearchSongsData>
+    ): Response<ApiResponse<SearchSongsData>>
 
-    @ApiRequestPolicy("API-SEARCH-001")
+    @ApiRequestPolicy(serviceAuthentication = ApiServiceAuthenticationPolicy.SearchLoginRequired)
     @Headers("x-router: complexsearch.kugou.com")
     @GET
     suspend fun searchTyped(
@@ -25,21 +27,21 @@ internal interface SearchApi {
         @Query("keyword") keywords: String, @Query("nocollect") noCollect: Int = 0,
         @Query("page") page: Int, @Query("pagesize") pageSize: Int,
         @Query("platform") platform: String = "AndroidFilter",
-    ): ApiResponse<JsonElement>
+    ): Response<ApiResponse<JsonElement>>
 
-    @ApiRequestPolicy("API-SEARCH-002")
+    @ApiRequestPolicy
     @GET
     suspend fun searchComplex(
         @Url url: String, @Query("platform") platform: String = "AndroidFilter", @Query("keyword") keyword: String,
         @Query("page") page: Int = 1, @Query("pagesize") pageSize: Int = 30, @Query("cursor") cursor: Int = 0,
     ): ApiResponse<JsonElement>
 
-    @ApiRequestPolicy("API-SEARCH-004")
+    @ApiRequestPolicy
     @Headers("x-router: msearch.kugou.com")
     @GET("api/v3/search/hot_tab")
     suspend fun hotSearch(@Query("navid") navigationId: Int = 1, @Query("plat") platform: Int = 2): ApiResponse<JsonElement>
 
-    @ApiRequestPolicy("API-SEARCH-007")
+    @ApiRequestPolicy
     @Headers("x-router: searchtip.kugou.com")
     @GET("v2/getSearchTip")
     suspend fun searchSuggestions(

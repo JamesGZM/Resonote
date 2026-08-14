@@ -10,7 +10,7 @@ import retrofit2.http.POST
 import retrofit2.http.Query
 
 internal interface RecognitionApi {
-    @ApiRequestPolicy("API-RECOGNITION-001")
+    @ApiRequestPolicy
     @Headers("Content-Type: application/octet-stream", "User-Agent: KuGou/11490 (Android)")
     @POST("fingerprint.service/v1/music_trackid_mulit")
     suspend fun recognizeAudio(

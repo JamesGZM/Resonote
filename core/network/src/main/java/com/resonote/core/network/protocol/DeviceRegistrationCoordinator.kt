@@ -70,7 +70,6 @@ internal class DeviceRegistrationCoordinator @Inject constructor(
         return ApiExchange(
             spec =
                 ApiEndpointSpec(
-                    id = "API-DEVICE-001",
                     origin = origins.deviceRegistration,
                     path = "/risk/v2/r_register_dev",
                     method = ApiHttpMethod.Post,

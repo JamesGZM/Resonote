@@ -30,7 +30,6 @@ class ApiOriginPolicyTest {
     }
 
     private fun spec(origin: String, cleartext: ApiCleartextPolicy) = ApiEndpointSpec(
-        id = "test",
         origin = origin,
         path = "/test",
         method = ApiHttpMethod.Get,

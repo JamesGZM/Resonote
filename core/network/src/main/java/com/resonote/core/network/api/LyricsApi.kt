@@ -10,7 +10,6 @@ import retrofit2.http.Url
 
 internal interface LyricsApi {
     @ApiRequestPolicy(
-        "API-SEARCH-005",
         signatureMode = ApiSignatureMode.None,
         sessionPropagation = ApiSessionPropagation.None,
         includeDefaultParams = false,
@@ -22,7 +21,6 @@ internal interface LyricsApi {
     ): JsonElement
 
     @ApiRequestPolicy(
-        "API-LYRICS-001",
         signatureMode = ApiSignatureMode.None,
         sessionPropagation = ApiSessionPropagation.None,
         includeDefaultParams = false,

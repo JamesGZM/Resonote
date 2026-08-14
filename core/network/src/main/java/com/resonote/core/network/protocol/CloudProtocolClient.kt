@@ -45,7 +45,6 @@ internal class CloudProtocolClient @Inject constructor(
             ApiExchange(
                 spec =
                     ApiEndpointSpec(
-                        id = "API-CLOUD-001",
                         origin = origins.cloud,
                         path = "/v1/get_list",
                         method = ApiHttpMethod.Post,

@@ -8,9 +8,12 @@ internal enum class ApiSessionPropagation { Full, DeviceOnly, None }
 internal enum class ApiResponseFormat { Json, Bytes }
 internal enum class ApiCleartextPolicy { Deny, LoginMobileCode }
 internal enum class ApiRiskPolicy { Detect, Bypass }
+internal enum class ApiServiceAuthenticationPolicy(val serviceCodes: Set<String>) {
+    None(emptySet()),
+    SearchLoginRequired(setOf("152")),
+}
 
 internal data class ApiEndpointSpec(
-    val id: String,
     val origin: String = ApiProtocolConfig.BASE_URL.removeSuffix("/"),
     val path: String,
     val method: ApiHttpMethod,
@@ -24,12 +27,14 @@ internal data class ApiEndpointSpec(
     val responseFormat: ApiResponseFormat = ApiResponseFormat.Json,
     val cleartextPolicy: ApiCleartextPolicy = ApiCleartextPolicy.Deny,
     val riskPolicy: ApiRiskPolicy = ApiRiskPolicy.Detect,
+    val authenticationServiceCodes: Set<String> = emptySet(),
 ) {
     override fun toString(): String =
-        "ApiEndpointSpec(id=$id, origin=$origin, path=$path, method=$method, " +
+        "ApiEndpointSpec(origin=$origin, path=$path, method=$method, " +
             "queryNames=${query.keys.sorted()}, headerNames=${headers.keys.sorted()}, bodyBytes=${body?.size ?: 0}, " +
             "signatureMode=$signatureMode, sessionPropagation=$sessionPropagation, responseFormat=$responseFormat, " +
-            "cleartextPolicy=$cleartextPolicy, riskPolicy=$riskPolicy)"
+            "cleartextPolicy=$cleartextPolicy, riskPolicy=$riskPolicy, " +
+            "authenticationServiceCodes=$authenticationServiceCodes)"
 }
 
 internal data class ApiExchange<T>(

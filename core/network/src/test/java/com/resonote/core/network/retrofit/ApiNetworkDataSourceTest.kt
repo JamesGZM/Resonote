@@ -782,16 +782,16 @@ class ApiNetworkDataSourceTest {
     }
 
     @Test
-    fun authenticatedSearchAuthenticationCodeDoesNotExpireSession() = runTest {
+    fun authenticatedSearchAuthenticationCodeExpiresSession() = runTest {
         gatewayServer.enqueue(jsonResponse("""{"status":0,"error_code":152,"data":{"lists":[]}}"""))
         val source = dataSource()
 
         val failure = runCatching { source.searchSongs("fixture", page = 1, pageSize = 1) }
             .exceptionOrNull() as ApiAuthenticationRequiredException
 
-        assertThat(failure.reason).isEqualTo(ApiAuthenticationGateReason.LoginRequired)
+        assertThat(failure.reason).isEqualTo(ApiAuthenticationGateReason.SessionExpired)
         assertThat(failure.serviceCode).isEqualTo("152")
-        assertThat(source.authenticationClearCount).isEqualTo(0)
+        assertThat(source.authenticationClearCount).isEqualTo(1)
     }
 
     @Test
@@ -802,9 +802,9 @@ class ApiNetworkDataSourceTest {
         val failure = runCatching { source.searchPlaylists("fixture", page = 1, pageSize = 30) }
             .exceptionOrNull() as ApiAuthenticationRequiredException
 
-        assertThat(failure.reason).isEqualTo(ApiAuthenticationGateReason.LoginRequired)
+        assertThat(failure.reason).isEqualTo(ApiAuthenticationGateReason.SessionExpired)
         assertThat(failure.serviceCode).isEqualTo("152")
-        assertThat(source.authenticationClearCount).isEqualTo(0)
+        assertThat(source.authenticationClearCount).isEqualTo(1)
     }
 
     @Test

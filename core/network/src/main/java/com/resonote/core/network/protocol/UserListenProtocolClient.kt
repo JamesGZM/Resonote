@@ -47,7 +47,6 @@ internal class UserListenProtocolClient @Inject constructor(
             ApiExchange(
                 spec =
                     ApiEndpointSpec(
-                        id = ENDPOINT_ID,
                         origin = origins.listen,
                         path = "/v2/get_list",
                         method = ApiHttpMethod.Post,
@@ -120,7 +119,6 @@ internal class UserListenProtocolClient @Inject constructor(
     private fun malformedResponse() = ApiProtocolException(ApiProtocolException.Reason.MalformedResponse)
 
     private companion object {
-        const val ENDPOINT_ID = "API-USER-007"
         const val ALL_TIME_HISTORY = 1
     }
 }

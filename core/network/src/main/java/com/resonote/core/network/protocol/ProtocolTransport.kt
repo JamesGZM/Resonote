@@ -58,13 +58,18 @@ internal class ProtocolTransport @Inject constructor(
             }
         }
         raw.serviceFailureCodeOrNull()?.let { serviceCode ->
-            AuthenticationFailureClassifier.requestAuthenticationFailure(exchange.spec.id, serviceCode)?.let { throw it }
+            if (AuthenticationFailureClassifier.capturesServiceFailure(exchange.spec.authenticationServiceCodes, serviceCode)) {
+                AuthenticationFailureClassifier.classify(
+                    sessionManager,
+                    authenticationContext,
+                    serviceCode,
+                )?.let { throw it }
+            }
         }
         return exchange.decode(raw)
     }
 
     private fun prepare(spec: ApiEndpointSpec, session: ApiSession, clientTime: Long): Request {
-        require(spec.id.isNotBlank()) { "Endpoint id must not be blank" }
         require(spec.path.startsWith('/') && '?' !in spec.path && '#' !in spec.path) { "Endpoint path must be absolute and query-free" }
         val origin = spec.origin.toHttpUrl()
         require(originPolicy.isAllowed(spec)) { "Only HTTPS or the fixed login mobile-code origin is allowed" }

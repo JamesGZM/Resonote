@@ -65,7 +65,6 @@ class ProtocolTransportTest {
                 val ignored = executor.execute { _, _ ->
                     ApiExchange(
                         ApiEndpointSpec(
-                            id = "test-no-replay",
                             origin = server.url("/").toString().removeSuffix("/"),
                             path = "/risk",
                             method = ApiHttpMethod.Get,
@@ -122,7 +121,7 @@ class ProtocolTransportTest {
 
         executor.execute { _, _ ->
             ApiExchange(
-                ApiEndpointSpec("test-thread", origin = server.origin(), path = "/thread", method = ApiHttpMethod.Get),
+                ApiEndpointSpec(origin = server.origin(), path = "/thread", method = ApiHttpMethod.Get),
                 ApiRawResponse::statusCode,
             )
         }
@@ -140,7 +139,7 @@ class ProtocolTransportTest {
         val failure = runCatching {
             executor.execute { _, _ ->
                 ApiExchange(
-                    ApiEndpointSpec("test-authenticated", origin = server.origin(), path = "/user", method = ApiHttpMethod.Get),
+                    ApiEndpointSpec(origin = server.origin(), path = "/user", method = ApiHttpMethod.Get),
                     ApiRawResponse::statusCode,
                 )
             }
@@ -158,7 +157,6 @@ class ProtocolTransportTest {
             executor.execute { _, _ ->
                 ApiExchange(
                     ApiEndpointSpec(
-                        "test-login",
                         origin = server.origin(),
                         path = "/login",
                         method = ApiHttpMethod.Get,

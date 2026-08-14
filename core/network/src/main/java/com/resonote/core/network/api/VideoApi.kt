@@ -8,7 +8,7 @@ import retrofit2.http.Headers
 import retrofit2.http.Query
 
 internal interface VideoApi {
-    @ApiRequestPolicy("API-VIDEO-003")
+    @ApiRequestPolicy
     @Headers("x-router: trackermv.kugou.com")
     @GET("v2/interface/index")
     suspend fun videoUrl(

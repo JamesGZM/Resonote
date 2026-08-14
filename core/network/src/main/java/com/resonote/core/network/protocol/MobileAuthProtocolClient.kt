@@ -35,7 +35,6 @@ internal class MobileAuthProtocolClient @Inject constructor(
             ApiExchange(
                 spec =
                     ApiEndpointSpec(
-                        id = "API-LOGIN-001",
                         origin = origins.mobileCode,
                         path = "/v7/send_mobile_code",
                         method = ApiHttpMethod.Post,
@@ -114,7 +113,6 @@ internal class MobileAuthProtocolClient @Inject constructor(
         return ApiExchange(
             spec =
                 ApiEndpointSpec(
-                    id = "API-LOGIN-004",
                     origin = origins.mobileLogin,
                     path = "/v7/login_by_verifycode",
                     method = ApiHttpMethod.Post,
@@ -156,7 +154,6 @@ internal class MobileAuthProtocolClient @Inject constructor(
         return ApiExchange(
             spec =
                 ApiEndpointSpec(
-                    id = "API-LOGIN-003",
                     origin = origins.gateway,
                     path = "/v9/login_by_pwd",
                     method = ApiHttpMethod.Post,

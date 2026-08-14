@@ -201,7 +201,7 @@ class ApiRequestInterceptorsTest {
         MockResponse().setResponseCode(200).addHeader("Content-Type", "application/json").setBody(body)
 
     private interface TestApi {
-        @ApiRequestPolicy("test-signed")
+        @ApiRequestPolicy
         @POST("songs")
         suspend fun signed(@Query("page") page: Int, @Body body: TestBody): ApiResponse<TestData>
 
@@ -209,7 +209,6 @@ class ApiRequestInterceptorsTest {
         suspend fun plain(): ApiResponse<TestData>
 
         @ApiRequestPolicy(
-            id = "test-unsigned",
             signatureMode = ApiSignatureMode.None,
             sessionPropagation = ApiSessionPropagation.None,
             includeDefaultParams = false,

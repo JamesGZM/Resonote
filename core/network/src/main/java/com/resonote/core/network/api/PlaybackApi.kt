@@ -12,12 +12,12 @@ import retrofit2.http.POST
 import retrofit2.http.Query
 
 internal interface PlaybackApi {
-    @ApiRequestPolicy("API-SONG-007")
+    @ApiRequestPolicy
     @Headers("x-router: media.store.kugou.com", "Content-Type: application/json")
     @POST("v2/get_res_privilege/lite")
     suspend fun songPrivilege(@Body body: SongPrivilegeRequest): ApiResponse<JsonElement>
 
-    @ApiRequestPolicy("API-SONG-011")
+    @ApiRequestPolicy
     @Headers("x-router: trackercdn.kugou.com")
     @GET("v5/url")
     suspend fun songSource(
@@ -32,7 +32,7 @@ internal interface PlaybackApi {
         @Query("clientver") clientVersion: String = "11430", @Query("key") key: String,
     ): SongSourceResponse
 
-    @ApiRequestPolicy("API-CLOUD-003")
+    @ApiRequestPolicy
     @GET("bsstrackercdngz/v2/query_musicclound_url")
     suspend fun cloudSongUrl(
         @Query("hash") hash: String, @Query("ssa_flag") ssaFlag: String = "is_fromtrack",

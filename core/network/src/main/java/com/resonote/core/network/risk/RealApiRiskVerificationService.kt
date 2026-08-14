@@ -40,7 +40,6 @@ internal class RealApiRiskVerificationService @Inject constructor(
             ApiExchange(
                 spec =
                     ApiEndpointSpec(
-                        id = "API-LOGIN-002",
                         origin = origins.gateway,
                         path = "/verifyservice/v3/get_verify_info",
                         method = ApiHttpMethod.Post,
@@ -96,7 +95,6 @@ internal class RealApiRiskVerificationService @Inject constructor(
             ApiExchange(
                 spec =
                     ApiEndpointSpec(
-                        id = "API-LOGIN-015",
                         origin = origins.riskVerification,
                         path = "/v4/verify_user_info",
                         method = ApiHttpMethod.Post,

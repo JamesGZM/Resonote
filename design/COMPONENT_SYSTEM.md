@@ -492,7 +492,7 @@ Resonote 使用 Material3 Adaptive Navigation Suite 1.4.0 稳定版作为 Primar
 09 状态：**已冻结**。2026-08-14 已按真机 Light 基线验收 Bottom Shell；后续主题色调整必须修改完整 Scheme 并重新验证 Light / Dark / AMOLED / Dynamic，不得为 Bottom Navigation 增加单点颜色覆盖。
 用户确认的冻结视觉基线：`design/approved/components/09-miniplayer-bottom-navigation.png`
 该 PNG 仅冻结 Mini Player、Bottom Navigation、系统手势区及其相互间距；图中上方首页内容不是首页视觉基线。
-首页对 Overlay 层级的页面级证据见 `design/HOME_IMPLEMENTATION_BASELINE.md`。
+首页对 Overlay 层级的实际组合以当前 Compose 实现与 Roborazzi 基线为准。
 
 ## 冻结组件快速索引
 

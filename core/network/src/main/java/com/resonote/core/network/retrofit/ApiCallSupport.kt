@@ -24,6 +24,7 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
+import retrofit2.Response
 
 internal class ApiCallExecutor @Inject constructor(
     private val sessions: ApiSessionManager,
@@ -69,20 +70,46 @@ internal class ApiResponseVerifier @Inject constructor(
 
     suspend fun requireSuccess(
         response: MusicApiResponse,
-        endpointId: String? = null,
     ) {
         requireNoRiskChallenge(response)
         serviceFailureCodeOrNull(response)?.let { serviceCode ->
-            if (endpointId != null) requireValidAuthentication(endpointId, serviceCode)
             throw ApiServiceException(serviceCode)
         }
     }
 
+    suspend fun <T : MusicApiResponse> requireSuccess(
+        response: Response<T>,
+        authenticationContext: ApiAuthenticationContext,
+    ): T {
+        val requestPolicy = response.raw().request.apiRequestPolicy()
+        if (!response.isSuccessful) {
+            val propagation = requestPolicy?.sessionPropagation ?: ApiSessionPropagation.None
+            if (AuthenticationFailureClassifier.capturesHttpFailure(response.code(), propagation)) {
+                AuthenticationFailureClassifier.classify(sessions, authenticationContext)?.let { throw it }
+            }
+            throw ApiHttpException(response.code())
+        }
+        val body = response.body() ?: throw ApiProtocolException(ApiProtocolException.Reason.MalformedResponse)
+        requireNoRiskChallenge(body)
+        serviceFailureCodeOrNull(body)?.let { serviceCode ->
+            requireValidAuthentication(
+                requestPolicy?.serviceAuthentication?.serviceCodes.orEmpty(),
+                serviceCode,
+                authenticationContext,
+            )
+            throw ApiServiceException(serviceCode)
+        }
+        return body
+    }
+
     suspend fun requireValidAuthentication(
-        endpointId: String,
+        authenticationServiceCodes: Set<String>,
         serviceCode: String,
+        authenticationContext: ApiAuthenticationContext,
     ) {
-        AuthenticationFailureClassifier.requestAuthenticationFailure(endpointId, serviceCode)?.let { throw it }
+        if (AuthenticationFailureClassifier.capturesServiceFailure(authenticationServiceCodes, serviceCode)) {
+            AuthenticationFailureClassifier.classify(sessions, authenticationContext, serviceCode)?.let { throw it }
+        }
     }
 
     suspend fun requireAuthenticatedSession(
@@ -94,18 +121,15 @@ internal class ApiResponseVerifier @Inject constructor(
 
     suspend fun requireWriteSuccess(
         response: MusicApiResponse,
-        endpointId: String? = null,
     ) {
         requireNoRiskChallenge(response)
         serviceFailureCodeOrNull(response)?.let { serviceCode ->
-            if (endpointId != null) requireValidAuthentication(endpointId, serviceCode)
             throw ApiServiceException(serviceCode)
         }
     }
 
     suspend fun requireJsonSuccess(
         response: JsonObject,
-        endpointId: String,
         successStatuses: Set<String>,
     ) {
         riskDetector.detect(ApiRawResponse(200, emptyMap(), byteArrayOf(), response))?.let { challenge ->
@@ -115,9 +139,7 @@ internal class ApiResponseVerifier @Inject constructor(
         val errorCode = response.text("error_code")
         val failedCode = errorCode != null && errorCode.toDoubleOrNull() != 0.0
         if (status !in successStatuses || failedCode) {
-            val serviceCode = errorCode ?: status
-            if (serviceCode != null) requireValidAuthentication(endpointId, serviceCode)
-            throw ApiServiceException(serviceCode)
+            throw ApiServiceException(errorCode ?: status)
         }
     }
 
