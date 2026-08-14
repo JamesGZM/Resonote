@@ -85,6 +85,18 @@ jobs:
       - name: Verify project and build release artifacts
         run: ./gradlew check verifyRoborazziDebug :app:assembleRelease :app:bundleRelease
 
+      - name: Upload Roborazzi failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: roborazzi-failure-${{ github.run_id }}
+          path: |
+            **/build/outputs/roborazzi/
+            **/build/reports/roborazzi/
+            **/build/test-results/roborazzi/
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Verify and prepare release artifacts
         id: artifacts
         shell: bash
