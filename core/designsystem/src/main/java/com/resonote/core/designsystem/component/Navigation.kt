@@ -1,6 +1,7 @@
 package com.resonote.core.designsystem.component
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.LocalContentColor
@@ -38,7 +40,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
@@ -178,18 +182,34 @@ private fun ResonoteCompactNavigationBar(items: List<ResonoteNavigationSuiteItem
     val colors = MaterialTheme.colorScheme
     val windowInsets = NavigationBarDefaults.windowInsets
     val bottomInset = windowInsets.asPaddingValues().calculateBottomPadding()
-    NavigationBar(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(CompactNavigationItemHeight + bottomInset)
-            .testTag("resonote-navigation-bar"),
-        containerColor = colors.surface,
-        tonalElevation = 0.dp,
-        windowInsets = windowInsets,
-    ) {
-        items.forEachIndexed { index, item ->
-            key(index) {
-                ResonoteCompactNavigationItem(item)
+    Box {
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .offset(y = -CompactNavigationTopShadowHeight)
+                .fillMaxWidth()
+                .height(CompactNavigationTopShadowHeight)
+                .background(
+                    Brush.verticalGradient(
+                        0f to Color.Transparent,
+                        0.7f to Color.Black.copy(alpha = 0.04f),
+                        1f to Color.Black.copy(alpha = 0.14f),
+                    ),
+                ),
+        )
+        NavigationBar(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(CompactNavigationItemHeight + bottomInset)
+                .testTag("resonote-navigation-bar"),
+            containerColor = colors.surface,
+            tonalElevation = 0.dp,
+            windowInsets = windowInsets,
+        ) {
+            items.forEachIndexed { index, item ->
+                key(index) {
+                    ResonoteCompactNavigationItem(item)
+                }
             }
         }
     }
@@ -235,5 +255,6 @@ private fun RowScope.ResonoteCompactNavigationItem(item: ResonoteNavigationSuite
 }
 
 private val CompactNavigationItemHeight = 64.dp
+private val CompactNavigationTopShadowHeight = 12.dp
 private val CompactNavigationIconLabelSpacing = 2.dp
 private val CompactNavigationRippleRadius = 42.dp
