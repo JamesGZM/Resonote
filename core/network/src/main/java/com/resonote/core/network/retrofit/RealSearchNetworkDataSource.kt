@@ -164,10 +164,12 @@ internal class RealSearchNetworkDataSource @Inject constructor(
         val title = (item.text("OriSongName") ?: item.text("SongName") ?: item.text("FileName"))?.stripEm()?.takeIf(String::isNotBlank) ?: return null
         val hq = item.text("HQFileHash") ?: item.text("FileHash320")
         val sq = item.text("SQFileHash") ?: item.text("FileHashFlac")
+        val hashOffset = item.obj("trans_param")?.obj("hash_offset")
         return NetworkSong(
             hash, title, item.text("SingerName")?.stripEm(), item.text("Image"),
             item.text("AlbumID"), item.text("MixSongID"), normalizeDurationMillis(item.long("Duration")),
             hq, sq, (item.int("Privilege") ?: 0) >= 10, hq != null, sq != null, item.text("AlbumName")?.stripEm(),
+            previewDurationMillis = previewDurationMillis(hashOffset?.long("start_ms"), hashOffset?.long("end_ms")),
         )
     }
 
@@ -216,6 +218,7 @@ internal class RealSearchNetworkDataSource @Inject constructor(
     private suspend fun <T> callApi(block: suspend () -> T): T = calls.execute(block = block)
     private fun String.stripEm(): String = replace(Regex("</?em>", RegexOption.IGNORE_CASE), "")
     private fun JsonElement?.obj(): JsonObject? = this as? JsonObject
+    private fun JsonObject.obj(name: String): JsonObject? = get(name) as? JsonObject
     private fun JsonObject.array(name: String): JsonArray? = get(name) as? JsonArray
     private fun JsonObject.text(name: String): String? = (get(name) as? JsonPrimitive)?.contentOrNull
     private fun JsonObject.long(name: String): Long? = text(name)?.toDoubleOrNull()?.toLong()

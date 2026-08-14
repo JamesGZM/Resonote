@@ -738,7 +738,7 @@ class ApiNetworkDataSourceTest {
     fun searchSongsDecodeIntoSharedNetworkSong() = runTest {
         gatewayServer.enqueue(
             jsonResponse(
-                """{"status":1,"data":{"lists":[{"FileHash":"SEARCH_HASH","OriSongName":"Search Song","SingerName":"Search Artist","Image":"https://example.com/cover.jpg","Duration":245,"HQFileHash":"HQ_HASH","SQFileHash":"SQ_HASH"}],"total":1}}""",
+                """{"status":1,"data":{"lists":[{"FileHash":"SEARCH_HASH","OriSongName":"Search Song","SingerName":"Search Artist","Image":"https://example.com/cover.jpg","Duration":245,"HQFileHash":"HQ_HASH","SQFileHash":"SQ_HASH","Privilege":10,"trans_param":{"hash_offset":{"start_ms":48971,"end_ms":108971}}}],"total":1}}""",
             ),
         )
 
@@ -760,6 +760,8 @@ class ApiNetworkDataSourceTest {
             assertThat(losslessHash).isEqualTo("SQ_HASH")
             assertThat(highQualityAvailable).isTrue()
             assertThat(losslessAvailable).isTrue()
+            assertThat(vip).isTrue()
+            assertThat(previewDurationMillis).isEqualTo(60_000)
         }
     }
 

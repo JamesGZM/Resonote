@@ -19,6 +19,7 @@ data class OnlineSong(
     val vip: Boolean,
     val albumTitle: String? = null,
     val fileId: String? = null,
+    val previewDurationMillis: Long? = null,
 )
 
 data class SongPage(val songs: List<OnlineSong>, val page: Int, val total: Int?, val hasMore: Boolean)

@@ -77,6 +77,7 @@ internal data class MusicSongDto(
     val sqhash: String? = null,
     @SerialName("hash_flac") val losslessHash: String? = null,
     @Serializable(with = FlexibleLongSerializer::class) val privilege: Long? = null,
+    @SerialName("Privilege") @Serializable(with = FlexibleLongSerializer::class) val searchPrivilege: Long? = null,
     @SerialName("relate_goods")
     @Serializable(with = RelatedGoodsSerializer::class)
     val relatedGoods: List<RelatedGoodDto> = emptyList(),
@@ -99,6 +100,13 @@ internal data class DeprecatedSongDto(
 @Serializable
 internal data class SongTransformDto(
     @SerialName("union_cover") val unionCover: String? = null,
+    @SerialName("hash_offset") val hashOffset: SongHashOffsetDto? = null,
+)
+
+@Serializable
+internal data class SongHashOffsetDto(
+    @SerialName("start_ms") @Serializable(with = FlexibleLongSerializer::class) val startMillis: Long? = null,
+    @SerialName("end_ms") @Serializable(with = FlexibleLongSerializer::class) val endMillis: Long? = null,
 )
 
 @Serializable

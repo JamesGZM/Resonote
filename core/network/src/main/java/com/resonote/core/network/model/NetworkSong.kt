@@ -15,6 +15,7 @@ data class NetworkSong(
     val losslessAvailable: Boolean = false,
     val albumTitle: String? = null,
     val fileId: String? = null,
+    val previewDurationMillis: Long? = null,
 )
 
 data class NetworkSongPage(

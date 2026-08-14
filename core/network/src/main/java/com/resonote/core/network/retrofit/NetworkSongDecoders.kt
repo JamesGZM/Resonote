@@ -22,12 +22,21 @@ internal fun MusicSongDto.toNetworkSongOrNull(): NetworkSong? {
         durationMillis = normalizeDurationMillis(timeLength ?: duration ?: deprecated?.duration ?: timelength ?: timelen ?: searchDuration),
         highQualityHash = resolvedHighQualityHash,
         losslessHash = resolvedLosslessHash,
-        vip = (privilege ?: deprecated?.payType ?: 0) >= 10,
+        vip = (privilege ?: searchPrivilege ?: deprecated?.payType ?: 0) >= 10,
         highQualityAvailable = relatedGoodsCount > 1 || !resolvedHighQualityHash.isNullOrBlank(),
         losslessAvailable = relatedGoodsCount > 2 || !resolvedLosslessHash.isNullOrBlank(),
         albumTitle = albuminfo?.name ?: albumName ?: albumname ?: remark,
         fileId = fileid,
+        previewDurationMillis = transform?.hashOffset?.let { offset ->
+            previewDurationMillis(offset.startMillis, offset.endMillis)
+        },
     )
+}
+
+internal fun previewDurationMillis(startMillis: Long?, endMillis: Long?): Long? {
+    val start = startMillis?.coerceAtLeast(0) ?: return null
+    val end = endMillis ?: return null
+    return (end - start).takeIf { it > 0 }
 }
 
 internal fun normalizeDurationMillis(value: Long?): Long =

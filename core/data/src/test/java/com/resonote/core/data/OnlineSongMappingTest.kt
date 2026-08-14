@@ -1,6 +1,7 @@
 package com.resonote.core.data
 
 import com.google.common.truth.Truth.assertThat
+import com.resonote.core.network.model.NetworkSong
 import org.junit.Test
 
 class OnlineSongMappingTest {
@@ -16,5 +17,24 @@ class OnlineSongMappingTest {
     fun remoteImageUrlRejectsBlankValues() {
         assertThat("  ".toRemoteImageUrl(480)).isNull()
         assertThat((null as String?).toRemoteImageUrl(480)).isNull()
+    }
+
+    @Test
+    fun previewDurationIsPreservedForPlayback() {
+        val song = NetworkSong(
+            hash = "preview",
+            title = "Preview",
+            artist = null,
+            coverUrl = null,
+            albumId = null,
+            albumAudioId = null,
+            durationMillis = 180_000,
+            highQualityHash = null,
+            losslessHash = null,
+            vip = true,
+            previewDurationMillis = 60_000,
+        ).toOnlineSong()
+
+        assertThat(song.previewDurationMillis).isEqualTo(60_000)
     }
 }

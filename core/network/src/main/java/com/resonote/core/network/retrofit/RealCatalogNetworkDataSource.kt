@@ -213,6 +213,7 @@ internal class RealCatalogNetworkDataSource @Inject constructor(
         val base = item.obj("base") ?: return null
         val album = item.obj("album_info")
         val trans = item.obj("trans_param")
+        val hashOffset = trans?.obj("hash_offset")
         val copyright = item.obj("copyright")
         val hash = audio.text("hash")?.takeIf(String::isNotBlank) ?: return null
         val title = base.text("audio_name")?.takeIf(String::isNotBlank) ?: return null
@@ -232,6 +233,7 @@ internal class RealCatalogNetworkDataSource @Inject constructor(
             highQualityAvailable = hq != null,
             losslessAvailable = sq != null,
             albumTitle = album?.text("album_name"),
+            previewDurationMillis = previewDurationMillis(hashOffset?.long("start_ms"), hashOffset?.long("end_ms")),
         )
     }
 
@@ -240,6 +242,7 @@ internal class RealCatalogNetworkDataSource @Inject constructor(
         val hash = item.text("hash")?.takeIf(String::isNotBlank) ?: return null
         val title = (item.text("audio_name") ?: item.text("songname"))?.takeIf(String::isNotBlank) ?: return null
         val trans = item.obj("trans_param")
+        val hashOffset = trans?.obj("hash_offset")
         val hq = item.text("hash_320")?.takeIf(String::isNotBlank)
         val sq = item.text("hash_flac")?.takeIf(String::isNotBlank)
         return NetworkSong(
@@ -256,6 +259,7 @@ internal class RealCatalogNetworkDataSource @Inject constructor(
             highQualityAvailable = hq != null,
             losslessAvailable = sq != null,
             albumTitle = item.text("album_name"),
+            previewDurationMillis = previewDurationMillis(hashOffset?.long("start_ms"), hashOffset?.long("end_ms")),
         )
     }
 

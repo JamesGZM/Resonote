@@ -67,6 +67,7 @@ internal class DefaultPlaybackController internal constructor(
     private var pendingControllerAction: ((MediaController) -> Unit)? = null
     private var loadGeneration = 0L
     private var handledEndedGeneration = -1L
+    private var pausedPreviewGeneration = -1L
     private var isResolving = false
     private var activeFailureBehavior = FailureBehavior.SkipQueueItem
     private var positionUpdates: Job? = null
@@ -204,7 +205,13 @@ internal class DefaultPlaybackController internal constructor(
             if (player.isPlaying) {
                 player.pause()
             } else {
-                if (player.playbackState == Player.STATE_ENDED) player.seekTo(0)
+                if (
+                    player.playbackState == Player.STATE_ENDED ||
+                    pausedPreviewGeneration == loadGeneration
+                ) {
+                    pausedPreviewGeneration = -1L
+                    player.seekTo(0)
+                }
                 player.play()
             }
         }
@@ -245,7 +252,10 @@ internal class DefaultPlaybackController internal constructor(
     }
 
     override fun seekTo(positionMillis: Long) {
-        runWithController { it.seekTo(positionMillis.coerceAtLeast(0)) }
+        val previewDurationMillis = queue.currentItem?.vipPreviewDurationMillisOrNull()
+        runWithController {
+            it.seekTo(positionMillis.coerceIn(0, previewDurationMillis ?: Long.MAX_VALUE))
+        }
     }
 
     override fun setMode(mode: PlaybackMode) {
@@ -281,9 +291,10 @@ internal class DefaultPlaybackController internal constructor(
 
     override fun onEvents(player: Player, events: Player.Events) {
         syncPlayerState(player)
+        if (handleVipPreviewBoundary(player)) return
         if (player.playbackState == Player.STATE_ENDED && handledEndedGeneration != loadGeneration) {
             handledEndedGeneration = loadGeneration
-            scope.launch { selectNext(automatic = true) }
+            handleCompletionAction(playbackEndedCompletionAction(mutableState.value.mode), player)
         }
     }
 
@@ -312,6 +323,7 @@ internal class DefaultPlaybackController internal constructor(
             historyEligibility.reset()
             activeFailureBehavior = failureBehavior
             handledEndedGeneration = -1L
+            pausedPreviewGeneration = -1L
             isResolving = true
             controller?.stop()
             controller?.clearMediaItems()
@@ -365,6 +377,7 @@ internal class DefaultPlaybackController internal constructor(
             historyEligibility.reset()
             activeFailureBehavior = FailureBehavior.RejectWithoutQueueMutation
             handledEndedGeneration = -1L
+            pausedPreviewGeneration = -1L
             isResolving = true
             controller?.stop()
             controller?.clearMediaItems()
@@ -413,10 +426,7 @@ internal class DefaultPlaybackController internal constructor(
         if (queue.currentItem == null) return
         val mode = mutableState.value.mode
         if (automatic && mode == PlaybackMode.SingleLoop) {
-            controller?.let { player ->
-                player.seekTo(0)
-                player.play()
-            }
+            replayCurrentItem()
             return
         }
 
@@ -431,6 +441,40 @@ internal class DefaultPlaybackController internal constructor(
         }
         publishQueue(status = PlaybackStatus.Resolving)
         resolveAndLoad(item, failureBehavior = FailureBehavior.SkipQueueItem)
+    }
+
+    private fun replayCurrentItem() {
+        pausedPreviewGeneration = -1L
+        controller?.let { player ->
+            player.seekTo(0)
+            player.play()
+        }
+    }
+
+    private fun handleVipPreviewBoundary(player: Player): Boolean {
+        if (handledEndedGeneration == loadGeneration) return false
+        val item = queue.currentItem ?: return false
+        val action = vipPreviewCompletionAction(
+            item = item,
+            mode = mutableState.value.mode,
+            queueSize = queue.items.size,
+            positionMillis = player.currentPosition.coerceAtLeast(0),
+        ) ?: return false
+        handledEndedGeneration = loadGeneration
+        handleCompletionAction(action, player)
+        return true
+    }
+
+    private fun handleCompletionAction(action: PlaybackCompletionAction, player: Player) {
+        when (action) {
+            PlaybackCompletionAction.Pause -> {
+                pausedPreviewGeneration = loadGeneration
+                player.pause()
+                mutableState.value = mutableState.value.copy(status = PlaybackStatus.Paused)
+            }
+            PlaybackCompletionAction.Advance -> scope.launch { selectNext(automatic = true) }
+            PlaybackCompletionAction.Replay -> replayCurrentItem()
+        }
     }
 
     private fun scheduleAutomaticSkip(generation: Long) {
@@ -483,13 +527,15 @@ internal class DefaultPlaybackController internal constructor(
 
     private fun syncPlayerState(player: Player) {
         if (isResolving) return
-        val duration = player.duration.takeUnless { it == C.TIME_UNSET || it < 0 }
+        val duration = queue.currentItem?.vipPreviewDurationMillisOrNull()
+            ?: player.duration.takeUnless { it == C.TIME_UNSET || it < 0 }
             ?: queue.currentItem?.resolvedSource?.durationMillis
             ?: queue.currentItem?.metadata?.durationMillis
             ?: 0L
         val status = when {
             player.playerError != null -> PlaybackStatus.Failed
             player.playbackState == Player.STATE_BUFFERING -> PlaybackStatus.Buffering
+            player.playbackState == Player.STATE_ENDED && pausedPreviewGeneration == loadGeneration -> PlaybackStatus.Paused
             player.playbackState == Player.STATE_ENDED -> PlaybackStatus.Ended
             player.isPlaying -> PlaybackStatus.Playing
             queue.currentItem != null -> PlaybackStatus.Paused
@@ -529,7 +575,10 @@ internal class DefaultPlaybackController internal constructor(
         positionUpdates = scope.launch {
             while (isActive) {
                 delay(POSITION_UPDATE_INTERVAL_MILLIS)
-                controller?.let(::syncPlayerState)
+                controller?.let { player ->
+                    syncPlayerState(player)
+                    handleVipPreviewBoundary(player)
+                }
             }
         }
     }

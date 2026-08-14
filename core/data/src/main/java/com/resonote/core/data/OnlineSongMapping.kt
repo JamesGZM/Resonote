@@ -22,6 +22,7 @@ internal fun NetworkSong.toOnlineSong(): OnlineSong =
         vip = vip,
         albumTitle = albumTitle,
         fileId = fileId,
+        previewDurationMillis = previewDurationMillis,
     )
 
 internal fun String?.toRemoteImageUrl(size: Int): String? {
