@@ -27,5 +27,17 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Assemble debug applications and run lint
-        run: ./gradlew :app:assembleDebug :app-resonote-catalog:assembleDebug lint
+      - name: Assemble debug applications, run lint, and verify screenshots
+        run: ./gradlew :app:assembleDebug :app-resonote-catalog:assembleDebug lint verifyRoborazziDebug
+
+      - name: Upload Roborazzi failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: roborazzi-failure-${{ github.run_id }}
+          path: |
+            **/build/outputs/roborazzi/
+            **/build/reports/roborazzi/
+            **/build/test-results/roborazzi/
+          if-no-files-found: ignore
+          retention-days: 7

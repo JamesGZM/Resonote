@@ -35,8 +35,11 @@ import com.resonote.core.designsystem.theme.ResonoteTheme
 import com.resonote.core.designsystem.theme.ResonoteThemeMode
 import androidx.compose.ui.unit.LayoutDirection as UiLayoutDirection
 
+// Allows only sub-0.001% cross-platform Skia noise while preserving meaningful visual diffs.
+private const val CROSS_PLATFORM_RENDER_NOISE_THRESHOLD = 0.00001f
+
 val DefaultRoborazziOptions = RoborazziOptions(
-    compareOptions = RoborazziOptions.CompareOptions(changeThreshold = 0f),
+    compareOptions = RoborazziOptions.CompareOptions(changeThreshold = CROSS_PLATFORM_RENDER_NOISE_THRESHOLD),
     recordOptions = RoborazziOptions.RecordOptions(resizeScale = 0.5),
 )
 
