@@ -7,13 +7,14 @@ import com.resonote.core.network.protocol.ApiServiceAuthenticationPolicy
 import kotlinx.serialization.json.JsonElement
 import retrofit2.Response
 import retrofit2.http.GET
-import retrofit2.http.Headers
 import retrofit2.http.Query
 import retrofit2.http.Url
 
 internal interface SearchApi {
-    @ApiRequestPolicy(serviceAuthentication = ApiServiceAuthenticationPolicy.SearchLoginRequired)
-    @Headers("x-router: complexsearch.kugou.com")
+    @ApiRequestPolicy(
+        serviceAuthentication = ApiServiceAuthenticationPolicy.SearchLoginRequired,
+        router = "complexsearch.kugou.com",
+    )
     @GET("v3/search/song")
     suspend fun searchSongs(
         @Query("albumhide") albumHide: Int = 0,
@@ -25,8 +26,10 @@ internal interface SearchApi {
         @Query("platform") platform: String = "AndroidFilter",
     ): Response<ApiResponse<SearchSongsData>>
 
-    @ApiRequestPolicy(serviceAuthentication = ApiServiceAuthenticationPolicy.SearchLoginRequired)
-    @Headers("x-router: complexsearch.kugou.com")
+    @ApiRequestPolicy(
+        serviceAuthentication = ApiServiceAuthenticationPolicy.SearchLoginRequired,
+        router = "complexsearch.kugou.com",
+    )
     @GET
     suspend fun searchTyped(
         @Url url: String,
@@ -50,16 +53,14 @@ internal interface SearchApi {
         @Query("cursor") cursor: Int = 0,
     ): ApiResponse<JsonElement>
 
-    @ApiRequestPolicy
-    @Headers("x-router: msearch.kugou.com")
+    @ApiRequestPolicy(router = "msearch.kugou.com")
     @GET("api/v3/search/hot_tab")
     suspend fun hotSearch(
         @Query("navid") navigationId: Int = 1,
         @Query("plat") platform: Int = 2,
     ): ApiResponse<JsonElement>
 
-    @ApiRequestPolicy
-    @Headers("x-router: searchtip.kugou.com")
+    @ApiRequestPolicy(router = "searchtip.kugou.com")
     @GET("v2/getSearchTip")
     suspend fun searchSuggestions(
         @Query("keyword") keyword: String,

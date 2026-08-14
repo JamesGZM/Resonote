@@ -20,10 +20,12 @@ import org.junit.After
 import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
+import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.Query
 import java.time.Clock
@@ -72,6 +74,8 @@ class ApiRequestInterceptorsTest {
         assertThat(recorded.requestUrl?.queryParameter("signature")).isNotEmpty()
         assertThat(recorded.getHeader("Cookie")).isEqualTo("token=token; userid=42")
         assertThat(recorded.getHeader("mid")).isEqualTo("mid")
+        assertThat(recorded.getHeader("x-router")).isEqualTo("songs.service.kugou.com")
+        assertThat(recorded.getHeader("kg-tid")).isEqualTo("255")
         assertThat(recorded.body.readUtf8()).isEqualTo("""{"value":1}""")
         val signedUrl = checkNotNull(recorded.requestUrl)
         val unsignedQuery =
@@ -181,6 +185,13 @@ class ApiRequestInterceptorsTest {
         assertThat(recorded.requestUrl?.queryParameter("signature")).isNull()
     }
 
+    @Test
+    fun policyHeaderRejectsConflictingRetrofitHeader() {
+        assertThrows(IllegalArgumentException::class.java) {
+            fixture().api.conflictingRouter("other.service.kugou.com").execute()
+        }
+    }
+
     private fun fixture(initialSession: ApiSession = session): Fixture {
         val sessions = ApiSessionManager(Optional.of(MemoryStore(initialSession)), ApiDeviceIdentityFactory())
         runBlocking { sessions.current() }
@@ -205,9 +216,13 @@ class ApiRequestInterceptorsTest {
         MockResponse().setResponseCode(200).addHeader("Content-Type", "application/json").setBody(body)
 
     private interface TestApi {
-        @ApiRequestPolicy
+        @ApiRequestPolicy(router = "songs.service.kugou.com", kgTid = 255)
         @POST("songs")
         suspend fun signed(@Query("page") page: Int, @Body body: TestBody): ApiResponse<TestData>
+
+        @ApiRequestPolicy(router = "songs.service.kugou.com")
+        @GET("conflict")
+        fun conflictingRouter(@Header("x-router") router: String): Call<ApiResponse<TestData>>
 
         @GET("plain")
         suspend fun plain(): ApiResponse<TestData>

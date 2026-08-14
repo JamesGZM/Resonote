@@ -21,19 +21,16 @@ import com.resonote.core.network.protocol.ApiRequestPolicy
 import kotlinx.serialization.json.JsonElement
 import retrofit2.http.Body
 import retrofit2.http.GET
-import retrofit2.http.Headers
 import retrofit2.http.POST
 import retrofit2.http.Query
 import retrofit2.http.Url
 
 internal interface ContentApi {
-    @ApiRequestPolicy
-    @Headers("x-router: everydayrec.service.kugou.com")
+    @ApiRequestPolicy(router = "everydayrec.service.kugou.com")
     @POST("everyday_song_recommend")
     suspend fun dailyRecommendations(@Query("platform") platform: String = "ios"): ApiResponse<SongListData>
 
-    @ApiRequestPolicy
-    @Headers("x-router: specialrec.service.kugou.com")
+    @ApiRequestPolicy(router = "specialrec.service.kugou.com")
     @POST("v2/special_recommend")
     suspend fun recommendedPlaylists(@Body body: RecommendedPlaylistsRequest): ApiResponse<PlaylistRecommendationsData>
 
@@ -59,8 +56,7 @@ internal interface ContentApi {
         @Query("parentid") parentId: Int = 0,
     ): ApiResponse<RankingsData>
 
-    @ApiRequestPolicy
-    @Headers("kg-tid: 369")
+    @ApiRequestPolicy(kgTid = 369)
     @POST("openapi/kmr/v2/rank/audio")
     suspend fun rankingSongs(@Body body: RankingSongsRequest): ApiResponse<RankingSongsData>
 
@@ -90,18 +86,15 @@ internal interface ContentApi {
     @POST("musicadservice/v1/mobile_newalbum_sp")
     suspend fun newAlbums(@Body body: TopAlbumsRequest): ApiResponse<JsonElement>
 
-    @ApiRequestPolicy
-    @Headers("x-router: openapi.kugou.com", "kg-tid: 255")
+    @ApiRequestPolicy(router = "openapi.kugou.com", kgTid = 255)
     @POST("v1/album_audio/lite")
     suspend fun albumSongs(@Body body: AlbumSongsRequest): ApiResponse<JsonElement>
 
-    @ApiRequestPolicy
-    @Headers("x-router: openapi.kugou.com", "kg-tid: 36")
+    @ApiRequestPolicy(router = "openapi.kugou.com", kgTid = 36)
     @POST("kmr/v3/author")
     suspend fun artistDetail(@Body body: ArtistDetailRequest): ApiResponse<JsonElement>
 
-    @ApiRequestPolicy
-    @Headers("x-router: openapi.kugou.com", "kg-tid: 220")
+    @ApiRequestPolicy(router = "openapi.kugou.com", kgTid = 220)
     @POST
     suspend fun artistSongs(@Url url: String, @Body body: ArtistAudiosRequest): ApiResponse<JsonElement>
 }

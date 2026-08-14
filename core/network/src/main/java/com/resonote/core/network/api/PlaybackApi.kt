@@ -12,13 +12,12 @@ import retrofit2.http.POST
 import retrofit2.http.Query
 
 internal interface PlaybackApi {
-    @ApiRequestPolicy
-    @Headers("x-router: media.store.kugou.com", "Content-Type: application/json")
+    @ApiRequestPolicy(router = "media.store.kugou.com")
+    @Headers("Content-Type: application/json")
     @POST("v2/get_res_privilege/lite")
     suspend fun songPrivilege(@Body body: SongPrivilegeRequest): ApiResponse<JsonElement>
 
-    @ApiRequestPolicy
-    @Headers("x-router: trackercdn.kugou.com")
+    @ApiRequestPolicy(router = "trackercdn.kugou.com")
     @GET("v5/url")
     suspend fun songSource(
         @Query("album_id") albumId: String,

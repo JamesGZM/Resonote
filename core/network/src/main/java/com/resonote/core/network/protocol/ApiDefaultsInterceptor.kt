@@ -47,7 +47,22 @@ internal class ApiDefaultsInterceptor @Inject constructor(
             query["clienttime"] ?: clientTimeSeconds.toString(),
             policy.sessionPropagation,
         )
+        policy.router.takeIf(String::isNotEmpty)?.let { builder.policyHeader(this, ROUTER_HEADER, it) }
+        policy.kgTid.takeIf { it != 0 }?.let { builder.policyHeader(this, KG_TID_HEADER, it.toString()) }
         if (header("User-Agent") == null) builder.header("User-Agent", ApiProtocolConfig.USER_AGENT)
         return builder.build()
+    }
+
+    private fun Request.Builder.policyHeader(request: Request, name: String, value: String) {
+        val existing = request.header(name)
+        require(existing == null || existing == value) {
+            "Request header $name conflicts with ApiRequestPolicy"
+        }
+        header(name, value)
+    }
+
+    private companion object {
+        const val ROUTER_HEADER = "x-router"
+        const val KG_TID_HEADER = "kg-tid"
     }
 }

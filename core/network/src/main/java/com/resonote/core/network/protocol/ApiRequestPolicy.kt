@@ -11,6 +11,8 @@ internal annotation class ApiRequestPolicy(
     val sessionPropagation: ApiSessionPropagation = ApiSessionPropagation.Full,
     val includeDefaultParams: Boolean = true,
     val serviceAuthentication: ApiServiceAuthenticationPolicy = ApiServiceAuthenticationPolicy.None,
+    val router: String = "",
+    val kgTid: Int = 0,
 )
 
 internal fun Request.apiRequestPolicy(): ApiRequestPolicy? =

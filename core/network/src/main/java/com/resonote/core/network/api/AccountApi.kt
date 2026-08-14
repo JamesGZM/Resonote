@@ -22,8 +22,7 @@ import retrofit2.http.Query
 import retrofit2.http.Url
 
 internal interface AccountApi {
-    @ApiRequestPolicy
-    @Headers("x-router: usercenter.kugou.com")
+    @ApiRequestPolicy(router = "usercenter.kugou.com")
     @POST("v3/get_my_info")
     suspend fun userDetail(@Query("plat") platform: Int = 1, @Body body: UserDetailRequest): ApiResponse<UserDetailData>
 
@@ -34,8 +33,7 @@ internal interface AccountApi {
         @Query("busi_type") businessType: String = "concept",
     ): ApiResponse<UserVipData>
 
-    @ApiRequestPolicy
-    @Headers("x-router: cloudlist.service.kugou.com")
+    @ApiRequestPolicy(router = "cloudlist.service.kugou.com")
     @POST("v7/get_all_list")
     suspend fun userPlaylists(
         @Query("plat") platform: Int = 1,
@@ -64,8 +62,7 @@ internal interface AccountApi {
         @Body body: PlaylistTracksAddRequest,
     ): ApiResponse<JsonElement>
 
-    @ApiRequestPolicy
-    @Headers("x-router: cloudlist.service.kugou.com")
+    @ApiRequestPolicy(router = "cloudlist.service.kugou.com")
     @POST("v4/delete_songs")
     suspend fun deletePlaylistTracks(@Body body: PlaylistTracksDeleteRequest): ApiResponse<JsonElement>
 

@@ -86,8 +86,9 @@ Feature -> Repository interface -> Repository implementation
 | Feature 状态/交互 | 对应 Feature 的 `testDebugUnitTest` |
 | 设计组件 | `:core:designsystem:testDebugUnitTest` 和相关 Roborazzi Task |
 | 文档 | `./gradlew checkDocumentation` |
+| Kotlin/KTS 格式 | 对所有改动模块运行对应的 `spotlessCheck` |
 
-优先使用 Fake 和确定性输入验证状态与输出。Mock 调用次数只在调用本身就是合同的时候使用。提交前至少运行最相关检查与 `git diff --check`。
+优先使用 Fake 和确定性输入验证状态与输出。Mock 调用次数只在调用本身就是合同的时候使用。提交前至少运行最相关测试、改动模块的 Spotless 检查与 `git diff --check`。
 
 ## 9. 何时查看参考仓库
 

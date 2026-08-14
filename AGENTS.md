@@ -25,4 +25,5 @@
 - Network 行为：`./gradlew :core:network:testDebugUnitTest`
 - Data 映射：`./gradlew :core:data:testDebugUnitTest`
 - 文档治理：`./gradlew checkDocumentation`
-- 提交前：运行最相关检查及 `git diff --check`，并说明未运行的较慢检查。
+- Kotlin/KTS 格式：对所有改动模块运行对应的 `spotlessCheck`。
+- 提交前：运行最相关测试、改动模块的 Spotless 检查及 `git diff --check`，并说明未运行的较慢检查。
