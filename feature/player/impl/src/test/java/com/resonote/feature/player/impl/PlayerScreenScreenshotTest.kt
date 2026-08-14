@@ -66,6 +66,8 @@ class PlayerScreenScreenshotTest {
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule.onAllNodesWithText("1.5×").fetchSemanticsNodes().isNotEmpty()
         }
+        composeRule.mainClock.advanceTimeByFrame()
+        composeRule.waitForIdle()
 
         captureScreenRoboImage(
             filePath = "src/test/screenshots/Player/PlayerCompact_speed.png",
