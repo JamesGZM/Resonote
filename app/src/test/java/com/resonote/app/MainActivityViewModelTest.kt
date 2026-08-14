@@ -7,6 +7,7 @@ import androidx.navigation3.runtime.NavKey
 import com.google.common.truth.Truth.assertThat
 import com.resonote.core.data.AuthRepository
 import com.resonote.core.data.LocalMediaRepository
+import com.resonote.core.data.ThemePreferencesRepository
 import com.resonote.core.model.AuthGateReason
 import com.resonote.core.model.AuthState
 import com.resonote.core.model.MobileCodeLoginResult
@@ -20,6 +21,8 @@ import com.resonote.core.model.PasswordLoginResult
 import com.resonote.core.model.QrLoginCheckResult
 import com.resonote.core.model.QrLoginKeyResult
 import com.resonote.core.model.SendMobileCodeResult
+import com.resonote.core.model.ThemeMode
+import com.resonote.core.model.ThemePreferences
 import com.resonote.core.navigation.LoginGateNavKey
 import com.resonote.core.navigation.LoginContinuation
 import com.resonote.core.navigation.TabsShellNavKey
@@ -56,7 +59,7 @@ class MainActivityViewModelTest {
     @Test
     fun requiredExpiredAcknowledgedAndAuthenticatedStatesRemainCentralized() = runTest {
         val repository = FakeAuthRepository()
-        val viewModel = MainActivityViewModel(repository, FakeLocalMediaRepository())
+        val viewModel = MainActivityViewModel(repository, FakeLocalMediaRepository(), FakeThemePreferencesRepository())
 
         repository.state.value = AuthState.AuthenticationRequired(AuthGateReason.Required)
         assertThat(viewModel.authState.value).isEqualTo(AuthState.AuthenticationRequired(AuthGateReason.Required))
@@ -169,7 +172,11 @@ class MainActivityViewModelTest {
 
     @Test
     fun externalImportRequestsQueueAndAcknowledgeWithoutOverwriting() {
-        val viewModel = MainActivityViewModel(FakeAuthRepository(), FakeLocalMediaRepository())
+        val viewModel = MainActivityViewModel(
+            FakeAuthRepository(),
+            FakeLocalMediaRepository(),
+            FakeThemePreferencesRepository(),
+        )
 
         assertThat(
             viewModel.handleExternalImportIntent(
@@ -215,7 +222,7 @@ class MainActivityViewModelTest {
     fun appStartupTriggersLocalStorageRecovery() {
         val localMedia = FakeLocalMediaRepository()
 
-        MainActivityViewModel(FakeAuthRepository(), localMedia)
+        MainActivityViewModel(FakeAuthRepository(), localMedia, FakeThemePreferencesRepository())
 
         assertThat(localMedia.recoveryCalls).isEqualTo(1)
     }
@@ -255,5 +262,11 @@ class MainActivityViewModelTest {
         override suspend fun delete(id: LocalMediaId): LocalMediaDeleteResult = error("unused")
 
         override suspend fun resolvePlaybackSource(id: LocalMediaId): LocalMediaPlaybackSource? = error("unused")
+    }
+
+    private class FakeThemePreferencesRepository : ThemePreferencesRepository {
+        override val themePreferences = flowOf(ThemePreferences())
+        override suspend fun setThemeMode(themeMode: ThemeMode) = Unit
+        override suspend fun setDynamicColorEnabled(enabled: Boolean) = Unit
     }
 }

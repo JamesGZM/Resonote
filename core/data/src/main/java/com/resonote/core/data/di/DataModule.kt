@@ -29,10 +29,12 @@ import com.resonote.core.data.HomeRepository
 import com.resonote.core.data.PlaylistRepository
 import com.resonote.core.data.PlaybackPreferencesRepository
 import com.resonote.core.data.DefaultPlaybackPreferencesRepository
+import com.resonote.core.data.DefaultThemePreferencesRepository
 import com.resonote.core.data.RankingRepository
 import com.resonote.core.data.RandomHomeRecommendationSampler
 import com.resonote.core.data.RiskVerificationRepository
 import com.resonote.core.data.SongPlaybackRepository
+import com.resonote.core.data.ThemePreferencesRepository
 import com.resonote.core.data.DefaultUserProfileRepository
 import com.resonote.core.data.DefaultLibraryRepository
 import com.resonote.core.data.DefaultLocalMediaRepository
@@ -69,6 +71,11 @@ internal abstract class DataBindings {
     abstract fun bindPlaybackPreferencesRepository(
         implementation: DefaultPlaybackPreferencesRepository,
     ): PlaybackPreferencesRepository
+
+    @Binds
+    abstract fun bindThemePreferencesRepository(
+        implementation: DefaultThemePreferencesRepository,
+    ): ThemePreferencesRepository
 
     @Binds
     abstract fun bindSongPlaybackRepository(implementation: DefaultSongPlaybackRepository): SongPlaybackRepository

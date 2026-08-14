@@ -2,6 +2,7 @@
 
 package com.resonote.feature.settings.impl
 
+import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.GraphicEq
+import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.Tune
@@ -32,6 +34,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -54,6 +57,7 @@ import com.resonote.core.designsystem.component.LocalResonoteSnackbarController
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
 import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.model.OnlinePlaybackQuality
+import com.resonote.core.model.ThemeMode
 
 @Composable
 fun SettingsRoute(
@@ -77,6 +81,8 @@ fun SettingsRoute(
         onRetry = viewModel::retry,
         onPlaybackSpeedChange = viewModel::setPlaybackSpeed,
         onOnlinePlaybackQualityChange = viewModel::setOnlinePlaybackQuality,
+        onThemeModeChange = viewModel::setThemeMode,
+        onDynamicColorChange = viewModel::setDynamicColorEnabled,
     )
 }
 
@@ -87,10 +93,14 @@ internal fun SettingsScreen(
     onRetry: () -> Unit,
     onPlaybackSpeedChange: (PlaybackSpeed) -> Unit,
     onOnlinePlaybackQualityChange: (OnlinePlaybackQuality) -> Unit = {},
+    onThemeModeChange: (ThemeMode) -> Unit = {},
+    onDynamicColorChange: (Boolean) -> Unit = {},
+    supportsDynamicColor: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
     modifier: Modifier = Modifier,
 ) {
     var speedDialogOpen by remember { mutableStateOf(false) }
     var qualityDialogOpen by remember { mutableStateOf(false) }
+    var themeDialogOpen by remember { mutableStateOf(false) }
     val ready = state as? SettingsUiState.Ready
 
     Scaffold(
@@ -116,14 +126,27 @@ internal fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             item(key = "intro") { SettingsIntroCard() }
+            if (state is SettingsUiState.Ready) {
+                item(key = "appearance-label") {
+                    SettingsSectionLabel(R.string.feature_settings_impl_appearance_section)
+                }
+                item(key = "theme-mode") {
+                    ThemeModeSettingsCard(
+                        state = state,
+                        onClick = { themeDialogOpen = true },
+                    )
+                }
+                if (supportsDynamicColor) {
+                    item(key = "dynamic-color") {
+                        DynamicColorSettingsCard(
+                            state = state,
+                            onCheckedChange = onDynamicColorChange,
+                        )
+                    }
+                }
+            }
             item(key = "playback-label") {
-                Text(
-                    text = stringResource(R.string.feature_settings_impl_playback_section),
-                    modifier = Modifier.padding(horizontal = 4.dp),
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
+                SettingsSectionLabel(R.string.feature_settings_impl_playback_section)
             }
             item(key = "playback-speed") {
                 when (state) {
@@ -165,6 +188,107 @@ internal fun SettingsScreen(
             },
             onDismiss = { qualityDialogOpen = false },
         )
+    }
+    if (themeDialogOpen && ready != null) {
+        ThemeModeDialog(
+            selected = ready.themePreferences.themeMode,
+            onSelect = {
+                themeDialogOpen = false
+                onThemeModeChange(it)
+            },
+            onDismiss = { themeDialogOpen = false },
+        )
+    }
+}
+
+@Composable
+private fun SettingsSectionLabel(textRes: Int) {
+    Text(
+        text = stringResource(textRes),
+        modifier = Modifier.padding(horizontal = 4.dp),
+        color = MaterialTheme.colorScheme.primary,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+    )
+}
+
+@Composable
+private fun ThemeModeSettingsCard(
+    state: SettingsUiState.Ready,
+    onClick: () -> Unit,
+) {
+    Card(
+        onClick = onClick,
+        enabled = !state.isSaving,
+        modifier = Modifier.fillMaxWidth().testTag("settings-theme-mode"),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        shape = MaterialTheme.shapes.extraLarge,
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(18.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Surface(
+                modifier = Modifier.size(48.dp),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(Icons.Rounded.DarkMode, contentDescription = null, modifier = Modifier.size(24.dp))
+                }
+            }
+            Column(modifier = Modifier.weight(1f).padding(horizontal = 14.dp)) {
+                Text(
+                    text = stringResource(R.string.feature_settings_impl_theme_mode),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    text = state.themePreferences.themeMode.label(),
+                    modifier = Modifier.padding(top = 3.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+            Icon(Icons.Rounded.ChevronRight, contentDescription = null)
+        }
+    }
+}
+
+@Composable
+private fun DynamicColorSettingsCard(
+    state: SettingsUiState.Ready,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth().testTag("settings-dynamic-color"),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        shape = MaterialTheme.shapes.extraLarge,
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(18.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.feature_settings_impl_dynamic_color),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    text = stringResource(R.string.feature_settings_impl_dynamic_color_body),
+                    modifier = Modifier.padding(top = 3.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+            Switch(
+                checked = state.themePreferences.dynamicColorEnabled,
+                enabled = !state.isSaving,
+                onCheckedChange = onCheckedChange,
+            )
+        }
     }
 }
 
@@ -463,6 +587,54 @@ private fun OnlineQualityDialog(
         },
     )
 }
+
+@Composable
+private fun ThemeModeDialog(
+    selected: ThemeMode,
+    onSelect: (ThemeMode) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = { Icon(Icons.Rounded.DarkMode, contentDescription = null) },
+        title = { Text(stringResource(R.string.feature_settings_impl_theme_mode)) },
+        text = {
+            Column {
+                ThemeMode.entries.forEach { themeMode ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .selectable(
+                                selected = themeMode == selected,
+                                role = Role.RadioButton,
+                                onClick = { onSelect(themeMode) },
+                            )
+                            .padding(horizontal = 4.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(selected = themeMode == selected, onClick = null)
+                        Text(themeMode.label(), modifier = Modifier.padding(start = 12.dp))
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.feature_settings_impl_cancel))
+            }
+        },
+    )
+}
+
+@Composable
+private fun ThemeMode.label(): String = stringResource(
+    when (this) {
+        ThemeMode.SYSTEM -> R.string.feature_settings_impl_theme_system
+        ThemeMode.LIGHT -> R.string.feature_settings_impl_theme_light
+        ThemeMode.DARK -> R.string.feature_settings_impl_theme_dark
+        ThemeMode.AMOLED -> R.string.feature_settings_impl_theme_amoled
+    },
+)
 
 @Composable
 private fun OnlinePlaybackQuality.label(): String = stringResource(

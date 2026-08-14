@@ -3,8 +3,11 @@ package com.resonote.feature.settings.impl
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.resonote.core.data.PlaybackPreferencesRepository
+import com.resonote.core.data.ThemePreferencesRepository
 import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.model.OnlinePlaybackQuality
+import com.resonote.core.model.ThemeMode
+import com.resonote.core.model.ThemePreferences
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
@@ -22,6 +25,7 @@ sealed interface SettingsUiState {
     data class Ready(
         val playbackSpeed: PlaybackSpeed,
         val onlinePlaybackQuality: OnlinePlaybackQuality = OnlinePlaybackQuality.Standard,
+        val themePreferences: ThemePreferences = ThemePreferences(),
         val isSaving: Boolean = false,
         val saveFailed: Boolean = false,
     ) : SettingsUiState
@@ -30,6 +34,7 @@ sealed interface SettingsUiState {
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val playbackPreferencesRepository: PlaybackPreferencesRepository,
+    private val themePreferencesRepository: ThemePreferencesRepository,
 ) : ViewModel() {
     private val mutableUiState = MutableStateFlow<SettingsUiState>(SettingsUiState.Loading)
     val uiState: StateFlow<SettingsUiState> = mutableUiState.asStateFlow()
@@ -78,6 +83,18 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun setThemeMode(themeMode: ThemeMode) {
+        val state = mutableUiState.value as? SettingsUiState.Ready ?: return
+        if (state.isSaving || state.themePreferences.themeMode == themeMode) return
+        savePreference { themePreferencesRepository.setThemeMode(themeMode) }
+    }
+
+    fun setDynamicColorEnabled(enabled: Boolean) {
+        val state = mutableUiState.value as? SettingsUiState.Ready ?: return
+        if (state.isSaving || state.themePreferences.dynamicColorEnabled == enabled) return
+        savePreference { themePreferencesRepository.setDynamicColorEnabled(enabled) }
+    }
+
     fun acknowledgeSaveFailure() {
         val state = mutableUiState.value as? SettingsUiState.Ready ?: return
         mutableUiState.value = state.copy(saveFailed = false)
@@ -91,18 +108,40 @@ class SettingsViewModel @Inject constructor(
                 combine(
                     playbackPreferencesRepository.playbackSpeed,
                     playbackPreferencesRepository.onlinePlaybackQuality,
-                ) { speed, quality -> speed to quality }.collect { (speed, quality) ->
-                    val current = mutableUiState.value as? SettingsUiState.Ready
-                    mutableUiState.value = SettingsUiState.Ready(
-                        playbackSpeed = speed,
-                        onlinePlaybackQuality = quality,
-                        isSaving = current?.isSaving == true,
-                    )
-                }
+                    themePreferencesRepository.themePreferences,
+                ) { speed, quality, themePreferences -> Triple(speed, quality, themePreferences) }
+                    .collect { (speed, quality, themePreferences) ->
+                        val current = mutableUiState.value as? SettingsUiState.Ready
+                        mutableUiState.value = SettingsUiState.Ready(
+                            playbackSpeed = speed,
+                            onlinePlaybackQuality = quality,
+                            themePreferences = themePreferences,
+                            isSaving = current?.isSaving == true,
+                            saveFailed = current?.saveFailed == true,
+                        )
+                    }
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
                 mutableUiState.value = SettingsUiState.LoadFailed
+            }
+        }
+    }
+
+    private fun savePreference(save: suspend () -> Unit) {
+        val state = mutableUiState.value as? SettingsUiState.Ready ?: return
+        if (state.isSaving) return
+        viewModelScope.launch {
+            mutableUiState.value = state.copy(isSaving = true, saveFailed = false)
+            try {
+                save()
+                val current = mutableUiState.value as? SettingsUiState.Ready ?: state
+                mutableUiState.value = current.copy(isSaving = false, saveFailed = false)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                val current = mutableUiState.value as? SettingsUiState.Ready ?: state
+                mutableUiState.value = current.copy(isSaving = false, saveFailed = true)
             }
         }
     }

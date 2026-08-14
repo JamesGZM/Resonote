@@ -5,6 +5,7 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 
+// Generated from the frozen brand seeds documented in design/theme-generator.
 internal val ResonoteLightColorScheme: ColorScheme = lightColorScheme(
     primary = Color(0xFFAE2A4B),
     onPrimary = Color(0xFFFFFFFF),
@@ -21,7 +22,7 @@ internal val ResonoteLightColorScheme: ColorScheme = lightColorScheme(
     onTertiaryContainer = Color(0xFF2A1700),
     background = Color(0xFFFFFBFF),
     onBackground = Color(0xFF201A1B),
-    surface = Color(0xFFFFFFFF),
+    surface = Color(0xFFFFF8F7),
     onSurface = Color(0xFF201A1B),
     surfaceVariant = Color(0xFFF4DDDF),
     onSurfaceVariant = Color(0xFF524344),
@@ -40,7 +41,7 @@ internal val ResonoteLightColorScheme: ColorScheme = lightColorScheme(
     surfaceContainer = Color(0xFFF8EBEB),
     surfaceContainerHigh = Color(0xFFF2E5E5),
     surfaceContainerHighest = Color(0xFFECE0E0),
-    surfaceContainerLow = Color(0xFFFFFFFF),
+    surfaceContainerLow = Color(0xFFFEF1F1),
     surfaceContainerLowest = Color(0xFFFFFFFF),
     primaryFixed = Color(0xFFFFD9DD),
     primaryFixedDim = Color(0xFFFFB2BC),

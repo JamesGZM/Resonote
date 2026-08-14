@@ -60,9 +60,17 @@ class SettingsScreenScreenshotTest {
         assertThat(backClicks).isEqualTo(1)
     }
 
+    @Test
+    fun dynamicColorOnlyAppearsWhenPlatformSupportsIt() {
+        setScreen(supportsDynamicColor = false)
+
+        composeRule.onNodeWithTag("settings-dynamic-color").assertDoesNotExist()
+    }
+
     private fun setScreen(
         onBack: () -> Unit = {},
         onPlaybackSpeedChange: (PlaybackSpeed) -> Unit = {},
+        supportsDynamicColor: Boolean = true,
     ) {
         composeRule.setContent {
             DeviceConfigurationOverride(
@@ -74,6 +82,7 @@ class SettingsScreenScreenshotTest {
                         onBack = onBack,
                         onRetry = {},
                         onPlaybackSpeedChange = onPlaybackSpeedChange,
+                        supportsDynamicColor = supportsDynamicColor,
                     )
                 }
             }

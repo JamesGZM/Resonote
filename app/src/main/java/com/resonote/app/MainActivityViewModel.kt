@@ -5,7 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.resonote.core.data.AuthRepository
 import com.resonote.core.data.LocalMediaRepository
+import com.resonote.core.data.ThemePreferencesRepository
 import com.resonote.core.model.AuthState
+import com.resonote.core.model.ThemePreferences
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.launch
@@ -20,6 +22,7 @@ import kotlinx.coroutines.flow.update
 internal class MainActivityViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     localMediaRepository: LocalMediaRepository,
+    themePreferencesRepository: ThemePreferencesRepository,
 ) : ViewModel() {
     private val mutableExternalImportRequests = MutableStateFlow<List<ExternalLocalImportRequest>>(emptyList())
     val externalImportRequests: StateFlow<List<ExternalLocalImportRequest>> =
@@ -36,6 +39,13 @@ internal class MainActivityViewModel @Inject constructor(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
             initialValue = AuthState.Anonymous,
+        )
+
+    val themePreferences: StateFlow<ThemePreferences> =
+        themePreferencesRepository.themePreferences.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = ThemePreferences(),
         )
 
     fun acknowledgeAuthenticationGate() {

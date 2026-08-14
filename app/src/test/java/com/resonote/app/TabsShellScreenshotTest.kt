@@ -95,6 +95,51 @@ class TabsShellScreenshotTest {
     }
 
     @Test
+    fun tabsShell_bottomChromeThemeMatrix() {
+        var themeMode by mutableStateOf(ResonoteThemeMode.LIGHT)
+        var dynamicColorEnabled by mutableStateOf(false)
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                override = DeviceConfigurationOverride.ForcedSize(DpSize(390.dp, 844.dp)),
+            ) {
+                ResonoteTheme(
+                    themeMode = themeMode,
+                    dynamicColorEnabled = dynamicColorEnabled,
+                ) {
+                    val homeViewModel = remember { HomeViewModel(ScreenshotHomeRepository()) }
+                    TabsShell(
+                        homeViewModel = homeViewModel,
+                        playbackState = PlaybackState(
+                            queue = listOf(PlaybackItem(song("theme-preview"))),
+                            currentIndex = 0,
+                        ),
+                    )
+                }
+            }
+        }
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("Rankings").fetchSemanticsNodes().isNotEmpty()
+        }
+
+        listOf(
+            Triple("Light", ResonoteThemeMode.LIGHT, false),
+            Triple("Dark", ResonoteThemeMode.DARK, false),
+            Triple("Amoled", ResonoteThemeMode.AMOLED, false),
+            Triple("Dynamic", ResonoteThemeMode.LIGHT, true),
+        ).forEach { (name, mode, dynamic) ->
+            composeRule.runOnIdle {
+                themeMode = mode
+                dynamicColorEnabled = dynamic
+            }
+            composeRule.waitForIdle()
+            composeRule.onRoot().captureRoboImage(
+                filePath = "src/test/screenshots/TabsShell/BottomShell_$name.png",
+                roborazziOptions = DefaultRoborazziOptions,
+            )
+        }
+    }
+
+    @Test
     fun compactTabItemAndClickTargetAre64DpHigh() {
         composeRule.setContent {
             DeviceConfigurationOverride(
@@ -206,7 +251,10 @@ class TabsShellScreenshotTest {
                 Box(Modifier.fillMaxSize()) {
                     if (producerExists) {
                         LaunchedEffect(Unit) {
-                            snackbarController.show("Playback failed")
+                            snackbarController.show(
+                                message = "Playback failed",
+                                duration = SnackbarDuration.Indefinite,
+                            )
                             producerExists = false
                         }
                     }

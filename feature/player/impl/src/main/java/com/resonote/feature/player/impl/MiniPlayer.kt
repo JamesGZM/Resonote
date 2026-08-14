@@ -72,7 +72,7 @@ fun ResonoteMiniPlayer(
             .fillMaxWidth()
             .then(containerHeightModifier),
         shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surface,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
         tonalElevation = 0.dp,
         shadowElevation = ResonoteTokens.elevation.level3.maximumShadow,
     ) {

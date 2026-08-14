@@ -7,8 +7,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.resonote.core.designsystem.theme.ResonoteTheme
-import com.resonote.core.designsystem.theme.ResonoteThemeMode
+import androidx.compose.runtime.getValue
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -23,7 +24,11 @@ class MainActivity : ComponentActivity() {
             viewModel.handleExternalImportIntent(intent, finishTaskOnBack = true)
         }
         setContent {
-            ResonoteTheme(themeMode = ResonoteThemeMode.SYSTEM) {
+            val themePreferences by viewModel.themePreferences.collectAsStateWithLifecycle()
+            ResonoteTheme(
+                themeMode = themePreferences.themeMode,
+                dynamicColorEnabled = themePreferences.dynamicColorEnabled,
+            ) {
                 ResonoteApp(viewModel = viewModel, onFinishExternalTask = ::finish)
             }
         }

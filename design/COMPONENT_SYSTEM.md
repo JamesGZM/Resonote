@@ -447,11 +447,11 @@ Resonote 使用 Material3 Adaptive Navigation Suite 1.4.0 稳定版作为 Primar
 
 | Property | Value |
 |---|---:|
-| Container | 悬浮卡片；`surfaceContainer`；与 Bottom Navigation 使用同一 Semantic Color |
+| Container | 悬浮卡片；Level 3 对应 `surfaceContainerHigh` |
 | Outer spacing | Start 16dp / End 16dp / 到 Bottom Navigation 顶部 16dp |
 | Min height | 72dp；200% 字号下弹性增长 |
 | Shape | `shapeExtraLarge / 28dp` |
-| Elevation | Level 3；Shadow 不得侵入与 Bottom Navigation 之间的 16dp 可见间距 |
+| Elevation | Level 3；`surfaceContainerHigh` + `6dp` Shadow；阴影不得侵入与 Bottom Navigation 之间的 16dp 可见间距 |
 | Artwork | 56dp × 56dp；`artworkShapeCompact / 8dp`；引用 04B |
 | Artwork → Text gap | 12dp |
 | Title | `bodyLarge`；严格 1 行；End Ellipsis |
@@ -461,7 +461,7 @@ Resonote 使用 Material3 Adaptive Navigation Suite 1.4.0 稳定版作为 Primar
 | Progress | 2dp；位于卡片内部底边，不越出 Container |
 
 - Mini Player 是独立悬浮卡片，不能与 Bottom Navigation 贴合、共边、融合或重叠。左右与下方三处 16dp 间距必须在 Compact 视觉和实现中同时成立。
-- 卡片与 Bottom Navigation 使用相同 Container Semantic Color 只表达同属 Bottom Shell；二者仍由 16dp 页面背景带明确分隔。
+- 卡片与 Bottom Navigation 分别使用 `surfaceContainerHigh` 与 Material Navigation Bar 默认的 `surfaceContainer`；二者仍由 16dp 页面背景带明确分隔。
 - Compact Tabs Shell 中 Mini Player 位于滚动内容之上的独立 Overlay 层。列表内容在滚动过程中可以从卡片后方经过；Mini Player 不结束列表、不切断外层容器，也不要求内容层在卡片上方保留永久空白带。
 - 滚动容器末尾必须提供足够的 Bottom Content Padding，使最后一个可聚焦 Item 能完整滚动到 Mini Player 上方。该 Padding 只保证末项可达，不改变中间滚动状态允许内容位于悬浮层后方的层级合同。
 - Mini Player Container 使用带 `shape` 的可点击 Surface 承担主体 Action；除内部独立 Icon Button 外，点击卡片任意区域均直接打开 Full Player。Surface 的 State Layer 必须按卡片圆角裁切，内部播放控制不得触发主体 Action。
@@ -479,16 +479,17 @@ Resonote 使用 Material3 Adaptive Navigation Suite 1.4.0 稳定版作为 Primar
 ### 09B — Compact Bottom Navigation
 
 - 使用 07A Material3 Navigation Bar 合同，目的地固定为“首页、发现、我的”，首页为 App 默认选中项。
+- Container 使用 Material Navigation Bar 默认映射的 `surfaceContainer`。禁止传入自定义 `containerColor`、写死白色、附加透明度、渐变或手写 Shadow；主题变化只通过当前 `ColorScheme` 生效。
 - Navigation Bar 消费底部系统 Insets；其 Container 延伸覆盖手势安全区，Gesture Indicator 使用 03D 设计证据规则。
 - Navigation/App Scaffold 将 `innerPadding` 交给页面内容时，必须同时执行 `.padding(innerPadding).consumeWindowInsets(innerPadding)`；禁止让发现、我的等 Feature Scaffold 再次消费 Navigation Bar 已处理的底部 Insets。
 - 三键/两键虚拟系统导航启用时，System Navigation Bar 使用同一 `surfaceContainer` 实色与匹配的图标明暗，不允许平台默认对比遮罩在底部产生第二条异色容器。
 - Gesture、Two-button、Three-button 三种模式下，页面可用内容区域必须连续结束于 Navigation Bar 顶边；两者之间不得出现等于系统导航栏高度的额外空白带。
 - Mini Player 出现或消失不得改变三个 Destination 的尺寸、选中状态、Tab 状态或 Back Stack。
-- Mini Player 与 Navigation Bar 都映射 `surfaceContainer`，但二者之间必须露出 16dp 页面 `background`；颜色相同不代表可以合并为同一个 Container。
+- Mini Player 映射 `surfaceContainerHigh`，Navigation Bar 使用 Material 默认 `surfaceContainer`；二者之间必须露出 16dp 页面 `background`。
 - 三个 Destination 等分可用宽度；Icon、Active Indicator 与 Label 使用 Material3 Navigation Bar 的内部 Token，不因 Mini Player 出现而上移、压缩或改变选中态。
 - Compact Destination 保持冻结的 Resonote Icon/Label/Color/Ripple 视觉结构；Item 内容层固定为 64dp，完整点击区域必须覆盖同一 64dp，不得扩展到页面内容或底部系统 Insets。禁止在 Item 上使用 `clipToBounds()` 或裁切 Ripple/State Layer。
 
-09 状态：**已冻结**。
+09 状态：**已冻结**。2026-08-14 已按真机 Light 基线验收 Bottom Shell；后续主题色调整必须修改完整 Scheme 并重新验证 Light / Dark / AMOLED / Dynamic，不得为 Bottom Navigation 增加单点颜色覆盖。
 用户确认的冻结视觉基线：`design/approved/components/09-miniplayer-bottom-navigation.png`
 该 PNG 仅冻结 Mini Player、Bottom Navigation、系统手势区及其相互间距；图中上方首页内容不是首页视觉基线。
 首页对 Overlay 层级的页面级证据见 `design/HOME_IMPLEMENTATION_BASELINE.md`。

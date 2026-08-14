@@ -1,10 +1,15 @@
 package com.resonote.core.designsystem.theme
 
 import android.animation.ValueAnimator
+import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalContext
+import com.resonote.core.model.ThemeMode
 import com.resonote.core.designsystem.tokens.LocalResonoteArtwork
 import com.resonote.core.designsystem.tokens.LocalResonoteArtworkShapes
 import com.resonote.core.designsystem.tokens.LocalResonoteBorders
@@ -30,29 +35,35 @@ import com.resonote.core.designsystem.tokens.ResonoteStateLayers
 import com.resonote.core.designsystem.tokens.ResonoteSystemColors
 import com.resonote.core.designsystem.tokens.ResonoteTouchTargets
 
-enum class ResonoteThemeMode {
-    SYSTEM,
-    LIGHT,
-    DARK,
-    AMOLED,
-}
+typealias ResonoteThemeMode = ThemeMode
 
 @Composable
 fun ResonoteTheme(
-    themeMode: ResonoteThemeMode = ResonoteThemeMode.SYSTEM,
+    themeMode: ThemeMode = ThemeMode.SYSTEM,
+    dynamicColorEnabled: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val systemDark = isSystemInDarkTheme()
+    val context = LocalContext.current
     val motionScheme = if (ValueAnimator.areAnimatorsEnabled()) {
         ResonoteMotionScheme.Standard
     } else {
         ResonoteMotionScheme.Reduced
     }
-    val colorScheme = when (themeMode) {
-        ResonoteThemeMode.SYSTEM -> if (systemDark) ResonoteDarkColorScheme else ResonoteLightColorScheme
-        ResonoteThemeMode.LIGHT -> ResonoteLightColorScheme
-        ResonoteThemeMode.DARK -> ResonoteDarkColorScheme
-        ResonoteThemeMode.AMOLED -> ResonoteAmoledColorScheme
+    val useDynamicColor = dynamicColorEnabled &&
+        themeMode != ThemeMode.AMOLED &&
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    val useDarkColors = when (themeMode) {
+        ThemeMode.SYSTEM -> systemDark
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK, ThemeMode.AMOLED -> true
+    }
+    val colorScheme = when {
+        useDynamicColor && useDarkColors -> dynamicDarkColorScheme(context)
+        useDynamicColor -> dynamicLightColorScheme(context)
+        themeMode == ThemeMode.AMOLED -> ResonoteAmoledColorScheme
+        useDarkColors -> ResonoteDarkColorScheme
+        else -> ResonoteLightColorScheme
     }
     CompositionLocalProvider(
         LocalResonoteSpacing provides ResonoteSpacing(),

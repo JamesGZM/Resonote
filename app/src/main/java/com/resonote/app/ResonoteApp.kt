@@ -98,7 +98,7 @@ internal fun ResonoteApp(
     val snackbarSpacing = ResonoteTokens.spacing.space2
     SyncSystemBars(
         navigationBarColor = if (hasTabBar) {
-            MaterialTheme.colorScheme.surface
+            MaterialTheme.colorScheme.surfaceContainer
         } else {
             MaterialTheme.colorScheme.background
         },

@@ -2,8 +2,11 @@ package com.resonote.feature.settings.impl
 
 import com.google.common.truth.Truth.assertThat
 import com.resonote.core.data.PlaybackPreferencesRepository
+import com.resonote.core.data.ThemePreferencesRepository
 import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.model.OnlinePlaybackQuality
+import com.resonote.core.model.ThemeMode
+import com.resonote.core.model.ThemePreferences
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -31,7 +34,7 @@ class SettingsViewModelTest {
     @Test
     fun repositoryPreferenceIsTheDisplayedFactSource() = runTest(dispatcher) {
         val repository = FakePlaybackPreferencesRepository(PlaybackSpeed.ThreeQuarters)
-        val viewModel = SettingsViewModel(repository)
+        val viewModel = SettingsViewModel(repository, FakeThemePreferencesRepository())
 
         advanceUntilIdle()
 
@@ -48,7 +51,7 @@ class SettingsViewModelTest {
     @Test
     fun selectingSpeedPersistsThroughTheSharedRepository() = runTest(dispatcher) {
         val repository = FakePlaybackPreferencesRepository(PlaybackSpeed.Normal)
-        val viewModel = SettingsViewModel(repository)
+        val viewModel = SettingsViewModel(repository, FakeThemePreferencesRepository())
         advanceUntilIdle()
 
         viewModel.setPlaybackSpeed(PlaybackSpeed.OneAndHalf)
@@ -61,7 +64,7 @@ class SettingsViewModelTest {
     @Test
     fun selectingOnlineQualityPersistsThroughTheSharedRepository() = runTest(dispatcher) {
         val repository = FakePlaybackPreferencesRepository(PlaybackSpeed.Normal)
-        val viewModel = SettingsViewModel(repository)
+        val viewModel = SettingsViewModel(repository, FakeThemePreferencesRepository())
         advanceUntilIdle()
 
         viewModel.setOnlinePlaybackQuality(OnlinePlaybackQuality.Lossless)
@@ -73,6 +76,24 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun appearanceChangesPersistThroughThemeRepository() = runTest(dispatcher) {
+        val themeRepository = FakeThemePreferencesRepository()
+        val viewModel = SettingsViewModel(
+            FakePlaybackPreferencesRepository(PlaybackSpeed.Normal),
+            themeRepository,
+        )
+        advanceUntilIdle()
+
+        viewModel.setThemeMode(ThemeMode.AMOLED)
+        advanceUntilIdle()
+        assertThat(themeRepository.preferences.value).isEqualTo(ThemePreferences(ThemeMode.AMOLED, false))
+
+        viewModel.setDynamicColorEnabled(true)
+        advanceUntilIdle()
+        assertThat(themeRepository.preferences.value).isEqualTo(ThemePreferences(ThemeMode.SYSTEM, true))
+    }
+
+    @Test
     fun loadAndSaveFailuresRemainExplicitAndRecoverable() = runTest(dispatcher) {
         val failedLoad = object : PlaybackPreferencesRepository {
             override val playbackSpeed: Flow<PlaybackSpeed> = flow { error("broken read") }
@@ -80,12 +101,12 @@ class SettingsViewModelTest {
             override suspend fun setPlaybackSpeed(speed: PlaybackSpeed) = Unit
             override suspend fun setOnlinePlaybackQuality(quality: OnlinePlaybackQuality) = Unit
         }
-        val loadingViewModel = SettingsViewModel(failedLoad)
+        val loadingViewModel = SettingsViewModel(failedLoad, FakeThemePreferencesRepository())
         advanceUntilIdle()
         assertThat(loadingViewModel.uiState.value).isEqualTo(SettingsUiState.LoadFailed)
 
         val failedSave = FakePlaybackPreferencesRepository(PlaybackSpeed.Normal, failWrites = true)
-        val savingViewModel = SettingsViewModel(failedSave)
+        val savingViewModel = SettingsViewModel(failedSave, FakeThemePreferencesRepository())
         advanceUntilIdle()
         savingViewModel.setPlaybackSpeed(PlaybackSpeed.Double)
         advanceUntilIdle()
@@ -116,6 +137,29 @@ class SettingsViewModelTest {
             qualityWrites += quality
             if (failWrites) error("broken write")
             this.quality.value = quality
+        }
+    }
+
+    private class FakeThemePreferencesRepository : ThemePreferencesRepository {
+        val preferences = MutableStateFlow(ThemePreferences())
+        override val themePreferences: Flow<ThemePreferences> = preferences
+
+        override suspend fun setThemeMode(themeMode: ThemeMode) {
+            preferences.value = preferences.value.copy(
+                themeMode = themeMode,
+                dynamicColorEnabled = preferences.value.dynamicColorEnabled && themeMode != ThemeMode.AMOLED,
+            )
+        }
+
+        override suspend fun setDynamicColorEnabled(enabled: Boolean) {
+            preferences.value = ThemePreferences(
+                themeMode = if (enabled && preferences.value.themeMode == ThemeMode.AMOLED) {
+                    ThemeMode.SYSTEM
+                } else {
+                    preferences.value.themeMode
+                },
+                dynamicColorEnabled = enabled,
+            )
         }
     }
 }

@@ -745,10 +745,11 @@ Kotlin 协议层直接请求上游接口；签名、加密、设备注册、Sess
 | 2026-08-11 | P-078 | MV 横屏是同一 Video Player 的显式全屏状态，不建立独立横屏页面或单独视觉稿；播放器功能负责发起全屏，App 统一协调方向并保证恢复 | 用户明确要求依靠 Video Player 能力 | Video UI、Orientation、Lifecycle 和 Design Deliverables | 已确认 |
 | 2026-08-11 | P-079 | Full Player 的封面页与歌词页固定使用横向 Pager；旧图只保留该交互方向，视觉、内容层级和组件必须重新设计 | 用户确认既有产品决策 | Player IA、Navigation、Gestures 和 Design Deliverables | 已确认 |
 | 2026-08-11 | P-080 | V1 Compact 页面设计稿固定 `390dp` 宽；固定页面使用 `390 × 844dp`，滚动页面使用 `390 × Auto` 长画板；设计证据完整保留顶部 Status Bar 与底部手势安全区，系统区域构成参考 `player-cover-page.png` | 用户确认页面设计交付规范 | Foundation、Page Design、Home、Insets 和 Design Deliverables | 已确认 |
-| 2026-08-12 | P-081 | Music Item 首行固定为 Title → Quality → VIP，尾部 Duration 与 More 先保留；长标题只做单行末尾省略，Quality/VIP 不得侵入或越过 Duration。Playlist Item 固定 1:1 Artwork 与单行标题；Mini Player 复用同一信息优先级，并与同色 Bottom Navigation 保持 16dp 分隔及独立 Queue 入口 | 用户明确要求将已冻结组件写成可跨线程执行的文档合同 | Component System、Home、Lists、Tabs Shell、Player 和 QA | 已确认 |
+| 2026-08-12 | P-081 | Music Item 首行固定为 Title → Quality → VIP，尾部 Duration 与 More 先保留；长标题只做单行末尾省略，Quality/VIP 不得侵入或越过 Duration。Playlist Item 固定 1:1 Artwork 与单行标题；Mini Player 复用同一信息优先级，并与 Bottom Navigation 保持 16dp 分隔及独立 Queue 入口；底部容器颜色映射由 P-085 修订 | 用户明确要求将已冻结组件写成可跨线程执行的文档合同 | Component System、Home、Lists、Tabs Shell、Player 和 QA | 已确认并由 P-085 修订 |
 | 2026-08-12 | P-082 | Music Item 的 Playing Indicator 与 Duration 共用固定 Trailing Status Slot 且互斥；播放中以均衡器直接替换时长，More 继续保留 | 用户修正冻结视觉的播放中状态 | Component System、Song Lists、Playback State 和 QA | 已确认 |
 | 2026-08-12 | P-083 | Compact 首页锁定为同一页面的三段滚动状态：推荐区域、6 首每日推荐、6 个推荐歌单、6 首无分类新歌速递；Top App Bar 与 Bottom Navigation 固定，Mini Player 以 Overlay 覆盖滚动内容，末尾 Content Padding 保证最后一项可完整滚出遮挡 | 用户确认先锁定设计并进入代码实现；ImageGen 细节留待真实组件校正 | Home、Tabs Shell、Lists、Design QA 和 Implementation | 已确认 |
 | 2026-08-12 | P-084 | 首页首次加载与下拉刷新并发更新三个内容区；每日推荐每次成功后重抽 6 首；区块独立提交、失败保留旧内容并受请求代际保护；推荐电台按需使用 `top_card` 五种模式 | 用户确认以 `MoeKoeMusic-Mobile@ab71195d` 的刷新行为为准 | Home API、Repository、Refresh 和 Error Recovery | 已确认 |
+| 2026-08-14 | P-085 | 主题以 MD3 语义体系和 NiA 组织方式为骨架，由冻结品牌种子生成完整 Light / Dark Scheme，AMOLED 从 Dark 派生，Android 12+ Dynamic 使用平台完整 Scheme。Bottom Navigation 使用 Material 默认 `surfaceContainer` 且不得单点覆色或手写阴影；Mini Player 使用 `surfaceContainerHigh` 与 Level 3 `6dp` 阴影 | 用户真机验收当前 Bottom Shell 后确认固定为规范 | Theme、Design System、Settings、Tabs Shell 和 QA | 已确认 |
 
 ## 13. 首轮讨论议题
 

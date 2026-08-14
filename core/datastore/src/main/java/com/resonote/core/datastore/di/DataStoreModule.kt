@@ -4,9 +4,12 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
 import com.resonote.core.datastore.AndroidKeystoreSessionCipher
+import com.resonote.core.datastore.AppearancePreferencesSerializer
+import com.resonote.core.datastore.AppearancePreferencesStorage
 import com.resonote.core.datastore.EncryptedApiSessionSerializer
 import com.resonote.core.datastore.EncryptedSessionStorage
 import com.resonote.core.datastore.ProtoEncryptedSessionStorage
+import com.resonote.core.datastore.ProtoAppearancePreferencesStorage
 import com.resonote.core.datastore.PlaybackPreferencesSerializer
 import com.resonote.core.datastore.PlaybackPreferencesStorage
 import com.resonote.core.datastore.ProtoPlaybackPreferencesStorage
@@ -15,6 +18,7 @@ import com.resonote.core.datastore.SearchHistorySerializer
 import com.resonote.core.datastore.SearchHistoryStorage
 import com.resonote.core.datastore.SessionCipher
 import com.resonote.core.datastore.proto.EncryptedApiSession
+import com.resonote.core.datastore.proto.AppearancePreferences
 import com.resonote.core.datastore.proto.PlaybackPreferences
 import com.resonote.core.datastore.proto.SearchHistory
 import dagger.Binds
@@ -58,11 +62,26 @@ internal object DataStoreModule {
             serializer = PlaybackPreferencesSerializer,
             produceFile = { File(context.filesDir, "datastore/playback_preferences.pb") },
         )
+
+    @Provides
+    @Singleton
+    fun provideAppearancePreferencesDataStore(
+        @ApplicationContext context: Context,
+    ): DataStore<AppearancePreferences> =
+        DataStoreFactory.create(
+            serializer = AppearancePreferencesSerializer,
+            produceFile = { File(context.filesDir, "datastore/appearance_preferences.pb") },
+        )
 }
 
 @Module
 @InstallIn(SingletonComponent::class)
 internal abstract class DataStoreBindings {
+    @Binds
+    abstract fun bindAppearancePreferencesStorage(
+        implementation: ProtoAppearancePreferencesStorage,
+    ): AppearancePreferencesStorage
+
     @Binds
     abstract fun bindEncryptedSessionStorage(implementation: ProtoEncryptedSessionStorage): EncryptedSessionStorage
 

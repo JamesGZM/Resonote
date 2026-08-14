@@ -90,6 +90,7 @@ Brand Key Colors
 - Tonal Palette 必须由 Material Color Utilities 逻辑生成，不手工猜色。
 - Light 与 Dark 只能从同一组 Palette 映射语义角色。
 - AMOLED 是 Resonote 对 Dark Scheme 的扩展，不是 Material 3 标准 Scheme。
+- 业务组件只消费 `MaterialTheme.colorScheme` 的语义角色；禁止读取 Hex 后二次设色，也禁止根据主题模式在组件内自行分支。
 
 #### 01A — Brand Key Colors
 
@@ -100,6 +101,7 @@ Brand Key Colors
 | `brandTertiary` | Beat Amber | `#855300` | 节奏强调与 Tertiary Palette 来源 |
 
 - 状态：**已冻结**。
+- 可复现生成入口：`design/theme-generator`。`npm ci && npm run check` 校验冻结种子与提交的 Tonal Palette 产物一致；运行时不依赖 Material Color Utilities。
 - 辅助视觉证据：`design/approved/foundation/01a-brand-key-colors.png`
 
 #### 01B — Accent Tonal Palettes
@@ -276,6 +278,22 @@ AMOLED 基于 Dark Scheme 派生。`background`、`surfaceDim`、`surface` 与 `
 - 状态：**已冻结**。
 - 辅助视觉证据：`design/approved/foundation/01g-amoled-extension.png`
 
+#### 01G-1 — Runtime Theme Policy
+
+| 设置 | 生效 Scheme | 约束 |
+|---|---|---|
+| 跟随系统 | 品牌 Light / Dark | 默认值；跟随系统明暗 |
+| 浅色 | 品牌 Light | 不受系统明暗影响 |
+| 深色 | 品牌 Dark | 不受系统明暗影响 |
+| AMOLED | Resonote AMOLED Extension | 与 Dynamic Color 互斥 |
+| Dynamic Color | Android 12+ 平台 Dynamic Light / Dark | 开启时使用平台完整 Scheme，不与品牌 Accent 混合 |
+
+- 默认偏好为 `SYSTEM + Brand`；主题模式和 Dynamic 开关必须持久化。
+- Android 12 以下隐藏 Dynamic Color 入口，并使用对应的品牌 Scheme。
+- 开启 Dynamic Color 时若当前为 AMOLED，模式切回 `SYSTEM`；选择 AMOLED 时自动关闭 Dynamic Color。互斥规则由偏好 Repository 保证，组件不得自行修正状态。
+- Dynamic Color 关闭时，System / Light / Dark 必须使用由 01A 冻结种子生成的完整品牌 Scheme。
+- 状态：**已冻结**。
+
 #### 01H — Color Contrast Validation
 
 - 普通文字最低对比度：`4.5:1`。
@@ -374,6 +392,7 @@ Material 3 将 Elevation 分为 `tonalElevation` 与 `shadowElevation`。Resonot
 
 - `tonalElevation` 与首选 Surface Role 表达同一层级意图；组件应优先使用已定义 Surface Role，不能叠加出新的未记录颜色。
 - `shadowElevation` 默认统一为 `0dp`；只有表面真实覆盖其他内容且 Tonal Surface 无法建立边界时，才可在表中上限内启用。
+- 组件规范可以把某个真实悬浮表面的 Shadow 固定到该 Level 上限；这是组件级例外，不改变其他同级组件的默认值。Compact Mini Player 按 09A 固定使用 Level 3 的 `6dp` Shadow。
 - 阴影不是 `zIndex`。绘制顺序必须由布局或 `Modifier.zIndex` 明确控制。
 - Light、Dark 与 AMOLED 使用相同 Level 语义，不分别发明 Elevation Token。
 - AMOLED 的阴影不可作为唯一层级信号，必须同时使用已冻结的 AMOLED Surface 层级、边界或 Scrim。
