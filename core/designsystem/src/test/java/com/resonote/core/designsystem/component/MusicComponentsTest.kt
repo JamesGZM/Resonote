@@ -1,5 +1,6 @@
 package com.resonote.core.designsystem.component
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -77,5 +78,54 @@ class MusicComponentsTest {
         }
 
         composeRule.onNodeWithContentDescription("More actions for 无更多操作").assertDoesNotExist()
+    }
+
+    @Test
+    fun longQualityLabel_isAbbreviatedOnArtwork() {
+        composeRule.setContent {
+            ResonoteTheme {
+                Column {
+                    ResonoteMusicItem(
+                        title = "无损歌曲",
+                        supportingText = "歌手",
+                        duration = "4:26",
+                        qualityLabel = "LOSSLESS",
+                        isVip = true,
+                        onClick = {},
+                        onMoreClick = {},
+                    )
+                    ResonoteMusicItem(
+                        title = "高品质歌曲",
+                        supportingText = "歌手",
+                        duration = "4:26",
+                        qualityLabel = "HQ",
+                        onClick = {},
+                        onMoreClick = {},
+                    )
+                    ResonoteMusicItem(
+                        title = "高解析歌曲",
+                        supportingText = "歌手",
+                        duration = "4:26",
+                        qualityLabel = "HIGH RESOLUTION",
+                        onClick = {},
+                        onMoreClick = {},
+                    )
+                    ResonoteMusicItem(
+                        title = "未知音质歌曲",
+                        supportingText = "歌手",
+                        duration = "4:26",
+                        qualityLabel = "MASTER",
+                        onClick = {},
+                        onMoreClick = {},
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithText("LOSSLESS").assertDoesNotExist()
+        composeRule.onNodeWithText("SQ · VIP").assertExists()
+        composeRule.onNodeWithText("HQ").assertExists()
+        composeRule.onNodeWithText("HR").assertExists()
+        composeRule.onNodeWithText("MASTER").assertDoesNotExist()
     }
 }

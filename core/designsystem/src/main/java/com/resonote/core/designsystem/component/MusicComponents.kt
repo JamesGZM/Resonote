@@ -34,7 +34,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
@@ -186,28 +188,41 @@ fun ResonoteMusicItem(
     enabled: Boolean = true,
 ) {
     val effectiveArtworkState = if (!artworkUrl.isNullOrBlank()) ResonoteArtworkState.LOADED else artworkState
+    val colors = MaterialTheme.colorScheme
     val containerColor = when {
-        isPlaying -> MaterialTheme.colorScheme.primaryContainer
-        isSelected -> MaterialTheme.colorScheme.secondaryContainer
+        isPlaying -> lerp(colors.surface, colors.primary, 0.08f)
+        isSelected -> lerp(colors.surface, colors.primary, 0.06f)
         else -> Color.Transparent
     }
-    val titleColor = if (isPlaying) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+    val titleColor = if (isPlaying) colors.primary else colors.onSurface
+    val statusSlotWidth = with(LocalDensity.current) {
+        when {
+            fontScale >= 1.75f -> 56.dp
+            fontScale >= 1.25f -> 48.dp
+            else -> 44.dp
+        }
+    }
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 72.dp)
+            .heightIn(min = 80.dp)
             .clip(MaterialTheme.shapes.large)
             .background(containerColor)
             .semantics { selected = isSelected }
             .clickable(enabled = enabled, onClick = onClick)
-            .padding(start = 16.dp),
+            .padding(
+                start = 8.dp,
+                top = 8.dp,
+                end = if (onMoreClick == null) 8.dp else 0.dp,
+                bottom = 8.dp,
+            ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         ResonoteArtwork(
             state = effectiveArtworkState,
             contentDescription = stringResource(R.string.core_designsystem_song_artwork, title),
-            modifier = Modifier.size(56.dp),
+            modifier = Modifier.size(64.dp).clip(ResonoteTokens.artworkShapes.standard),
             artwork = {
                 if (artworkUrl.isNullOrBlank()) {
                     artwork()
@@ -219,72 +234,118 @@ fun ResonoteMusicItem(
                         fallback = artwork,
                     )
                 }
+                if (effectiveArtworkState == ResonoteArtworkState.LOADED) {
+                    ArtworkBadges(
+                        qualityLabel = qualityLabel?.toCompactQualityLabel(),
+                        isVip = isVip,
+                    )
+                }
             },
         )
         Spacer(Modifier.width(12.dp))
         if (effectiveArtworkState == ResonoteArtworkState.LOADING) {
             LoadingMusicText(modifier = Modifier.weight(1f))
         } else {
-            Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = title,
-                        modifier = Modifier.weight(1f),
-                        color = titleColor,
-                        style = MaterialTheme.typography.bodyLarge,
-                        maxLines = 1,
-                        softWrap = false,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    if (qualityLabel != null) {
-                        Spacer(Modifier.width(8.dp))
-                        ResonoteQualityBadge(qualityLabel)
-                    }
-                    if (isVip) {
-                        Spacer(Modifier.width(8.dp))
-                        ResonoteVipBadge()
-                    }
-                }
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text(
+                    text = title,
+                    color = titleColor,
+                    style = MaterialTheme.typography.bodyLarge,
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Ellipsis,
+                )
                 Text(
                     text = supportingText,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
                     maxLines = 1,
                     softWrap = false,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
         }
-        Box(
-            modifier = Modifier.width(48.dp),
-            contentAlignment = Alignment.Center,
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(if (onMoreClick == null) 0.dp else (-8).dp),
         ) {
-            if (isPlaying) {
-                Icon(
-                    imageVector = Icons.Rounded.Equalizer,
-                    contentDescription = stringResource(R.string.core_designsystem_playing),
-                    tint = MaterialTheme.colorScheme.primary,
-                )
-            } else {
-                Text(
-                    text = if (effectiveArtworkState == ResonoteArtworkState.LOADING) "--:--" else duration,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 1,
+            Box(
+                modifier = Modifier.width(statusSlotWidth),
+                contentAlignment = Alignment.Center,
+            ) {
+                if (isPlaying) {
+                    Icon(
+                        imageVector = Icons.Rounded.Equalizer,
+                        contentDescription = stringResource(R.string.core_designsystem_playing),
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                } else {
+                    Text(
+                        text = if (effectiveArtworkState == ResonoteArtworkState.LOADING) "--:--" else duration,
+                        color = colors.onSurfaceVariant,
+                        style = MaterialTheme.typography.labelMedium,
+                        maxLines = 1,
+                    )
+                }
+            }
+            if (onMoreClick != null) {
+                ResonoteIconButton(
+                    label = stringResource(R.string.core_designsystem_more_actions, title),
+                    onClick = onMoreClick,
+                    enabled = enabled,
+                    icon = { Icon(Icons.Rounded.MoreVert, contentDescription = null) },
                 )
             }
         }
-        if (onMoreClick != null) {
-            ResonoteIconButton(
-                label = stringResource(R.string.core_designsystem_more_actions, title),
-                onClick = onMoreClick,
-                enabled = enabled,
-                icon = { Icon(Icons.Rounded.MoreVert, contentDescription = null) },
-            )
-        } else {
-            Spacer(Modifier.width(16.dp))
-        }
     }
+}
+
+@Composable
+private fun BoxScope.ArtworkBadges(qualityLabel: String?, isVip: Boolean) {
+    val label = listOfNotNull(
+        qualityLabel,
+        "VIP".takeIf { isVip },
+    ).joinToString(separator = " · ")
+    if (label.isNotEmpty()) {
+        ArtworkBadge(
+            label = label,
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(4.dp),
+        )
+    }
+}
+
+@Composable
+private fun ArtworkBadge(label: String, modifier: Modifier = Modifier) {
+    val badgeFontSize = with(LocalDensity.current) { 8.dp.toSp() }
+    val badgeLineHeight = with(LocalDensity.current) { 10.dp.toSp() }
+    Surface(
+        modifier = modifier,
+        color = Color.Black.copy(alpha = 0.62f),
+        contentColor = Color.White,
+        shape = RoundedCornerShape(4.dp),
+    ) {
+        Text(
+            text = label,
+            modifier = Modifier.padding(horizontal = 3.dp, vertical = 1.dp),
+            style = MaterialTheme.typography.labelSmall,
+            fontSize = badgeFontSize,
+            lineHeight = badgeLineHeight,
+            maxLines = 1,
+            softWrap = false,
+        )
+    }
+}
+
+private fun String.toCompactQualityLabel(): String? = when (val normalized = trim().uppercase()) {
+    "LOSSLESS", "SQ" -> "SQ"
+    "HIGH QUALITY", "HIGH_QUALITY", "HQ" -> "HQ"
+    "HI-RES", "HI RES", "HIRES", "HIGH RESOLUTION", "HIGH_RESOLUTION", "HR" -> "HR"
+    else -> normalized.takeIf { it.length <= 3 }
 }
 
 @Composable

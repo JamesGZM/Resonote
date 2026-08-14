@@ -46,8 +46,8 @@ class MusicComponentsScreenshotTest {
                 ResonoteTheme(themeMode = currentCase.themeMode) {
                     Column {
                         ResonoteMusicItem(
-                            title = "那些年我们一起听过的歌",
-                            supportingText = "陈粒 · Resonote Ensemble",
+                            title = "那些年我们一起听过的歌：夏日回忆特别版",
+                            supportingText = "陈粒 · Resonote Ensemble · 特别合作艺术家",
                             duration = "5:41",
                             qualityLabel = "LOSSLESS",
                             isVip = true,
