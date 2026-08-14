@@ -25,10 +25,9 @@ class MiniPlayerTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun controls_dispatchIndependentActions() {
+    fun controls_dispatchIndependentActions_withoutNextAction() {
         var opens = 0
         var toggles = 0
-        var next = 0
         var queue = 0
         var miniPlayerHeightPx = 0
         composeRule.setContent {
@@ -42,10 +41,10 @@ class MiniPlayerTest {
                         isVip = true,
                         isPlaying = true,
                         progress = 0.4f,
+                        coverUrl = "https://example.test/cover.jpg",
                     ),
                     onOpenPlayer = { opens++ },
                     onTogglePlay = { toggles++ },
-                    onNext = { next++ },
                     onOpenQueue = { queue++ },
                     modifier = Modifier.onSizeChanged { miniPlayerHeightPx = it.height },
                 )
@@ -53,20 +52,20 @@ class MiniPlayerTest {
         }
 
         composeRule.onNodeWithContentDescription("Pause").performClick()
-        composeRule.onNodeWithContentDescription("Next").performClick()
         composeRule.onNodeWithContentDescription("Queue").performClick()
 
         assertEquals(0, opens)
         composeRule.onNodeWithText("静默轨道").performClick()
 
+        composeRule.onNodeWithContentDescription("Next").assertDoesNotExist()
         composeRule.onNodeWithTag("resonote-mini-player-artwork", useUnmergedTree = true)
             .assertWidthIsEqualTo(56.dp)
             .assertHeightIsEqualTo(56.dp)
-        composeRule.onNodeWithText("LOSSLESS").assertExists()
-        composeRule.onNodeWithText("VIP").assertExists()
+        composeRule.onNodeWithTag("resonote-artwork-badge", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithText("SQ · VIP", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithText("LOSSLESS").assertDoesNotExist()
         assertEquals(with(composeRule.density) { 72.dp.roundToPx() }, miniPlayerHeightPx)
         assertEquals(1, toggles)
-        assertEquals(1, next)
         assertEquals(1, queue)
         assertEquals(1, opens)
     }

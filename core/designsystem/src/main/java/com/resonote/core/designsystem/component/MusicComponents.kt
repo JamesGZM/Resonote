@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
@@ -237,6 +238,15 @@ fun ResonoteMusicItem(
                         fallback = artwork,
                     )
                 }
+                if (effectiveArtworkState == ResonoteArtworkState.LOADED) {
+                    ResonoteArtworkBadge(
+                        qualityLabel = qualityLabel,
+                        isVip = isVip,
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(4.dp),
+                    )
+                }
             },
         )
         Spacer(Modifier.width(12.dp))
@@ -247,22 +257,14 @@ fun ResonoteMusicItem(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    Text(
-                        text = title,
-                        modifier = Modifier.weight(1f),
-                        color = titleColor,
-                        style = MaterialTheme.typography.bodyLarge,
-                        maxLines = 1,
-                        softWrap = false,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    qualityLabel?.takeIf(String::isNotBlank)?.let { ResonoteQualityBadge(it) }
-                    if (isVip) ResonoteVipBadge()
-                }
+                Text(
+                    text = title,
+                    color = titleColor,
+                    style = MaterialTheme.typography.bodyLarge,
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Ellipsis,
+                )
                 Text(
                     text = supportingText,
                     color = colors.onSurfaceVariant,
@@ -306,6 +308,41 @@ fun ResonoteMusicItem(
             }
         }
     }
+}
+
+@Composable
+fun ResonoteArtworkBadge(qualityLabel: String?, isVip: Boolean, modifier: Modifier = Modifier) {
+    val label = listOfNotNull(
+        qualityLabel?.toCompactQualityLabel(),
+        "VIP".takeIf { isVip },
+    ).joinToString(separator = " · ")
+    if (label.isNotEmpty()) {
+        Surface(
+            modifier = modifier.testTag("resonote-artwork-badge"),
+            color = Color.Black.copy(alpha = 0.62f),
+            contentColor = Color.White,
+            shape = RoundedCornerShape(4.dp),
+        ) {
+            val badgeFontSize = with(LocalDensity.current) { 8.dp.toSp() }
+            val badgeLineHeight = with(LocalDensity.current) { 10.dp.toSp() }
+            Text(
+                text = label,
+                modifier = Modifier.padding(horizontal = 3.dp, vertical = 1.dp),
+                style = MaterialTheme.typography.labelSmall,
+                fontSize = badgeFontSize,
+                lineHeight = badgeLineHeight,
+                maxLines = 1,
+                softWrap = false,
+            )
+        }
+    }
+}
+
+private fun String.toCompactQualityLabel(): String? = when (val normalized = trim().uppercase()) {
+    "LOSSLESS", "SQ" -> "SQ"
+    "HIGH QUALITY", "HIGH_QUALITY", "HQ" -> "HQ"
+    "HI-RES", "HI RES", "HIRES", "HIGH RESOLUTION", "HIGH_RESOLUTION", "HR" -> "HR"
+    else -> normalized.takeIf { it.length <= 3 }
 }
 
 @Composable

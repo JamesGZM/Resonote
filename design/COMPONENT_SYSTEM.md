@@ -362,45 +362,37 @@ Resonote 使用 Material3 Adaptive Navigation Suite 1.4.0 稳定版作为 Primar
 
 | Property | Value |
 |---|---:|
-| One-line min height | 72dp |
-| Two-line/large text | 88dp 起，弹性增长 |
-| Horizontal padding | 16dp |
-| Artwork | 56dp × 56dp；`artworkShapeCompact / 8dp` |
+| Min height | 80dp；大字号下弹性增长 |
+| Content padding | Start / Top / Bottom 8dp；无 More 时 End 8dp |
+| Artwork | 64dp × 64dp；`artworkShapeStandard / 12dp` |
 | Artwork → Text gap | 12dp |
 | Title | `bodyLarge`；严格 1 行；End Ellipsis |
-| Supporting | `bodyMedium` / `onSurfaceVariant` |
-| Trailing metadata | Duration 固定宽度；不参与标题测量 |
+| Supporting | `bodySmall` / `onSurfaceVariant` |
+| Artwork badge | 左下 4dp；Quality / VIP 组合紧凑角标 |
+| Trailing metadata | Duration 固定 Status Slot；不参与标题测量 |
 | Trailing Action | More：48dp Target / 24dp Icon |
 
 - Row 主 Action 打开 Song Detail 或执行产品定义的非播放浏览操作；本文不预设 Tap 即播放。
-- Title、Quality Badge 与 VIP Badge 处于同一首行；Duration 和 More 固定在尾部。空间不足时 Title 先执行 End Ellipsis，Badge、Duration 与 More 不换行、不越界且不互相覆盖。
+- Title 独占文字列首行，Quality / VIP 不得进入 Title 行；二者合并为封面左下角的紧凑 Artwork Badge。Duration 和 More 固定在尾部。
 - Artist/Supporting 独占第二行并允许单行省略；Duration 不进入可点击 More Action Target。
-- Loaded 封面从网络加载并按 04B `Crop`。`Loading` 与 `Missing` 使用完全相同的 `artworkPlaceholder` 封面；`Loading` 同时以静态骨架替代 Title/Supporting，`Missing` 显示正常歌曲信息和时长。
+- Loaded 封面从网络加载并按 04B `Crop`，有 Quality / VIP 时在封面内部叠加 Artwork Badge。`Loading` 与 `Missing` 使用完全相同的 `artworkPlaceholder` 封面；`Loading` 同时以静态骨架替代 Title/Supporting，`Missing` 显示正常歌曲信息和时长。
 - Playing 与 Selected 是不同状态。Playing 使用 `primaryContainer` 低强调背景、`primary` 标题与均衡器状态标记，但不显示播放进度；Reduced Motion 下均衡器静止。
 - Playing 时均衡器状态标记直接替换固定 Duration Slot；当前播放行不得同时显示均衡器和时长。More 仍保留在原固定尾部 Target，均衡器不得移动到 Title/Badge 区。
 - Selected 仅表示列表选择/当前上下文，不得复用 Playing 的均衡器或播放语义。
 - 批量选择模式暴露 Checkbox/Selected Semantics，不能同时保留与选择冲突的 Row 主 Action。
 
-#### Compact 首行宽度与省略合同
+#### Compact 文字列与尾部宽度合同
 
-首行逻辑顺序固定为：
+水平逻辑顺序固定为：
 
-`Title（弹性） → Quality Badge（可选） → VIP Badge（可选） || Duration（固定尾部） → More（固定尾部）`
+`Artwork（内含可选 Badge） → Title / Supporting（弹性） || Duration（固定尾部） → More（固定尾部）`
 
-其中 `||` 表示中央文字区与尾部保留区的硬边界。实现必须遵循以下测量顺序：
+其中 `||` 表示中央文字区与尾部保留区的硬边界。实现必须遵循以下合同：
 
 1. 先为 More 保留完整 48dp Touch Target，再为 Trailing Status Slot 保留固定宽度及规定间距；普通行在该 Slot 显示 Duration，Playing 行在同一 Slot 显示均衡器，二者互斥且不参与 Title 的宽度竞争。
-2. 在剩余的中央文字区内，先测量存在的 Quality Badge、VIP Badge 及 Badge 间距；Badge 使用固有宽度，`wrapContentWidth`，不可压缩、不可换行、不可覆盖。
-3. Title 只获得扣除 Badge 后的剩余宽度，并使用 `weight(1f, fill = true)` 或等价的有界弹性布局。
-4. Title 固定 `maxLines = 1`、`softWrap = false`、`overflow = TextOverflow.Ellipsis`。空间不足时只截断 Title；不得把 Quality/VIP 推入 Duration 区，不得让 VIP 越过或覆盖 Duration。
-5. Quality Badge 与 VIP Badge 的顺序固定；二者都存在时不能通过交换顺序规避截断。默认 Compact 视觉不隐藏 Badge。
-6. Artist/Supporting 位于独立第二行，宽度只取中央文字区；不得延伸到 Duration 或 More 下方，过长时同样单行 End Ellipsis。
-
-以 Layout Constraint 表达：
-
-`Title.maxEnd ≤ Quality.start ≤ VIP.start < TrailingBoundary ≤ TrailingStatus.start < More.start`
-
-不存在的可选 Badge 从约束链中移除，但 `TrailingBoundary` 始终保留。`TrailingStatus = Duration XOR PlayingIndicator`。设计评审中出现 Title 换行、Badge 进入尾部状态列、VIP 位于尾部状态右侧、Duration 被挤压，或 Playing 行同时出现均衡器与 Duration，均直接判定为不符合冻结合同。
+2. Artwork Badge 只占用 Artwork 内部空间，不参与 Title、Supporting、Duration 或 More 的宽度测量，也不得移回 Title 行。
+3. Title 和 Supporting 共享弹性中央列，均固定 `maxLines = 1`、`softWrap = false`、`overflow = TextOverflow.Ellipsis`。
+4. `TrailingStatus = Duration XOR PlayingIndicator`。设计评审中出现 Badge 位于 Title 或尾部状态区、Duration 被挤压，或 Playing 行同时出现均衡器与 Duration，均直接判定为不符合冻结合同。
 
 ### 08D — Section Header
 
@@ -429,15 +421,22 @@ Resonote 使用 Material3 Adaptive Navigation Suite 1.4.0 稳定版作为 Primar
 - Badge 是非交互元数据，与 Song/Album 的合并描述一起朗读；筛选入口使用 Chip，不让 Badge 可点击。
 - 同一项最多显示一个主要 Quality Badge，更多技术信息进入 Detail，避免列表噪声。
 
-08 状态：**已冻结**；作为基于 Material3 Foundation Token 构建的 Resonote Extension 验收。  
-辅助视觉证据：`design/approved/components/08-music-components.png`  
-矢量源：`design/approved/components/08-music-components-source.svg`
+#### 08E-1 — Artwork Metadata Badge
+
+Song Row 与 Compact Mini Player 使用封面叠加变体，不使用上述 20dp 标题行变体：
+
+- 位于 Artwork 左下角，内缩 4dp；不得移到 Title 右侧。
+- Quality 紧凑化为 `SQ` / `HQ` / `HR`；Quality 和 VIP 同时存在时合并为 `SQ · VIP` 形式的单一角标。
+- 角标使用 4dp Shape、水平 3dp / 垂直 1dp Padding、8sp Label 与 10sp Line Height；深色 62% 遮罩承载白色文字。
+- 不可解释且超过 3 个字符的未知 Quality 不进入紧凑角标；详细音质信息仍在 Detail 展示。
+
+08 状态：**已冻结**；作为基于 Material3 Foundation Token 构建的 Resonote Extension 验收。
 
 用户确认的冻结视觉基线：
 
-- Music Item / Song Row：`design/approved/components/08-song-item.png`
+- Music Item / Song Row：`core/designsystem/src/test/screenshots/MusicComponents/MusicItems_light.png`
 - Playlist Item：`design/approved/components/08-playlist-item.png`
-- 上述两张 PNG 固定 Compact 390dp 设计证据；实现数值、状态和可访问性仍以本文 Markdown 合同为准。
+- 上述两张 PNG 固定 Compact 视觉证据；实现数值、状态和可访问性仍以本文 Markdown 合同为准。Music Item 的 Dark / AMOLED / 200% 字号变体由同目录 Roborazzi 基线共同约束。
 
 ## 09 — Mini Player & Bottom Navigation Shell
 
@@ -447,33 +446,33 @@ Resonote 使用 Material3 Adaptive Navigation Suite 1.4.0 稳定版作为 Primar
 
 | Property | Value |
 |---|---:|
-| Container | 悬浮卡片；Level 3 对应 `surfaceContainerHigh` |
+| Container | 悬浮卡片；`surfaceContainer` + Level 3 Shadow；颜色与 Bottom Navigation 一致 |
 | Outer spacing | Start 16dp / End 16dp / 到 Bottom Navigation 顶部 16dp |
 | Min height | 72dp；200% 字号下弹性增长 |
-| Shape | `shapeExtraLarge / 28dp` |
-| Elevation | Level 3；`surfaceContainerHigh` + `6dp` Shadow；阴影不得侵入与 Bottom Navigation 之间的 16dp 可见间距 |
-| Artwork | 56dp × 56dp；`artworkShapeCompact / 8dp`；引用 04B |
+| Shape | `shapeLarge / 16dp` |
+| Elevation | Level 3；`surfaceContainer` + `6dp` Shadow；阴影不得侵入与 Bottom Navigation 之间的 16dp 可见间距 |
+| Artwork | 56dp × 56dp；`artworkShapeStandard / 12dp`；引用 04B |
 | Artwork → Text gap | 12dp |
 | Title | `bodyLarge`；严格 1 行；End Ellipsis |
-| Supporting | `bodyMedium`；严格 1 行；End Ellipsis |
-| Quality / VIP | 复用 08E；与 Title 同一首行；Title 先省略，Badge 不换行 |
-| Playback actions | Pause/Play、Next、Queue；各自 48dp Touch Target |
+| Supporting | `bodySmall`；严格 1 行；End Ellipsis |
+| Quality / VIP | 复用 08E-1；合并显示在 Artwork 左下角 |
+| Playback actions | Pause/Play、Queue；各自 48dp Touch Target；Compact 不显示 Next |
 | Progress | 2dp；位于卡片内部底边，不越出 Container |
 
 - Mini Player 是独立悬浮卡片，不能与 Bottom Navigation 贴合、共边、融合或重叠。左右与下方三处 16dp 间距必须在 Compact 视觉和实现中同时成立。
-- 卡片与 Bottom Navigation 分别使用 `surfaceContainerHigh` 与 Material Navigation Bar 默认的 `surfaceContainer`；二者仍由 16dp 页面背景带明确分隔。
+- 卡片与 Bottom Navigation 均使用 Material Navigation Bar 默认映射的 `surfaceContainer`；两者颜色必须一致，并继续由 16dp 页面背景带明确分隔。
 - Compact Tabs Shell 中 Mini Player 位于滚动内容之上的独立 Overlay 层。列表内容在滚动过程中可以从卡片后方经过；Mini Player 不结束列表、不切断外层容器，也不要求内容层在卡片上方保留永久空白带。
 - 滚动容器末尾必须提供足够的 Bottom Content Padding，使最后一个可聚焦 Item 能完整滚动到 Mini Player 上方。该 Padding 只保证末项可达，不改变中间滚动状态允许内容位于悬浮层后方的层级合同。
 - Mini Player Container 使用带 `shape` 的可点击 Surface 承担主体 Action；除内部独立 Icon Button 外，点击卡片任意区域均直接打开 Full Player。Surface 的 State Layer 必须按卡片圆角裁切，内部播放控制不得触发主体 Action。
 - `queue_music` 是独立 Queue Action，直接打开当前 Queue 的 Modal Bottom Sheet，不要求先进入 Full Player。
-- 首行顺序为 Title → Quality Badge → VIP Badge。可用宽度不足时 Title 先 End Ellipsis；Badge、播放控制和 Queue 入口不得换行、隐藏或越界。
+- Title 独占信息列首行，Quality / VIP 只能作为 Artwork 左下角的组合角标。可用宽度不足时 Title 执行 End Ellipsis；Pause/Play 和 Queue 入口不得换行、隐藏或越界。Compact 不提供 Next，避免三个连续 Icon Button 压缩主信息。
 - 尚无当前媒体时整个 Mini Player 不显示，Bottom Navigation 保持原位置且不保留空占位。
 
 #### Compact 信息行宽度合同
 
-- Mini Player 的信息列与 08C 使用同一优先级：先保留 Pause/Play、Next、Queue 三个独立 Touch Target，再测量 Quality/VIP，最后把剩余宽度交给 Title。
-- Title、Quality Badge、VIP Badge 必须处于同一首行；Title 使用单行 End Ellipsis，Badge 使用固有宽度且不可被压缩到操作区。
-- Artist 独占第二行并单行 End Ellipsis。Title 或 Artist 变长不得移动、隐藏或缩小右侧三个播放操作。
+- Mini Player 先保留 Pause/Play、Queue 两个独立 Touch Target，剩余宽度交给 Title / Artist 信息列；Artwork Badge 不参与信息列测量。
+- Title 使用单行 End Ellipsis；Quality / VIP 必须保持在 Artwork 内，不得因文字或操作区宽度变化而移回 Title 行。
+- Artist 独占第二行并单行 End Ellipsis。Title 或 Artist 变长不得移动、隐藏或缩小右侧两项操作。
 - Queue 必须使用明确的播放列表图标与本地化 `contentDescription`，点击打开当前 Queue；不得用 More 菜单代替该入口。
 
 ### 09B — Compact Bottom Navigation
@@ -485,23 +484,22 @@ Resonote 使用 Material3 Adaptive Navigation Suite 1.4.0 稳定版作为 Primar
 - 三键/两键虚拟系统导航启用时，System Navigation Bar 使用同一 `surfaceContainer` 实色与匹配的图标明暗，不允许平台默认对比遮罩在底部产生第二条异色容器。
 - Gesture、Two-button、Three-button 三种模式下，页面可用内容区域必须连续结束于 Navigation Bar 顶边；两者之间不得出现等于系统导航栏高度的额外空白带。
 - Mini Player 出现或消失不得改变三个 Destination 的尺寸、选中状态、Tab 状态或 Back Stack。
-- Mini Player 映射 `surfaceContainerHigh`，Navigation Bar 使用 Material 默认 `surfaceContainer`；二者之间必须露出 16dp 页面 `background`。
+- Mini Player 与 Navigation Bar 均映射 `surfaceContainer`，Mini Player 额外使用 Level 3 Shadow；二者之间必须露出 16dp 页面 `background`。
 - 三个 Destination 等分可用宽度；Icon、Active Indicator 与 Label 使用 Material3 Navigation Bar 的内部 Token，不因 Mini Player 出现而上移、压缩或改变选中态。
 - Compact Destination 保持冻结的 Resonote Icon/Label/Color/Ripple 视觉结构；Item 内容层固定为 64dp，完整点击区域必须覆盖同一 64dp，不得扩展到页面内容或底部系统 Insets。禁止在 Item 上使用 `clipToBounds()` 或裁切 Ripple/State Layer。
 
 09 状态：**已冻结**。2026-08-14 已按真机 Light 基线验收 Bottom Shell；后续主题色调整必须修改完整 Scheme 并重新验证 Light / Dark / AMOLED / Dynamic，不得为 Bottom Navigation 增加单点颜色覆盖。
-用户确认的冻结视觉基线：`design/approved/components/09-miniplayer-bottom-navigation.png`
-该 PNG 仅冻结 Mini Player、Bottom Navigation、系统手势区及其相互间距；图中上方首页内容不是首页视觉基线。
-首页对 Overlay 层级的实际组合以当前 Compose 实现与 Roborazzi 基线为准。
+用户确认的冻结视觉基线：`app/src/test/screenshots/TabsShell/BottomShell_Light.png`。同目录的 Dark / AMOLED / Dynamic 基线共同约束主题变体。
+这些 PNG 只冻结 Mini Player、Bottom Navigation、系统手势区及其相互间距；图中上方内容不是首页视觉基线。首页对 Overlay 层级的实际组合以当前 Compose 实现与 Roborazzi 基线为准。
 
 ## 冻结组件快速索引
 
 | 组件 | 规范性合同 | 冻结视觉证据 | 不得回归 |
 |---|---|---|---|
-| Music Item / Song Row | 08C | `design/approved/components/08-song-item.png` | Title 换行；Badge 挤入/越过 Trailing Status；Playing 同时显示均衡器和 Duration；Artwork 不是 56dp；Loading 与 Missing 使用不同 Placeholder |
+| Music Item / Song Row | 08C | `core/designsystem/src/test/screenshots/MusicComponents/MusicItems_light.png` | Title 换行；Quality/VIP 离开封面左下角；Playing 同时显示均衡器和 Duration；Artwork 不是 64dp；Loading 与 Missing 使用不同 Placeholder |
 | Playlist Item | 08B | `design/approved/components/08-playlist-item.png` | Compact 改为 3 列；Artwork 不是 1:1；Title 换行；Loaded/Loading/Missing 导致布局跳动 |
-| Compact Mini Player | 09A | `design/approved/components/09-miniplayer-bottom-navigation.png` | 与 Navigation Bar 贴合；缺少 Quality/VIP；长标题挤压播放操作；缺少 Queue 入口 |
-| Compact Bottom Navigation | 09B、07A | `design/approved/components/09-miniplayer-bottom-navigation.png` | 与 Mini Player 融合；缺少 16dp 间距；Container 颜色不一致；目的地不是首页/发现/我的 |
+| Compact Mini Player | 09A | `app/src/test/screenshots/TabsShell/BottomShell_Light.png` | 与 Navigation Bar 贴合；Quality/VIP 不在封面左下角；长标题挤压播放操作；缺少 Queue 入口 |
+| Compact Bottom Navigation | 09B、07A | `app/src/test/screenshots/TabsShell/BottomShell_Light.png` | 与 Mini Player 融合；缺少 16dp 间距；Container 颜色不一致；目的地不是首页/发现/我的 |
 
 后续线程开始页面设计或 Android 实现前，必须先读取本索引对应章节；不能仅凭 PNG 重新推断布局规则。PNG 与 Markdown 不一致时，以本文的尺寸、测量、截断、状态和可访问性合同为准，并提请重新评审视觉证据。
 

@@ -66,6 +66,8 @@ Feature -> Repository interface -> Repository implementation
 - 真实悬浮层使用统一 Elevation Token；装饰渐变不能冒充组件阴影规范。
 - Composable 尽量无状态，状态提升到页面或 ViewModel；预览与截图使用稳定 Fixture。
 - 修改冻结组件时同步更新设计合同、行为测试和必要的 Roborazzi 基线。
+- 代码审计、Token 治理或“规范对齐”不得顺带重排已通过真机验收的视觉布局；文档落后时应报告冲突并更新文档，不得默认回改代码。
+- 重录 Roborazzi Golden 前必须先审查 actual / compare，并能指向已批准的视觉变更；不得将实现回归和批量基线更新合并成无审查的“对齐”提交。
 
 ## 7. Build Logic 原则
 

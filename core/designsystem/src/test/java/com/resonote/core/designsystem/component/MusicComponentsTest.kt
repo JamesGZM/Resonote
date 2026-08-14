@@ -1,8 +1,8 @@
 package com.resonote.core.designsystem.component
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.resonote.core.designsystem.theme.ResonoteTheme
@@ -81,51 +81,23 @@ class MusicComponentsTest {
     }
 
     @Test
-    fun qualityAndVipLabels_areRenderedSeparatelyBesideTitle() {
+    fun qualityAndVipLabels_areCombinedIntoCompactArtworkBadge() {
         composeRule.setContent {
             ResonoteTheme {
-                Column {
-                    ResonoteMusicItem(
-                        title = "无损歌曲",
-                        supportingText = "歌手",
-                        duration = "4:26",
-                        qualityLabel = "LOSSLESS",
-                        isVip = true,
-                        onClick = {},
-                        onMoreClick = {},
-                    )
-                    ResonoteMusicItem(
-                        title = "高品质歌曲",
-                        supportingText = "歌手",
-                        duration = "4:26",
-                        qualityLabel = "HQ",
-                        onClick = {},
-                        onMoreClick = {},
-                    )
-                    ResonoteMusicItem(
-                        title = "高解析歌曲",
-                        supportingText = "歌手",
-                        duration = "4:26",
-                        qualityLabel = "HIGH RESOLUTION",
-                        onClick = {},
-                        onMoreClick = {},
-                    )
-                    ResonoteMusicItem(
-                        title = "未知音质歌曲",
-                        supportingText = "歌手",
-                        duration = "4:26",
-                        qualityLabel = "MASTER",
-                        onClick = {},
-                        onMoreClick = {},
-                    )
-                }
+                ResonoteMusicItem(
+                    title = "无损歌曲",
+                    supportingText = "歌手",
+                    duration = "4:26",
+                    qualityLabel = "LOSSLESS",
+                    isVip = true,
+                    onClick = {},
+                    onMoreClick = {},
+                )
             }
         }
 
-        composeRule.onNodeWithText("LOSSLESS").assertExists()
-        composeRule.onNodeWithText("VIP").assertExists()
-        composeRule.onNodeWithText("HQ").assertExists()
-        composeRule.onNodeWithText("HIGH RESOLUTION").assertExists()
-        composeRule.onNodeWithText("MASTER").assertExists()
+        composeRule.onNodeWithTag("resonote-artwork-badge", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithText("SQ · VIP", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithText("LOSSLESS").assertDoesNotExist()
     }
 }
