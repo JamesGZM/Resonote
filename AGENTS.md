@@ -4,13 +4,16 @@
 
 ## 事实来源
 
-1. 当前 Resonote 源码、测试与现行合同。
-2. [Resonote 架构](docs/ARCHITECTURE.md) 与 [开发指南](docs/DEVELOPMENT.md)。
-3. `../nowinandroid`（固定观察点 `7d45eae4f872`）：仅用于未覆盖问题、升级调研与决策溯源。
-4. `../MoeKoeMusic`（固定观察点 `a86cfefb3093`）：PC 功能和实际 API 消费证据。
-5. `../MoeKoeMusic-Mobile`（固定观察点 `ab71195d4cf3`）：移动端行为、字段兼容与实际 API 消费证据。
+1. 用户已在真机上人工调整并明确验收的现行产品行为。
+2. 当前 Resonote 源码、测试与现行合同。
+3. [Resonote 架构](docs/ARCHITECTURE.md) 与 [开发指南](docs/DEVELOPMENT.md)。
+4. `../nowinandroid`（固定观察点 `7d45eae4f872`）：仅用于未覆盖问题、升级调研与决策溯源。
+5. `../MoeKoeMusic`（固定观察点 `a86cfefb3093`）：PC 功能和实际 API 消费证据。
+6. `../MoeKoeMusic-Mobile`（固定观察点 `ab71195d4cf3`）：移动端行为、字段兼容与实际 API 消费证据。
 
 日常开发直接遵循 Resonote 自有架构和开发指南，不要求重复阅读 NiA。参考仓库不能覆盖 Resonote 已验证的行为，也不能直接复制 GPL 项目的实现、样式或资产。升级固定观察点必须单独审查并更新相关 ADR 或文档证据。
+
+当人工验收的真机行为与文档、旧截图或参考项目冲突时，不得以“规范对齐”为由回改实现。应保留已验收实现，将冲突明确报告给用户，得到确认后再更新合同、测试与视觉证据。
 
 ## 架构与实现
 
@@ -24,6 +27,8 @@
 
 - Network 行为：`./gradlew :core:network:testDebugUnitTest`
 - Data 映射：`./gradlew :core:data:testDebugUnitTest`
+- Compose 外观或截图基线：运行相关 Roborazzi Task；PR 和 `main` 的 Linux CI 必须通过 `verifyRoborazziDebug`。
 - 文档治理：`./gradlew checkDocumentation`
 - Kotlin/KTS 格式：对所有改动模块运行对应的 `spotlessCheck`。
 - 提交前：运行最相关测试、改动模块的 Spotless 检查及 `git diff --check`，并说明未运行的较慢检查。
+- 发布前：Tag 只能指向已通过完整 Build 与 Roborazzi 门禁的 `main` 提交；Release 不能是该提交首次执行完整验证的地方。

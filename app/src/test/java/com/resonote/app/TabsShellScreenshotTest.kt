@@ -377,7 +377,7 @@ class TabsShellScreenshotTest {
             hash = id,
             title = "歌曲 $id",
             artist = "Resonote Artist",
-            coverUrl = null,
+            coverUrl = "fixture://artwork/$id",
             albumId = "1",
             albumAudioId = "2",
             durationMillis = 180_000,

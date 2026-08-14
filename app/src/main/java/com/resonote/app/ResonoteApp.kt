@@ -142,7 +142,6 @@ internal fun ResonoteApp(
                             onPlaySong = playbackViewModel::play,
                             onPlaySongs = playbackViewModel::playAll,
                             onTogglePlay = playbackViewModel::togglePlayPause,
-                            onNext = playbackViewModel::next,
                             onOpenPlayer = {
                                 if (backStack.lastOrNull() !is PlayerNavKey) backStack.add(PlayerNavKey)
                             },
