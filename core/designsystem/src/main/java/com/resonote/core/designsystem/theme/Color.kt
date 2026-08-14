@@ -5,6 +5,7 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 
+// Generated from the frozen brand seeds documented in design/theme-generator.
 internal val ResonoteLightColorScheme: ColorScheme = lightColorScheme(
     primary = Color(0xFFAE2A4B),
     onPrimary = Color(0xFFFFFFFF),

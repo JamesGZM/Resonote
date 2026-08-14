@@ -1,78 +1,27 @@
-# Resonote Design System
+# Resonote
 
-Resonote is an open-source music product design system built on the Material 3
-Baseline and aligned with `androidx.compose.material3:material3:1.4.0`.
+Resonote 是一款面向 Android 的无广告音乐应用，目标是把在线音乐、本地音乐和个人云盘放进同一套清晰、沉浸的播放体验中。
 
-Markdown is the normative source for tokens, values, behavior, accessibility,
-and component contracts. PNG and SVG assets are supporting visual evidence and
-must not be used as the only implementation source.
+## 核心体验
 
-## Documentation
+- 从首页推荐、发现、排行榜、歌单、专辑、歌手和搜索浏览在线音乐。
+- 使用统一播放队列播放在线、本地和云盘歌曲，并通过 Mini Player、完整播放器和系统媒体通知持续控制播放。
+- 查看同步歌词、歌曲信息和播放历史。
+- 从 Android 文件选择器、文件打开或分享入口导入本地音频。
+- 登录后访问个人歌单、云盘、账号资料和会员相关能力。
+- 支持跟随系统、浅色、深色、AMOLED，以及 Android 12+ 动态取色。
 
-- [Architecture](docs/ARCHITECTURE.md)
-- [Dependency matrix](docs/DEPENDENCY_MATRIX.md)
-- [ADR-0001: Now in Android reference baseline](docs/adr/0001-now-in-android-reference-baseline.md)
-- [ADR-0002: MoeKoe functional reference](docs/adr/0002-moekoe-functional-reference.md)
-- [Design system plan](design/DESIGN_SYSTEM_PLAN.md)
-- [Product requirements and page design contracts](design/PRODUCT_REQUIREMENTS.md)
-- [Home implementation baseline](design/HOME_IMPLEMENTATION_BASELINE.md)
-- [Foundation](design/FOUNDATION.md)
-- [Component system](design/COMPONENT_SYSTEM.md)
-- [Validation matrix](design/VALIDATION.md)
+## 产品原则
 
-Before creating or revising a product page, read the page contract in
-`design/PRODUCT_REQUIREMENTS.md` and the Compact canvas, layout, and Insets
-rules in `design/FOUNDATION.md` section 03D. Markdown is normative; approved
-PNG/SVG files are supporting review evidence only.
+- 没有广告打断，播放始终是界面的核心。
+- 在线、本地和云盘保留各自的数据边界，但共享一致的播放与队列体验。
+- 登录、权限和文件导入按需发生，不设置强制首次使用流程。
+- 网络受限、版权/VIP 限制、登录失效和内容不可用都提供明确状态，不伪装成空内容。
+- UI 以 Material 3 语义体系为基础，并使用 Resonote 品牌主题和组件规范。
 
-Before reusing the frozen Music Item, Playlist Item, Mini Player, or Bottom
-Navigation, read `design/COMPONENT_SYSTEM.md` sections 08B, 08C, 09A, and 09B,
-including the frozen-component quick index. Those sections define measurement,
-single-line truncation, trailing-space reservation, loading/missing artwork,
-spacing, actions, and accessibility; screenshots must not be reinterpreted.
+## 当前状态
 
-Before implementing Home, also read `design/HOME_IMPLEMENTATION_BASELINE.md`.
-Its three screenshots are scroll states of one page and freeze structure and
-density only; the component Markdown and 08/09 baselines remain authoritative
-for pixel-level behavior.
-
-## Scope
-
-- Foundation: brand, color, typography, shape, elevation, layout, icons,
-  artwork, motion, interaction states, and accessibility.
-- Components: Material 3 core components, adaptive navigation, feedback, and
-  Resonote music browsing extensions.
-- Validation: themes, font scaling, window size classes, locale, input,
-  interaction states, motion scale, and content extremes.
-
-Player-specific layouts and playback components are retained as approved
-product references but remain outside the current Foundation and Component
-System specification.
-
-## Status
-
-Foundation 00–05, Component System 06–09, and the Validation specification are
-frozen. The Android foundation now includes the Gradle build, Material3 1.4.0
-theme tokens, a minimal app, and the standalone Catalog. Component System 06A
-Buttons & Actions and 06B-1 Text Field are implemented with behavior tests and
-Roborazzi baselines; 06B-2–08 remain to be implemented. Validation V-04 and V-05
-have partial automated coverage, but V-01–V-10 are not marked as passed.
-
-## Build
-
-JDK 17 and Android SDK 36 are required.
-
-```bash
-./gradlew :app:assembleDebug :app-resonote-catalog:assembleDebug
-./gradlew :core:designsystem:testDebugUnitTest verifyRoborazziDebug
-```
-
-Install or run `app` for the minimal product shell, and
-`app-resonote-catalog` for Light, Dark, AMOLED, and token inspection.
-Frozen color specifications use `#RRGGBB`; the Catalog displays runtime colors
-as `#AARRGGBB` so their alpha channel remains visible during inspection.
-The component screenshot baselines cover Light, Dark, AMOLED, font scaling, RTL,
-and representative window classes under `core/designsystem/src/test/screenshots/`.
+Resonote 正在持续开发中。在线能力依赖第三方服务的当前可用性、账号状态、地区与内容授权；它们不构成长期服务保证。
 
 ## License
 

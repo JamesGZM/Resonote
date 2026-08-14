@@ -1,7 +1,6 @@
 package com.resonote.core.network.protocol
 
 import com.resonote.core.network.ApiProtocolException
-import javax.inject.Inject
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -10,11 +9,10 @@ import okhttp3.Interceptor
 import okhttp3.Response
 import okhttp3.ResponseBody
 import okhttp3.ResponseBody.Companion.toResponseBody
+import javax.inject.Inject
 
 /** Normalizes the provider's response-header risk event into the typed JSON envelope. */
-internal class ApiResponseMetadataInterceptor @Inject constructor(
-    private val json: Json,
-) : Interceptor {
+internal class ApiResponseMetadataInterceptor @Inject constructor(private val json: Json) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
         val response = chain.proceed(request)

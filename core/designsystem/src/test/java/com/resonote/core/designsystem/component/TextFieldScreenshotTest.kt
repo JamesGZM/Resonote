@@ -119,7 +119,6 @@ class TextFieldScreenshotTest {
             }
         }
     }
-
 }
 
 @RunWith(RobolectricTestRunner::class)

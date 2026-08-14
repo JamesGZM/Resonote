@@ -2,58 +2,61 @@ package com.resonote.core.network.retrofit
 
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
+import com.resonote.core.network.ApiAuthenticationRequiredException
 import com.resonote.core.network.ApiProtocolException
 import com.resonote.core.network.ApiServiceException
 import com.resonote.core.network.api.MusicApi
-import com.resonote.core.network.protocol.ProtocolTransport
+import com.resonote.core.network.protocol.ApiDefaultsInterceptor
 import com.resonote.core.network.protocol.ApiDeviceIdentityFactory
+import com.resonote.core.network.protocol.ApiEndpointOrigins
+import com.resonote.core.network.protocol.ApiProtocolCrypto
+import com.resonote.core.network.protocol.ApiRequestSigner
+import com.resonote.core.network.protocol.ApiResponseMetadataInterceptor
+import com.resonote.core.network.protocol.ApiSigningInterceptor
 import com.resonote.core.network.protocol.DeviceRegistrationCoordinator
 import com.resonote.core.network.protocol.DeviceRegistrationProfile
 import com.resonote.core.network.protocol.DeviceRegistrationProfileProvider
-import com.resonote.core.network.protocol.ApiEndpointOrigins
-import com.resonote.core.network.protocol.ApiProtocolCrypto
-import com.resonote.core.network.protocol.ApiDefaultsInterceptor
-import com.resonote.core.network.protocol.ApiResponseMetadataInterceptor
-import com.resonote.core.network.protocol.ApiSigningInterceptor
-import com.resonote.core.network.protocol.ApiRequestSigner
 import com.resonote.core.network.protocol.ProductionApiOriginPolicy
 import com.resonote.core.network.protocol.ProtocolRandom
-import com.resonote.core.network.protocol.MobileAuthProtocolClient
+import com.resonote.core.network.protocol.ProtocolTransport
 import com.resonote.core.network.risk.ApiRiskChallengeDetector
+import com.resonote.core.network.session.ApiAuthenticationGateReason
 import com.resonote.core.network.session.ApiSession
 import com.resonote.core.network.session.ApiSessionManager
 import com.resonote.core.network.session.ApiSessionStore
-import java.security.SecureRandom
-import java.time.Clock
-import java.util.Optional
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.Request
+import okio.Buffer
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
+import java.security.SecureRandom
+import java.time.Clock
+import java.util.Optional
 
 class LiveApiSearchCanaryTest {
     @Test
-    fun registeredLiteDeviceCanSearch() = runTest {
+    fun anonymousSearchReturnsConfirmedAuthenticationFailure() = runTest {
         assumeTrue(System.getenv("RESONOTE_RUN_LIVE_API_TESTS") == "true")
         val fixture = registeredLiveFixture()
 
-        val result =
+        val failure =
             try {
-                fixture.dataSource.searchSongs("周杰伦", page = 1, pageSize = 1)
-            } catch (failure: ApiServiceException) {
-                assumeTrue(
-                    "Anonymous search requires an authenticated cookie when the service returns code 152",
-                    failure.serviceCode != ANONYMOUS_SEARCH_REQUIRES_AUTHENTICATION,
-                )
-                throw failure
+                fixture.search.searchSongs("周杰伦", page = 1, pageSize = 1)
+                null
+            } catch (failure: ApiAuthenticationRequiredException) {
+                failure
             }
 
-        assertThat(result.items).isNotEmpty()
+        assertThat(failure).isNotNull()
+        assertThat(failure?.reason).isEqualTo(ApiAuthenticationGateReason.LoginRequired)
+        assertThat(failure?.serviceCode).isEqualTo(ANONYMOUS_SEARCH_REQUIRES_AUTHENTICATION)
     }
 
     @Test
@@ -87,7 +90,7 @@ class LiveApiSearchCanaryTest {
         var resolved: com.resonote.core.network.model.NetworkSongSource? = null
         val failureKinds = mutableListOf<String>()
         for (song in candidates) {
-            val attempt = runCatching { dataSource.resolveSongSource(song.hash, song.albumId, song.albumAudioId) }
+            val attempt = runCatching { fixture.playback.resolveSongSource(song.hash, song.albumId, song.albumAudioId) }
             resolved = attempt.getOrNull()
             attempt.exceptionOrNull()?.let { failure ->
                 val candidateShape =
@@ -107,7 +110,22 @@ class LiveApiSearchCanaryTest {
         }
 
         assertWithMessage("Playback candidate failures: $failureKinds").that(resolved).isNotNull()
-        assertThat(resolved?.uri).startsWith("https://")
+        val source = checkNotNull(resolved)
+        val mediaUrl = source.uri.toHttpUrl()
+        assertThat(mediaUrl.scheme).isAnyOf("http", "https")
+        if (mediaUrl.scheme == "http") {
+            assertThat(mediaUrl.host == "kugou.com" || mediaUrl.host.endsWith(".kugou.com")).isTrue()
+        }
+        OkHttpClient().newCall(
+            Request.Builder()
+                .url(mediaUrl)
+                .header("Range", "bytes=0-1023")
+                .build(),
+        ).execute().use { response ->
+            assertThat(response.isSuccessful).isTrue()
+            val bytesRead = response.body?.source()?.read(Buffer(), 1_024) ?: -1
+            assertThat(bytesRead).isGreaterThan(0)
+        }
     }
 
     @Test
@@ -135,6 +153,9 @@ class LiveApiSearchCanaryTest {
                     ?.takeIf { it.info != null && it.songs.isNotEmpty() }
             }
         assertWithMessage("No consumable details in the first three public playlists").that(playlistPage).isNotNull()
+        assertWithMessage("Playlist songs should expose artwork URLs")
+            .that(checkNotNull(playlistPage).songs.any { !it.coverUrl.isNullOrBlank() })
+            .isTrue()
     }
 
     private fun liveFixture(): LiveFixture {
@@ -157,7 +178,13 @@ class LiveApiSearchCanaryTest {
                 .addInterceptor(ApiResponseMetadataInterceptor(json))
                 .build()
         val executor = ProtocolTransport(
-            { client }, json, clock, signer, sessions, riskDetector, ProductionApiOriginPolicy(),
+            { client },
+            json,
+            clock,
+            signer,
+            sessions,
+            riskDetector,
+            ProductionApiOriginPolicy(),
         )
         val origins = ApiEndpointOrigins()
         val musicApi =
@@ -186,16 +213,16 @@ class LiveApiSearchCanaryTest {
                     )
                 },
             )
-        val mobileAuth = MobileAuthProtocolClient(executor, registration, json, crypto, signer, origins)
+        val calls = ApiCallExecutor(sessions)
+        val responses = ApiResponseVerifier(riskDetector, sessions)
+        val home = RealHomeNetworkDataSource(musicApi, registration, signer, clock, responses, calls)
+        val catalog = RealCatalogNetworkDataSource(musicApi, registration, signer, clock, responses, calls, origins)
+        val ranking = RealRankingNetworkDataSource(musicApi, registration, responses, calls)
+        val playlist = RealPlaylistNetworkDataSource(musicApi, registration, responses, calls)
         return LiveFixture(
-            dataSource = RealApiNetworkDataSource(
-                musicApi,
-                registration,
-                mobileAuth,
-                signer,
-                clock,
-                riskDetector,
-            ),
+            dataSource = LivePublicDataSource(home, catalog, ranking, playlist),
+            search = RealSearchNetworkDataSource(musicApi, registration, responses, calls, origins),
+            playback = RealPlaybackNetworkDataSource(musicApi, registration, signer, calls, responses),
             registration = registration,
         )
     }
@@ -218,18 +245,18 @@ class LiveApiSearchCanaryTest {
     }
 
     private fun roundRobinCandidates(
-        pools: List<List<com.resonote.core.network.model.NetworkHomeSong>>,
+        pools: List<List<com.resonote.core.network.model.NetworkSong>>,
         limit: Int,
-    ): List<com.resonote.core.network.model.NetworkHomeSong> {
+    ): List<com.resonote.core.network.model.NetworkSong> {
         val orderedPools =
             pools.map { pool ->
                 pool.distinctBy { it.hash }
                     .shuffled()
                     .sortedWith(
                         compareBy(
-                            com.resonote.core.network.model.NetworkHomeSong::vip,
-                            com.resonote.core.network.model.NetworkHomeSong::losslessAvailable,
-                            com.resonote.core.network.model.NetworkHomeSong::highQualityAvailable,
+                            com.resonote.core.network.model.NetworkSong::vip,
+                            com.resonote.core.network.model.NetworkSong::losslessAvailable,
+                            com.resonote.core.network.model.NetworkSong::highQualityAvailable,
                         ),
                     )
             }
@@ -241,16 +268,27 @@ class LiveApiSearchCanaryTest {
     }
 
     private data class LiveFixture(
-        val dataSource: RealApiNetworkDataSource,
+        val dataSource: LivePublicDataSource,
+        val search: RealSearchNetworkDataSource,
+        val playback: RealPlaybackNetworkDataSource,
         val registration: DeviceRegistrationCoordinator,
     )
 
-    private suspend fun <T> liveStep(label: String, block: suspend () -> T): T =
-        try {
-            block()
-        } catch (failure: Throwable) {
-            throw AssertionError("$label failed with ${failure::class.simpleName}", failure)
-        }
+    private class LivePublicDataSource(
+        home: RealHomeNetworkDataSource,
+        catalog: RealCatalogNetworkDataSource,
+        ranking: RealRankingNetworkDataSource,
+        playlist: RealPlaylistNetworkDataSource,
+    ) : com.resonote.core.network.HomeNetworkDataSource by home,
+        com.resonote.core.network.CatalogNetworkDataSource by catalog,
+        com.resonote.core.network.RankingNetworkDataSource by ranking,
+        com.resonote.core.network.PlaylistNetworkDataSource by playlist
+
+    private suspend fun <T> liveStep(label: String, block: suspend () -> T): T = try {
+        block()
+    } catch (failure: Throwable) {
+        throw AssertionError("$label failed with ${failure::class.simpleName}", failure)
+    }
 
     private companion object {
         const val MAX_REGISTRATION_ATTEMPTS = 5
@@ -260,13 +298,15 @@ class LiveApiSearchCanaryTest {
         var cachedFixture: LiveFixture? = null
     }
 
-
-
     private class MemoryStore : ApiSessionStore {
         private val state = MutableStateFlow<ApiSession?>(null)
         override val session = state
         override suspend fun read() = state.value
-        override suspend fun write(session: ApiSession) { state.value = session }
-        override suspend fun clearAuthentication() { state.value = null }
+        override suspend fun write(session: ApiSession) {
+            state.value = session
+        }
+        override suspend fun clearAuthentication() {
+            state.value = null
+        }
     }
 }

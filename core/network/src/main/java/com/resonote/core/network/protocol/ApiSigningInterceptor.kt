@@ -1,15 +1,13 @@
 package com.resonote.core.network.protocol
 
-import javax.inject.Inject
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
 import okio.Buffer
+import javax.inject.Inject
 
 /** Signs the final query and the exact request body bytes produced by Retrofit. */
-internal class ApiSigningInterceptor @Inject constructor(
-    private val signer: ApiRequestSigner,
-) : Interceptor {
+internal class ApiSigningInterceptor @Inject constructor(private val signer: ApiRequestSigner) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
         val policy = request.apiRequestPolicy() ?: return chain.proceed(request)

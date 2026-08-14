@@ -21,9 +21,7 @@ import kotlin.math.roundToInt
 
 /** Creates the SID/EDT pair used by the fixed PC risk protocol for header-only challenges. */
 @Singleton
-internal class ApiRiskContextFactory @Inject constructor(
-    private val clock: Clock,
-) {
+internal class ApiRiskContextFactory @Inject constructor(private val clock: Clock) {
     private val random = SecureRandom()
     private val webGlHash: String by lazy { BigInteger(64, random).toString() }
 
@@ -35,7 +33,11 @@ internal class ApiRiskContextFactory @Inject constructor(
                 "webgl=$webGlHash;webdriver=0;ts=${clock.millis()};data=${eventData()}"
         val edt =
             Cipher.getInstance("AES/CBC/PKCS5Padding").run {
-                init(Cipher.ENCRYPT_MODE, SecretKeySpec(key.encodeToByteArray(), "AES"), IvParameterSpec(RISK_IV.encodeToByteArray()))
+                init(
+                    Cipher.ENCRYPT_MODE,
+                    SecretKeySpec(key.encodeToByteArray(), "AES"),
+                    IvParameterSpec(RISK_IV.encodeToByteArray()),
+                )
                 Base64.getEncoder().encodeToString(doFinal(plaintext.encodeToByteArray()))
             }
         val sid =
@@ -80,11 +82,15 @@ internal class ApiRiskContextFactory @Inject constructor(
             val u = 1 - t
             val jitter = max(.5, 3 - t * 2.5)
             val x =
-                (u * u * u * startX + 3 * u * u * t * control1X + 3 * u * t * t * control2X + t * t * t * endX +
-                    (random.nextDouble() - .5) * jitter).roundToInt()
+                (
+                    u * u * u * startX + 3 * u * u * t * control1X + 3 * u * t * t * control2X + t * t * t * endX +
+                        (random.nextDouble() - .5) * jitter
+                    ).roundToInt()
             val y =
-                (u * u * u * startY + 3 * u * u * t * control1Y + 3 * u * t * t * control2Y + t * t * t * endY +
-                    (random.nextDouble() - .5) * jitter).roundToInt()
+                (
+                    u * u * u * startY + 3 * u * u * t * control1Y + 3 * u * t * t * control2Y + t * t * t * endY +
+                        (random.nextDouble() - .5) * jitter
+                    ).roundToInt()
             timestamp += randomInt(8, 50)
             entries += "3,$timestamp,$subIndex,$x,$y"
             entries += "3,$sentinel,$subIndex,$x,$y"
@@ -102,13 +108,16 @@ internal class ApiRiskContextFactory @Inject constructor(
         return entries.joinToString(":")
     }
 
-    private fun randomString(length: Int): String =
-        buildString(length) { repeat(length) { append(ALPHABET[random.nextInt(ALPHABET.length)]) } }
+    private fun randomString(length: Int): String = buildString(length) {
+        repeat(length) { append(ALPHABET[random.nextInt(ALPHABET.length)]) }
+    }
 
     private fun randomInt(min: Int, max: Int): Int = min + random.nextInt(max - min + 1)
 
     private fun md5(value: String): String =
-        MessageDigest.getInstance("MD5").digest(value.encodeToByteArray()).joinToString("") { "%02x".format(it) }
+        MessageDigest.getInstance("MD5").digest(value.encodeToByteArray()).joinToString("") {
+            "%02x".format(it)
+        }
 
     private val publicKey by lazy {
         KeyFactory.getInstance("RSA").generatePublic(X509EncodedKeySpec(Base64.getDecoder().decode(RISK_PUBLIC_KEY)))

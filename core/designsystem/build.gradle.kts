@@ -10,12 +10,16 @@ android {
 }
 
 dependencies {
+    api(projects.core.model)
     api(libs.androidx.compose.material3)
     api(libs.androidx.compose.material3.adaptive)
     api(libs.androidx.compose.material3.navigation.suite)
     implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.compose.runtime)
     implementation(libs.androidx.compose.ui)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
 
     testImplementation(projects.core.screenshotTesting)
     testImplementation(libs.androidx.compose.ui.test.junit4)

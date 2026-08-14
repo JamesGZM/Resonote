@@ -1,0 +1,33 @@
+<resources>
+    <string name="feature_settings_impl_title">设置</string>
+    <string name="feature_settings_impl_back">返回</string>
+    <string name="feature_settings_impl_intro_eyebrow">聆听档案</string>
+    <string name="feature_settings_impl_intro_title">让播放更合你的习惯</string>
+    <string name="feature_settings_impl_intro_body">偏好保存在这台设备上，并应用到每一次聆听。</string>
+    <string name="feature_settings_impl_appearance_section">外观</string>
+    <string name="feature_settings_impl_theme_mode">主题模式</string>
+    <string name="feature_settings_impl_theme_system">跟随系统</string>
+    <string name="feature_settings_impl_theme_light">浅色</string>
+    <string name="feature_settings_impl_theme_dark">深色</string>
+    <string name="feature_settings_impl_theme_amoled">AMOLED</string>
+    <string name="feature_settings_impl_dynamic_color">动态配色</string>
+    <string name="feature_settings_impl_dynamic_color_body">使用 Android 壁纸生成的系统配色</string>
+    <string name="feature_settings_impl_playback_section">播放</string>
+    <string name="feature_settings_impl_playback_speed">播放速度</string>
+    <string name="feature_settings_impl_playback_speed_body">与播放器共用同一速度，并在下次启动时保留</string>
+    <string name="feature_settings_impl_speed_value">%1$s×</string>
+    <string name="feature_settings_impl_online_quality">在线播放音质</string>
+    <string name="feature_settings_impl_online_quality_body">优先使用所选音质，不可用时自动向下降级</string>
+    <string name="feature_settings_impl_quality_standard">标准 · 128 Kbps</string>
+    <string name="feature_settings_impl_quality_high">高品 · 320 Kbps</string>
+    <string name="feature_settings_impl_quality_lossless">无损 · FLAC</string>
+    <string name="feature_settings_impl_quality_hi_res">Hi-Res</string>
+    <string name="feature_settings_impl_quality_atmos">蝰蛇全景声</string>
+    <string name="feature_settings_impl_quality_clear">蝰蛇超清</string>
+    <string name="feature_settings_impl_quality_tape">蝰蛇母带</string>
+    <string name="feature_settings_impl_cancel">取消</string>
+    <string name="feature_settings_impl_loading">正在读取偏好</string>
+    <string name="feature_settings_impl_load_error">暂时无法读取偏好。</string>
+    <string name="feature_settings_impl_retry">重试</string>
+    <string name="feature_settings_impl_save_error">偏好未能保存，请重试。</string>
+</resources>

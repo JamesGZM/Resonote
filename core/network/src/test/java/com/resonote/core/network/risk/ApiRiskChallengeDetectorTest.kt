@@ -2,7 +2,7 @@ package com.resonote.core.network.risk
 
 import com.google.common.truth.Truth.assertThat
 import com.resonote.core.network.ApiProtocolException
-import com.resonote.core.network.retrofit.ApiRawResponse
+import com.resonote.core.network.protocol.ApiRawResponse
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import org.junit.Assert.assertThrows
@@ -55,8 +55,6 @@ class ApiRiskChallengeDetectorTest {
         assertThat(detector.detect(response)).isNull()
     }
 
-    private fun response(
-        body: String,
-        headers: Map<String, List<String>> = emptyMap(),
-    ) = ApiRawResponse(200, headers, body.encodeToByteArray(), Json.parseToJsonElement(body).jsonObject)
+    private fun response(body: String, headers: Map<String, List<String>> = emptyMap()) =
+        ApiRawResponse(200, headers, body.encodeToByteArray(), Json.parseToJsonElement(body).jsonObject)
 }

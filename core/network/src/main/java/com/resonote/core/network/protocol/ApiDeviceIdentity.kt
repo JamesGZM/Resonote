@@ -6,11 +6,7 @@ import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
-data class ApiDeviceIdentity(
-    val guid: String,
-    val mid: String,
-    val dev: String,
-)
+data class ApiDeviceIdentity(val guid: String, val mid: String, val dev: String)
 
 @Singleton
 class ApiDeviceIdentityFactory @Inject constructor() {
@@ -24,10 +20,9 @@ class ApiDeviceIdentityFactory @Inject constructor() {
     }
 }
 
-internal fun md5(value: String): String =
-    MessageDigest.getInstance("MD5")
-        .digest(value.toByteArray(Charsets.UTF_8))
-        .joinToString(separator = "") { byte -> "%02x".format(byte) }
+internal fun md5(value: String): String = MessageDigest.getInstance("MD5")
+    .digest(value.toByteArray(Charsets.UTF_8))
+    .joinToString(separator = "") { byte -> "%02x".format(byte) }
 
 internal fun randomProtocolString(length: Int): String {
     val alphabet = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ"

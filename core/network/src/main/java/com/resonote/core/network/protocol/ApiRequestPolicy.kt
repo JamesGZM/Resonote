@@ -7,10 +7,12 @@ import retrofit2.Invocation
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 internal annotation class ApiRequestPolicy(
-    val id: String,
     val signatureMode: ApiSignatureMode = ApiSignatureMode.Android,
-    val sessionMode: ApiSessionMode = ApiSessionMode.Full,
+    val sessionPropagation: ApiSessionPropagation = ApiSessionPropagation.Full,
     val includeDefaultParams: Boolean = true,
+    val serviceAuthentication: ApiServiceAuthenticationPolicy = ApiServiceAuthenticationPolicy.None,
+    val router: String = "",
+    val kgTid: Int = 0,
 )
 
 internal fun Request.apiRequestPolicy(): ApiRequestPolicy? =

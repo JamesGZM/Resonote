@@ -26,6 +26,15 @@ data class ApiSession(
     }
 }
 
+enum class ApiAuthenticationGateReason {
+    LoginRequired,
+    SessionExpired,
+}
+
+data class ApiAuthenticationState(val session: ApiSession?, val gateReason: ApiAuthenticationGateReason? = null)
+
+internal data class ApiAuthenticationContext(val revision: Long)
+
 interface ApiSessionStore {
     val session: Flow<ApiSession?>
 
@@ -35,3 +44,5 @@ interface ApiSessionStore {
 
     suspend fun clearAuthentication()
 }
+
+val apiAuthenticationCookieNames = setOf("token", "userid", "t1", "vip_type", "vip_token")

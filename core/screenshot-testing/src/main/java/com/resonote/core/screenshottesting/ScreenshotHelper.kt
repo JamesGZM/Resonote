@@ -28,12 +28,12 @@ import androidx.compose.ui.test.LayoutDirection
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.then
-import androidx.compose.ui.unit.LayoutDirection as UiLayoutDirection
 import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.github.takahirom.roborazzi.checkRoboAccessibility
 import com.resonote.core.designsystem.theme.ResonoteTheme
 import com.resonote.core.designsystem.theme.ResonoteThemeMode
+import androidx.compose.ui.unit.LayoutDirection as UiLayoutDirection
 
 val DefaultRoborazziOptions = RoborazziOptions(
     compareOptions = RoborazziOptions.CompareOptions(changeThreshold = 0f),

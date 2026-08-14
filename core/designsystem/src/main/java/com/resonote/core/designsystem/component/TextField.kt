@@ -16,6 +16,8 @@
 
 package com.resonote.core.designsystem.component
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,10 +25,9 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -36,7 +37,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
@@ -48,7 +48,6 @@ import androidx.compose.ui.semantics.maxTextLength
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.unit.dp
 import com.resonote.core.designsystem.R
 import com.resonote.core.designsystem.tokens.ResonoteTokens
 
@@ -107,7 +106,7 @@ fun ResonoteTextField(
     val minimizedLabelHalfHeight = with(density) {
         MaterialTheme.typography.bodySmall.lineHeight.toDp() / 2
     }
-    val stackAffixes = density.fontScale >= LargeTextFontScale
+    val stackAffixes = density.fontScale >= LARGE_TEXT_FONT_SCALE
     val resolvedLeadingIcon = if (leadingIcon != null) {
         decorativeFieldIcon(leadingIcon)
     } else {
@@ -226,12 +225,11 @@ private fun decorativeFieldIcon(icon: @Composable () -> Unit): @Composable () ->
     }
 }
 
-internal fun resonoteUnfocusedTextFieldBorderThickness(isError: Boolean) =
-    if (isError) {
-        OutlinedTextFieldDefaults.FocusedBorderThickness
-    } else {
-        OutlinedTextFieldDefaults.UnfocusedBorderThickness
-    }
+internal fun resonoteUnfocusedTextFieldBorderThickness(isError: Boolean) = if (isError) {
+    OutlinedTextFieldDefaults.FocusedBorderThickness
+} else {
+    OutlinedTextFieldDefaults.UnfocusedBorderThickness
+}
 
 @Composable
 private fun ResonoteTextFieldSupportingContent(
@@ -271,4 +269,4 @@ private fun SupportingText(text: String) {
     )
 }
 
-private const val LargeTextFontScale = 2f
+private const val LARGE_TEXT_FONT_SCALE = 2f

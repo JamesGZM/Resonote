@@ -4,4 +4,10 @@
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="false">login.user.kugou.com</domain>
     </domain-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">kugou.com</domain>
+    </domain-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">kgimg.com</domain>
+    </domain-config>
 </network-security-config>

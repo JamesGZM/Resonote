@@ -1,7 +1,7 @@
 # Resonote Component System
 
 > 状态：执行基线；06–09 已冻结
-> 更新日期：2026-08-12
+> 更新日期：2026-08-14
 > 规范范围：06 Core Components、07 Navigation & Feedback、08 Music Components、09 Tabs Shell Bottom Chrome
 > Foundation 依赖：[FOUNDATION.md](./FOUNDATION.md)  
 > Material 基线：`androidx.compose.material3:material3:1.4.0` 稳定版 Baseline
@@ -31,6 +31,9 @@
 
 - Icon + Label 作为一个不可拆分的 Content Row 在容器内整体居中；二者共享垂直中心线，不能只把 Label 居中后再把 Icon 贴到左侧。
 - 组件内容必须保留规范 Padding。内容放不下时按组件规则增高、换行、扩大到允许宽度或更换组件，不得越出 Container、覆盖边界或挤入相邻 Target。
+- Pressed/Ripple 必须由定义视觉 Container 与 Shape 的交互组件承载。整张卡片是一个 Action 时使用带 `shape` 的 Material3 `Surface(onClick)` 或等价 Design System 封装，不得把裸 `Modifier.clickable` 挂在内部无 Shape 的 Row/Column 上制造矩形 State Layer。
+- 禁止在 App Theme 层全局关闭 Material Ripple。个别上游组件内部 State Layer 形状无法配置时，只能在最小组件边界局部关闭，并在其内容子树立即恢复；不得连带移除 Navigation、Button、Icon Button、List Item 等组件的正确反馈。
+- 容器内存在独立子 Action 时，主体与子 Action 必须拥有独立 Semantics、Interaction Source 和点击结果；点击子 Action 不得同时触发主体 Action。
 
 ## 06 — Core Components
 
@@ -77,6 +80,7 @@ Variant：
 - Icon-only Action 必须有本地化 `contentDescription` 与 Tooltip；高风险或陌生操作改用带 Label 的 Button。
 - Standard、Filled、Tonal、Outlined 只改变 Container/Content，不改变 Glyph、Touch Target 或语义。
 - Toggle Icon Button 使用 Selected Container + Filled/Check Indicator 至少两个信号，并暴露 Toggle State。
+- Glyph、圆形 State Layer 与 48dp Touch Target 必须保持同心。禁止只对 Glyph 使用 `offset` 修正按钮间距；间距问题必须通过父布局、Action 数量或正确组件 Variant 解决，且相邻 Touch Target 不得重叠。
 
 ### 06B — Inputs, Selection & Metadata
 
@@ -203,6 +207,13 @@ Slot 与一致的调用约定；交互 Icon 使用 Resonote Icon Button 以保�
 
 - 文案简短说明结果；最多一个 Text Action，可附 Dismiss Icon。关键错误不只放 Snackbar。
 - 使用 `LiveRegionMode.Polite`；Action 可聚焦，超时尊重无障碍服务与内容长度。
+- App 只能在根层持有一个稳定的 `SnackbarHostState`、Controller 与 `SnackbarHost`；切换 Tab、进入子页面或打开 Feature 不得替换、销毁或创建第二个 Host。
+- Feature 只能向 App 级 Controller 提交消息，不得持有 `SnackbarHostState`，不得在页面 `Scaffold` 中声明 `snackbarHost`，也不得从页面生命周期直接挂起调用 `showSnackbar()`。
+- App 级 Controller 负责调用挂起的 `showSnackbar()`，使消息展示不受触发页面重组、状态清空或退出影响。普通无 Action 反馈默认 `Short`；有 Action 默认 `Indefinite` 并提供 Dismiss。
+- Controller 采用 latest-wins 调度：相同消息再次触发时合并为当前一条并从最新触发时刻重新计时；新的不同消息替换当前消息并取消旧任务。任何情况下最多保留一条请求，不保留可导致长时间连续展示的历史队列。需要持久恢复或逐条确认的事件不得用 Snackbar 队列承载。
+- 根 Host 使用 `WindowInsets.safeDrawing.exclude(WindowInsets.ime)`。Tab Bar 与 Mini Player 只能向根 Host 上报动态 Bottom Avoidance，不得通过嵌套 Host 解决位置问题。
+- Snackbar 与 Mini Player 卡片可见顶边保持 8dp 间距；动态 Bottom Avoidance 必须测量卡片本身边界，不得将 Mini Player 外边距重复计入。
+- 实现模式参考 NiA `NiaApp.kt` 的单一 Host、`LocalSnackbarHostState` 与 Safe Drawing 处理；当前固定参考提交为 `7d45eae4f8720a0c77f507712ba2437ff974b6ed`。
 
 #### Dialog
 
@@ -233,6 +244,7 @@ Slot 与一致的调用约定；交互 Icon 使用 Resonote Icon Button 以保�
 
 - Modal Sheet 用于短时任务；Persistent Sheet 只有在宽屏主任务确有并行内容时使用。
 - Handle 只有可拖动时显示，并提供展开/折叠/关闭的可访问 Action；不能只靠 Drag 手势。
+- 保留 Material3 默认 Handle 的尺寸、位置与可访问 Action。若同版本框架为 Handle 外层生成与视觉形状不匹配的矩形 Ripple，只在该外层作用域关闭 Ripple，并在 Sheet 正文恢复默认配置；不得替换 Handle UI，也不得关闭正文 Button、Icon Button、List Item 的反馈。
 - IME 打开时当前字段和提交操作保持可见；Sheet 状态变化遵循 05A 并支持 Predictive Back。
 
 06 状态：**已冻结**。  
@@ -435,11 +447,11 @@ Resonote 使用 Material3 Adaptive Navigation Suite 1.4.0 稳定版作为 Primar
 
 | Property | Value |
 |---|---:|
-| Container | 悬浮卡片；`surfaceContainer`；与 Bottom Navigation 使用同一 Semantic Color |
+| Container | 悬浮卡片；Level 3 对应 `surfaceContainerHigh` |
 | Outer spacing | Start 16dp / End 16dp / 到 Bottom Navigation 顶部 16dp |
 | Min height | 72dp；200% 字号下弹性增长 |
 | Shape | `shapeExtraLarge / 28dp` |
-| Elevation | Level 3；Shadow 不得侵入与 Bottom Navigation 之间的 16dp 可见间距 |
+| Elevation | Level 3；`surfaceContainerHigh` + `6dp` Shadow；阴影不得侵入与 Bottom Navigation 之间的 16dp 可见间距 |
 | Artwork | 56dp × 56dp；`artworkShapeCompact / 8dp`；引用 04B |
 | Artwork → Text gap | 12dp |
 | Title | `bodyLarge`；严格 1 行；End Ellipsis |
@@ -449,10 +461,10 @@ Resonote 使用 Material3 Adaptive Navigation Suite 1.4.0 稳定版作为 Primar
 | Progress | 2dp；位于卡片内部底边，不越出 Container |
 
 - Mini Player 是独立悬浮卡片，不能与 Bottom Navigation 贴合、共边、融合或重叠。左右与下方三处 16dp 间距必须在 Compact 视觉和实现中同时成立。
-- 卡片与 Bottom Navigation 使用相同 Container Semantic Color 只表达同属 Bottom Shell；二者仍由 16dp 页面背景带明确分隔。
+- 卡片与 Bottom Navigation 分别使用 `surfaceContainerHigh` 与 Material Navigation Bar 默认的 `surfaceContainer`；二者仍由 16dp 页面背景带明确分隔。
 - Compact Tabs Shell 中 Mini Player 位于滚动内容之上的独立 Overlay 层。列表内容在滚动过程中可以从卡片后方经过；Mini Player 不结束列表、不切断外层容器，也不要求内容层在卡片上方保留永久空白带。
 - 滚动容器末尾必须提供足够的 Bottom Content Padding，使最后一个可聚焦 Item 能完整滚动到 Mini Player 上方。该 Padding 只保证末项可达，不改变中间滚动状态允许内容位于悬浮层后方的层级合同。
-- Artwork、Title 与 Supporting 组成主体 Action，点击直接打开 Full Player；内部播放控制不得触发主体 Action。
+- Mini Player Container 使用带 `shape` 的可点击 Surface 承担主体 Action；除内部独立 Icon Button 外，点击卡片任意区域均直接打开 Full Player。Surface 的 State Layer 必须按卡片圆角裁切，内部播放控制不得触发主体 Action。
 - `queue_music` 是独立 Queue Action，直接打开当前 Queue 的 Modal Bottom Sheet，不要求先进入 Full Player。
 - 首行顺序为 Title → Quality Badge → VIP Badge。可用宽度不足时 Title 先 End Ellipsis；Badge、播放控制和 Queue 入口不得换行、隐藏或越界。
 - 尚无当前媒体时整个 Mini Player 不显示，Bottom Navigation 保持原位置且不保留空占位。
@@ -467,15 +479,20 @@ Resonote 使用 Material3 Adaptive Navigation Suite 1.4.0 稳定版作为 Primar
 ### 09B — Compact Bottom Navigation
 
 - 使用 07A Material3 Navigation Bar 合同，目的地固定为“首页、发现、我的”，首页为 App 默认选中项。
+- Container 使用 Material Navigation Bar 默认映射的 `surfaceContainer`。禁止传入自定义 `containerColor`、写死白色、附加透明度、渐变或手写 Shadow；主题变化只通过当前 `ColorScheme` 生效。
 - Navigation Bar 消费底部系统 Insets；其 Container 延伸覆盖手势安全区，Gesture Indicator 使用 03D 设计证据规则。
+- Navigation/App Scaffold 将 `innerPadding` 交给页面内容时，必须同时执行 `.padding(innerPadding).consumeWindowInsets(innerPadding)`；禁止让发现、我的等 Feature Scaffold 再次消费 Navigation Bar 已处理的底部 Insets。
+- 三键/两键虚拟系统导航启用时，System Navigation Bar 使用同一 `surfaceContainer` 实色与匹配的图标明暗，不允许平台默认对比遮罩在底部产生第二条异色容器。
+- Gesture、Two-button、Three-button 三种模式下，页面可用内容区域必须连续结束于 Navigation Bar 顶边；两者之间不得出现等于系统导航栏高度的额外空白带。
 - Mini Player 出现或消失不得改变三个 Destination 的尺寸、选中状态、Tab 状态或 Back Stack。
-- Mini Player 与 Navigation Bar 都映射 `surfaceContainer`，但二者之间必须露出 16dp 页面 `background`；颜色相同不代表可以合并为同一个 Container。
+- Mini Player 映射 `surfaceContainerHigh`，Navigation Bar 使用 Material 默认 `surfaceContainer`；二者之间必须露出 16dp 页面 `background`。
 - 三个 Destination 等分可用宽度；Icon、Active Indicator 与 Label 使用 Material3 Navigation Bar 的内部 Token，不因 Mini Player 出现而上移、压缩或改变选中态。
+- Compact Destination 保持冻结的 Resonote Icon/Label/Color/Ripple 视觉结构；Item 内容层固定为 64dp，完整点击区域必须覆盖同一 64dp，不得扩展到页面内容或底部系统 Insets。禁止在 Item 上使用 `clipToBounds()` 或裁切 Ripple/State Layer。
 
-09 状态：**已冻结**。
+09 状态：**已冻结**。2026-08-14 已按真机 Light 基线验收 Bottom Shell；后续主题色调整必须修改完整 Scheme 并重新验证 Light / Dark / AMOLED / Dynamic，不得为 Bottom Navigation 增加单点颜色覆盖。
 用户确认的冻结视觉基线：`design/approved/components/09-miniplayer-bottom-navigation.png`
 该 PNG 仅冻结 Mini Player、Bottom Navigation、系统手势区及其相互间距；图中上方首页内容不是首页视觉基线。
-首页对 Overlay 层级的页面级证据见 `design/HOME_IMPLEMENTATION_BASELINE.md`。
+首页对 Overlay 层级的实际组合以当前 Compose 实现与 Roborazzi 基线为准。
 
 ## 冻结组件快速索引
 

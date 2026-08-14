@@ -1,4 +1,4 @@
-import com.resonote.buildlogic.configureSpotlessForJvm
+import com.resonote.buildlogic.configureSpotless
 import com.resonote.buildlogic.libs
 import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
@@ -16,7 +16,7 @@ class JvmLibraryConventionPlugin : Plugin<Project> {
         with(target) {
             apply(plugin = "org.jetbrains.kotlin.jvm")
             apply(plugin = "resonote.android.lint")
-            configureSpotlessForJvm()
+            configureSpotless()
             extensions.configure<JavaPluginExtension> {
                 sourceCompatibility = JavaVersion.VERSION_11
                 targetCompatibility = JavaVersion.VERSION_11

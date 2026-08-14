@@ -1,7 +1,6 @@
 package com.resonote.catalog
 
 import android.graphics.Color
-import androidx.core.splashscreen.R as SplashScreenR
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -9,6 +8,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import org.xmlpull.v1.XmlPullParser
+import androidx.core.splashscreen.R as SplashScreenR
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])

@@ -2,11 +2,11 @@ package com.resonote.core.network.risk
 
 import com.resonote.core.network.ApiProtocolException
 import com.resonote.core.network.api.model.MusicApiResponse
-import com.resonote.core.network.retrofit.ApiRawResponse
-import javax.inject.Inject
+import com.resonote.core.network.protocol.ApiRawResponse
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
+import javax.inject.Inject
 
 internal class ApiRiskChallengeDetector @Inject constructor() {
     fun detect(response: ApiRawResponse): ApiRiskChallenge? {
@@ -17,12 +17,12 @@ internal class ApiRiskChallengeDetector @Inject constructor() {
                 serviceCode = root?.text("error_code") ?: data?.text("error_code"),
                 status = root?.text("status") ?: data?.text("status"),
                 eventId = root?.text("ssaCode")
-                ?: root?.text("ssa_code")
-                ?: data?.text("ssaCode")
-                ?: data?.text("ssa_code")
-                ?: response.header("ssa-code")
-                ?: response.header("ssa")
-                ?: response.header("ssaCode"),
+                    ?: root?.text("ssa_code")
+                    ?: data?.text("ssaCode")
+                    ?: data?.text("ssa_code")
+                    ?: response.header("ssa-code")
+                    ?: response.header("ssa")
+                    ?: response.header("ssaCode"),
                 sid = root?.text("sid") ?: data?.text("sid"),
                 edt = root?.text("edt") ?: data?.text("edt"),
             ),
@@ -58,8 +58,9 @@ internal class ApiRiskChallengeDetector @Inject constructor() {
         )
     }
 
-    private fun ApiRawResponse.header(name: String): String? =
-        headers.entries.firstOrNull { (key) -> key.equals(name, ignoreCase = true) }?.value?.firstOrNull()?.takeIf(String::isNotBlank)
+    private fun ApiRawResponse.header(name: String): String? = headers.entries.firstOrNull { (key) ->
+        key.equals(name, ignoreCase = true)
+    }?.value?.firstOrNull()?.takeIf(String::isNotBlank)
 
     private fun JsonObject.text(name: String): String? =
         (get(name) as? JsonPrimitive)?.contentOrNull?.takeIf(String::isNotBlank)

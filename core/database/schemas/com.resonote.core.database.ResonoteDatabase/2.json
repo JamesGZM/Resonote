@@ -1,0 +1,229 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "1957484b5a7b97008464067de888b245",
+    "entities": [
+      {
+        "tableName": "local_media",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `storagePath` TEXT NOT NULL, `displayName` TEXT NOT NULL, `title` TEXT NOT NULL, `artist` TEXT, `albumTitle` TEXT, `artworkPath` TEXT, `durationMillis` INTEGER NOT NULL, `mimeType` TEXT, `fileExtension` TEXT, `sizeBytes` INTEGER NOT NULL, `sha256` TEXT NOT NULL, `sampleRateHz` INTEGER, `bitDepth` INTEGER, `bitrateBitsPerSecond` INTEGER, `importedAtEpochMillis` INTEGER NOT NULL, `pendingDeletion` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "storagePath",
+            "columnName": "storagePath",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "displayName",
+            "columnName": "displayName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "artist",
+            "columnName": "artist",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "albumTitle",
+            "columnName": "albumTitle",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "artworkPath",
+            "columnName": "artworkPath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "durationMillis",
+            "columnName": "durationMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mimeType",
+            "columnName": "mimeType",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "fileExtension",
+            "columnName": "fileExtension",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "sizeBytes",
+            "columnName": "sizeBytes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sha256",
+            "columnName": "sha256",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sampleRateHz",
+            "columnName": "sampleRateHz",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "bitDepth",
+            "columnName": "bitDepth",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "bitrateBitsPerSecond",
+            "columnName": "bitrateBitsPerSecond",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "importedAtEpochMillis",
+            "columnName": "importedAtEpochMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pendingDeletion",
+            "columnName": "pendingDeletion",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_local_media_storagePath",
+            "unique": true,
+            "columnNames": [
+              "storagePath"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_local_media_storagePath` ON `${TABLE_NAME}` (`storagePath`)"
+          },
+          {
+            "name": "index_local_media_sizeBytes_sha256",
+            "unique": false,
+            "columnNames": [
+              "sizeBytes",
+              "sha256"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_local_media_sizeBytes_sha256` ON `${TABLE_NAME}` (`sizeBytes`, `sha256`)"
+          },
+          {
+            "name": "index_local_media_importedAtEpochMillis",
+            "unique": false,
+            "columnNames": [
+              "importedAtEpochMillis"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_local_media_importedAtEpochMillis` ON `${TABLE_NAME}` (`importedAtEpochMillis`)"
+          }
+        ]
+      },
+      {
+        "tableName": "device_playback_history",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`source` TEXT NOT NULL, `mediaId` TEXT NOT NULL, `title` TEXT NOT NULL, `artist` TEXT, `albumTitle` TEXT, `artworkUri` TEXT, `durationMillis` INTEGER NOT NULL, `albumAudioId` TEXT, `lastPlayedAtEpochMillis` INTEGER NOT NULL, `playCount` INTEGER NOT NULL, PRIMARY KEY(`source`, `mediaId`))",
+        "fields": [
+          {
+            "fieldPath": "source",
+            "columnName": "source",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mediaId",
+            "columnName": "mediaId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "artist",
+            "columnName": "artist",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "albumTitle",
+            "columnName": "albumTitle",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "artworkUri",
+            "columnName": "artworkUri",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "durationMillis",
+            "columnName": "durationMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "albumAudioId",
+            "columnName": "albumAudioId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "lastPlayedAtEpochMillis",
+            "columnName": "lastPlayedAtEpochMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "playCount",
+            "columnName": "playCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "source",
+            "mediaId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_device_playback_history_lastPlayedAtEpochMillis",
+            "unique": false,
+            "columnNames": [
+              "lastPlayedAtEpochMillis"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_device_playback_history_lastPlayedAtEpochMillis` ON `${TABLE_NAME}` (`lastPlayedAtEpochMillis`)"
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1957484b5a7b97008464067de888b245')"
+    ]
+  }
+}

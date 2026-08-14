@@ -20,4 +20,20 @@ class RedactedNetworkLoggingInterceptorTest {
         assertThat(label).doesNotContain("device")
         assertThat(label).doesNotContain("private")
     }
+
+    @Test
+    fun failureDescriptionIncludesCauseButRedactsCredentials() {
+        val failure = java.io.IOException(
+            "request to https://example.test/image?token=secret failed",
+            java.net.SocketException("signature=signed connection reset"),
+        )
+
+        val description = failure.redactedDescription()
+
+        assertThat(description).contains("IOException")
+        assertThat(description).contains("SocketException")
+        assertThat(description).contains("connection reset")
+        assertThat(description).doesNotContain("secret")
+        assertThat(description).doesNotContain("signed")
+    }
 }

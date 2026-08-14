@@ -38,6 +38,7 @@
 - Signal Signature：以 `R + 波形` 为核心识别，不使用普通音符作为 Logo。
 - 视觉证据覆盖字标、单色、小尺寸、App Icon 和品牌图形边界。
 - 状态：**已冻结**。
+- Wordmark Source：`design/approved/foundation/00-resonote-wordmark-source.svg`
 - 辅助视觉证据：`design/approved/foundation/00-design-principles.png`
 
 #### 00B — Launcher & Startup Identity
@@ -89,6 +90,7 @@ Brand Key Colors
 - Tonal Palette 必须由 Material Color Utilities 逻辑生成，不手工猜色。
 - Light 与 Dark 只能从同一组 Palette 映射语义角色。
 - AMOLED 是 Resonote 对 Dark Scheme 的扩展，不是 Material 3 标准 Scheme。
+- 业务组件只消费 `MaterialTheme.colorScheme` 的语义角色；禁止读取 Hex 后二次设色，也禁止根据主题模式在组件内自行分支。
 
 #### 01A — Brand Key Colors
 
@@ -99,6 +101,7 @@ Brand Key Colors
 | `brandTertiary` | Beat Amber | `#855300` | 节奏强调与 Tertiary Palette 来源 |
 
 - 状态：**已冻结**。
+- 可复现生成入口：`design/theme-generator`。`npm ci && npm run check` 校验冻结种子与提交的 Tonal Palette 产物一致；运行时不依赖 Material Color Utilities。
 - 辅助视觉证据：`design/approved/foundation/01a-brand-key-colors.png`
 
 #### 01B — Accent Tonal Palettes
@@ -241,7 +244,7 @@ Brand Key Colors
 
 Fixed Roles 在 Light 与 Dark 中保持同一 Tone/Hex：`Fixed = T90`、`FixedDim = T80`、`OnFixed = T10`、`OnFixedVariant = T30`。它们用于需要跨主题保持色调不变的容器，不替代常规 Primary/Secondary/Tertiary Role。
 
-01D/01E 覆盖 Material3 1.4.0 `ColorScheme` 的全部 48 个属性；额外的 `shadow` 是 Foundation System Token，不是 Compose `ColorScheme` 属性，实现时通过独立 `ResonoteSystemColors.shadow` Alias 暴露。
+01D/01E 覆盖 Material3 1.4.0 `ColorScheme` 的全部 48 个属性；额外的固定系统色通过 `ResonoteSystemColors` 暴露：`shadow = #000000`，黑色媒体遮罩的前景使用 `onScrim = #FFFFFF`，视频画布使用 `mediaCanvas = #000000` / `onMediaCanvas = #FFFFFF`。`onScrim` 只能与 `scrim` 或等价的黑色媒体遮罩配对；视频画布不参与主题 Surface 层级，也不得用于普通页面或卡片。
 
 #### 01F — Surface Hierarchy
 
@@ -274,6 +277,22 @@ AMOLED 基于 Dark Scheme 派生。`background`、`surfaceDim`、`surface` 与 `
 
 - 状态：**已冻结**。
 - 辅助视觉证据：`design/approved/foundation/01g-amoled-extension.png`
+
+#### 01G-1 — Runtime Theme Policy
+
+| 设置 | 生效 Scheme | 约束 |
+|---|---|---|
+| 跟随系统 | 品牌 Light / Dark | 默认值；跟随系统明暗 |
+| 浅色 | 品牌 Light | 不受系统明暗影响 |
+| 深色 | 品牌 Dark | 不受系统明暗影响 |
+| AMOLED | Resonote AMOLED Extension | 与 Dynamic Color 互斥 |
+| Dynamic Color | Android 12+ 平台 Dynamic Light / Dark | 开启时使用平台完整 Scheme，不与品牌 Accent 混合 |
+
+- 默认偏好为 `SYSTEM + Brand`；主题模式和 Dynamic 开关必须持久化。
+- Android 12 以下隐藏 Dynamic Color 入口，并使用对应的品牌 Scheme。
+- 开启 Dynamic Color 时若当前为 AMOLED，模式切回 `SYSTEM`；选择 AMOLED 时自动关闭 Dynamic Color。互斥规则由偏好 Repository 保证，组件不得自行修正状态。
+- Dynamic Color 关闭时，System / Light / Dark 必须使用由 01A 冻结种子生成的完整品牌 Scheme。
+- 状态：**已冻结**。
 
 #### 01H — Color Contrast Validation
 
@@ -373,6 +392,7 @@ Material 3 将 Elevation 分为 `tonalElevation` 与 `shadowElevation`。Resonot
 
 - `tonalElevation` 与首选 Surface Role 表达同一层级意图；组件应优先使用已定义 Surface Role，不能叠加出新的未记录颜色。
 - `shadowElevation` 默认统一为 `0dp`；只有表面真实覆盖其他内容且 Tonal Surface 无法建立边界时，才可在表中上限内启用。
+- 组件规范可以把某个真实悬浮表面的 Shadow 固定到该 Level 上限；这是组件级例外，不改变其他同级组件的默认值。Compact Mini Player 按 09A 固定使用 Level 3 的 `6dp` Shadow。
 - 阴影不是 `zIndex`。绘制顺序必须由布局或 `Modifier.zIndex` 明确控制。
 - Light、Dark 与 AMOLED 使用相同 Level 语义，不分别发明 Elevation Token。
 - AMOLED 的阴影不可作为唯一层级信号，必须同时使用已冻结的 AMOLED Surface 层级、边界或 Scrim。
@@ -488,9 +508,13 @@ Edge-to-edge 与 Insets：
 - 背景色、图片和非交互装饰可以延伸到系统栏后方；重要文字与触控目标必须处于相应安全区域。
 - 不硬编码 Status Bar、Navigation Bar、Caption Bar、Cutout 或 IME 高度。
 - 使用 Material 3 `Scaffold` 的 `innerPadding` 后，不再在同一层重复应用 `safeDrawingPadding()`；每类 Insets 只由一个明确层级消费。
+- 接收 `Scaffold` `innerPadding` 的内容容器必须按 `.padding(innerPadding).consumeWindowInsets(innerPadding)` 的顺序应用两者；只应用 `padding` 会让嵌套 Scaffold 再次读取同一系统 Insets，禁止省略消费步骤。
+- 嵌套 Scaffold 必须声明 Insets 所有者。外层 Navigation/App Scaffold 已消费的 Bottom/System Insets，Feature Scaffold 不得再次消费；Feature 只处理尚未由父层处理的 Insets。
 - 输入页面启用 `adjustResize` 并处理 `ime`；当前焦点与提交控件不得被键盘遮挡。
 - 手势排除区保持最小，只为确实冲突的局部交互申请，不屏蔽整条屏幕边缘。
 - Insets 变化必须参与动画和布局重算，不在旋转、分屏、键盘开合时跳帧或遗留空白。
+- Bottom Navigation 的 Insets 验证必须覆盖 Gesture、Two-button 与 Three-button Navigation；页面内容底边到 Navigation Bar 顶边不得出现第二份系统安全区空白。
+- 实现基线参考 NiA `NiaApp.kt` 的 `padding(padding).consumeWindowInsets(padding)`，当前固定参考提交为 `7d45eae4f8720a0c77f507712ba2437ff974b6ed`。
 - 依据：[Window Size Classes](https://developer.android.com/develop/ui/views/layout/use-window-size-classes)、[Edge-to-edge](https://developer.android.com/develop/ui/compose/system/setup-e2e)、[Window Insets](https://developer.android.com/develop/ui/compose/system/insets)。
 - 状态：**已冻结**。
 - 辅助视觉证据：`design/approved/foundation/03d-adaptive-layout-insets.png`

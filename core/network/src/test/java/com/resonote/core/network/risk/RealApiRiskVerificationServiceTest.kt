@@ -1,21 +1,16 @@
 package com.resonote.core.network.risk
 
 import com.google.common.truth.Truth.assertThat
-import com.resonote.core.network.protocol.ProtocolTransport
 import com.resonote.core.network.protocol.ApiDeviceIdentityFactory
 import com.resonote.core.network.protocol.ApiEndpointOrigins
 import com.resonote.core.network.protocol.ApiOriginPolicy
 import com.resonote.core.network.protocol.ApiProtocolCrypto
 import com.resonote.core.network.protocol.ApiRequestSigner
 import com.resonote.core.network.protocol.ProtocolRandom
+import com.resonote.core.network.protocol.ProtocolTransport
 import com.resonote.core.network.session.ApiSession
 import com.resonote.core.network.session.ApiSessionManager
 import com.resonote.core.network.session.ApiSessionStore
-import java.time.Clock
-import java.time.Instant
-import java.time.ZoneOffset
-import java.util.Optional
-import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
@@ -27,6 +22,11 @@ import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
+import java.util.Optional
+import java.util.concurrent.TimeUnit
 
 class RealApiRiskVerificationServiceTest {
     private lateinit var gatewayServer: MockWebServer
@@ -55,6 +55,31 @@ class RealApiRiskVerificationServiceTest {
     }
 
     @Test
+    fun methodForUsesGatewayContractAndDecodesSmsVerification() = runTest {
+        gatewayServer.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setBody("""{"status":1,"data":{"v_type":32}}"""),
+        )
+        val clock = Clock.fixed(Instant.ofEpochMilli(1_700_000_000_123), ZoneOffset.UTC)
+        val service = service(clock)
+
+        val method = service.methodFor(ApiRiskChallenge("risk-event"))
+
+        assertThat(method).isEqualTo(ApiRiskMethod.Sms)
+        val request = checkNotNull(gatewayServer.takeRequest(1, TimeUnit.SECONDS))
+        assertThat(request.path).contains("/verifyservice/v3/get_verify_info?")
+        assertThat(request.requestUrl?.queryParameter("signature")).isNotEmpty()
+        val body = json.parseToJsonElement(request.body.readUtf8()).jsonObject
+        assertThat(body["eventid"]?.jsonPrimitive?.content).isEqualTo("risk-event")
+        assertThat(body["userid"]?.jsonPrimitive?.content).isEqualTo("42")
+        assertThat(body["platid"]?.jsonPrimitive?.content).isEqualTo("2")
+        assertThat(body["rtype"]?.jsonPrimitive?.content).isEqualTo("1")
+        assertThat(body["wasm"]?.jsonPrimitive?.content).isEqualTo("1")
+        assertThat(riskVerificationServer.requestCount).isEqualTo(0)
+    }
+
+    @Test
     fun submitUsesIsolatedRiskOriginAndBypassesRecursiveVerification() {
         listOf(gatewayServer, mobileCodeServer, mobileLoginServer, deviceRegistrationServer).forEach {
             it.enqueue(MockResponse().setResponseCode(200).setBody("""{"status":1}"""))
@@ -65,23 +90,7 @@ class RealApiRiskVerificationServiceTest {
                 .setBody("""{"status":1,"error_code":20028,"ssaCode":"must-not-recurse"}"""),
         )
         val clock = Clock.fixed(Instant.ofEpochMilli(1_700_000_000_123), ZoneOffset.UTC)
-        val session = ApiSession("guid", "mid", "dev", dfid = "dfid", userId = "42")
-        val sessions = ApiSessionManager(Optional.of(MemoryStore(session)), ApiDeviceIdentityFactory())
-        val executor = ProtocolTransport(
-            { OkHttpClient() }, json, clock, ApiRequestSigner(), sessions, ApiRiskChallengeDetector(), ApiOriginPolicy { true },
-        )
-        val service = RealApiRiskVerificationService(
-            executor,
-            ApiProtocolCrypto(ProtocolRandom { length -> "A".repeat(length) }),
-            ApiEndpointOrigins(
-                gateway = gatewayServer.origin(),
-                mobileCode = mobileCodeServer.origin(),
-                mobileLogin = mobileLoginServer.origin(),
-                deviceRegistration = deviceRegistrationServer.origin(),
-                riskVerification = riskVerificationServer.origin(),
-            ),
-            ApiRiskContextFactory(clock),
-        )
+        val service = service(clock)
 
         runTest { service.submit(ApiRiskChallenge("event"), ApiRiskProof.Sms("246810")) }
 
@@ -101,13 +110,45 @@ class RealApiRiskVerificationServiceTest {
         assertThat(deviceRegistrationServer.requestCount).isEqualTo(0)
     }
 
+    private fun service(clock: Clock): RealApiRiskVerificationService {
+        val session = ApiSession("guid", "mid", "dev", dfid = "dfid", userId = "42")
+        val sessions = ApiSessionManager(Optional.of(MemoryStore(session)), ApiDeviceIdentityFactory())
+        val executor = ProtocolTransport(
+            {
+                OkHttpClient()
+            },
+            json,
+            clock,
+            ApiRequestSigner(),
+            sessions,
+            ApiRiskChallengeDetector(),
+            ApiOriginPolicy { true },
+        )
+        return RealApiRiskVerificationService(
+            executor,
+            ApiProtocolCrypto(ProtocolRandom { length -> "A".repeat(length) }),
+            ApiEndpointOrigins(
+                gateway = gatewayServer.origin(),
+                mobileCode = mobileCodeServer.origin(),
+                mobileLogin = mobileLoginServer.origin(),
+                deviceRegistration = deviceRegistrationServer.origin(),
+                riskVerification = riskVerificationServer.origin(),
+            ),
+            ApiRiskContextFactory(clock),
+        )
+    }
+
     private fun MockWebServer.origin(): String = url("/").toString().removeSuffix("/")
 
     private class MemoryStore(initial: ApiSession?) : ApiSessionStore {
         private val state = MutableStateFlow(initial)
         override val session = state
         override suspend fun read() = state.value
-        override suspend fun write(session: ApiSession) { state.value = session }
-        override suspend fun clearAuthentication() { state.value = null }
+        override suspend fun write(session: ApiSession) {
+            state.value = session
+        }
+        override suspend fun clearAuthentication() {
+            state.value = null
+        }
     }
 }

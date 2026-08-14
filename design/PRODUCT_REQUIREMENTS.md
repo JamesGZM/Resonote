@@ -1,13 +1,13 @@
 # Resonote Product Requirements
 
-> 状态：需求发现草案
-> 更新日期：2026-08-11
-> 上游基线：[DESIGN_SYSTEM_PLAN.md](./DESIGN_SYSTEM_PLAN.md)
-> 下游交付：产品信息架构、功能范围、关键流程、页面设计与实现计划
+> 状态：现行产品合同
+> 更新日期：2026-08-14
+> 设计语义：[FOUNDATION.md](./FOUNDATION.md) 与 [COMPONENT_SYSTEM.md](./COMPONENT_SYSTEM.md)
+> 适用范围：产品定位、功能范围、关键流程、页面职责与恢复行为
 
 ## 1. 文档目的
 
-本文件用于在正式页面设计之前讨论并冻结 Resonote 的产品需求与功能范围。它负责回答：
+本文件记录 Resonote 当前有效的产品需求与行为合同。它负责回答：
 
 - Resonote 为谁解决什么问题。
 - V1 必须支持哪些任务，明确不支持哪些任务。
@@ -42,7 +42,7 @@
 - Core Component 已具备 Button、Icon Button、Text Field、Small Top App Bar 和无状态 Adaptive Navigation Suite。
 - Primary Navigation 默认使用 Material `WindowAdaptiveInfo` 在 Navigation Bar / Rail 间切换；目的地集合和选中状态由 App 持有。
 - Resonote 五档宽度分类继续服务 Grid、内容限宽与验证；Body `1200dp`、Reading `720dp` 是可由页面消费的 Layout Token。
-- 当前自适应骨架只接入 Catalog；主 App 尚未承载真实产品页面。
+- 主 App 已组合真实 Feature、全局导航、播放 Shell 与持久化主题；Catalog 继续作为独立设计系统检查入口。
 - `design/approved/player/` 与既有音乐组件图片是历史设计证据，不是已冻结的产品需求或最终页面方案。
 
 ## 4. 决策原则
@@ -212,8 +212,7 @@ Compact 首页实现基准已冻结：
 - 推荐歌单固定 6 个 Playlist Item，Compact 固定两列；标题右侧无 Action。
 - 新歌速递固定 6 个 Music Item，并共用一个外层卡片容器；不显示分类筛选，Section Action 为“播放全部”。
 - Top App Bar 与 Bottom Navigation 固定；Mini Player 是高于滚动内容的悬浮 Overlay。Item 可以在滚动过程中从其后方经过，但列表末尾必须有足够 Content Padding，保证最后一个 Item 可完整滚动到悬浮层上方。
-- `design/approved/home/10-home-scroll-top.png`、`10-home-scroll-middle.png`、`10-home-scroll-bottom.png` 是同一首页的顶部、中段、底部滚动状态，不是不同页面或备选方案。
-- 页面结构、滚动层级和信息密度以 `design/HOME_IMPLEMENTATION_BASELINE.md` 为实现交接；组件细节仍以 08/09 Markdown 与冻结组件 PNG 为准。
+- 页面结构、滚动层级和信息密度以当前 Compose 实现与 Roborazzi 基线为准；组件细节仍以 08/09 合同为准。
 
 PC 的卡片样式切换、装饰图片、彩蛋、桌面 Hover 和具体栅格不属于功能合同，不直接迁移。
 
@@ -335,6 +334,7 @@ PC 的四段式切换器、卡片布局和滚动表现只是行为证据，不�
 
 - 在线、本地和云盘歌曲共享同一个当前 Queue；来源只影响地址解析、可用操作和错误恢复，不建立独立播放器。
 - 用户从任意歌曲列表点击单曲时采用旧 Mobile 行为：立即播放该曲；若不在 Queue 中则插入当前歌曲之后，不用来源列表替换整个 Queue；若已存在则跳转到原队列位置，不创建重复项。
+- 单曲点击必须先完成播放地址解析，再提交 Queue 与播放器切换。解析失败时不插入/选中失败歌曲，不停止、清空或重置当前播放，只显示失败提示；没有当前播放时保持空闲状态。
 - “下一首播放”插入当前歌曲之后但不中断当前播放；连续添加多首时保持用户添加顺序。“加入队列”追加到队尾并按稳定媒体身份去重。
 - 明确点击“播放全部”才使用当前列表替换 Queue，并从列表第一首开始；分页尚未加载完成时，后续数据只在 Queue generation 未变化时继续追加并去重。
 - Queue 支持跳转、移除、清空和拖拽重排。移除当前歌曲时继续播放其后第一首；已经是末项时播放新的末项；移除最后一项等同清空并停止播放。
@@ -621,19 +621,14 @@ Kotlin 协议层直接请求上游接口；签名、加密、设备注册、Sess
 本地 `../MoeKoeMusic/api` 是固定版本的协议与能力证据，不是 Resonote 的运行时服务；桌面
 `../MoeKoeMusic` 只提供产品功能和消费字段参考，不作为 Resonote 页面或功能范围模板。
 
-当前合并到 `main` 的 Android 纵向切片包括：
+当前 Android 生产能力包括：
 
 - 原生设备注册、会话管理、请求签名、加密、风控识别与安全日志基础设施。
-- 手机验证码发送、验证码登录、多账号选择和加密 Session 持久化。
-- 歌曲搜索 Data Source、DTO 解码、Repository 边界所需的工程基础与测试证据。
+- 手机验证码、密码、二维码登录和加密 Session 持久化。
+- Home、Search、Catalog、Account、Playback、Lyrics、Cloud、Local Media 等语义化 DataSource 与 Repository。
+- Compose Feature、Navigation 3 App Shell、Media3 Session Service、Queue 和本地持久化。
 
-密码登录已经有固定上游协议、请求字段和 Endpoint 证据，但当前 `AuthRepository` 与
-`ApiNetworkDataSource` 尚未公开密码登录操作。因此它是已确认的产品能力和待完成的 Android
-纵向切片，不能标记为生产代码已实现。
-
-静态 API 目录记录了推荐、歌单、榜单、新歌/新碟、歌曲 URL、歌词、账号歌单与历史等候选能力，
-但目录能力不等于 Android 生产代码已经实现。当前 `ApiNetworkDataSource` 只公开搜索和手机验证码
-登录；播放地址、歌词、首页、发现与用户资料库仍需按产品优先级逐条建立 Android 纵向切片。
+网络能力以 `core:network` 的公开 DataSource、`core:data` 的 Repository 和测试为准，不再使用静态上游 API 目录或人工 Endpoint 编号证明完成度。未被当前 App 消费的上游能力不属于 Resonote 合同。
 
 匿名内容与登录后个性化内容的边界仍需逐接口验证。播放 URL、个性化推荐、收藏和用户资料库
 可能受登录、会员、风控、接口变化及地区/版权状态影响。正式发布前必须单独评估服务稳定性、
@@ -642,130 +637,31 @@ Kotlin 协议层直接请求上游接口；签名、加密、设备注册、Sess
 因此，产品设计必须包含 API 不可用、内容受限、登录失效、风控验证、歌曲不可播放及在线内容
 为空时的恢复路径；具体技术结论进入后续方案和风险评审。
 
-### 11.2 第一条 Vertical Slice 的证据与就绪度
+### 11.2 当前能力与已知限制
 
-第一条切片是“匿名在线沉浸播放闭环”。以下矩阵区分历史/静态能力证据与当前 Android 生产实现，防止用“目录里存在接口”替代真正可交付性。
+以下矩阵记录当前产品合同所依赖的 Android 能力及仍需持续处理的运行限制。实现状态以当前源码和测试为准，外部参考只提供协议或消费行为证据。
 
-| 能力 | 本地证据 | 当前 Android 状态 | 页面设计结论 |
-|---|---|---|---|
-| 匿名 Session 与风控基础 | 原生设备注册、Session、签名、加密与风控代码及测试 | 已合入 `main` | 可以设计匿名启动与统一受限状态 |
-| 首页推荐内容 | Mobile 首页 `ab71195d`、内嵌 API `283f1e97`；`top_card` 消费链 `a86cfefb` | 五个窄 Network 操作、`HomeRepository`、并发/代际/保留旧区测试已实现 | 数据合同就绪；Compose 与导航不在本批 |
-| 搜索与歌曲样本 | Android Search DataSource、DTO、Repository 基础与测试 | 已有生产切片 | 可作为早期真实歌曲样本来源，但不能替代首页接口 |
-| 歌曲播放地址 | Mobile 内嵌 `song_url` 与真实调用 Canary | Android 生产接口和 Repository 已实现；主/备用 HTTPS、版权/VIP/协议/网络/风控分类有测试；匿名 VIP 实测码 `35104` 映射为候选级不可播放 | 数据合同就绪；当次真实候选可能全部受限，播放闭环仍待 Media3 |
-| 歌词 | 静态目录 `/search/lyric` 获取 `id/accesskey`，再调用 `/lyric`；另有 PC/Mobile 字段证据 | 两步 Android 生产接口均尚未实现 | 可设计完整状态；真实逐字/翻译/音译样本待验证 |
-| Playback Service / Queue | 本文与产品合同已冻结职责、行为和依赖方向 | 生产模块、Controller 与持久化协议尚未创建 | 可讨论页面任务；实现前必须补 Playback ADR 与最小公开 API |
-| MediaSession / 系统通知 | Android 官方能力与产品合同 | 尚未接入生产播放链路 | 第一切片必须纳入，不是页面完成后的附加项 |
-| 封面与媒体 metadata | PC 字段和候选 API 响应证据 | Android 映射、占位与缓存策略尚未验证 | 低保真可用明确 fixture；高保真前需真实长度、缺失与失败样本 |
+| 能力 | 当前实现 | 已知限制与恢复要求 |
+|---|---|---|
+| 匿名 Session 与风控 | 已实现设备注册、Session、签名、加密、风控识别与安全日志 | 上游触发风控或设备协议失败时必须显示可恢复状态，不能退化为空内容 |
+| 首页推荐内容 | Home Network DataSource、Repository、Compose 页面和导航已实现 | 各区块独立提交；失败保留旧内容，首次全部失败显示明确错误 |
+| 搜索 | 单曲、歌单、专辑、歌手、MV、综合、热词与建议已通过语义化 DataSource 暴露 | Search 请求的认证业务码按请求 Policy 分类；登录后返回来源但不自动重放原子操作 |
+| 在线歌曲播放 | Network Source Resolver、Repository、Media3 播放链路及错误分类已实现 | 真实候选可能受版权、VIP、地区、协议或网络限制；不可播放状态必须保留原因和恢复入口 |
+| 歌词 | 搜索候选、下载、KRC 解码、Repository 与 Player 歌词页已实现 | 上游字段和内容类型可能漂移；使用 Fixture、Canary 与兼容解码持续验证 |
+| Queue 与 Playback Service | `PlaybackController`、Media3 Service、Queue 和失败恢复已实现并测试 | 仍以 [Playback ADR](../docs/adr/0003-playback-foundation.md) 记录的当前限制为准，不把未实现能力描述为已交付 |
+| MediaSession 与系统通知 | `MediaSessionService` 已接入生产播放链路 | 系统通知、外设控制和音频焦点继续按设备矩阵验收 |
+| Artwork 与媒体 metadata | 在线、本地、云盘与历史模型已映射到播放 metadata | 字段缺失时省略并使用规范占位，不伪造音质、格式或时长 |
 
-结论：首页首屏及入口下游的数据层已经达到实现就绪：榜单列表 `API-RANKING-003`、榜单歌曲 `API-RANKING-001` 和歌单详情歌曲 `API-PLAYLIST-007` 已实现；精选歌单入口复用 `API-DISCOVER-012`，不增加首页首屏请求。歌词、Playback 最小 API、Media3、Compose 和导航仍是匿名在线沉浸播放闭环的后续阻塞项。真实 Canary 只证明运行当时的协议和内容可用性，不替代版权、VIP 或长期服务授权判断。
+真实 Canary 只证明运行当时的协议和内容可用性，不替代版权、VIP、地区限制或长期服务授权判断。
 
-## 12. 决策与变更记录
+## 12. 决策归档
 
-| 日期 | Decision ID | 决策 | 理由 / 证据 | 影响范围 | 状态 |
-|---|---|---|---|---|---|
-| 2026-08-11 | P-000 | 先冻结需求与功能文档，再开始产品页面设计 | 避免脱离真实流程提前制造音乐组件 | 产品设计流程 | 已确认 |
-| 2026-08-11 | P-001 | Resonote 面向大众，主打无广告的沉浸式音乐体验 | 产品方向 | 定位、内容和交互 | 已确认 |
-| 2026-08-11 | P-002 | 同时支持 API 在线音乐、本地音乐和 Android 文件入口导入 | 用户明确需求 | 数据、播放、权限和页面状态 | 已确认 |
-| 2026-08-11 | P-003 | 顶层目的地为首页、发现、我的，启动后直接进入首页 | 用户明确需求 | IA、自适应导航和状态恢复 | 已确认 |
-| 2026-08-11 | P-004 | 不设置强制首次使用流程，登录、权限和导入按需触发 | 在线 API 是默认入口 | 启动、权限和空错误状态 | 已确认 |
-| 2026-08-11 | P-005 | 支持手机验证码与密码登录；导航级登录成功后继续目标页面，原子按钮操作只恢复上下文且必须再次点击 | 用户明确需求 | Auth、导航、错误恢复和 Session | 已确认 |
-| 2026-08-11 | P-006 | 首页、发现、我的分别参考 PC Home、Discover、Library 的功能边界 | 用户明确需求 | IA、API 切片和页面清单 | 已确认 |
-| 2026-08-11 | P-007 | 外部文件打开复用导入管线，复制到 App 目录并持久加入本地音乐列表 | 用户明确需求 | 系统入口、本地存储、索引和播放 | 已确认 |
-| 2026-08-11 | P-008 | “我的”能力范围参考 PC Library；好友资料只读且不可进入；页面独立设计 | 用户明确需求 | Profile、Library、Cloud、Local Music 和 IA | 已确认 |
-| 2026-08-11 | P-009 | 验证码为默认登录，密码登录参考 PC 账号/邮箱 + 密码表单；不默认加入扫码登录 | 用户明确需求与 PC 行为 | Auth UI、协议纵切片 | 已确认 |
-| 2026-08-11 | P-010 | 本地音乐建模为系统维护的特殊音乐列表并复用歌单逻辑 | 用户明确需求 | Model、Library、Playlist 和 Playback | 已确认 |
-| 2026-08-11 | P-011 | 每日 VIP 签到与可选升级是“我的”Must，状态语义参考 MoeKoeMusic-Mobile | 用户明确需求 | Account、VIP API、风控和状态刷新 | 已确认 |
-| 2026-08-11 | P-012 | 云盘功能对齐 PC：查看、搜索/排序、播放/队列、上传和删除，不增加下载 | 用户明确需求与 PC 行为 | Cloud、Upload、Playback 和 Storage | 已确认 |
-| 2026-08-11 | P-013 | 本地音乐对齐 PC：共享 Queue，但不进入在线歌单、喜欢或账号历史 | 用户明确需求与 PC 行为 | Local Music、Playlist 和 Playback | 已确认 |
-| 2026-08-11 | P-014 | 重复导入必须由用户通过冲突弹窗确认，不允许静默处理 | 用户明确需求 | Import、Storage 和 Dialog | 已确认 |
-| 2026-08-11 | P-015 | 首页与发现采用 PC 的完整功能合同，Resonote Android 页面与视觉完全独立设计 | 用户明确需求 | Home、Discover、API 和页面清单 | 已确认 |
-| 2026-08-11 | P-016 | Mini Player 跨顶层页面常驻，点击直接进入 Full Player | 用户明确需求 | App Scaffold、Player、Navigation 和 Playback | 已确认 |
-| 2026-08-11 | P-017 | 所有 PC 参考仅用于功能、规则和状态；Resonote 不复用 PC 页面与视觉实现 | 用户明确边界 | 全部产品页面与设计交付 | 已确认 |
-| 2026-08-11 | P-018 | 搜索入口只放首页并进入独立搜索页；话筒进入独立听歌识曲页 | 用户明确需求与 Mobile 行为证据 | Home、Search、Recognition 和 Navigation | 已确认 |
-| 2026-08-11 | P-019 | 旧 Player 封面/歌词图降为历史方向稿，按 NIA + MD3 Adaptive 独立更新 | 用户明确需求与现有图片复核 | Player 产品设计和视觉验收 | 已确认 |
-| 2026-08-11 | P-020 | 音频焦点提供所有场景、部分场景、不允许三档意图，默认“不允许”；部分场景按公开音频类别适配，兼容降级不改写保存值 | 用户明确需求与 Android 平台约束 | Playback、Settings、验证和文案 | 产品已确认；设备矩阵待验证 |
-| 2026-08-11 | P-021 | 播放必须提供标准 MediaSession 媒体通知；岛形/状态栏等系统媒体表面交由 Android 自动呈现，不主动申请 Live Updates | 用户明确需求与 Android 系统行为 | MediaSession、Notification、Playback Service | 已确认 |
-| 2026-08-11 | P-022 | 听歌识曲开始前暂停 Resonote，识别结束后保持暂停，由用户明确恢复 | 用户明确需求 | Recognition、Playback 和状态恢复 | 已确认 |
-| 2026-08-11 | P-023 | 列表单曲点击沿用旧 Mobile 插播逻辑，不用来源列表替换 Queue；播放全部才替换 | 用户明确选择与本地源码证据 | Song List、Queue 和 Playback | 已确认 |
-| 2026-08-11 | P-024 | Queue 支持下一首、队尾追加、跳转、移除、清空、拖拽重排，并持久恢复为暂停状态 | 用户逐项确认 | Queue、Playback Service 和 Persistence | 已确认 |
-| 2026-08-11 | P-025 | 普通不可播放项按 PC 逻辑延迟 3 秒自动切换，最多执行 5 次；成功后重置计数 | 用户要求参考 PC；修正其成功后不清零的实现缺陷 | Playback Error、Auth、Queue 和 UX Feedback | 已确认 |
-| 2026-08-11 | P-026 | 播放模式保留列表循环、随机、单曲循环、顺序播放到队尾停止四种 | PC 功能证据与用户确认 | Playback State、Queue 和系统媒体控制 | 已确认 |
-| 2026-08-11 | P-027 | Player 提供下一首和队尾追加；分享入口作为低频操作进入 Overflow 候选，具体布局后续设计 | 用户明确需求 | Player、Track Actions、Queue 和页面设计 | 已确认 |
-| 2026-08-11 | P-028 | 歌词完整保留同步、逐字/逐行、翻译/音译、跳转和个性化设置 | 用户确认与 PC/Mobile 功能证据 | Lyrics、Player、Settings 和 Accessibility | 已确认 |
-| 2026-08-11 | P-029 | 在线七档音质、本地/云盘真实信息、六档倍速、响度均衡、睡眠定时和系统音量进入产品范围 | 用户逐项确认 | Playback、Media Source、Settings 和 System Integration | 已确认 |
-| 2026-08-11 | P-030 | 支持无缝播放与默认关闭的 3/5/8 秒交叉淡化；不建立均衡器/低音/环绕 | 用户逐项确认 | Playback Pipeline、Settings 和测试矩阵 | 已确认 |
-| 2026-08-11 | P-031 | 音频路由使用系统 Output Switcher；耳机/蓝牙支持系统控制，意外断开暂停且重连不自动恢复 | 用户逐项确认 | MediaSession、Audio Route 和设备恢复 | 已确认 |
-| 2026-08-11 | P-032 | Android Auto 与 Google Cast 当前均不接入，未来有明确需求时重新评审 | 用户判断无必要 | 产品范围、依赖与系统集成 | Out |
-| 2026-08-11 | P-033 | 全局搜索只查在线内容；本地/云盘各自搜索；本机搜索历史最多 20 条；热词与建议按 API 可用性提供 | 用户逐项确认与 PC 搜索行为 | Search、Local Music、Cloud 和 Persistence | 已确认 |
-| 2026-08-11 | P-034 | 搜索包含综合、单曲、歌单、专辑、MV、歌手；歌曲插播，集合与作者进入详情，MV 进入独立播放页 | 用户确认并要求参考 PC MV | Search、Details、Video 和 Playback | 已确认 |
-| 2026-08-11 | P-035 | 分享保留可见入口但当前不落地，点击明确提示暂未开放 | 用户明确需求 | Player、Overflow 和 Feedback | 入口 Must；能力 Deferred |
-| 2026-08-11 | P-036 | MV 获准进入后暂停音乐并自动播放，退出保持音乐暂停；支持全屏和条件式清晰度，不支持后台/PiP/点赞/收藏/下载；方向与门禁由 P-071、P-075、P-076 修订 | 用户逐项确认及后续方向/鉴权澄清 | Video、Playback、Details、Orientation 和 System Integration | 已确认并被后续决策细化 |
-| 2026-08-11 | P-037 | 歌单、专辑、歌手详情进入 V1；使用独立目的地与状态模型并复用内部歌曲列表能力 | 用户逐项确认；PC 单页多类型实现仅作功能证据 | Details、Navigation、Search、Home、Discover 和 My | 已确认 |
-| 2026-08-11 | P-038 | 只有自建歌单可编辑资料、歌曲和删除；其他歌单只可收藏，专辑不可编辑；批量操作按所有权开放 | 用户明确权限边界 | Playlist、Collection、Auth 和 Batch Actions | 已确认 |
-| 2026-08-11 | P-039 | 导航前已知无有效 ID 时禁用详情入口并就地说明；无法预判且进入后才发现缺失/失效 ID、内容删除或解析失败时显示错误页 | 用户确认两层防御逻辑 | Details、Navigation 和 Error Recovery | 已确认 |
-| 2026-08-11 | P-040 | 歌曲信息使用 Sheet/Dialog，展示真实元数据，不建立独立页面 | 用户确认 | Track Actions、Metadata 和 Player | 已确认 |
-| 2026-08-11 | P-041 | 在线歌曲下载不进入 V1；在线播放使用可淘汰的自动缓存，设置页可查看占用并清除 | 用户逐项确认；PC 无用户下载能力 | Playback Cache、Settings、Storage 和 Offline | Cache Must；Download Deferred |
-| 2026-08-11 | P-042 | 本地导入副本不是缓存，清除缓存不得影响本地音乐、Queue、收藏、历史或云盘数据 | 用户确认 | Local Music、Cache、Persistence 和 Data Safety | 已确认 |
-| 2026-08-11 | P-043 | 云盘同步 PC 实际使用的列表、上传、删除和播放地址接口；播放 URL 不等于设备下载 | 用户要求同步 PC 端接口与本地源码证据 | Cloud、Network、Playback 和 Storage | 已确认 |
-| 2026-08-11 | P-044 | 未来离线下载使用独立“已下载”列表和 App 私有持久目录，不混入本地导入、不导出且删除需确认 | 用户确认保留未来合同 | Download、Storage 和 Library | Deferred 合同 |
-| 2026-08-11 | P-045 | 设置从“我的”进入独立页面，并按外观、播放、歌词、缓存、权限、重置和关于组织 | 用户逐项确认 | Settings、My 和 Navigation | 已确认 |
-| 2026-08-11 | P-046 | 支持跟随系统、浅色、深色、AMOLED 和 Android 动态取色；不支持动态色时回退品牌色 | 用户确认 | Theme、Design System 和 Compatibility | 已确认 |
-| 2026-08-11 | P-047 | 首版只提供简体中文，但工程保留 Android 资源本地化与后续多语言适配能力 | 用户明确范围 | Resources、Formatting 和 Accessibility | 已确认 |
-| 2026-08-11 | P-048 | 睡眠定时仅在 Player；歌词偏好可从 Player 与独立歌词设置页访问并共享状态 | 用户确认 | Player、Lyrics 和 Settings | 已确认 |
-| 2026-08-11 | P-049 | 权限入口反映并跳转系统设置；重置设置不退出账号或删除媒体、队列、历史与收藏 | 用户确认 | Permissions、Settings、Auth 和 Data Safety | 已确认 |
-| 2026-08-11 | P-050 | 不迁移 PC 桌面专属设置和自更新器；关于页提供版本、许可、隐私与项目链接，更新交给分发渠道 | 用户确认 | Settings、About、Distribution 和 Security | 已确认 |
-| 2026-08-11 | P-051 | 本地导入统一支持系统单选、多选、目录授权及打开/分享入口；导入前验证真实媒体可读与可解码 | 用户逐项确认 | Local Import、SAF、System Intent 和 Media Validation | 已确认 |
-| 2026-08-11 | P-052 | 重复文件使用大小预筛选与 SHA-256 最终确认；重复冲突允许用户取消或以独立副本继续导入 | 用户确认副本模式 | Deduplication、Storage、Dialog 和 Local Model | 已确认 |
-| 2026-08-11 | P-053 | 批量导入显示进度与结果并可取消剩余任务；已成功项保留，半成品回滚 | 用户确认 | Import Worker、Progress、Cancellation 和 Error Recovery | 已确认 |
-| 2026-08-11 | P-054 | 删除本地歌曲同时删除私有副本和 Queue 引用并要求确认；首版元数据只读 | 用户确认 | Local Music、Playback、Metadata 和 Data Safety | 已确认 |
-| 2026-08-11 | P-055 | 使用 Tabs Shell + 单一全局页面栈；三个 Tab 保存根页面状态，但不分别保存详情 Back Stack | 用户明确选择并要求参考 MoeKoeMusic-Mobile | Navigation、App Shell、State Restoration 和 Features | 已确认 |
-| 2026-08-11 | P-056 | 发现/我的根页面 Back 回首页，首页根页面 Back 退出；Tab 切换和重复点击不重置、重载或滚动页面 | 用户确认 Mobile 风格返回逻辑 | Navigation、Home、Discover、My 和 Android Back | 已确认 |
-| 2026-08-11 | P-057 | 退出登录需确认并返回“我的”匿名状态；账号资料、收藏、历史与云盘清除并在二级页面重新请求 | 用户确认并补充移动端二级页面行为 | Auth、My、Library、Cloud 和 Navigation | 已确认 |
-| 2026-08-11 | P-058 | 本地音乐、Queue、进度和设备设置不随账号清除；公开在线歌曲可继续，账号授权内容立即暂停 | 用户逐项确认 | Auth、Playback、Local Music 和 Settings | 已确认 |
-| 2026-08-11 | P-059 | 账号专属地址、临时数据和受保护缓存按账号隔离并在退出/换号时失效，公共缓存可保留 | 用户确认 | Auth、Media Cache、Cloud 和 Security | 已确认 |
-| 2026-08-11 | P-060 | 上游明确认证状态码统一触发登录门禁；页面级登录后重载，原子操作不重试，后台只标记失效 | 用户明确登录门禁逻辑 | Network、Auth、Navigation 和 Error Mapping | 已确认 |
-| 2026-08-11 | P-061 | V1 只保留单一当前账号，不提供已保存账号切换器；多账号选择仅属于单次登录流程 | 用户确认 | Auth、Credential Storage 和 Login | 已确认 |
-| 2026-08-11 | P-062 | 最近播放分账号在线历史与设备本机历史；本地/云盘只进入本机历史，不上传普通账号历史 | 用户逐项确认与 PC 行为证据 | History、My、Local Music、Cloud 和 Auth | 已确认 |
-| 2026-08-11 | P-063 | 本机媒体累计播放 10 秒后记入历史，短音频完整结束也记录；稳定身份去重并更新次数 | 用户确认 | Playback Events、History 和 Media Identity | 已确认 |
-| 2026-08-11 | P-064 | 本机历史上限 500 条并支持单删/清空；账号历史删除能力只在上游 API 支持时提供 | 用户确认 | History、Persistence、API 和 Data Safety | 已确认 |
-| 2026-08-11 | P-065 | 历史单曲沿用插播逻辑，播放全部才以当前历史结果替换 Queue | 用户确认 | History、Queue 和 Playback | 已确认 |
-| 2026-08-11 | P-066 | 冻结面向大众、无广告沉浸式 Android 音乐应用的定位，统一在线、本地与个人云盘 | 用户全部确认 | Product Positioning、Scope 和 Messaging | 已确认 |
-| 2026-08-11 | P-067 | 核心场景按在线播放、Full Player/Queue、系统承接、本地导入、账号音乐库、音频协调排序 | 用户确认 | Product Priorities 和 IA | 已确认 |
-| 2026-08-11 | P-068 | 第一条 Vertical Slice 为匿名在线沉浸播放闭环，第二条为系统文件导入与持久本地播放 | 用户确认 | Delivery Plan、Playback、Home 和 Local Import | 已确认 |
-| 2026-08-11 | P-069 | V1 以可测试任务、状态保持、系统承接、账号隔离和零广告打断验收，不依赖产品内埋点 | 用户确认 | Acceptance、Privacy 和 Release | 已确认 |
-| 2026-08-11 | P-070 | Mini Player 的歌曲主体进入 Full Player，并提供可直接打开同一 Queue 的独立操作 | 用户补充确认 | Mini Player、Queue、Player 和 Accessibility | 已确认 |
-| 2026-08-11 | P-071 | V1 仅正式支持 Android 手机；普通页面固定竖屏，MV 显式全屏横屏是唯一方向例外；平板、折叠展开态和桌面宽屏后续扩展 | 用户明确首版范围并进一步澄清 MV 全屏 | Device Scope、Orientation、Player 和 Video | 已确认并由 P-075 细化 |
-| 2026-08-11 | P-072 | 触控为主要输入；鼠标/键盘/触控板使用 Android 系统能力，不制作桌面专属交互 | 用户确认 | Input、Accessibility 和 Interaction | 已确认 |
-| 2026-08-11 | P-073 | Android TV、Wear OS、ChromeOS/桌面模式、Android Auto 与 Google Cast 不进入 V1 | 用户确认；Auto/Cast 延续 P-032 | Distribution、Platform 和 Dependencies | Out |
-| 2026-08-11 | P-074 | 维持 minSdk 26；Adaptive 架构与宽窗口 Design System 保留为未来扩展基础，但不属于 V1 页面验收范围 | 用户确认其他平台原则与当前工程基线 | Compatibility、Design System 和 Future Scope | 已确认 |
-| 2026-08-11 | P-075 | MV 仅在用户点击全屏时程序控制切换横屏，退出全屏/页面后恢复竖屏；不支持传感器自动旋转 | 用户明确方向行为 | Video、App Orientation、Lifecycle 和 QA | 已确认 |
-| 2026-08-11 | P-076 | MV 是原子播放操作：只有明确认证失败才进入登录门禁；登录后返回来源且需再次点击；VIP、版权、地区和版本限制显示业务错误，晚到认证失败也不得自动重试 | 用户确认自动播放只发生在已获准进入之后 | Video、Auth Gate、Navigation 和 Playback | 已确认 |
-| 2026-08-11 | P-077 | 外部文件冷启动完成后 Back 返回文件管理器，前台导入 Back 恢复原 App 页面；Deep Link/系统媒体详情 Back 返回归属 Tab 根页面 | 已确认的移动端页面导航与来源恢复语义 | Intents、Deep Links、Navigation 和 Task Restore | 已确认 |
-| 2026-08-11 | P-078 | MV 横屏是同一 Video Player 的显式全屏状态，不建立独立横屏页面或单独视觉稿；播放器功能负责发起全屏，App 统一协调方向并保证恢复 | 用户明确要求依靠 Video Player 能力 | Video UI、Orientation、Lifecycle 和 Design Deliverables | 已确认 |
-| 2026-08-11 | P-079 | Full Player 的封面页与歌词页固定使用横向 Pager；旧图只保留该交互方向，视觉、内容层级和组件必须重新设计 | 用户确认既有产品决策 | Player IA、Navigation、Gestures 和 Design Deliverables | 已确认 |
-| 2026-08-11 | P-080 | V1 Compact 页面设计稿固定 `390dp` 宽；固定页面使用 `390 × 844dp`，滚动页面使用 `390 × Auto` 长画板；设计证据完整保留顶部 Status Bar 与底部手势安全区，系统区域构成参考 `player-cover-page.png` | 用户确认页面设计交付规范 | Foundation、Page Design、Home、Insets 和 Design Deliverables | 已确认 |
-| 2026-08-12 | P-081 | Music Item 首行固定为 Title → Quality → VIP，尾部 Duration 与 More 先保留；长标题只做单行末尾省略，Quality/VIP 不得侵入或越过 Duration。Playlist Item 固定 1:1 Artwork 与单行标题；Mini Player 复用同一信息优先级，并与同色 Bottom Navigation 保持 16dp 分隔及独立 Queue 入口 | 用户明确要求将已冻结组件写成可跨线程执行的文档合同 | Component System、Home、Lists、Tabs Shell、Player 和 QA | 已确认 |
-| 2026-08-12 | P-082 | Music Item 的 Playing Indicator 与 Duration 共用固定 Trailing Status Slot 且互斥；播放中以均衡器直接替换时长，More 继续保留 | 用户修正冻结视觉的播放中状态 | Component System、Song Lists、Playback State 和 QA | 已确认 |
-| 2026-08-12 | P-083 | Compact 首页锁定为同一页面的三段滚动状态：推荐区域、6 首每日推荐、6 个推荐歌单、6 首无分类新歌速递；Top App Bar 与 Bottom Navigation 固定，Mini Player 以 Overlay 覆盖滚动内容，末尾 Content Padding 保证最后一项可完整滚出遮挡 | 用户确认先锁定设计并进入代码实现；ImageGen 细节留待真实组件校正 | Home、Tabs Shell、Lists、Design QA 和 Implementation | 已确认 |
-| 2026-08-12 | P-084 | 首页首次加载与下拉刷新并发更新三个内容区；每日推荐每次成功后重抽 6 首；区块独立提交、失败保留旧内容并受请求代际保护；推荐电台按需使用 `top_card` 五种模式 | 用户确认以 `MoeKoeMusic-Mobile@ab71195d` 的刷新行为为准 | Home API、Repository、Refresh 和 Error Recovery | 已确认 |
+P-000…P-085 历史决策已迁移至 [Product Decisions](../docs/product/DECISIONS.md)。
 
-## 13. 首轮讨论议题
+## 13. 产品合同维护规则
 
-按以下顺序推进，避免同时展开所有功能：
-
-1. Full Player 默认首屏是封面还是歌词；横向 Pager 两页各自承载哪些内容，Queue 最终使用哪种容器？
-2. 第一批页面从首页/搜索/Player 还是本地导入开始冻结视觉稿；各页真实字段 fixture 由哪条 Android 纵向切片提供？
-3. 第一条 Vertical Slice 尚缺的首页、歌曲 URL、歌词与 Playback 最小 API 以什么顺序补齐？
-
-## 14. 进入页面设计的条件
-
-同时满足以下条件后，开始低保真产品页面设计：
-
-- 产品定位、目标用户和内容来源已确认。
-- V1 `Must / Should / Could / Out` 已完成评审。
-- 顶层 IA 和第一条 Vertical Slice 已确认。
-- Vertical Slice 的主路径、失败恢复和状态保持已写成可测试合同。
-- 所需真实字段、示例内容和技术约束已知。
-- 第一批页面及其 V1 Compact 竖屏设计范围已列出，并记录未来 Adaptive 扩展约束。
-
-未满足上述条件时，可以制作探索草图，但不得标记为 Approved，也不得据此冻结业务组件。
+- 产品行为变更必须同步本合同、相关设计规范和最小行为测试。
+- 当前 Compose 实现与测试用于证明合同已经实现，不能在未更新合同时静默改变产品语义。
+- 新能力进入现行合同前，需要明确用户任务、入口、成功路径、失败恢复、状态保持和数据证据。
+- 探索方案与历史讨论不属于现行合同；确认后写入本文件，历史决策归档到 [Product Decisions](../docs/product/DECISIONS.md)。
+- 未实现或延期能力必须明确标记，不能与当前可用能力混写。

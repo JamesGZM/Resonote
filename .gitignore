@@ -9,3 +9,9 @@ captures/
 .DS_Store
 compose-metrics/
 compose-reports/
+
+# Local Android release signing material. Only documentation and the placeholder
+# configuration are tracked; the keystore and populated properties stay local.
+keystore/*
+!keystore/README.md
+!keystore/signing.properties.example

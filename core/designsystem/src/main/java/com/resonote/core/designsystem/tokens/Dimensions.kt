@@ -29,9 +29,7 @@ data class ResonoteBorders internal constructor(
 )
 
 @Immutable
-data class ResonoteTouchTargets internal constructor(
-    val minimum: Dp = 48.dp,
-)
+data class ResonoteTouchTargets internal constructor(val minimum: Dp = 48.dp)
 
 @Immutable
 data class ResonoteIconTokens internal constructor(

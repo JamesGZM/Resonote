@@ -4,6 +4,15 @@ import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 
 class ApiOriginPolicyTest {
+    @Test
+    fun sessionPropagationOnlyAllowsKugouHostsAndDebugLoopback() {
+        assertThat(ApiSessionOriginPolicy.isAllowed("gateway.kugou.com")).isTrue()
+        assertThat(ApiSessionOriginPolicy.isAllowed("kugou.com")).isTrue()
+        assertThat(ApiSessionOriginPolicy.isAllowed("evil-kugou.com")).isFalse()
+        assertThat(ApiSessionOriginPolicy.isAllowed("example.com")).isFalse()
+        assertThat(ApiSessionOriginPolicy.isAllowed("localhost")).isTrue()
+    }
+
     private val policy = ProductionApiOriginPolicy()
 
     @Test
@@ -21,7 +30,6 @@ class ApiOriginPolicyTest {
     }
 
     private fun spec(origin: String, cleartext: ApiCleartextPolicy) = ApiEndpointSpec(
-        id = "test",
         origin = origin,
         path = "/test",
         method = ApiHttpMethod.Get,

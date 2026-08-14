@@ -4,12 +4,12 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
 import com.google.protobuf.ByteString
 import com.resonote.core.datastore.proto.EncryptedApiSession
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import java.io.InputStream
 import java.io.OutputStream
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 
 object EncryptedApiSessionSerializer : Serializer<EncryptedApiSession> {
     override val defaultValue: EncryptedApiSession = EncryptedApiSession.getDefaultInstance()
@@ -20,9 +20,8 @@ object EncryptedApiSessionSerializer : Serializer<EncryptedApiSession> {
 }
 
 @Singleton
-internal class ProtoEncryptedSessionStorage @Inject constructor(
-    private val store: DataStore<EncryptedApiSession>,
-) : EncryptedSessionStorage {
+internal class ProtoEncryptedSessionStorage @Inject constructor(private val store: DataStore<EncryptedApiSession>) :
+    EncryptedSessionStorage {
     override val data: Flow<EncryptedSessionEnvelope?> =
         store.data.map { value ->
             value.takeIf { it.schemaVersion > 0 && !it.iv.isEmpty && !it.ciphertext.isEmpty }?.let {

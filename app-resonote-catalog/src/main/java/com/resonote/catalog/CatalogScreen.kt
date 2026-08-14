@@ -32,7 +32,6 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.resonote.core.designsystem.theme.ResonoteThemeMode
 import com.resonote.core.designsystem.tokens.ResonoteTokens
@@ -42,10 +41,7 @@ private data class TypeEntry(val name: String, val style: TextStyle)
 private data class ShapeEntry(val name: String, val shape: Shape)
 
 @Composable
-internal fun FoundationCatalog(
-    themeMode: ResonoteThemeMode,
-    onThemeModeChange: (ResonoteThemeMode) -> Unit,
-) {
+internal fun FoundationCatalog(themeMode: ResonoteThemeMode, onThemeModeChange: (ResonoteThemeMode) -> Unit) {
     val colors = colorEntries()
     val typography = typeEntries()
     Surface(
@@ -77,7 +73,11 @@ internal fun FoundationCatalog(
             item { SectionTitle("Typography · 15 roles") }
             items(typography, key = { it.name }) { entry ->
                 Column(modifier = Modifier.padding(vertical = ResonoteTokens.spacing.space1)) {
-                    Text(entry.name, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                    Text(
+                        entry.name,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
                     Text("Resonote 乐律 · Music 123", style = entry.style)
                 }
             }
@@ -91,6 +91,8 @@ internal fun FoundationCatalog(
                 ActionsCatalog()
                 SectionTitle("06B-1 · Text Field")
                 InputsCatalog()
+                SectionTitle("08 · Music Components")
+                MusicComponentsCatalog()
                 Spacer(Modifier.height(ResonoteTokens.spacing.space6))
                 Text(
                     text = "Catalog 是实现证据入口，不代表 V-01–V-10 已通过。",
@@ -103,10 +105,7 @@ internal fun FoundationCatalog(
 }
 
 @Composable
-private fun ThemeModeSelector(
-    selected: ResonoteThemeMode,
-    onSelected: (ResonoteThemeMode) -> Unit,
-) {
+private fun ThemeModeSelector(selected: ResonoteThemeMode, onSelected: (ResonoteThemeMode) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -220,18 +219,30 @@ private fun ExtendedTokenValues() {
     val alignment = if (artwork.alignment == Alignment.Center) "Center" else "Custom"
 
     Column(verticalArrangement = Arrangement.spacedBy(ResonoteTokens.spacing.space2)) {
-        TokenRow("Spacing", "${spacing.space0}, ${spacing.space1}, ${spacing.space2}, ${spacing.space3}, ${spacing.space4}, ${spacing.space6}, ${spacing.space8}, ${spacing.space10}, ${spacing.space12}, ${spacing.space16}")
+        TokenRow(
+            "Spacing",
+            "${spacing.space0}, ${spacing.space1}, ${spacing.space2}, ${spacing.space3}, ${spacing.space4}, ${spacing.space6}, ${spacing.space8}, ${spacing.space10}, ${spacing.space12}, ${spacing.space16}",
+        )
         TokenRow("Borders", "hairline ${ResonoteTokens.borders.hairline} · strong ${ResonoteTokens.borders.strong}")
         TokenRow("Touch target", ResonoteTokens.touchTargets.minimum.toString())
         TokenRow("Elevation tonal", elevationLevels.joinToString { it.tonal.toString() })
         TokenRow("Elevation surfaces", elevationLevels.joinToString { it.preferredSurfaceRole.name })
-        TokenRow("Icon sizes", "${icons.small}, ${icons.default}, ${icons.large}, ${icons.display} · target ${icons.touchTarget}")
-        TokenRow("Artwork", "ratio ${artwork.aspectRatio}:1 · overlay ${artwork.overlayInset} · $contentScale / $alignment")
+        TokenRow(
+            "Icon sizes",
+            "${icons.small}, ${icons.default}, ${icons.large}, ${icons.display} · target ${icons.touchTarget}",
+        )
+        TokenRow(
+            "Artwork",
+            "ratio ${artwork.aspectRatio}:1 · overlay ${artwork.overlayInset} · $contentScale / $alignment",
+        )
         TokenRow(
             "Artwork placeholders",
             "loading ${artwork.loadingContainerRole.name} · missing ${artwork.missingContainerRole.name}/${artwork.missingContentRole.name} · error ${artwork.errorContainerRole.name}/${artwork.errorContentRole.name}",
         )
-        TokenRow("State opacity", "hover ${state.hoverOpacity} · focus ${state.focusOpacity} · pressed ${state.pressedOpacity} · dragged ${state.draggedOpacity}")
+        TokenRow(
+            "State opacity",
+            "hover ${state.hoverOpacity} · focus ${state.focusOpacity} · pressed ${state.pressedOpacity} · dragged ${state.draggedOpacity}",
+        )
         TokenRow("Grid columns", "${layout.compactColumns} / ${layout.mediumColumns} / ${layout.expandedColumns}")
         TokenRow("Body widths", "expanded ${layout.expandedMaximumBodyWidth} · reading ${layout.readingMaximumWidth}")
         TokenRow("Motion", "Instant · Effects Fast/Default/Slow · Spatial Fast/Default/Slow")
@@ -273,7 +284,11 @@ private fun colorEntries(): List<ColorEntry> = with(MaterialTheme.colorScheme) {
         ColorEntry("primaryFixed", primaryFixed), ColorEntry("primaryFixedDim", primaryFixedDim),
         ColorEntry("onPrimaryFixed", onPrimaryFixed), ColorEntry("onPrimaryFixedVariant", onPrimaryFixedVariant),
         ColorEntry("secondaryFixed", secondaryFixed), ColorEntry("secondaryFixedDim", secondaryFixedDim),
-        ColorEntry("onSecondaryFixed", onSecondaryFixed), ColorEntry("onSecondaryFixedVariant", onSecondaryFixedVariant),
+        ColorEntry(
+            "onSecondaryFixed",
+            onSecondaryFixed,
+        ),
+        ColorEntry("onSecondaryFixedVariant", onSecondaryFixedVariant),
         ColorEntry("tertiaryFixed", tertiaryFixed), ColorEntry("tertiaryFixedDim", tertiaryFixedDim),
         ColorEntry("onTertiaryFixed", onTertiaryFixed), ColorEntry("onTertiaryFixedVariant", onTertiaryFixedVariant),
     )

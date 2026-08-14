@@ -11,7 +11,5 @@ interface HomeRepository {
 
     suspend fun refresh(): HomeRefreshResult
 
-    suspend fun loadRadio(
-        mode: RecommendationMode = RecommendationMode.Personal,
-    ): RadioRecommendationResult
+    suspend fun loadRadio(mode: RecommendationMode = RecommendationMode.Personal): RadioRecommendationResult
 }

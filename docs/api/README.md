@@ -1,75 +1,64 @@
-# Lite 静态 API 契约
+# Resonote 当前网络能力
 
-> 状态：静态证据基线，不代表上游接口当前可用或获得服务授权。
+本文只描述当前 App 通过 `core:network` DataSource 暴露、并由 `core:data` Repository 消费的能力。它不是上游 API 全集，也不为操作分配人工编号。协议公共行为见 [PROTOCOL](PROTOCOL.md)，证据与运行状态见 [VERIFICATION](VERIFICATION.md)。
 
-## 基线
+## 能力清单
 
-- PC 消费端：`MoeKoeMusic@52c9833afe2e7fedcba8d5b23ff8d1f9731af73a`
-- API 协议源：`MoeKoeMusic/api@6efe84e1971c15b11a5cf1a210c5e8e0cc9d7ddb`
-- 首页 Mobile 消费证据：`MoeKoeMusic-Mobile@ab71195d4cf3297332490fd37704d1ae8973d4c5`
-- Mobile 内嵌 API 证据：`MoeKoeMusic-Mobile/api@283f1e97`
-- `top_card` PC 消费链：`MoeKoeMusic@a86cfefb`
-- 其他 Mobile 分支或重写版本不作为证据来源。
-- 平台：概念版 `lite`（`appid=3116`、`clientver=11440`）
-- 模块：164
-- 验证：仅静态分析，无外部网络请求
+默认 Origin 为 `https://gateway.kugou.com`。表中的响应是 Resonote 实际消费的 Network 模型；内部 DTO 和未知字段不构成公共合同。
 
-## 阅读顺序
+### Home 与内容浏览
 
-1. [公共协议](PROTOCOL.md)
-2. [机器可读目录](catalog.yaml)
-3. [Android/NIA 映射](ANDROID_MAPPING.md)
-4. [验证与缺口](VERIFICATION.md)
-5. [接口领域索引](#接口领域)
+| DataSource / Repository 操作 | 实现与 Method、Host/Path | Session | 实际消费模型 |
+|---|---|---|---|
+| `dailyRecommendations` | Retrofit `POST /everyday_song_recommend` | 可选 | `List<NetworkSong>` |
+| `newSongs` | Retrofit `POST /musicadservice/container/v1/newsong_publish` | 可选 | `List<NetworkSong>` |
+| `radioRecommendations` | Retrofit `POST /singlecardrec.service/v1/single_card_recommend` | 可选 | `List<NetworkSong>` |
+| `recommendedPlaylists`, `categoryPlaylists` | Retrofit `POST /v2/special_recommend` | 可选 | `List<NetworkPlaylistSummary>` |
+| `banners`, `playlistCategories` | Retrofit `POST /ads.gateway/v3/listen_banner`, `/pubsongs/v1/get_tags_by_type` | 可选 | `NetworkBanner`, `NetworkPlaylistCategory` 列表 |
+| `newAlbums`, `albumSongs` | Retrofit `POST /musicadservice/v1/mobile_newalbum_sp`, `/v1/album_audio/lite` | 可选 | `NetworkAlbum`, `NetworkAlbumSongPage` |
+| `artistDetail`, `artistSongs` | Retrofit `POST /kmr/v3/author` 与动态作者歌曲 URL | 可选 | `NetworkArtistInfo`, `NetworkSongPage` |
+| `rankings`, `rankingSongs` | Retrofit `GET /ocean/v6/rank/list`, `POST /openapi/kmr/v2/rank/audio` | 可选 | `NetworkRanking`, `NetworkSongPage` |
+| `playlistSongs` | Retrofit `GET /pubsongs/v2/get_other_list_file_nofilt` | 可选 | `NetworkPlaylistPage` |
 
-Node 包装路由只描述 PC 调用的本地 Express 接口；每个接口章节中的“上游请求”才是 Android 直连契约。字段证据等级为 `SOURCE_CONFIRMED`、`CONSUMER_CONFIRMED`、`REFERENCE_CONFIRMED`、`DECLARED`、`FIXTURE_CONFIRMED`、`INFERRED`、`UNKNOWN`。
+### Search
 
-## 接口领域
+| DataSource / Repository 操作 | 实现与 Method、Host/Path | 认证策略 | 实际消费模型 |
+|---|---|---|---|
+| `searchSongs` | Retrofit `GET /v3/search/song` | 请求显式允许将业务码 `152` 识别为认证失败 | `NetworkSearchPage` |
+| `searchPlaylists`, `searchAlbums`, `searchArtists`, `searchMvs` | Retrofit 动态 Search URL | 同上 | `NetworkSearchResultPage<T>` |
+| `searchComplex` | Retrofit `GET https://complexsearch.kugou.com/...` | 普通可选 Session | `NetworkComplexSearch` |
+| `hotSearchKeywords` | Retrofit `GET /api/v3/search/hot_tab` | 普通可选 Session | `List<NetworkSearchKeyword>` |
+| `searchSuggestions` | Retrofit `GET /v2/getSearchTip` | 普通可选 Session | `List<String>` |
 
-- [AI 推荐](endpoints/ai.md)：1
-- [专辑](endpoints/album.md)：4
-- [歌手](endpoints/artist.md)：9
-- [刷刷](endpoints/brush.md)：1
-- [云盘](endpoints/cloud.md)：3
-- [评论](endpoints/comment.md)：7
-- [设备与验证](endpoints/device.md)：1
-- [发现与推荐](endpoints/discover.md)：17
-- [收藏统计](endpoints/favorite.md)：1
-- [电台](endpoints/fm.md)：4
-- [图片](endpoints/images.md)：2
-- [IP 内容](endpoints/ip.md)：5
-- [登录](endpoints/login.md)：15
-- [长音频](endpoints/longaudio.md)：6
-- [歌词](endpoints/lyrics.md)：1
-- [歌单](endpoints/playlist.md)：10
-- [排行](endpoints/ranking.md)：5
-- [听歌识曲](endpoints/recognition.md)：1
-- [场景音乐](endpoints/scene.md)：8
-- [搜索](endpoints/search.md)：7
-- [曲谱](endpoints/sheet.md)：6
-- [歌曲](endpoints/song.md)：12
-- [主题内容](endpoints/theme.md)：4
-- [用户](endpoints/user.md)：13
-- [视频](endpoints/video.md)：3
-- [概念版专区](endpoints/youth.md)：16
-- [其他](endpoints/misc.md)：2
+只有声明 Search 认证策略的请求会把 `152` 分类为登录需要或 Session 过期；其他请求收到相同业务码时仍按普通业务失败处理。
 
-## 完整性摘要
+### Playback、歌词、视频与识曲
 
-- 全量模块：164/164
-- 固定 PC 消费端直接使用：46
-- 无字段级响应证据：117
-- 未映射的固定 PC 请求路由：0
+| DataSource / Repository 操作 | 实现与 Method、Host/Path | Session | 实际消费模型 |
+|---|---|---|---|
+| `resolveSongSource` | Retrofit `POST /v2/get_res_privilege/lite` 后 `GET /v5/url` | 可选；权限结果参与候选选择 | `NetworkSongSource` |
+| `resolveCloudSongSource` | Retrofit `GET https://gateway.kugou.com/bsstrackercdngz/v2/query_musicclound_url` | 必需 | `NetworkSongSource` |
+| `searchLyric`, `downloadLyric` | Retrofit 动态 `lyrics.kugou.com` URL；KRC 解码在 Network 内部 | 不传播 Session | `NetworkLyricCandidate`, 解码文本 |
+| `resolveVideoUrl` | Retrofit `GET /v2/interface/index` | 可选 | URL 字符串 |
+| `recognizeAudio` | Retrofit 二进制 `POST /fingerprint.service/v1/music_trackid_mulit` | 可选 | `List<NetworkRecognitionMatch>` |
 
-完整统计和限制见 [VERIFICATION](VERIFICATION.md)。
+### Account、Library、Cloud 与 VIP
 
-## 重新生成与校验
+| DataSource / Repository 操作 | 实现与 Method、Host/Path | Session | 实际消费模型 |
+|---|---|---|---|
+| `sendMobileCode`, `loginWithMobileCode`, `loginWithPassword` | 特殊协议 `POST` 到 mobile-code、mobile-login 与 gateway 登录 Origin | 登录前设备身份；成功后原子提交 Session | 登录结果模型 |
+| `createQrLoginKey`, `checkQrLogin` | Retrofit 动态 QR Login HTTPS URL，Web 签名 | 登录前/轮询后提交 Session | `NetworkQrLoginStatus` |
+| `userDetail`, `userVip` | Retrofit `POST /v3/get_my_info` 与 VIP 动态 URL | 必需 | `NetworkUserDetail`, `NetworkUserVip` |
+| `userPlaylists`, `createPlaylist`, `addPlaylistTracks`, `deletePlaylistTracks` | Retrofit `/v7/get_all_list`, `/cloudlist.service/v5/add_list`, `/cloudlist.service/v6/add_song`, `/v4/delete_songs` | 必需 | `NetworkUserPlaylist` 或写入结果 |
+| `cloudTracks` | 特殊协议 `POST https://mcloudservice.kugou.com/v1/get_list` | 必需 | `NetworkCloudPage` |
+| `accountHistory` | 特殊协议 `POST https://listenservice.kugou.com/v2/get_list` | 必需 | `List<NetworkSong>` |
+| `claimDailyVip`, `upgradeDailyVip` | Retrofit youth VIP 路径 | 必需 | `NetworkVipRewardResult` |
 
-在 Resonote 根目录执行：
+设备注册与风控验证是共享协议能力，不作为页面 Endpoint：设备注册使用 `POST https://userservice.kugou.com/risk/v2/r_register_dev`；风控上下文与提交分别使用 gateway verify-info 和 `https://verifyservice.kugou.com/v4/verify_user_info`。
 
-```shell
-node docs/api/tools/generate-docs.mjs
-node docs/api/tools/validate-docs.mjs
-```
+## 维护规则
 
-工具只读取固定 Git 对象；默认通过 Git common directory 定位主 checkout 的相邻参考仓库，因此普通 checkout 与 worktree 使用同一规则。如参考仓库不在该位置，可通过 `MOEKOE_ROOT` 和 `MOEKOE_MOBILE_ROOT` 分别覆盖 PC 与 Mobile checkout。生成器会替换本目录中的领域文档、Schema 和 Fixture 索引。
+- 新能力只有在 DataSource 与 Repository 已存在真实消费者后才加入本文。
+- Method、Path、Policy、DTO 映射以源码与测试为事实源；文档不生成生产注册表。
+- 验证状态必须区分 Fixture、匿名 Canary、真实账号验证，不能用静态源码阅读替代运行证据。
+- 固定参考为 `../MoeKoeMusic@a86cfefb3093` 与 `../MoeKoeMusic-Mobile@ab71195d4cf3`；未使用能力只在调研中记录。

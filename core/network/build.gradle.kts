@@ -25,3 +25,9 @@ dependencies {
     testImplementation(libs.okhttp.mockwebserver)
     testImplementation(libs.truth)
 }
+
+val runLiveApiTests = providers.environmentVariable("RESONOTE_RUN_LIVE_API_TESTS").orElse("false")
+tasks.withType<Test>().configureEach {
+    inputs.property("resonoteRunLiveApiTests", runLiveApiTests)
+    environment("RESONOTE_RUN_LIVE_API_TESTS", runLiveApiTests.get())
+}

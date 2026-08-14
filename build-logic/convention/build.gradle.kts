@@ -36,6 +36,7 @@ dependencies {
     compileOnly(libs.compose.gradlePlugin)
     compileOnly(libs.kotlin.gradlePlugin)
     implementation(libs.spotless.gradlePlugin)
+    testImplementation(libs.kotlin.test)
 }
 
 tasks.validatePlugins {
@@ -72,6 +73,10 @@ gradlePlugin {
         register("hilt") {
             id = "resonote.hilt"
             implementationClass = "HiltConventionPlugin"
+        }
+        register("documentation") {
+            id = "resonote.documentation"
+            implementationClass = "DocumentationConventionPlugin"
         }
     }
 }
