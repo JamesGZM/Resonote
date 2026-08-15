@@ -135,7 +135,11 @@ internal fun ResonoteApp(
 
     LaunchedEffect(authState) {
         backStack.synchronizeAuthenticationGate(authState)
-        if (authState !is AuthState.Authenticated) playlistPickerSong = null
+        if (authState is AuthState.Authenticated) {
+            playbackViewModel.refreshCurrentOnlineSource()
+        } else {
+            playlistPickerSong = null
+        }
     }
 
     LaunchedEffect(addSuccessMessage) {
@@ -318,7 +322,10 @@ internal fun ResonoteApp(
                     entry<DailyVipNavKey> {
                         DailyVipRoute(
                             onBack = { backStack.removeAt(backStack.lastIndex) },
-                            onRewardApplied = myViewModel::refresh,
+                            onRewardApplied = {
+                                myViewModel.refresh()
+                                playbackViewModel.refreshCurrentOnlineSource(force = true)
+                            },
                         )
                     }
                     entry<CloudNavKey> {

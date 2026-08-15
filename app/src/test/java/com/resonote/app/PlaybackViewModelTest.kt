@@ -75,6 +75,17 @@ class PlaybackViewModelTest {
     }
 
     @Test
+    fun entitlementRefreshDelegatesPreviewAndForcedRefreshes() {
+        val controller = FakePlaybackController()
+        val viewModel = PlaybackViewModel(controller)
+
+        viewModel.refreshCurrentOnlineSource()
+        viewModel.refreshCurrentOnlineSource(force = true)
+
+        assertThat(controller.sourceRefreshForces).containsExactly(false, true).inOrder()
+    }
+
+    @Test
     fun onlinePlayNextStartsPlaybackWhenQueueHasNoCurrentItem() {
         val controller = FakePlaybackController()
         val viewModel = PlaybackViewModel(controller)
@@ -150,6 +161,7 @@ class PlaybackViewModelTest {
         var appendedItems = emptyList<PlaybackItem>()
         var nextItems = emptyList<PlaybackItem>()
         var pauseCalls = 0
+        val sourceRefreshForces = mutableListOf<Boolean>()
 
         override fun play(item: PlaybackItem) {
             playedItems = listOf(item)
@@ -190,6 +202,10 @@ class PlaybackViewModelTest {
         override fun setMode(mode: PlaybackMode) = Unit
 
         override fun setPlaybackSpeed(speed: PlaybackSpeed) = Unit
+
+        override fun refreshCurrentOnlineSource(force: Boolean) {
+            sourceRefreshForces += force
+        }
 
         override fun clear() = Unit
     }

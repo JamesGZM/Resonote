@@ -95,6 +95,8 @@ internal class DefaultPlaybackController internal constructor(
     private var activeFailureBehavior = FailureBehavior.SkipQueueItem
     private var positionUpdates: Job? = null
     private var automaticSkipJob: Job? = null
+    private var currentSourceRefreshJob: Job? = null
+    private var isRefreshingCurrentSource = false
     private var hasPlaybackMutation = false
     private var lastPositionCheckpointAtMillis = 0L
     private val historyEligibility = PlaybackHistoryEligibilityTracker()
@@ -329,6 +331,35 @@ internal class DefaultPlaybackController internal constructor(
         scope.launch { preferencesRepository.setPlaybackSpeed(speed) }
     }
 
+    override fun refreshCurrentOnlineSource(force: Boolean) {
+        val item = queue.currentItem ?: return
+        val player = controller ?: return
+        if (
+            !item.shouldRefreshOnlineSource(force) ||
+            player.mediaItemCount == 0 ||
+            isResolving ||
+            currentSourceRefreshJob?.isActive == true
+        ) {
+            return
+        }
+        val startPositionMillis = player.currentPosition.coerceAtLeast(0)
+        val playWhenReady = player.isPlaying
+        isRefreshingCurrentSource = true
+        currentSourceRefreshJob = scope.launch {
+            val refreshed = try {
+                resolveAndLoad(
+                    item = item.copy(resolvedSource = null),
+                    failureBehavior = FailureBehavior.RefreshCurrentSource,
+                    startPositionMillis = startPositionMillis,
+                    playWhenReady = playWhenReady,
+                )
+            } finally {
+                isRefreshingCurrentSource = false
+            }
+            if (!refreshed) controller?.let(::handleVipPreviewBoundary)
+        }
+    }
+
     override fun clear() {
         hasPlaybackMutation = true
         scope.launch {
@@ -339,6 +370,9 @@ internal class DefaultPlaybackController internal constructor(
             pendingControllerAction = null
             automaticSkipJob?.cancel()
             automaticSkipJob = null
+            currentSourceRefreshJob?.cancel()
+            currentSourceRefreshJob = null
+            isRefreshingCurrentSource = false
             failureRecovery.reset()
             queue.clear()
             controller?.stop()
@@ -377,11 +411,12 @@ internal class DefaultPlaybackController internal constructor(
         item: PlaybackItem,
         failureBehavior: FailureBehavior,
         startPositionMillis: Long = 0,
-    ) {
+        playWhenReady: Boolean = true,
+    ): Boolean {
         automaticSkipJob?.cancel()
         automaticSkipJob = null
         val preservesCurrentPlayback =
-            failureBehavior == FailureBehavior.RejectWithoutQueueMutation &&
+            failureBehavior != FailureBehavior.SkipQueueItem &&
                 (controller?.mediaItemCount ?: 0) > 0
         val generation = ++loadGeneration
         if (!preservesCurrentPlayback) {
@@ -406,30 +441,40 @@ internal class DefaultPlaybackController internal constructor(
                 failureBehavior = failureBehavior,
                 preservesCurrentPlayback = preservesCurrentPlayback,
             )
-            return
+            return false
         }
-        if (generation != loadGeneration) return
+        if (generation != loadGeneration) return false
 
-        when (result) {
-            is ResolveSongSourceResult.Resolved -> loadResolvedItem(
-                item = item,
-                source = result.source,
-                generation = generation,
-                preservesCurrentPlayback = preservesCurrentPlayback,
-                startPositionMillis = startPositionMillis,
-            )
-            is ResolveSongSourceResult.Unavailable -> failResolution(
-                generation,
-                PlaybackIssue.Unavailable(result.reason),
-                failureBehavior,
-                preservesCurrentPlayback,
-            )
-            is ResolveSongSourceResult.Failed -> failResolution(
-                generation,
-                PlaybackIssue.SourceFailure(result.failure),
-                failureBehavior,
-                preservesCurrentPlayback,
-            )
+        return when (result) {
+            is ResolveSongSourceResult.Resolved -> {
+                loadResolvedItem(
+                    item = item,
+                    source = result.source,
+                    generation = generation,
+                    preservesCurrentPlayback = preservesCurrentPlayback,
+                    startPositionMillis = startPositionMillis,
+                    playWhenReady = playWhenReady,
+                )
+                true
+            }
+            is ResolveSongSourceResult.Unavailable -> {
+                failResolution(
+                    generation,
+                    PlaybackIssue.Unavailable(result.reason),
+                    failureBehavior,
+                    preservesCurrentPlayback,
+                )
+                false
+            }
+            is ResolveSongSourceResult.Failed -> {
+                failResolution(
+                    generation,
+                    PlaybackIssue.SourceFailure(result.failure),
+                    failureBehavior,
+                    preservesCurrentPlayback,
+                )
+                false
+            }
         }
     }
 
@@ -439,6 +484,7 @@ internal class DefaultPlaybackController internal constructor(
         generation: Long,
         preservesCurrentPlayback: Boolean,
         startPositionMillis: Long,
+        playWhenReady: Boolean,
     ) {
         if (preservesCurrentPlayback) {
             sampleHistory(controller?.isPlaying == true, endedNaturally = false)
@@ -465,7 +511,7 @@ internal class DefaultPlaybackController internal constructor(
             player.setMediaItem(item.toMediaItem(source))
             player.prepare()
             if (startPositionMillis > 0) player.seekTo(startPositionMillis.coerceAtMost(resolvedDuration))
-            player.play()
+            if (playWhenReady) player.play() else player.pause()
             syncPlayerState(player)
         }
     }
@@ -478,6 +524,7 @@ internal class DefaultPlaybackController internal constructor(
     ) {
         if (generation != loadGeneration) return
         if (preservesCurrentPlayback) {
+            if (failureBehavior == FailureBehavior.RefreshCurrentSource) return
             mutableState.value = mutableState.value.withNonInterruptingIssue(issue)
             return
         }
@@ -525,6 +572,11 @@ internal class DefaultPlaybackController internal constructor(
     private fun handleVipPreviewBoundary(player: Player): Boolean {
         if (handledEndedGeneration == loadGeneration) return false
         val item = queue.currentItem ?: return false
+        if (isRefreshingCurrentSource && item.vipPreviewDurationMillisOrNull() != null) {
+            player.pause()
+            mutableState.value = mutableState.value.copy(status = PlaybackStatus.Paused)
+            return true
+        }
         val action = vipPreviewCompletionAction(
             item = item,
             mode = mutableState.value.mode,
@@ -732,6 +784,7 @@ internal class DefaultPlaybackController internal constructor(
 
     private enum class FailureBehavior {
         RejectWithoutQueueMutation,
+        RefreshCurrentSource,
         SkipQueueItem,
     }
 }

@@ -38,11 +38,45 @@ class PlaybackCompletionPolicyTest {
             action(
                 mode = PlaybackMode.ListLoop,
                 queueSize = 3,
-                positionMillis = 179_700,
+                positionMillis = 59_700,
                 sourceDurationMillis = 180_000,
-                previewDurationMillis = null,
+                previewDurationMillis = 60_000,
             ),
         ).isNull()
+    }
+
+    @Test
+    fun unresolvedVipSongCanExposeDeclaredPreviewDuration() {
+        val item = PlaybackItem(song(isVip = true, previewDurationMillis = 60_000))
+
+        assertThat(item.vipPreviewDurationMillisOrNull()).isEqualTo(60_000)
+    }
+
+    @Test
+    fun resolvedSourceWithUnknownDurationIgnoresDeclaredPreviewMetadata() {
+        assertThat(
+            action(
+                mode = PlaybackMode.ListLoop,
+                queueSize = 3,
+                positionMillis = 59_700,
+                sourceDurationMillis = 0,
+                previewDurationMillis = 60_000,
+            ),
+        ).isNull()
+    }
+
+    @Test
+    fun onlineVipPreviewRefreshesAfterEntitlementChange() {
+        val preview = PlaybackItem(song(isVip = true, previewDurationMillis = 60_000)).withResolvedSource(
+            ResolvedSongSource("https://media.example/preview.mp3", 60_000, "mp3"),
+        )
+        val full = PlaybackItem(song(isVip = true, previewDurationMillis = 60_000)).withResolvedSource(
+            ResolvedSongSource("https://media.example/full.mp3", 180_000, "mp3"),
+        )
+
+        assertThat(preview.shouldRefreshOnlineSource(force = false)).isTrue()
+        assertThat(full.shouldRefreshOnlineSource(force = false)).isFalse()
+        assertThat(full.shouldRefreshOnlineSource(force = true)).isTrue()
     }
 
     @Test
@@ -63,8 +97,8 @@ class PlaybackCompletionPolicyTest {
         queueSize: Int,
         positionMillis: Long,
         isVip: Boolean = true,
-        sourceDurationMillis: Long = 180_000,
-        previewDurationMillis: Long? = 60_000,
+        sourceDurationMillis: Long = 60_000,
+        previewDurationMillis: Long? = 45_000,
     ): PlaybackCompletionAction? = vipPreviewCompletionAction(
         item = PlaybackItem(song(isVip, previewDurationMillis)).withResolvedSource(
             ResolvedSongSource("https://media.example/preview.mp3", sourceDurationMillis, "mp3"),

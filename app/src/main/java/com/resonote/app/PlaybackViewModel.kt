@@ -79,6 +79,8 @@ internal class PlaybackViewModel @Inject constructor(private val playbackControl
 
     fun setMode(mode: PlaybackMode) = playbackController.setMode(mode)
 
+    fun refreshCurrentOnlineSource(force: Boolean = false) = playbackController.refreshCurrentOnlineSource(force)
+
     fun selectQueueItem(index: Int) = playbackController.selectQueueItem(index)
 
     fun removeQueueItem(index: Int) = playbackController.removeQueueItem(index)

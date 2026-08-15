@@ -188,6 +188,8 @@ interface PlaybackController {
 
     fun setPlaybackSpeed(speed: PlaybackSpeed)
 
+    fun refreshCurrentOnlineSource(force: Boolean = false)
+
     fun clear()
 }
 

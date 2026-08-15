@@ -153,6 +153,7 @@ class PlayerViewModelTest {
         override fun setPlaybackSpeed(speed: PlaybackSpeed) {
             selectedSpeed = speed
         }
+        override fun refreshCurrentOnlineSource(force: Boolean) = Unit
         override fun clear() = Unit
     }
 
