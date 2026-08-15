@@ -341,13 +341,14 @@ internal class DefaultPlaybackController internal constructor(
         ) {
             return
         }
-        val hasLoadedMedia = (player?.mediaItemCount ?: 0) > 0
-        val startPositionMillis = if (hasLoadedMedia) {
-            player?.currentPosition?.coerceAtLeast(0) ?: 0
-        } else {
-            mutableState.value.positionMillis
-        }
-        val playWhenReady = hasLoadedMedia && player?.isPlaying == true
+        val loadedPlayerPositionMillis = player
+            ?.takeIf { it.mediaItemCount > 0 }
+            ?.currentPosition
+        val startPositionMillis = item.sourceRefreshPositionMillis(
+            loadedPlayerPositionMillis = loadedPlayerPositionMillis,
+            restoredPositionMillis = mutableState.value.positionMillis,
+        )
+        val playWhenReady = item.resolvedSource != null && player?.isPlaying == true
         isRefreshingCurrentSource = true
         currentSourceRefreshJob = scope.launch {
             val refreshed = try {
@@ -517,9 +518,8 @@ internal class DefaultPlaybackController internal constructor(
                 durationMillis = resolvedDuration,
                 elapsedRealtimeMillis = elapsedRealtime(),
             )
-            player.setMediaItem(item.toMediaItem(source))
+            player.setMediaItem(item.toMediaItem(source), boundedStartPositionMillis)
             player.prepare()
-            if (boundedStartPositionMillis > 0) player.seekTo(boundedStartPositionMillis)
             if (playWhenReady) player.play() else player.pause()
             syncPlayerState(player)
         }

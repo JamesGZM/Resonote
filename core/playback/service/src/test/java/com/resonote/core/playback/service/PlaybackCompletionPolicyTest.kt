@@ -111,6 +111,27 @@ class PlaybackCompletionPolicyTest {
     }
 
     @Test
+    fun unresolvedRestoredItemPrefersSnapshotOverStalePlayerPosition() {
+        val restored = PlaybackItem(song(isVip = true, previewDurationMillis = 60_000))
+        val playingPreview = restored.withResolvedSource(
+            ResolvedSongSource("https://media.example/preview.mp3", 180_000, "mp3", isPreview = true),
+        )
+
+        assertThat(
+            restored.sourceRefreshPositionMillis(
+                loadedPlayerPositionMillis = 0,
+                restoredPositionMillis = 124_234,
+            ),
+        ).isEqualTo(124_234)
+        assertThat(
+            playingPreview.sourceRefreshPositionMillis(
+                loadedPlayerPositionMillis = 37_000,
+                restoredPositionMillis = 124_234,
+            ),
+        ).isEqualTo(37_000)
+    }
+
+    @Test
     fun nonVipSourceIsNotTreatedAsPreview() {
         assertThat(action(mode = PlaybackMode.ListLoop, queueSize = 3, positionMillis = 59_700, isVip = false)).isNull()
     }
