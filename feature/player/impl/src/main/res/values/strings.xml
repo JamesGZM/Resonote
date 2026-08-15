@@ -29,12 +29,9 @@
     <string name="feature_player_impl_mode_shuffle">Shuffle</string>
     <string name="feature_player_impl_mode_single_loop">Loop one</string>
     <string name="feature_player_impl_mode_sequential">Play once</string>
-    <string name="feature_player_impl_queue_title">Up next</string>
-    <string name="feature_player_impl_queue_count">%1$d songs</string>
+    <string name="feature_player_impl_queue_title">Playback queue</string>
+    <string name="feature_player_impl_queue_subtitle">%1$s · %2$d songs</string>
+    <string name="feature_player_impl_queue_mode_action">Playback mode: %1$s</string>
     <string name="feature_player_impl_clear">Clear</string>
-    <string name="feature_player_impl_now_playing_artist">Playing · %1$s</string>
-    <string name="feature_player_impl_reorder">Hold and drag to reorder</string>
-    <string name="feature_player_impl_move_up">Move up</string>
-    <string name="feature_player_impl_move_down">Move down</string>
     <string name="feature_player_impl_remove">Remove %1$s</string>
 </resources>

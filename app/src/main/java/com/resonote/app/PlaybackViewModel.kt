@@ -83,7 +83,5 @@ internal class PlaybackViewModel @Inject constructor(private val playbackControl
 
     fun removeQueueItem(index: Int) = playbackController.removeQueueItem(index)
 
-    fun moveQueueItem(fromIndex: Int, toIndex: Int) = playbackController.moveQueueItem(fromIndex, toIndex)
-
     fun clearQueue() = playbackController.clear()
 }

@@ -29,12 +29,9 @@
     <string name="feature_player_impl_mode_shuffle">随机播放</string>
     <string name="feature_player_impl_mode_single_loop">单曲循环</string>
     <string name="feature_player_impl_mode_sequential">顺序播放</string>
-    <string name="feature_player_impl_queue_title">接下来播放</string>
-    <string name="feature_player_impl_queue_count">%1$d 首歌曲</string>
+    <string name="feature_player_impl_queue_title">播放队列</string>
+    <string name="feature_player_impl_queue_subtitle">%1$s · %2$d首</string>
+    <string name="feature_player_impl_queue_mode_action">播放模式：%1$s</string>
     <string name="feature_player_impl_clear">清空</string>
-    <string name="feature_player_impl_now_playing_artist">正在播放 · %1$s</string>
-    <string name="feature_player_impl_reorder">长按并拖动排序</string>
-    <string name="feature_player_impl_move_up">上移</string>
-    <string name="feature_player_impl_move_down">下移</string>
     <string name="feature_player_impl_remove">移除 %1$s</string>
 </resources>

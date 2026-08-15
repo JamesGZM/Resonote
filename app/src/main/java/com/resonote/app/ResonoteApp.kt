@@ -412,7 +412,6 @@ internal fun ResonoteApp(
                 onDismiss = { queueOpen = false },
                 onSelect = playbackViewModel::selectQueueItem,
                 onRemove = playbackViewModel::removeQueueItem,
-                onMove = playbackViewModel::moveQueueItem,
                 onClear = playbackViewModel::clearQueue,
                 onModeChange = playbackViewModel::setMode,
                 snackbarHost = {

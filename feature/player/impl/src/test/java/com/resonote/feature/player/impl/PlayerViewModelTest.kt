@@ -75,21 +75,19 @@ class PlayerViewModelTest {
     }
 
     @Test
-    fun lyricSeekAndQueueCommandsDelegateToSharedController() {
+    fun lyricSeekAndVisibleQueueCommandsDelegateToSharedController() {
         val controller = FakePlaybackController(song("first"))
         val viewModel = PlayerViewModel(controller, FakeLyricsRepository(CollectionLoadResult.Available(emptyList())))
 
         viewModel.seekTo(42_000)
         viewModel.selectQueueItem(2)
         viewModel.removeQueueItem(1)
-        viewModel.moveQueueItem(2, 0)
         viewModel.setMode(PlaybackMode.Shuffle)
         viewModel.setPlaybackSpeed(PlaybackSpeed.OneAndHalf)
 
         assertThat(controller.seekPosition).isEqualTo(42_000)
         assertThat(controller.selectedIndex).isEqualTo(2)
         assertThat(controller.removedIndex).isEqualTo(1)
-        assertThat(controller.moved).isEqualTo(2 to 0)
         assertThat(controller.selectedMode).isEqualTo(PlaybackMode.Shuffle)
         assertThat(controller.selectedSpeed).isEqualTo(PlaybackSpeed.OneAndHalf)
     }
@@ -124,7 +122,6 @@ class PlayerViewModelTest {
         var seekPosition = -1L
         var selectedIndex = -1
         var removedIndex = -1
-        var moved: Pair<Int, Int>? = null
         var selectedMode: PlaybackMode? = null
         var selectedSpeed: PlaybackSpeed? = null
 
@@ -142,9 +139,7 @@ class PlayerViewModelTest {
         override fun removeQueueItem(index: Int) {
             removedIndex = index
         }
-        override fun moveQueueItem(fromIndex: Int, toIndex: Int) {
-            moved = fromIndex to toIndex
-        }
+        override fun moveQueueItem(fromIndex: Int, toIndex: Int) = Unit
         override fun togglePlayPause() = Unit
         override fun pause() = Unit
         override fun next() = Unit

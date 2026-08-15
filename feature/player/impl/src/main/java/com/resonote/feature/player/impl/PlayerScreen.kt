@@ -113,7 +113,6 @@ fun PlayerRoute(
         onRetryLyrics = viewModel::retryLyrics,
         onSelectQueueItem = viewModel::selectQueueItem,
         onRemoveQueueItem = viewModel::removeQueueItem,
-        onMoveQueueItem = viewModel::moveQueueItem,
         onClearQueue = viewModel::clearQueue,
         onSongMoreClick = (state.playback.currentItem?.origin as? PlaybackOrigin.Online)?.song?.let { song ->
             { onSongMoreClick(song) }
@@ -135,7 +134,6 @@ fun PlayerScreen(
     onRetryLyrics: () -> Unit,
     onSelectQueueItem: (Int) -> Unit,
     onRemoveQueueItem: (Int) -> Unit,
-    onMoveQueueItem: (Int, Int) -> Unit,
     onClearQueue: () -> Unit,
     modifier: Modifier = Modifier,
     initialPage: Int = 0,
@@ -212,7 +210,6 @@ fun PlayerScreen(
             onDismiss = { queueOpen = false },
             onSelect = onSelectQueueItem,
             onRemove = onRemoveQueueItem,
-            onMove = onMoveQueueItem,
             onClear = onClearQueue,
             onModeChange = onModeChange,
         )

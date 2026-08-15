@@ -190,8 +190,10 @@ fun ResonoteMusicItem(
     isPlaying: Boolean = false,
     isSelected: Boolean = false,
     enabled: Boolean = true,
+    trailingAction: (@Composable () -> Unit)? = null,
 ) {
     val effectiveArtworkState = if (!artworkUrl.isNullOrBlank()) ResonoteArtworkState.LOADED else artworkState
+    val hasTrailingAction = trailingAction != null || onMoreClick != null
     val colors = MaterialTheme.colorScheme
     val containerColor = when {
         isPlaying -> lerp(colors.surface, colors.primary, 0.08f)
@@ -218,7 +220,7 @@ fun ResonoteMusicItem(
             .padding(
                 start = 8.dp,
                 top = 8.dp,
-                end = if (onMoreClick == null) 8.dp else 0.dp,
+                end = if (hasTrailingAction) 0.dp else 8.dp,
                 bottom = 8.dp,
             ),
         verticalAlignment = Alignment.CenterVertically,
@@ -278,7 +280,7 @@ fun ResonoteMusicItem(
         }
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(if (onMoreClick == null) 0.dp else (-8).dp),
+            horizontalArrangement = Arrangement.spacedBy(if (hasTrailingAction) (-8).dp else 0.dp),
         ) {
             Box(
                 modifier = Modifier.width(statusSlotWidth),
@@ -299,7 +301,9 @@ fun ResonoteMusicItem(
                     )
                 }
             }
-            if (onMoreClick != null) {
+            if (trailingAction != null) {
+                trailingAction()
+            } else if (onMoreClick != null) {
                 ResonoteIconButton(
                     label = stringResource(R.string.core_designsystem_more_actions, title),
                     onClick = onMoreClick,
