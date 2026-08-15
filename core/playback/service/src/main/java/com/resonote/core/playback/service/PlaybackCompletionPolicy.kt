@@ -27,8 +27,9 @@ internal fun PlaybackItem.vipPreviewDurationMillisOrNull(): Long? {
     }
 }
 
-internal fun PlaybackItem.shouldRefreshOnlineSource(force: Boolean): Boolean =
-    origin is PlaybackOrigin.Online && metadata.isVip && (force || vipPreviewDurationMillisOrNull() != null)
+internal fun PlaybackItem.shouldRefreshOnlineSource(force: Boolean): Boolean = origin is PlaybackOrigin.Online &&
+    metadata.isVip &&
+    (force || resolvedSource == null || vipPreviewDurationMillisOrNull() != null)
 
 internal fun vipPreviewCompletionAction(
     item: PlaybackItem,

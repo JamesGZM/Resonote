@@ -135,10 +135,14 @@ internal fun ResonoteApp(
 
     LaunchedEffect(authState) {
         backStack.synchronizeAuthenticationGate(authState)
+        if (authState !is AuthState.Authenticated) {
+            playlistPickerSong = null
+        }
+    }
+
+    LaunchedEffect(authState, playbackState.currentItem?.queueKey) {
         if (authState is AuthState.Authenticated) {
             playbackViewModel.refreshCurrentOnlineSource()
-        } else {
-            playlistPickerSong = null
         }
     }
 

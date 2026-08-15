@@ -333,17 +333,21 @@ internal class DefaultPlaybackController internal constructor(
 
     override fun refreshCurrentOnlineSource(force: Boolean) {
         val item = queue.currentItem ?: return
-        val player = controller ?: return
+        val player = controller
         if (
             !item.shouldRefreshOnlineSource(force) ||
-            player.mediaItemCount == 0 ||
             isResolving ||
             currentSourceRefreshJob?.isActive == true
         ) {
             return
         }
-        val startPositionMillis = player.currentPosition.coerceAtLeast(0)
-        val playWhenReady = player.isPlaying
+        val hasLoadedMedia = (player?.mediaItemCount ?: 0) > 0
+        val startPositionMillis = if (hasLoadedMedia) {
+            player?.currentPosition?.coerceAtLeast(0) ?: 0
+        } else {
+            mutableState.value.positionMillis
+        }
+        val playWhenReady = hasLoadedMedia && player?.isPlaying == true
         isRefreshingCurrentSource = true
         currentSourceRefreshJob = scope.launch {
             val refreshed = try {
@@ -417,7 +421,7 @@ internal class DefaultPlaybackController internal constructor(
         automaticSkipJob = null
         val preservesCurrentPlayback =
             failureBehavior != FailureBehavior.SkipQueueItem &&
-                (controller?.mediaItemCount ?: 0) > 0
+                ((controller?.mediaItemCount ?: 0) > 0 || failureBehavior == FailureBehavior.RefreshCurrentSource)
         val generation = ++loadGeneration
         if (!preservesCurrentPlayback) {
             sampleHistory(controller?.isPlaying == true, endedNaturally = false)

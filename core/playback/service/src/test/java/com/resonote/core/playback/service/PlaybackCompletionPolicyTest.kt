@@ -83,6 +83,7 @@ class PlaybackCompletionPolicyTest {
 
     @Test
     fun onlineVipPreviewRefreshesAfterEntitlementChange() {
+        val restored = PlaybackItem(song(isVip = true, previewDurationMillis = 60_000))
         val preview = PlaybackItem(song(isVip = true, previewDurationMillis = 60_000)).withResolvedSource(
             ResolvedSongSource("https://media.example/preview.mp3", 180_000, "mp3", isPreview = true),
         )
@@ -90,6 +91,7 @@ class PlaybackCompletionPolicyTest {
             ResolvedSongSource("https://media.example/full.mp3", 180_000, "mp3"),
         )
 
+        assertThat(restored.shouldRefreshOnlineSource(force = false)).isTrue()
         assertThat(preview.shouldRefreshOnlineSource(force = false)).isTrue()
         assertThat(full.shouldRefreshOnlineSource(force = false)).isFalse()
         assertThat(full.shouldRefreshOnlineSource(force = true)).isTrue()
