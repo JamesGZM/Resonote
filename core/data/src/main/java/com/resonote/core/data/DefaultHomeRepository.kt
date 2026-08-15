@@ -1,5 +1,6 @@
 package com.resonote.core.data
 
+import com.resonote.core.datastore.HomeSnapshotStorage
 import com.resonote.core.model.HomeContent
 import com.resonote.core.model.HomeIssue
 import com.resonote.core.model.HomeRefreshResult
@@ -13,13 +14,16 @@ import com.resonote.core.network.CatalogNetworkDataSource
 import com.resonote.core.network.HomeNetworkDataSource
 import com.resonote.core.network.model.NetworkPlaylistSummary
 import com.resonote.core.network.model.NetworkRecommendationMode
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -40,13 +44,37 @@ internal class DefaultHomeRepository @Inject constructor(
     private val catalogNetwork: CatalogNetworkDataSource,
     private val sampler: HomeRecommendationSampler,
     private val riskChallenges: RiskChallengeRegistry,
+    private val snapshotStorage: HomeSnapshotStorage,
 ) : HomeRepository {
     private val generation = AtomicLong()
     private val stateMutex = Mutex()
+    private val cacheMutex = Mutex()
+    private val snapshotCodec = HomeSnapshotCodec()
     private val mutableContent = MutableStateFlow<HomeContent?>(null)
+    private var cacheLoaded = false
     override val content: StateFlow<HomeContent?> = mutableContent.asStateFlow()
 
     override suspend fun refresh(): HomeRefreshResult = coroutineScope {
+        val cacheLoad = async { ensureCachedContent() }
+        val result = refreshFromNetwork { cacheLoad.await() }
+        if (result is HomeRefreshResult.Updated) {
+            val encoded = withContext(Dispatchers.Default) { snapshotCodec.encode(result.content) }
+            runCatching { snapshotStorage.write(encoded) }
+        }
+        result
+    }
+
+    private suspend fun ensureCachedContent() {
+        cacheMutex.withLock {
+            if (cacheLoaded) return
+            val stored = runCatching { snapshotStorage.snapshotJson.first() }.getOrNull()
+            val cached = stored?.let { withContext(Dispatchers.Default) { snapshotCodec.decode(it) } }
+            if (cached != null) mutableContent.value = cached
+            cacheLoaded = true
+        }
+    }
+
+    private suspend fun refreshFromNetwork(awaitCache: suspend () -> Unit): HomeRefreshResult = coroutineScope {
         val requestGeneration = generation.incrementAndGet()
         val daily =
             async {
@@ -73,6 +101,7 @@ internal class DefaultHomeRepository @Inject constructor(
         val newSongResult = newSongs.await()
         val issues = listOfNotNull(dailyResult.issue, playlistResult.issue, newSongResult.issue)
 
+        awaitCache()
         stateMutex.withLock {
             if (requestGeneration != generation.get()) {
                 return@withLock HomeRefreshResult.Superseded

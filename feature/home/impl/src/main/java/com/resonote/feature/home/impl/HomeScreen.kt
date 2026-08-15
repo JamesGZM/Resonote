@@ -1,5 +1,10 @@
 package com.resonote.feature.home.impl
 
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -32,11 +37,17 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
@@ -95,33 +106,7 @@ fun HomeScreen(
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             containerColor = MaterialTheme.colorScheme.background,
-            topBar = {
-                ResonoteTopAppBar(
-                    title = {
-                        Image(
-                            painter = painterResource(R.drawable.feature_home_impl_resonote_wordmark),
-                            contentDescription = stringResource(R.string.feature_home_impl_brand),
-                            modifier = Modifier
-                                .width(124.dp)
-                                .height(40.dp),
-                            contentScale = ContentScale.Fit,
-                            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
-                        )
-                    },
-                    actions = {
-                        ResonoteIconButton(
-                            label = stringResource(R.string.feature_home_impl_search),
-                            onClick = onSearchClick,
-                            icon = { Icon(Icons.Rounded.Search, contentDescription = null) },
-                        )
-                        ResonoteIconButton(
-                            label = stringResource(R.string.feature_home_impl_recognize),
-                            onClick = onRecognitionClick,
-                            icon = { Icon(Icons.Rounded.Mic, contentDescription = null) },
-                        )
-                    },
-                )
-            },
+            topBar = { HomeTopBar(onSearchClick, onRecognitionClick) },
         ) { scaffoldPadding ->
             LazyColumn(
                 modifier = Modifier
@@ -219,6 +204,129 @@ fun HomeScreen(
 }
 
 @Composable
+internal fun HomeLoading(
+    bottomContentPadding: Dp,
+    onSearchClick: () -> Unit,
+    onRecognitionClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val transition = rememberInfiniteTransition(label = "home-skeleton")
+    val offset = transition.animateFloat(
+        initialValue = -300f,
+        targetValue = 1_200f,
+        animationSpec = infiniteRepeatable(animation = tween(1_200), repeatMode = RepeatMode.Restart),
+        label = "home-skeleton-offset",
+    )
+    val base = MaterialTheme.colorScheme.surfaceVariant
+    val highlight = MaterialTheme.colorScheme.surface
+    val shimmer = remember(offset, base, highlight) { HomeShimmer(offset, base, highlight) }
+
+    Scaffold(
+        modifier = modifier.fillMaxSize().testTag("home-loading-skeleton"),
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = { HomeTopBar(onSearchClick, onRecognitionClick) },
+    ) { scaffoldPadding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(top = scaffoldPadding.calculateTopPadding()),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = bottomContentPadding),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            item {
+                Row(horizontalArrangement = Arrangement.spacedBy(ResonoteTokens.spacing.space2)) {
+                    repeat(3) {
+                        Spacer(
+                            Modifier.weight(1f).aspectRatio(1f)
+                                .homeShimmer(shimmer, MaterialTheme.shapes.large),
+                        )
+                    }
+                }
+            }
+            item { SkeletonSection(shimmer, rows = 3) }
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    SkeletonLine(shimmer, width = 176.dp, height = 20.dp)
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        repeat(2) {
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Spacer(
+                                    Modifier.fillMaxWidth().aspectRatio(1f)
+                                        .homeShimmer(shimmer, MaterialTheme.shapes.large),
+                                )
+                                SkeletonLine(shimmer, width = 116.dp, height = 14.dp)
+                                SkeletonLine(shimmer, width = 72.dp, height = 12.dp)
+                            }
+                        }
+                    }
+                }
+            }
+            item { SkeletonSection(shimmer, rows = 3) }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun HomeTopBar(onSearchClick: () -> Unit, onRecognitionClick: () -> Unit) {
+    ResonoteTopAppBar(
+        title = {
+            Image(
+                painter = painterResource(R.drawable.feature_home_impl_resonote_wordmark),
+                contentDescription = stringResource(R.string.feature_home_impl_brand),
+                modifier = Modifier.width(124.dp).height(40.dp),
+                contentScale = ContentScale.Fit,
+                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
+            )
+        },
+        actions = {
+            ResonoteIconButton(
+                label = stringResource(R.string.feature_home_impl_search),
+                onClick = onSearchClick,
+                icon = { Icon(Icons.Rounded.Search, contentDescription = null) },
+            )
+            ResonoteIconButton(
+                label = stringResource(R.string.feature_home_impl_recognize),
+                onClick = onRecognitionClick,
+                icon = { Icon(Icons.Rounded.Mic, contentDescription = null) },
+            )
+        },
+    )
+}
+
+@Composable
+private fun SkeletonSection(shimmer: HomeShimmer, rows: Int) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        SkeletonLine(shimmer, width = 156.dp, height = 20.dp)
+        repeat(rows) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Spacer(Modifier.size(56.dp).homeShimmer(shimmer, MaterialTheme.shapes.medium))
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SkeletonLine(shimmer, width = 180.dp, height = 15.dp)
+                    SkeletonLine(shimmer, width = 112.dp, height = 12.dp)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SkeletonLine(shimmer: HomeShimmer, width: Dp, height: Dp) {
+    Spacer(Modifier.width(width).height(height).homeShimmer(shimmer, MaterialTheme.shapes.small))
+}
+
+private data class HomeShimmer(val offset: State<Float>, val base: Color, val highlight: Color)
+
+private fun Modifier.homeShimmer(shimmer: HomeShimmer, shape: Shape): Modifier = clip(shape).drawBehind {
+    val offset = shimmer.offset.value
+    drawRect(
+        brush = Brush.linearGradient(
+            colors = listOf(shimmer.base, shimmer.highlight, shimmer.base),
+            start = Offset(offset - 300f, 0f),
+            end = Offset(offset, 300f),
+        ),
+    )
+}
+
+@Composable
 private fun RecommendationArea(
     onPlayRadio: () -> Unit,
     onOpenRankings: () -> Unit,
@@ -231,7 +339,7 @@ private fun RecommendationArea(
         RecommendationShortcut(
             title = stringResource(R.string.feature_home_impl_radio),
             supporting = stringResource(R.string.feature_home_impl_radio_supporting),
-            iconRes = R.drawable.home_radio_waveform,
+            iconRes = R.drawable.feature_home_impl_home_radio_waveform,
             iconWidth = 54.dp,
             iconHeight = 48.dp,
             containerColor = MaterialTheme.colorScheme.primary,
@@ -243,7 +351,7 @@ private fun RecommendationArea(
         RecommendationShortcut(
             title = stringResource(R.string.feature_home_impl_rankings),
             supporting = stringResource(R.string.feature_home_impl_popular_rankings),
-            iconRes = R.drawable.home_ranking_bars,
+            iconRes = R.drawable.feature_home_impl_home_ranking_bars,
             iconWidth = 64.dp,
             iconHeight = 43.dp,
             containerColor = MaterialTheme.colorScheme.secondary,
@@ -256,7 +364,7 @@ private fun RecommendationArea(
         RecommendationShortcut(
             title = stringResource(R.string.feature_home_impl_featured_playlists),
             supporting = stringResource(R.string.feature_home_impl_selected_for_you),
-            iconRes = R.drawable.home_playlist_disc,
+            iconRes = R.drawable.feature_home_impl_home_playlist_disc,
             iconWidth = 47.dp,
             iconHeight = 50.dp,
             containerColor = MaterialTheme.colorScheme.tertiary,

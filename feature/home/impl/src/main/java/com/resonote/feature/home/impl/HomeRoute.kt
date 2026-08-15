@@ -3,7 +3,6 @@ package com.resonote.feature.home.impl
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -34,7 +33,12 @@ fun HomeRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val coroutineScope = rememberCoroutineScope()
     when (val state = uiState) {
-        HomeUiState.Loading -> HomeLoading(modifier)
+        HomeUiState.Loading -> HomeLoading(
+            bottomContentPadding = bottomContentPadding,
+            onSearchClick = onSearchClick,
+            onRecognitionClick = onRecognitionClick,
+            modifier = modifier,
+        )
         is HomeUiState.Error -> HomeLoadError(onRetry = viewModel::refresh, modifier = modifier)
         is HomeUiState.Content ->
             HomeScreen(
@@ -62,13 +66,6 @@ fun HomeRoute(
                 onPlaylistClick = onPlaylistClick,
                 modifier = modifier,
             )
-    }
-}
-
-@Composable
-private fun HomeLoading(modifier: Modifier) {
-    Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        CircularProgressIndicator()
     }
 }
 

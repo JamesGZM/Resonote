@@ -6,6 +6,7 @@ import androidx.compose.ui.test.ForcedSize
 import androidx.compose.ui.test.Locales
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -36,6 +37,32 @@ import org.robolectric.annotation.GraphicsMode
 class HomeScreenshotTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Test
+    fun home_compact_loadingSkeletonKeepsTopBar() {
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                override = DeviceConfigurationOverride.Locales(LocaleList(Locale("zh-CN"))),
+            ) {
+                DeviceConfigurationOverride(
+                    override = DeviceConfigurationOverride.ForcedSize(DpSize(390.dp, 844.dp)),
+                ) {
+                    ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                        HomeLoading(
+                            bottomContentPadding = 120.dp,
+                            onSearchClick = {},
+                            onRecognitionClick = {},
+                        )
+                    }
+                }
+            }
+        }
+
+        composeRule.onNodeWithTag("home-loading-skeleton").assertExists()
+        composeRule.onNodeWithContentDescription("Resonote").assertExists()
+        capture("loading")
+    }
 
     @Test
     fun home_compact_scrollStates() {

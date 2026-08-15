@@ -1,8 +1,10 @@
 package com.resonote.core.data
 
 import com.google.common.truth.Truth.assertThat
+import com.resonote.core.datastore.HomeSnapshotStorage
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.ContentFailure
+import com.resonote.core.model.HomeContent
 import com.resonote.core.model.HomeRefreshResult
 import com.resonote.core.model.HomeSection
 import com.resonote.core.model.OnlinePlaybackQuality
@@ -27,16 +29,101 @@ import com.resonote.core.network.model.NetworkSongSource
 import com.resonote.core.network.risk.ApiRiskChallenge
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertThrows
 import org.junit.Test
 import java.io.IOException
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class DefaultHomeRepositoryTest {
     private val riskChallenges = RiskChallengeRegistry()
+
+    @Test
+    fun startupNetworkBeginsWhileCachedContentIsStillLoading() = runTest {
+        val cache = BlockingHomeSnapshotStorage()
+        val networkStarted = CompletableDeferred<Unit>()
+        val repository = createHomeRepository(
+            FakeNetwork(daily = {
+                networkStarted.complete(Unit)
+                emptyList()
+            }),
+            storage = cache,
+        )
+
+        val refresh = async { repository.refresh() }
+        runCurrent()
+
+        assertThat(cache.readStarted.isCompleted).isTrue()
+        assertThat(networkStarted.isCompleted).isTrue()
+        cache.releaseRead.complete(Unit)
+        refresh.await()
+    }
+
+    @Test
+    fun cachedContentIsPublishedBeforeStartupRefreshCompletes() = runTest {
+        val started = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        val cached = HomeContent(
+            dailyRecommendations = listOf(domainSong(120_000).copy(hash = "cached")),
+            recommendedPlaylists = listOf(com.resonote.core.model.PlaylistSummary("cached", "Cached", null, 1)),
+            newSongs = emptyList(),
+        )
+        val storage = FakeHomeSnapshotStorage(HomeSnapshotCodec().encode(cached))
+        val network = FakeNetwork(daily = {
+            started.complete(Unit)
+            release.await()
+            listOf(song("fresh"))
+        })
+        val repository = createHomeRepository(network, storage = storage)
+
+        val refresh = async { repository.refresh() }
+        started.await()
+
+        assertThat(repository.content.first { it != null }).isEqualTo(cached)
+        release.complete(Unit)
+        refresh.await()
+    }
+
+    @Test
+    fun successfulEmptySectionsReplaceCachedContentAndPersist() = runTest {
+        val cached = HomeContent(
+            dailyRecommendations = listOf(domainSong(120_000)),
+            recommendedPlaylists = listOf(com.resonote.core.model.PlaylistSummary("cached", "Cached", null, 1)),
+            newSongs = listOf(domainSong(120_000).copy(hash = "new")),
+        )
+        val storage = FakeHomeSnapshotStorage(HomeSnapshotCodec().encode(cached))
+        val repository = createHomeRepository(FakeNetwork(), storage = storage)
+
+        val result = repository.refresh() as HomeRefreshResult.Updated
+
+        assertThat(result.content.dailyRecommendations).isEmpty()
+        assertThat(result.content.recommendedPlaylists).isEmpty()
+        assertThat(result.content.newSongs).isEmpty()
+        assertThat(HomeSnapshotCodec().decode(requireNotNull(storage.snapshotJson.value))).isEqualTo(result.content)
+    }
+
+    @Test
+    fun allFailedRefreshRetainsCachedContent() = runTest {
+        val failure = { throw ApiNetworkException(ApiNetworkException.Kind.Connection, IOException()) }
+        val cached = HomeContent(listOf(domainSong(120_000)), emptyList(), emptyList())
+        val storage = FakeHomeSnapshotStorage(HomeSnapshotCodec().encode(cached))
+        val repository = createHomeRepository(
+            FakeNetwork(daily = failure, playlists = { _, _ -> failure() }, newSongLoader = { _, _ -> failure() }),
+            storage = storage,
+        )
+
+        val result = repository.refresh()
+
+        assertThat(result).isInstanceOf(HomeRefreshResult.Failed::class.java)
+        assertThat(repository.content.value).isEqualTo(cached)
+        assertThat(HomeSnapshotCodec().decode(requireNotNull(storage.snapshotJson.value))).isEqualTo(cached)
+    }
 
     @Test
     fun refreshLoadsSectionsConcurrentlyAndSamplesExactlySixDailySongs() = runTest {
@@ -333,8 +420,38 @@ class DefaultHomeRepositoryTest {
     private fun domainSong(durationMillis: Long) =
         OnlineSong("hash", "Title", "Artist", null, "1", "2", durationMillis, AudioQuality.Standard, false)
 
-    private fun createHomeRepository(network: TestApiNetworkDataSource, sampler: HomeRecommendationSampler) =
-        DefaultHomeRepository(network, network, sampler, riskChallenges)
+    private fun createHomeRepository(
+        network: TestApiNetworkDataSource,
+        sampler: HomeRecommendationSampler = HomeRecommendationSampler { songs, count -> songs.take(count) },
+        storage: HomeSnapshotStorage = FakeHomeSnapshotStorage(),
+    ) = DefaultHomeRepository(network, network, sampler, riskChallenges, storage)
+
+    private class FakeHomeSnapshotStorage(initialJson: String? = null) : HomeSnapshotStorage {
+        private val state = MutableStateFlow(initialJson)
+        override val snapshotJson = state
+
+        override suspend fun write(json: String) {
+            state.value = json
+        }
+
+        override suspend fun clear() {
+            state.value = null
+        }
+    }
+
+    private class BlockingHomeSnapshotStorage : HomeSnapshotStorage {
+        val readStarted = CompletableDeferred<Unit>()
+        val releaseRead = CompletableDeferred<Unit>()
+        override val snapshotJson = flow<String?> {
+            readStarted.complete(Unit)
+            releaseRead.await()
+            emit(null)
+        }
+
+        override suspend fun write(json: String) = Unit
+
+        override suspend fun clear() = Unit
+    }
 
     private class FakeNetwork(
         var daily: suspend () -> List<NetworkSong> = { emptyList() },
