@@ -32,6 +32,7 @@ internal class DefaultSongPlaybackRepository @Inject constructor(
                     it > 0
                 } ?: song.durationMillis,
                 source.extension,
+                source.isPreview,
             ),
         )
     } catch (unavailable: ApiPlaybackUnavailableException) {

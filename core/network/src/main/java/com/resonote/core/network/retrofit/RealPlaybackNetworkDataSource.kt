@@ -94,7 +94,7 @@ internal class RealPlaybackNetworkDataSource @Inject constructor(
                     lastFailure = ApiProtocolException(ApiProtocolException.Reason.MalformedResponse)
                     continue
                 }
-                return decodeSongSource(response)
+                return decodeSongSource(response, isPreview = !session.isAuthenticated)
             }
             if (failureCode == SONG_SOURCE_VIP_REQUIRED_CODE) {
                 sawVipRequired = true
@@ -108,7 +108,7 @@ internal class RealPlaybackNetworkDataSource @Inject constructor(
         throw ApiProtocolException(ApiProtocolException.Reason.MalformedResponse)
     }
 
-    private fun decodeSongSource(response: SongSourceResponse): NetworkSongSource {
+    private fun decodeSongSource(response: SongSourceResponse, isPreview: Boolean): NetworkSongSource {
         val status = response.status?.toLongOrNull() ?: throw missingField()
         val rawUrls = sequenceOf(response.url, response.backupUrl, response.legacyBackupUrl)
             .flatten()
@@ -133,6 +133,7 @@ internal class RealPlaybackNetworkDataSource @Inject constructor(
             uri = playableUrl.toString(),
             durationMillis = normalizeDurationMillis(response.timeLength),
             extension = response.extension?.takeIf(String::isNotBlank),
+            isPreview = isPreview,
         )
     }
 

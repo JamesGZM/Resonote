@@ -317,6 +317,7 @@ class ApiNetworkDataSourceTest {
 
         assertThat(source.uri).isEqualTo("https://cdn.example/song.mp3")
         assertThat(source.durationMillis).isEqualTo(321_000)
+        assertThat(source.isPreview).isFalse()
         val privilegeRequest = gatewayServer.takeRequest()
         assertThat(privilegeRequest.method).isEqualTo("POST")
         assertThat(privilegeRequest.requestUrl?.encodedPath).isEqualTo("/v2/get_res_privilege/lite")
@@ -508,6 +509,7 @@ class ApiNetworkDataSourceTest {
         val source = dataSource(anonymousSession).resolveSongSource("ABCDEF", "12", "34")
 
         assertThat(source.uri).isEqualTo("http://fs.youthandroid2.kugou.com/song.mp3?token=value")
+        assertThat(source.isPreview).isTrue()
         val request = gatewayServer.takeRequest()
         assertThat(request.requestUrl?.queryParameter("IsFreePart")).isEqualTo("1")
         assertThat(request.requestUrl?.queryParameter("ppage_id")).isEqualTo("356753938,823673182,967485191")

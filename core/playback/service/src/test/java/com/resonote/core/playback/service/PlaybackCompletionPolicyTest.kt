@@ -28,12 +28,12 @@ class PlaybackCompletionPolicyTest {
     }
 
     @Test
-    fun vipPreviewDoesNotCompleteBeforeSourceDuration() {
-        assertThat(action(mode = PlaybackMode.ListLoop, queueSize = 3, positionMillis = 50_000)).isNull()
+    fun vipPreviewDoesNotCompleteBeforeDeclaredDuration() {
+        assertThat(action(mode = PlaybackMode.ListLoop, queueSize = 3, positionMillis = 40_000)).isNull()
     }
 
     @Test
-    fun fullLengthVipSourceIsNotTreatedAsPreview() {
+    fun authenticatedFullLengthVipSourceIsNotTreatedAsPreview() {
         assertThat(
             action(
                 mode = PlaybackMode.ListLoop,
@@ -41,8 +41,23 @@ class PlaybackCompletionPolicyTest {
                 positionMillis = 59_700,
                 sourceDurationMillis = 180_000,
                 previewDurationMillis = 60_000,
+                isPreviewSource = false,
             ),
         ).isNull()
+    }
+
+    @Test
+    fun anonymousPreviewUsesDeclaredBoundaryEvenWhenApiReportsFullSongDuration() {
+        assertThat(
+            action(
+                mode = PlaybackMode.ListLoop,
+                queueSize = 3,
+                positionMillis = 59_700,
+                sourceDurationMillis = 180_000,
+                previewDurationMillis = 60_000,
+                isPreviewSource = true,
+            ),
+        ).isEqualTo(PlaybackCompletionAction.Advance)
     }
 
     @Test
@@ -53,7 +68,7 @@ class PlaybackCompletionPolicyTest {
     }
 
     @Test
-    fun resolvedSourceWithUnknownDurationIgnoresDeclaredPreviewMetadata() {
+    fun authenticatedSourceWithUnknownDurationIgnoresDeclaredPreviewMetadata() {
         assertThat(
             action(
                 mode = PlaybackMode.ListLoop,
@@ -61,6 +76,7 @@ class PlaybackCompletionPolicyTest {
                 positionMillis = 59_700,
                 sourceDurationMillis = 0,
                 previewDurationMillis = 60_000,
+                isPreviewSource = false,
             ),
         ).isNull()
     }
@@ -68,7 +84,7 @@ class PlaybackCompletionPolicyTest {
     @Test
     fun onlineVipPreviewRefreshesAfterEntitlementChange() {
         val preview = PlaybackItem(song(isVip = true, previewDurationMillis = 60_000)).withResolvedSource(
-            ResolvedSongSource("https://media.example/preview.mp3", 60_000, "mp3"),
+            ResolvedSongSource("https://media.example/preview.mp3", 180_000, "mp3", isPreview = true),
         )
         val full = PlaybackItem(song(isVip = true, previewDurationMillis = 60_000)).withResolvedSource(
             ResolvedSongSource("https://media.example/full.mp3", 180_000, "mp3"),
@@ -99,9 +115,15 @@ class PlaybackCompletionPolicyTest {
         isVip: Boolean = true,
         sourceDurationMillis: Long = 60_000,
         previewDurationMillis: Long? = 45_000,
+        isPreviewSource: Boolean = true,
     ): PlaybackCompletionAction? = vipPreviewCompletionAction(
         item = PlaybackItem(song(isVip, previewDurationMillis)).withResolvedSource(
-            ResolvedSongSource("https://media.example/preview.mp3", sourceDurationMillis, "mp3"),
+            ResolvedSongSource(
+                "https://media.example/preview.mp3",
+                sourceDurationMillis,
+                "mp3",
+                isPreview = isPreviewSource,
+            ),
         ),
         mode = mode,
         queueSize = queueSize,

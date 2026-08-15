@@ -340,7 +340,7 @@ class DefaultHomeRepositoryTest {
         var requestedQuality: String? = null
         val network = FakeNetwork(source = { _, _, _, quality ->
             requestedQuality = quality
-            NetworkSongSource("https://cdn/song.mp3", 0, "mp3")
+            NetworkSongSource("https://cdn/song.mp3", 0, "mp3", isPreview = true)
         })
         val preferences = FakePlaybackPreferencesRepository(OnlinePlaybackQuality.HighResolution)
         val repository = DefaultSongPlaybackRepository(network, riskChallenges, preferences)
@@ -348,6 +348,7 @@ class DefaultHomeRepositoryTest {
 
         val resolved = repository.resolveSource(song) as ResolveSongSourceResult.Resolved
         assertThat(resolved.source.durationMillis).isEqualTo(123_000)
+        assertThat(resolved.source.isPreview).isTrue()
         assertThat(requestedQuality).isEqualTo("high")
 
         network.source =

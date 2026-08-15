@@ -12,13 +12,6 @@ internal enum class PlaybackCompletionAction {
 
 internal fun PlaybackItem.vipPreviewDurationMillisOrNull(): Long? {
     if (!metadata.isVip) return null
-    resolvedSource?.let { source ->
-        return source.durationMillis.takeIf { durationMillis ->
-            durationMillis > 0 &&
-                metadata.durationMillis - durationMillis > VIP_PREVIEW_DURATION_TOLERANCE_MILLIS
-        }
-    }
-
     val declaredPreviewDurationMillis = (origin as? PlaybackOrigin.Online)
         ?.song
         ?.previewDurationMillis
@@ -26,7 +19,12 @@ internal fun PlaybackItem.vipPreviewDurationMillisOrNull(): Long? {
             durationMillis > 0 &&
                 metadata.durationMillis - durationMillis > VIP_PREVIEW_DURATION_TOLERANCE_MILLIS
         }
-    return declaredPreviewDurationMillis
+    val source = resolvedSource ?: return declaredPreviewDurationMillis
+    if (!source.isPreview) return null
+    return declaredPreviewDurationMillis ?: source.durationMillis.takeIf { durationMillis ->
+        durationMillis > 0 &&
+            metadata.durationMillis - durationMillis > VIP_PREVIEW_DURATION_TOLERANCE_MILLIS
+    }
 }
 
 internal fun PlaybackItem.shouldRefreshOnlineSource(force: Boolean): Boolean =
