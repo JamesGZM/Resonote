@@ -40,7 +40,7 @@
 
 ### 3.1 00B 品牌启动身份
 
-- 自动化合同覆盖两个 Manifest 的 Launcher/Splash Theme、主 App API 26–30 静态回退、API 31+ AVD、Catalog 静态 Mark、Light / Dark 启动色和 `750ms` 参数。
+- 自动化合同覆盖两个 Manifest 的 Launcher/Splash Theme、主 App API 26–30 静态回退、API 31+ AVD 与退出等待计算、Catalog 静态 Mark、Light / Dark 启动色和 `750ms` 参数。
 - 设计评审稿覆盖 `16 / 24 / 32 / 48px`、Circle / Rounded / Squircle / Teardrop、Light / Dark 终态与动画分镜；该稿只证明资产设计，不替代真实 Launcher 或启动截图。
 - 已补 API 32 Emulator、Light、Motion Scale `1×`、真实 Launcher 点击冷启动录屏和终态截图；AVD 完整进入圆形安全区，Splash 与 Compose 首帧均为 `#FFFBFF`，未观察到异色闪屏。
 - 待补真实设备证据：API 26 / 30 / 最新 API 的 cold / warm / hot start，以及 Dark、Motion Scale `0× / 10×` 录屏和首帧闪烁检查。
