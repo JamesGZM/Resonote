@@ -2,7 +2,6 @@ package com.resonote.feature.auth.impl
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -200,7 +199,8 @@ private fun LoginMethodSelector(selected: LoginMethod, onSelected: (LoginMethod)
         LoginMethod.entries.forEach { method ->
             val isSelected = selected == method
             Surface(
-                modifier = Modifier.weight(1f).clickable { onSelected(method) },
+                onClick = { onSelected(method) },
+                modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp),
                 color =
                 if (isSelected) {

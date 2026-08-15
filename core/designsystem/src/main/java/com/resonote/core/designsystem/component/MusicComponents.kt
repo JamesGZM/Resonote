@@ -384,70 +384,73 @@ fun ResonotePlaylistItem(
     enabled: Boolean = true,
 ) {
     val effectiveArtworkState = if (!artworkUrl.isNullOrBlank()) ResonoteArtworkState.LOADED else artworkState
-    Column(
-        modifier = modifier
-            .clickable(enabled = enabled, onClick = onClick),
+    ResonotePlainAction(
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
     ) {
-        Box {
-            ResonoteArtwork(
-                state = effectiveArtworkState,
-                contentDescription = stringResource(R.string.core_designsystem_playlist_artwork, metadata.title),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1f)
-                    .clip(ResonoteTokens.artworkShapes.hero),
-                artwork = {
-                    if (artworkUrl.isNullOrBlank()) {
-                        artwork()
-                    } else {
-                        ResonoteRemoteArtwork(
-                            model = artworkUrl,
-                            contentDescription = null,
-                            modifier = Modifier.fillMaxSize(),
-                            fallback = artwork,
-                        )
-                    }
-                },
-            )
-            if (effectiveArtworkState == ResonoteArtworkState.LOADED && metadata.playCount != null) {
-                Surface(
+        Column {
+            Box {
+                ResonoteArtwork(
+                    state = effectiveArtworkState,
+                    contentDescription = stringResource(R.string.core_designsystem_playlist_artwork, metadata.title),
                     modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(ResonoteTokens.spacing.space2),
-                    color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.58f),
-                    contentColor = ResonoteTokens.systemColors.onScrim,
-                    shape = MaterialTheme.shapes.large,
-                ) {
-                    Row(
+                        .fillMaxWidth()
+                        .aspectRatio(1f)
+                        .clip(ResonoteTokens.artworkShapes.hero),
+                    artwork = {
+                        if (artworkUrl.isNullOrBlank()) {
+                            artwork()
+                        } else {
+                            ResonoteRemoteArtwork(
+                                model = artworkUrl,
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize(),
+                                fallback = artwork,
+                            )
+                        }
+                    },
+                )
+                if (effectiveArtworkState == ResonoteArtworkState.LOADED && metadata.playCount != null) {
+                    Surface(
                         modifier = Modifier
-                            .padding(horizontal = 6.dp, vertical = 3.dp)
-                            .offset(y = (-0.5).dp),
-                        verticalAlignment = Alignment.CenterVertically,
+                            .align(Alignment.BottomStart)
+                            .padding(ResonoteTokens.spacing.space2),
+                        color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.58f),
+                        contentColor = ResonoteTokens.systemColors.onScrim,
+                        shape = MaterialTheme.shapes.large,
                     ) {
-                        Icon(Icons.Rounded.PlayArrow, contentDescription = null, modifier = Modifier.size(14.dp))
-                        Spacer(Modifier.width(1.dp))
-                        Text(metadata.playCount, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                        Row(
+                            modifier = Modifier
+                                .padding(horizontal = 6.dp, vertical = 3.dp)
+                                .offset(y = (-0.5).dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(Icons.Rounded.PlayArrow, contentDescription = null, modifier = Modifier.size(14.dp))
+                            Spacer(Modifier.width(1.dp))
+                            Text(metadata.playCount, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                        }
                     }
                 }
             }
-        }
-        Spacer(Modifier.height(6.dp))
-        if (effectiveArtworkState == ResonoteArtworkState.LOADING) {
-            Box(
-                Modifier
-                    .fillMaxWidth(0.8f)
-                    .height(14.dp)
-                    .clip(MaterialTheme.shapes.extraSmall)
-                    .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.14f)),
-            )
-        } else {
-            Text(
-                text = metadata.title,
-                modifier = Modifier.fillMaxWidth(),
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
+            Spacer(Modifier.height(6.dp))
+            if (effectiveArtworkState == ResonoteArtworkState.LOADING) {
+                Box(
+                    Modifier
+                        .fillMaxWidth(0.8f)
+                        .height(14.dp)
+                        .clip(MaterialTheme.shapes.extraSmall)
+                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.14f)),
+                )
+            } else {
+                Text(
+                    text = metadata.title,
+                    modifier = Modifier.fillMaxWidth(),
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }
