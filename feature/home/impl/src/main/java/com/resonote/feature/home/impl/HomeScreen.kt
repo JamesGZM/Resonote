@@ -1,7 +1,12 @@
 package com.resonote.feature.home.impl
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -22,7 +28,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
@@ -31,18 +36,20 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -52,6 +59,7 @@ import com.resonote.core.designsystem.component.ResonoteIconButton
 import com.resonote.core.designsystem.component.ResonoteMusicItem
 import com.resonote.core.designsystem.component.ResonotePlaylistItem
 import com.resonote.core.designsystem.component.ResonotePlaylistMetadata
+import com.resonote.core.designsystem.component.ResonoteSectionHeader
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
 import com.resonote.core.designsystem.tokens.ResonoteTokens
 
@@ -114,7 +122,7 @@ fun HomeScreen(
                 top = 16.dp,
                 bottom = bottomContentPadding,
             ),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item(key = "recommendations") {
                 RecommendationArea(
@@ -124,10 +132,14 @@ fun HomeScreen(
                 )
             }
             item(key = "daily-header") {
-                HomeSectionHeader(
+                ResonoteSectionHeader(
                     title = stringResource(R.string.feature_home_impl_daily),
-                    actionLabel = stringResource(R.string.feature_home_impl_play_all),
-                    onAction = { onPlayAll(HomeSongCollection.DAILY_RECOMMENDATIONS) },
+                    supportingText = stringResource(R.string.feature_home_impl_daily_subtitle),
+                    trailingContent = {
+                        HomePlayAllButton(
+                            onClick = { onPlayAll(HomeSongCollection.DAILY_RECOMMENDATIONS) },
+                        )
+                    },
                 )
             }
             item(key = "daily-songs") {
@@ -139,8 +151,9 @@ fun HomeScreen(
                 )
             }
             item(key = "playlist-header") {
-                HomeSectionHeader(
+                ResonoteSectionHeader(
                     title = stringResource(R.string.feature_home_impl_playlists),
+                    supportingText = stringResource(R.string.feature_home_impl_playlists_subtitle),
                     modifier = Modifier.testTag("home-playlists-header"),
                 )
             }
@@ -169,10 +182,14 @@ fun HomeScreen(
                 }
             }
             item(key = "new-header") {
-                HomeSectionHeader(
+                ResonoteSectionHeader(
                     title = stringResource(R.string.feature_home_impl_new_releases),
-                    actionLabel = stringResource(R.string.feature_home_impl_play_all),
-                    onAction = { onPlayAll(HomeSongCollection.NEW_SONGS) },
+                    supportingText = stringResource(R.string.feature_home_impl_new_releases_subtitle),
+                    trailingContent = {
+                        HomePlayAllButton(
+                            onClick = { onPlayAll(HomeSongCollection.NEW_SONGS) },
+                        )
+                    },
                     modifier = Modifier.testTag("home-new-releases-header"),
                 )
             }
@@ -353,27 +370,34 @@ private fun RecommendationShortcut(
 }
 
 @Composable
-private fun HomeSectionHeader(
-    title: String,
-    actionLabel: String? = null,
-    onAction: () -> Unit = {},
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(48.dp)
-            .semantics { heading() },
-        verticalAlignment = Alignment.CenterVertically,
+private fun HomePlayAllButton(onClick: () -> Unit) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val contentAlpha by animateFloatAsState(
+        targetValue = if (isPressed) 0.6f else 1f,
+        animationSpec = tween(durationMillis = 100),
+        label = "playAllContentAlpha",
+    )
+
+    Box(
+        modifier = Modifier
+            .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                role = Role.Button,
+                onClick = onClick,
+            ),
+        contentAlignment = Alignment.Center,
     ) {
-        Text(title, modifier = Modifier.weight(1f), style = MaterialTheme.typography.titleLarge)
-        if (actionLabel != null) {
-            Button(onClick = onAction, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)) {
-                Icon(Icons.Rounded.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(8.dp))
-                Text(actionLabel)
-            }
-        }
+        Text(
+            text = stringResource(R.string.feature_home_impl_play_all),
+            modifier = Modifier
+                .graphicsLayer { alpha = contentAlpha }
+                .padding(horizontal = 8.dp),
+            color = MaterialTheme.colorScheme.primary,
+            style = MaterialTheme.typography.labelLarge,
+        )
     }
 }
 

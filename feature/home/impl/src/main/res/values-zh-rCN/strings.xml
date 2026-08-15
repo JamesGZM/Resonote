@@ -11,8 +11,11 @@
     <string name="feature_home_impl_featured_playlists">精选歌单</string>
     <string name="feature_home_impl_selected_for_you">编辑精选推荐</string>
     <string name="feature_home_impl_daily">每日推荐</string>
+    <string name="feature_home_impl_daily_subtitle">每天为你更新的专属好歌</string>
     <string name="feature_home_impl_playlists">推荐歌单</string>
+    <string name="feature_home_impl_playlists_subtitle">按你的口味精选歌单</string>
     <string name="feature_home_impl_new_releases">新歌速递</string>
+    <string name="feature_home_impl_new_releases_subtitle">第一时间听见新鲜声音</string>
     <string name="feature_home_impl_play_all">播放全部</string>
     <string name="feature_home_impl_retry">重试</string>
 </resources>

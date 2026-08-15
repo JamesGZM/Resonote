@@ -11,8 +11,11 @@
     <string name="feature_home_impl_featured_playlists">Playlists</string>
     <string name="feature_home_impl_selected_for_you">Editor’s picks</string>
     <string name="feature_home_impl_daily">Daily recommendations</string>
+    <string name="feature_home_impl_daily_subtitle">Made for you, refreshed daily</string>
     <string name="feature_home_impl_playlists">Recommended playlists</string>
+    <string name="feature_home_impl_playlists_subtitle">Playlists selected for your taste</string>
     <string name="feature_home_impl_new_releases">New releases</string>
+    <string name="feature_home_impl_new_releases_subtitle">Fresh tracks as they arrive</string>
     <string name="feature_home_impl_play_all">Play all</string>
     <string name="feature_home_impl_retry">Retry</string>
 </resources>
