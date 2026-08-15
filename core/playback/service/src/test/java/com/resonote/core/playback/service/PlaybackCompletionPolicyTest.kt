@@ -98,6 +98,19 @@ class PlaybackCompletionPolicyTest {
     }
 
     @Test
+    fun restoredPositionUsesResolvedEntitlementBoundary() {
+        val preview = PlaybackItem(song(isVip = true, previewDurationMillis = 60_000)).withResolvedSource(
+            ResolvedSongSource("https://media.example/preview.mp3", 180_000, "mp3", isPreview = true),
+        )
+        val full = PlaybackItem(song(isVip = true, previewDurationMillis = 60_000)).withResolvedSource(
+            ResolvedSongSource("https://media.example/full.mp3", 180_000, "mp3"),
+        )
+
+        assertThat(preview.coercePlaybackPosition(157_000, 180_000)).isEqualTo(60_000)
+        assertThat(full.coercePlaybackPosition(157_000, 180_000)).isEqualTo(157_000)
+    }
+
+    @Test
     fun nonVipSourceIsNotTreatedAsPreview() {
         assertThat(action(mode = PlaybackMode.ListLoop, queueSize = 3, positionMillis = 59_700, isVip = false)).isNull()
     }

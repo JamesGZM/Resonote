@@ -31,6 +31,13 @@ internal fun PlaybackItem.shouldRefreshOnlineSource(force: Boolean): Boolean = o
     metadata.isVip &&
     (force || resolvedSource == null || vipPreviewDurationMillisOrNull() != null)
 
+internal fun PlaybackItem.coercePlaybackPosition(positionMillis: Long, fallbackDurationMillis: Long): Long =
+    positionMillis.coerceIn(
+        minimumValue = 0,
+        maximumValue = (vipPreviewDurationMillisOrNull() ?: fallbackDurationMillis).takeIf { it > 0 }
+            ?: Long.MAX_VALUE,
+    )
+
 internal fun vipPreviewCompletionAction(
     item: PlaybackItem,
     mode: PlaybackMode,

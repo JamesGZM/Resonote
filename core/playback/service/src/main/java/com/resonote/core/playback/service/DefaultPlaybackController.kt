@@ -501,12 +501,17 @@ internal class DefaultPlaybackController internal constructor(
             controller?.clearMediaItems()
         }
         queue.selectOrInsert(item.withResolvedSource(source))
+        val resolvedDuration = source.durationMillis.takeIf { it > 0 } ?: item.metadata.durationMillis
+        val boundedStartPositionMillis = checkNotNull(queue.currentItem).coercePlaybackPosition(
+            positionMillis = startPositionMillis,
+            fallbackDurationMillis = resolvedDuration,
+        )
         publishQueue(status = PlaybackStatus.Buffering)
-        requestPersistSession(positionMillis = startPositionMillis)
+        mutableState.value = mutableState.value.copy(positionMillis = boundedStartPositionMillis)
+        requestPersistSession(positionMillis = boundedStartPositionMillis)
         runWithController { player ->
             if (generation != loadGeneration) return@runWithController
             isResolving = false
-            val resolvedDuration = source.durationMillis.takeIf { it > 0 } ?: item.metadata.durationMillis
             historyEligibility.start(
                 record = item.toDeviceHistoryRecordOrNull()?.copy(durationMillis = resolvedDuration),
                 durationMillis = resolvedDuration,
@@ -514,7 +519,7 @@ internal class DefaultPlaybackController internal constructor(
             )
             player.setMediaItem(item.toMediaItem(source))
             player.prepare()
-            if (startPositionMillis > 0) player.seekTo(startPositionMillis.coerceAtMost(resolvedDuration))
+            if (boundedStartPositionMillis > 0) player.seekTo(boundedStartPositionMillis)
             if (playWhenReady) player.play() else player.pause()
             syncPlayerState(player)
         }
@@ -889,7 +894,7 @@ internal fun PlaybackSessionSnapshot.toPlaybackState(playbackSpeed: PlaybackSpee
     val snapshotIndex = currentIndex
     val restoredQueue = PlaybackQueue().apply { replace(restoredItems, snapshotIndex) }
     val currentItem = restoredQueue.currentItem ?: return null
-    val duration = currentItem.vipPreviewDurationMillisOrNull() ?: currentItem.metadata.durationMillis
+    val duration = currentItem.metadata.durationMillis
     return PlaybackState(
         queue = restoredQueue.items,
         currentIndex = restoredQueue.currentIndex,
