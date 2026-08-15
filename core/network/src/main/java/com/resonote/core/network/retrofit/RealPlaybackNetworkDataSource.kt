@@ -8,7 +8,6 @@ import com.resonote.core.network.ApiRiskException
 import com.resonote.core.network.ApiServiceException
 import com.resonote.core.network.PlaybackNetworkDataSource
 import com.resonote.core.network.api.MusicApi
-import com.resonote.core.network.api.model.MusicApiResponse
 import com.resonote.core.network.api.model.SongPrivilegeRequest
 import com.resonote.core.network.api.model.SongPrivilegeResource
 import com.resonote.core.network.api.model.SongSourceResponse
@@ -16,7 +15,6 @@ import com.resonote.core.network.model.NetworkSongSource
 import com.resonote.core.network.protocol.ApiProtocolConfig
 import com.resonote.core.network.protocol.ApiRequestSigner
 import com.resonote.core.network.protocol.DeviceRegistrationCoordinator
-import com.resonote.core.network.session.ApiAuthenticationContext
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -43,12 +41,11 @@ internal class RealPlaybackNetworkDataSource @Inject constructor(
     ): NetworkSongSource {
         require(hash.isNotBlank()) { "hash must not be blank" }
         val session = registration.ensureRegisteredSession()
-        val authenticationContext = responses.authenticationContext()
         val normalizedHash = hash.trim().lowercase()
         val normalizedAlbumId = albumId?.toLongOrNull() ?: 0
         val normalizedQuality = requestedQuality.takeIf(QUALITY_LEVELS::contains) ?: STANDARD_QUALITY
         val candidates = if (session.isAuthenticated) {
-            resolveCandidates(normalizedHash, normalizedAlbumId, normalizedQuality, authenticationContext)
+            resolveCandidates(normalizedHash, normalizedAlbumId, normalizedQuality)
         } else {
             listOf(PlaybackCandidate(normalizedHash, STANDARD_QUALITY))
         }
@@ -82,9 +79,6 @@ internal class RealPlaybackNetworkDataSource @Inject constructor(
                 continue
             }
             responses.requireNoRiskChallenge(response)
-            if (response.status?.toDoubleOrNull() == AUTHENTICATION_REQUIRED_STATUS) {
-                responses.requireAuthenticatedSession(response.failureCode(), authenticationContext)
-            }
             val failureCode = responses.serviceFailureCodeOrNull(response)
             if (failureCode == null) {
                 if (response.extension.equals("mp4", ignoreCase = true)) continue
@@ -141,7 +135,6 @@ internal class RealPlaybackNetworkDataSource @Inject constructor(
         hash: String,
         albumId: Long,
         requestedQuality: String,
-        authenticationContext: ApiAuthenticationContext,
     ): List<PlaybackCandidate> {
         val fallbackQualities = fallbackQualities(requestedQuality)
         val response = try {
@@ -162,9 +155,6 @@ internal class RealPlaybackNetworkDataSource @Inject constructor(
             return fallbackQualities.map { PlaybackCandidate(hash, it) }
         }
         responses.requireNoRiskChallenge(response)
-        if (response.status?.toDoubleOrNull() == AUTHENTICATION_REQUIRED_STATUS) {
-            responses.requireAuthenticatedSession(response.failureCode(), authenticationContext)
-        }
         responses.serviceFailureCodeOrNull(response)?.let {
             return fallbackQualities.map { PlaybackCandidate(hash, it) }
         }
@@ -211,9 +201,6 @@ internal class RealPlaybackNetworkDataSource @Inject constructor(
         it.isNotBlank()
     }
 
-    private fun MusicApiResponse.failureCode(): String? = errorCode?.trim()?.takeIf(String::isNotEmpty)
-        ?: status?.trim()?.takeIf(String::isNotEmpty)
-
     private fun okhttp3.HttpUrl.isAllowedCleartextMediaUrl(): Boolean =
         scheme == "http" && (host == KUGOU_DOMAIN || host.endsWith(".$KUGOU_DOMAIN"))
 
@@ -226,7 +213,6 @@ internal class RealPlaybackNetworkDataSource @Inject constructor(
         const val ANONYMOUS_PARENT_PAGE_ID = "356753938,823673182,967485191"
         const val SONG_SOURCE_VIP_REQUIRED_CODE = "35104"
         const val SUCCESS_STATUS = 1.0
-        const val AUTHENTICATION_REQUIRED_STATUS = 2.0
         val QUALITY_LEVELS = listOf("128", "320", "flac", "high", "viper_atmos", "viper_clear", "viper_tape")
     }
 }

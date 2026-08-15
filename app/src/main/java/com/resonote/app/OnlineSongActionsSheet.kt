@@ -52,6 +52,7 @@ internal fun OnlineSongActionsSheet(
     onAddToPlaylist: () -> Unit,
     onShowInfo: () -> Unit,
     onShareUnavailable: () -> Unit,
+    snackbarHost: @Composable () -> Unit = {},
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -104,6 +105,7 @@ internal fun OnlineSongActionsSheet(
                 )
             }
         }
+        snackbarHost()
     }
 }
 

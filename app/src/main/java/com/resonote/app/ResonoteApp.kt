@@ -1,8 +1,14 @@
 package com.resonote.app
 
+import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -14,8 +20,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
+import androidx.compose.ui.zIndex
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
@@ -33,6 +46,7 @@ import com.resonote.core.model.PlaybackUnavailableReason
 import com.resonote.core.navigation.LoginGateNavKey
 import com.resonote.core.navigation.TabsShellNavKey
 import com.resonote.core.playback.PlaybackIssue
+import com.resonote.core.playback.PlaybackState
 import com.resonote.feature.album.api.AlbumNavKey
 import com.resonote.feature.album.impl.AlbumRoute
 import com.resonote.feature.artist.api.ArtistNavKey
@@ -50,7 +64,11 @@ import com.resonote.feature.library.impl.PlaylistPickerSheet
 import com.resonote.feature.local.api.LocalMusicNavKey
 import com.resonote.feature.local.impl.LocalMusicRoute
 import com.resonote.feature.player.api.PlayerNavKey
+import com.resonote.feature.player.impl.MiniPlayerUiState
+import com.resonote.feature.player.impl.PlaybackQueueSheet
 import com.resonote.feature.player.impl.PlayerRoute
+import com.resonote.feature.player.impl.ResonoteMiniPlayer
+import com.resonote.feature.player.impl.badgeLabel
 import com.resonote.feature.playlist.api.PlaylistNavKey
 import com.resonote.feature.playlist.impl.PlaylistRoute
 import com.resonote.feature.ranking.api.RankingNavKey
@@ -83,7 +101,9 @@ internal fun ResonoteApp(
     val myViewModel: MyViewModel = hiltViewModel()
     val myState by myViewModel.uiState.collectAsStateWithLifecycle()
     val setVideoFullscreen = rememberVideoFullscreenController()
-    var tabSnackbarBottomInset by remember { mutableStateOf(0.dp) }
+    var tabBarInset by remember { mutableStateOf(0.dp) }
+    var playbackChromeInset by remember { mutableStateOf(0.dp) }
+    var queueOpen by remember { mutableStateOf(false) }
     var songActionRequest by remember { mutableStateOf<OnlineSongActionRequest?>(null) }
     var playlistPickerSong by remember { mutableStateOf<OnlineSong?>(null) }
     var infoSong by remember { mutableStateOf<OnlineSong?>(null) }
@@ -95,7 +115,12 @@ internal fun ResonoteApp(
     val queueAddedMessage = stringResource(R.string.song_action_added_queue)
     val shareUnavailableMessage = stringResource(R.string.song_action_share_unavailable)
     val playbackIssueMessage = playbackState.issue?.let { stringResource(it.messageRes()) }
-    val snackbarSpacing = ResonoteTokens.spacing.space2
+    val snackbarHostSurface = when {
+        playlistPickerSong != null -> SnackbarHostSurface.PlaylistPicker
+        songActionRequest != null -> SnackbarHostSurface.SongActions
+        queueOpen -> SnackbarHostSurface.PlaybackQueue
+        else -> null
+    }
     SyncSystemBars(
         navigationBarColor = if (hasTabBar) {
             MaterialTheme.colorScheme.surfaceContainer
@@ -141,15 +166,6 @@ internal fun ResonoteApp(
                             playbackState = playbackState,
                             onPlaySong = playbackViewModel::play,
                             onPlaySongs = playbackViewModel::playAll,
-                            onTogglePlay = playbackViewModel::togglePlayPause,
-                            onOpenPlayer = {
-                                if (backStack.lastOrNull() !is PlayerNavKey) backStack.add(PlayerNavKey)
-                            },
-                            onSelectQueueItem = playbackViewModel::selectQueueItem,
-                            onRemoveQueueItem = playbackViewModel::removeQueueItem,
-                            onMoveQueueItem = playbackViewModel::moveQueueItem,
-                            onClearQueue = playbackViewModel::clearQueue,
-                            onModeChange = playbackViewModel::setMode,
                             myViewModel = myViewModel,
                             onLoginRequest = {
                                 if (backStack.lastOrNull() !is LoginGateNavKey) {
@@ -174,7 +190,7 @@ internal fun ResonoteApp(
                             onCloudClick = { backStack.navigateToCloud(authState) },
                             onLocalMusicClick = { backStack.add(LocalMusicNavKey()) },
                             onSettingsClick = { backStack.add(SettingsNavKey) },
-                            onSnackbarBottomInsetChanged = { tabSnackbarBottomInset = it },
+                            onBottomBarInsetChanged = { tabBarInset = it },
                             onPlaylistClick = { backStack.add(PlaylistNavKey(it)) },
                             onUserPlaylistClick = { playlist ->
                                 val accountId = (authState as? AuthState.Authenticated)?.userId
@@ -378,73 +394,108 @@ internal fun ResonoteApp(
                 },
             )
         }
-        ResonoteSnackbarHost(
-            hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(
-                    start = snackbarSpacing,
-                    end = snackbarSpacing,
-                    bottom = snackbarSpacing + if (hasTabBar) tabSnackbarBottomInset else 0.dp,
-                ),
+        GlobalMiniPlayer(
+            playbackState = playbackState,
+            hasTabBar = hasTabBar,
+            tabBarInset = tabBarInset,
+            visible = backStack.lastOrNull().showsMiniPlayer(),
+            onOpenPlayer = {
+                if (backStack.lastOrNull() !is PlayerNavKey) backStack.add(PlayerNavKey)
+            },
+            onTogglePlay = playbackViewModel::togglePlayPause,
+            onOpenQueue = { queueOpen = true },
+            onAnchorInsetChanged = { playbackChromeInset = it },
         )
-    }
+        if (queueOpen) {
+            PlaybackQueueSheet(
+                playback = playbackState,
+                onDismiss = { queueOpen = false },
+                onSelect = playbackViewModel::selectQueueItem,
+                onRemove = playbackViewModel::removeQueueItem,
+                onMove = playbackViewModel::moveQueueItem,
+                onClear = playbackViewModel::clearQueue,
+                onModeChange = playbackViewModel::setMode,
+                snackbarHost = {
+                    if (snackbarHostSurface == SnackbarHostSurface.PlaybackQueue) {
+                        ModalSnackbarHost(snackbarHostState)
+                    }
+                },
+            )
+        }
 
-    songActionRequest?.let { request ->
-        OnlineSongActionsSheet(
-            request = request,
-            onDismiss = { songActionRequest = null },
-            onPlay = {
-                songActionRequest = null
-                playbackViewModel.play(request.song)
-            },
-            onPlayNext = {
-                songActionRequest = null
-                if (playbackViewModel.playNextOnline(request.song)) {
-                    snackbarController.show(queueNextMessage)
-                }
-            },
-            onAppendToQueue = {
-                songActionRequest = null
-                playbackViewModel.appendOnline(request.song)
-                snackbarController.show(queueAddedMessage)
-            },
-            onAddToPlaylist = {
-                songActionRequest = null
-                if (authState is AuthState.Authenticated) {
-                    myViewModel.preparePlaylistAddition()
-                    playlistPickerSong = request.song
-                } else if (backStack.lastOrNull() !is LoginGateNavKey) {
-                    backStack.add(LoginGateNavKey(sessionExpired = false))
-                }
-            },
-            onShowInfo = {
-                songActionRequest = null
-                infoSong = request.song
-            },
-            onShareUnavailable = {
-                songActionRequest = null
-                snackbarController.show(shareUnavailableMessage)
-            },
-        )
-    }
+        songActionRequest?.let { request ->
+            OnlineSongActionsSheet(
+                request = request,
+                onDismiss = { songActionRequest = null },
+                onPlay = {
+                    songActionRequest = null
+                    playbackViewModel.play(request.song)
+                },
+                onPlayNext = {
+                    songActionRequest = null
+                    if (playbackViewModel.playNextOnline(request.song)) {
+                        snackbarController.show(queueNextMessage)
+                    }
+                },
+                onAppendToQueue = {
+                    songActionRequest = null
+                    playbackViewModel.appendOnline(request.song)
+                    snackbarController.show(queueAddedMessage)
+                },
+                onAddToPlaylist = {
+                    songActionRequest = null
+                    if (authState is AuthState.Authenticated) {
+                        myViewModel.preparePlaylistAddition()
+                        playlistPickerSong = request.song
+                    } else if (backStack.lastOrNull() !is LoginGateNavKey) {
+                        backStack.add(LoginGateNavKey(sessionExpired = false))
+                    }
+                },
+                onShowInfo = {
+                    songActionRequest = null
+                    infoSong = request.song
+                },
+                onShareUnavailable = {
+                    songActionRequest = null
+                    snackbarController.show(shareUnavailableMessage)
+                },
+                snackbarHost = {
+                    if (snackbarHostSurface == SnackbarHostSurface.SongActions) {
+                        ModalSnackbarHost(snackbarHostState)
+                    }
+                },
+            )
+        }
 
-    playlistPickerSong?.let { song ->
-        PlaylistPickerSheet(
-            state = myState,
-            song = song,
-            onDismiss = {
-                playlistPickerSong = null
-                myViewModel.dismissPlaylistAdditionFailure()
-            },
-            onRetryPlaylists = myViewModel::retryPlaylists,
-            onPlaylistClick = { myViewModel.addSongToPlaylist(it, song) },
-            onDismissFailure = myViewModel::dismissPlaylistAdditionFailure,
-        )
-    }
+        playlistPickerSong?.let { song ->
+            PlaylistPickerSheet(
+                state = myState,
+                song = song,
+                onDismiss = {
+                    playlistPickerSong = null
+                    myViewModel.dismissPlaylistAdditionFailure()
+                },
+                onRetryPlaylists = myViewModel::retryPlaylists,
+                onPlaylistClick = { myViewModel.addSongToPlaylist(it, song) },
+                onDismissFailure = myViewModel::dismissPlaylistAdditionFailure,
+                snackbarHost = {
+                    if (snackbarHostSurface == SnackbarHostSurface.PlaylistPicker) {
+                        ModalSnackbarHost(snackbarHostState)
+                    }
+                },
+            )
+        }
 
-    infoSong?.let { song ->
-        OnlineSongInfoDialog(song = song, onDismiss = { infoSong = null })
+        infoSong?.let { song ->
+            OnlineSongInfoDialog(song = song, onDismiss = { infoSong = null })
+        }
+
+        if (snackbarHostSurface == null) {
+            GlobalSnackbarHost(
+                hostState = snackbarHostState,
+                bottomInset = playbackChromeInset,
+            )
+        }
     }
 }
 
@@ -455,6 +506,107 @@ internal fun MutableList<NavKey>.leaveLocalMusic(key: LocalMusicNavKey): Boolean
 }
 
 internal fun NavKey?.hasPrimaryNavigation(): Boolean = this is TabsShellNavKey
+
+internal fun NavKey?.showsMiniPlayer(): Boolean = this != null && this !is PlayerNavKey
+
+private enum class SnackbarHostSurface {
+    PlaybackQueue,
+    SongActions,
+    PlaylistPicker,
+}
+
+@Composable
+internal fun ModalSnackbarHost(hostState: SnackbarHostState) {
+    val spacing = ResonoteTokens.spacing.space2
+    Popup(
+        alignment = Alignment.BottomCenter,
+        properties = PopupProperties(
+            focusable = false,
+            dismissOnBackPress = false,
+            dismissOnClickOutside = false,
+            clippingEnabled = false,
+        ),
+    ) {
+        ResonoteSnackbarHost(
+            hostState = hostState,
+            modifier = Modifier.padding(horizontal = spacing, vertical = spacing),
+        )
+    }
+}
+
+@Composable
+internal fun BoxScope.GlobalSnackbarHost(hostState: SnackbarHostState, bottomInset: Dp) {
+    val spacing = ResonoteTokens.spacing.space2
+    ResonoteSnackbarHost(
+        hostState = hostState,
+        modifier = Modifier
+            .align(Alignment.BottomCenter)
+            .zIndex(Float.MAX_VALUE)
+            .padding(
+                start = spacing,
+                end = spacing,
+                bottom = spacing + bottomInset,
+            ),
+    )
+}
+
+@Composable
+internal fun BoxScope.GlobalMiniPlayer(
+    playbackState: PlaybackState,
+    hasTabBar: Boolean,
+    tabBarInset: Dp,
+    visible: Boolean,
+    onOpenPlayer: () -> Unit,
+    onTogglePlay: () -> Unit,
+    onOpenQueue: () -> Unit,
+    onAnchorInsetChanged: (Dp) -> Unit = {},
+    animationSpec: FiniteAnimationSpec<Dp> = ResonoteTokens.motion.spatialDefault(),
+    modifier: Modifier = Modifier,
+) {
+    val density = LocalDensity.current
+    val song = playbackState.currentMetadata
+    var miniPlayerHeight by remember { mutableStateOf(0.dp) }
+    val bottomInset by animateDpAsState(
+        targetValue = if (hasTabBar) tabBarInset else 0.dp,
+        animationSpec = animationSpec,
+        label = "Mini player bottom inset",
+    )
+    val layoutBottomInset = bottomInset.coerceAtLeast(0.dp)
+    LaunchedEffect(song, visible, layoutBottomInset, miniPlayerHeight, hasTabBar, tabBarInset) {
+        onAnchorInsetChanged(
+            if (song != null && visible) {
+                layoutBottomInset + 16.dp + miniPlayerHeight
+            } else if (hasTabBar) {
+                tabBarInset
+            } else {
+                0.dp
+            },
+        )
+    }
+    if (song == null || !visible) return
+    ResonoteMiniPlayer(
+        state = MiniPlayerUiState(
+            song.mediaId,
+            song.title,
+            song.artist.orEmpty(),
+            song.format.badgeLabel(),
+            song.isVip,
+            playbackState.isPlaying,
+            playbackState.progress,
+            song.artworkUri,
+        ),
+        onOpenPlayer = onOpenPlayer,
+        onTogglePlay = onTogglePlay,
+        onOpenQueue = onOpenQueue,
+        modifier = modifier
+            .align(Alignment.BottomCenter)
+            .windowInsetsPadding(WindowInsets.safeDrawing)
+            .padding(horizontal = 16.dp, vertical = 16.dp)
+            .padding(bottom = layoutBottomInset)
+            .testTag("resonote-mini-player")
+            .onSizeChanged { size -> miniPlayerHeight = with(density) { size.height.toDp() } },
+    )
+}
 
 @androidx.annotation.StringRes
 internal fun PlaybackIssue.messageRes(): Int = when (this) {

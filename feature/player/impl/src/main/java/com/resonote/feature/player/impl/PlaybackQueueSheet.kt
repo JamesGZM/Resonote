@@ -57,6 +57,7 @@ fun PlaybackQueueSheet(
     onMove: (Int, Int) -> Unit,
     onClear: () -> Unit,
     onModeChange: (PlaybackMode) -> Unit,
+    snackbarHost: @Composable () -> Unit = {},
 ) {
     CompositionLocalProvider(LocalRippleConfiguration provides null) {
         ModalBottomSheet(onDismissRequest = onDismiss) {
@@ -69,6 +70,7 @@ fun PlaybackQueueSheet(
                     onClear = onClear,
                     onModeChange = onModeChange,
                 )
+                snackbarHost()
             }
         }
     }
