@@ -87,7 +87,7 @@ class TabsShellScreenshotTest {
         }
 
         composeRule.waitUntil(5_000) {
-            composeRule.onAllNodesWithText("Rankings").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithTag("home-shortcut-rankings").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText("My music").assertExists()
         composeRule.onRoot().captureRoboImage(
@@ -134,7 +134,7 @@ class TabsShellScreenshotTest {
             }
         }
         composeRule.waitUntil(5_000) {
-            composeRule.onAllNodesWithText("Rankings").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithTag("home-shortcut-rankings").fetchSemanticsNodes().isNotEmpty()
         }
 
         listOf(
@@ -189,9 +189,9 @@ class TabsShellScreenshotTest {
         }
 
         composeRule.waitUntil(5_000) {
-            composeRule.onAllNodesWithText("Rankings").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithTag("home-shortcut-rankings").fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText("Rankings").performClick()
+        composeRule.onNodeWithTag("home-shortcut-rankings").performClick()
         composeRule.waitUntil(5_000) {
             composeRule.onAllNodesWithText("潮汐热歌榜").fetchSemanticsNodes().isNotEmpty()
         }
@@ -215,9 +215,10 @@ class TabsShellScreenshotTest {
         }
 
         composeRule.waitUntil(5_000) {
-            composeRule.onAllNodesWithText("Featured playlists").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithTag("home-shortcut-featured-playlists")
+                .fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText("Featured playlists").performClick()
+        composeRule.onNodeWithTag("home-shortcut-featured-playlists").performClick()
         composeRule.waitUntil(5_000) {
             composeRule.onAllNodesWithText("深夜航线").fetchSemanticsNodes().isNotEmpty()
         }

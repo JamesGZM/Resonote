@@ -219,7 +219,9 @@ private fun RecommendationArea(
             containerColor = MaterialTheme.colorScheme.secondary,
             contentColor = MaterialTheme.colorScheme.onSecondary,
             onClick = onOpenRankings,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .testTag("home-shortcut-rankings"),
         )
         RecommendationShortcut(
             title = stringResource(R.string.feature_home_impl_featured_playlists),
@@ -230,7 +232,9 @@ private fun RecommendationArea(
             containerColor = MaterialTheme.colorScheme.tertiary,
             contentColor = MaterialTheme.colorScheme.onTertiary,
             onClick = onOpenFeaturedPlaylists,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .testTag("home-shortcut-featured-playlists"),
         )
     }
 }
