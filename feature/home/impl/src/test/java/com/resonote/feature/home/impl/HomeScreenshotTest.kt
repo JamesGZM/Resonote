@@ -2,12 +2,16 @@ package com.resonote.feature.home.impl
 
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
+import androidx.compose.ui.test.Locales
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.text.intl.LocaleList
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -30,29 +34,10 @@ class HomeScreenshotTest {
 
     @Test
     fun home_compact_scrollStates() {
-        composeRule.setContent {
-            DeviceConfigurationOverride(
-                override = DeviceConfigurationOverride.ForcedSize(DpSize(390.dp, 844.dp)),
-            ) {
-                ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
-                    HomeScreen(
-                        state = HomeFixtures.state(),
-                        playingMediaId = HomeFixtures.songs.first().id,
-                        bottomContentPadding = 120.dp,
-                        onSearchClick = {},
-                        onRecognitionClick = {},
-                        onPlayRadio = {},
-                        onOpenRankings = {},
-                        onOpenFeaturedPlaylists = {},
-                        onSongClick = { _, _ -> },
-                        onSongMoreClick = {},
-                        onPlayAll = {},
-                        onPlaylistClick = {},
-                    )
-                }
-            }
-        }
+        setHomeContent("en-US")
 
+        composeRule.onNodeWithText("首页不可见电台曲名").assertDoesNotExist()
+        composeRule.onNodeWithText("首页不可见电台歌手").assertDoesNotExist()
         capture("top")
         composeRule.onNodeWithTag("home-list").performScrollToNode(hasTestTag("home-playlists-header"))
         composeRule.waitForIdle()
@@ -60,6 +45,51 @@ class HomeScreenshotTest {
         composeRule.onNodeWithTag("home-list").performScrollToIndex(8)
         composeRule.waitForIdle()
         capture("bottom")
+    }
+
+    @Test
+    fun home_compact_chineseTop() {
+        setHomeContent("zh-CN")
+
+        composeRule.onNodeWithText("首页不可见电台曲名").assertDoesNotExist()
+        composeRule.onNodeWithText("首页不可见电台歌手").assertDoesNotExist()
+        capture("top_zh")
+    }
+
+    private fun setHomeContent(languageTag: String) {
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                override = DeviceConfigurationOverride.Locales(LocaleList(Locale(languageTag))),
+            ) {
+                DeviceConfigurationOverride(
+                    override = DeviceConfigurationOverride.ForcedSize(DpSize(390.dp, 844.dp)),
+                ) {
+                    ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                        HomeScreen(
+                            state = HomeFixtures.state().copy(
+                                radio = HomeSongUiModel(
+                                    id = "radio-only",
+                                    title = "首页不可见电台曲名",
+                                    artist = "首页不可见电台歌手",
+                                    duration = "3:30",
+                                ),
+                            ),
+                            playingMediaId = HomeFixtures.songs.first().id,
+                            bottomContentPadding = 120.dp,
+                            onSearchClick = {},
+                            onRecognitionClick = {},
+                            onPlayRadio = {},
+                            onOpenRankings = {},
+                            onOpenFeaturedPlaylists = {},
+                            onSongClick = { _, _ -> },
+                            onSongMoreClick = {},
+                            onPlayAll = {},
+                            onPlaylistClick = {},
+                        )
+                    }
+                }
+            }
+        }
     }
 
     private fun capture(name: String) {

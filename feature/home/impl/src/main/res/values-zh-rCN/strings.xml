@@ -3,11 +3,13 @@
     <string name="feature_home_impl_brand">Resonote</string>
     <string name="feature_home_impl_search">搜索</string>
     <string name="feature_home_impl_recognize">听歌识曲</string>
+    <string name="feature_home_impl_radio">推荐电台</string>
+    <string name="feature_home_impl_radio_supporting">私人电台随心听</string>
     <string name="feature_home_impl_play_radio">播放电台</string>
     <string name="feature_home_impl_rankings">排行榜</string>
-    <string name="feature_home_impl_popular_rankings">热门榜单</string>
+    <string name="feature_home_impl_popular_rankings">新歌热歌榜单</string>
     <string name="feature_home_impl_featured_playlists">精选歌单</string>
-    <string name="feature_home_impl_selected_for_you">为你精选</string>
+    <string name="feature_home_impl_selected_for_you">编辑精选推荐</string>
     <string name="feature_home_impl_daily">每日推荐</string>
     <string name="feature_home_impl_playlists">推荐歌单</string>
     <string name="feature_home_impl_new_releases">新歌速递</string>

@@ -82,6 +82,8 @@ Variant：
 - Toggle Icon Button 使用 Selected Container + Filled/Check Indicator 至少两个信号，并暴露 Toggle State。
 - Glyph、圆形 State Layer 与 48dp Touch Target 必须保持同心。禁止只对 Glyph 使用 `offset` 修正按钮间距；间距问题必须通过父布局、Action 数量或正确组件 Variant 解决，且相邻 Touch Target 不得重叠。
 
+Compact Overlay Icon Button 仅用于封面、缩略图等受限视觉容器右下角的低密度单一操作：Touch Target 保持 `48dp × 48dp`，可见 Filled Container 为 `28dp × 28dp`，Glyph 为 `16dp`。可见容器在 Target 内向右下锚定并保留 `8dp` 边距，使额外触控面积向容器内部扩展；不得用于普通工具栏、列表 Action 或相邻按钮组。
+
 ### 06B — Inputs, Selection & Metadata
 
 #### Text Field

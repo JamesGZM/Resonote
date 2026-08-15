@@ -208,6 +208,7 @@ Resonote 使用页面导航模式，不采用 NIA 当前 `topLevelStack + 每个
 Compact 首页实现基准已冻结：
 
 - 内容顺序为推荐区域 → 每日推荐 → 推荐歌单 → 新歌速递。
+- 推荐区域固定为三张同宽、同高、同层级的 `1:1` 彩色入口卡，顺序为推荐电台、排行榜、精选歌单；卡间距为 `8dp`，标题使用加粗 `titleSmall`，辅助文案使用常规字重 `labelSmall`，卡色使用从主题语义色派生的轻微渐变。卡内使用设计稿原始线性图形资产，并保持波形、五柱榜单与同心唱片各自的视觉占比。电台卡只显示固定功能文案，不展示歌曲、歌手或封面等动态媒体信息；电台只通过 Compact Overlay Filled Icon Button 触发按需加载，保留 `48dp` 触控区，同时使用 `28dp` 可见容器和 `16dp` Glyph，可见容器与卡片右、下边缘各保留 `8dp`。另外两张卡整卡导航。
 - 每日推荐固定 6 个 Music Item，并共用一个外层卡片容器；Section Action 为“播放全部”。
 - 推荐歌单固定 6 个 Playlist Item，Compact 固定两列；标题右侧无 Action。
 - 新歌速递固定 6 个 Music Item，并共用一个外层卡片容器；不显示分类筛选，Section Action 为“播放全部”。
@@ -656,7 +657,7 @@ Kotlin 协议层直接请求上游接口；签名、加密、设备注册、Sess
 
 ## 12. 决策归档
 
-P-000…P-085 历史决策已迁移至 [Product Decisions](../docs/product/DECISIONS.md)。
+P-000…P-087 历史决策已迁移至 [Product Decisions](../docs/product/DECISIONS.md)。
 
 ## 13. 产品合同维护规则
 

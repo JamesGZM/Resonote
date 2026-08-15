@@ -2,13 +2,14 @@ package com.resonote.feature.home.impl
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,16 +19,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.BarChart
-import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -35,25 +33,27 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.resonote.core.designsystem.component.ResonoteArtwork
 import com.resonote.core.designsystem.component.ResonoteArtworkState
+import com.resonote.core.designsystem.component.ResonoteCompactFilledIconButton
 import com.resonote.core.designsystem.component.ResonoteIconButton
 import com.resonote.core.designsystem.component.ResonoteMusicItem
 import com.resonote.core.designsystem.component.ResonotePlaylistItem
 import com.resonote.core.designsystem.component.ResonotePlaylistMetadata
-import com.resonote.core.designsystem.component.ResonoteRemoteArtwork
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
+import com.resonote.core.designsystem.tokens.ResonoteTokens
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -118,7 +118,6 @@ fun HomeScreen(
         ) {
             item(key = "recommendations") {
                 RecommendationArea(
-                    radio = state.radio,
                     onPlayRadio = onPlayRadio,
                     onOpenRankings = onOpenRankings,
                     onOpenFeaturedPlaylists = onOpenFeaturedPlaylists,
@@ -191,77 +190,48 @@ fun HomeScreen(
 
 @Composable
 private fun RecommendationArea(
-    radio: HomeSongUiModel?,
     onPlayRadio: () -> Unit,
     onOpenRankings: () -> Unit,
     onOpenFeaturedPlaylists: () -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        if (radio != null) {
-            Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-                shape = MaterialTheme.shapes.extraLarge,
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    ResonoteArtwork(
-                        state = if (radio.artworkUrl.isNullOrBlank()) {
-                            ResonoteArtworkState.MISSING
-                        } else {
-                            ResonoteArtworkState.LOADED
-                        },
-                        contentDescription = radio.title,
-                        modifier = Modifier.size(112.dp),
-                    ) {
-                        ResonoteRemoteArtwork(
-                            model = radio.artworkUrl,
-                            contentDescription = null,
-                        )
-                    }
-                    Spacer(Modifier.width(16.dp))
-                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(
-                            radio.title,
-                            style = MaterialTheme.typography.titleLarge,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        Text(
-                            radio.artist,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            style = MaterialTheme.typography.bodyMedium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        Button(onClick = onPlayRadio) {
-                            Icon(Icons.Rounded.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text(stringResource(R.string.feature_home_impl_play_radio))
-                        }
-                    }
-                }
-            }
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            RecommendationShortcut(
-                title = stringResource(R.string.feature_home_impl_rankings),
-                supporting = stringResource(R.string.feature_home_impl_popular_rankings),
-                icon = Icons.Rounded.BarChart,
-                onClick = onOpenRankings,
-                modifier = Modifier.weight(1f),
-            )
-            RecommendationShortcut(
-                title = stringResource(R.string.feature_home_impl_featured_playlists),
-                supporting = stringResource(R.string.feature_home_impl_selected_for_you),
-                icon = Icons.Rounded.LibraryMusic,
-                onClick = onOpenFeaturedPlaylists,
-                modifier = Modifier.weight(1f),
-            )
-        }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(ResonoteTokens.spacing.space2),
+    ) {
+        RecommendationShortcut(
+            title = stringResource(R.string.feature_home_impl_radio),
+            supporting = stringResource(R.string.feature_home_impl_radio_supporting),
+            iconRes = R.drawable.home_radio_waveform,
+            iconWidth = 54.dp,
+            iconHeight = 48.dp,
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+            actionLabel = stringResource(R.string.feature_home_impl_play_radio),
+            onAction = onPlayRadio,
+            modifier = Modifier.weight(1f),
+        )
+        RecommendationShortcut(
+            title = stringResource(R.string.feature_home_impl_rankings),
+            supporting = stringResource(R.string.feature_home_impl_popular_rankings),
+            iconRes = R.drawable.home_ranking_bars,
+            iconWidth = 64.dp,
+            iconHeight = 43.dp,
+            containerColor = MaterialTheme.colorScheme.secondary,
+            contentColor = MaterialTheme.colorScheme.onSecondary,
+            onClick = onOpenRankings,
+            modifier = Modifier.weight(1f),
+        )
+        RecommendationShortcut(
+            title = stringResource(R.string.feature_home_impl_featured_playlists),
+            supporting = stringResource(R.string.feature_home_impl_selected_for_you),
+            iconRes = R.drawable.home_playlist_disc,
+            iconWidth = 47.dp,
+            iconHeight = 50.dp,
+            containerColor = MaterialTheme.colorScheme.tertiary,
+            contentColor = MaterialTheme.colorScheme.onTertiary,
+            onClick = onOpenFeaturedPlaylists,
+            modifier = Modifier.weight(1f),
+        )
     }
 }
 
@@ -269,45 +239,112 @@ private fun RecommendationArea(
 private fun RecommendationShortcut(
     title: String,
     supporting: String,
-    icon: ImageVector,
-    onClick: () -> Unit,
+    iconRes: Int,
+    iconWidth: Dp,
+    iconHeight: Dp,
+    containerColor: Color,
+    contentColor: Color,
     modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    actionLabel: String? = null,
+    onAction: () -> Unit = {},
 ) {
-    Surface(
-        modifier = modifier.clickable(onClick = onClick),
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        shape = MaterialTheme.shapes.extraLarge,
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
+    val cardContent: @Composable () -> Unit = {
+        Box(
+            modifier = Modifier
+                .fillMaxHeight()
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(
+                            lerp(containerColor, Color.White, 0.08f),
+                            containerColor,
+                            lerp(containerColor, Color.Black, 0.06f),
+                        ),
+                    ),
+                ),
         ) {
-            Surface(
-                color = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.primary,
-                shape = MaterialTheme.shapes.medium,
+            Column(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .padding(
+                        start = ResonoteTokens.spacing.space3,
+                        top = ResonoteTokens.spacing.space3,
+                        end = ResonoteTokens.spacing.space3,
+                        bottom = ResonoteTokens.spacing.space2,
+                    ),
             ) {
-                Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
-                    Icon(icon, contentDescription = null)
+                Column(verticalArrangement = Arrangement.spacedBy(ResonoteTokens.spacing.space1)) {
+                    Text(
+                        title,
+                        color = contentColor,
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                    )
+                    Text(
+                        supporting,
+                        color = contentColor,
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Normal),
+                    )
+                }
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentAlignment = Alignment.BottomCenter,
+                ) {
+                    Image(
+                        painter = painterResource(iconRes),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .align(if (actionLabel == null) Alignment.BottomCenter else Alignment.BottomStart)
+                            .width(iconWidth)
+                            .height(iconHeight),
+                        colorFilter = ColorFilter.tint(contentColor),
+                    )
                 }
             }
-            Spacer(Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    title,
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    supporting,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+            if (actionLabel != null) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .size(ResonoteTokens.touchTargets.minimum),
+                ) {
+                    ResonoteCompactFilledIconButton(
+                        label = actionLabel,
+                        onClick = onAction,
+                        modifier = Modifier.fillMaxSize(),
+                        colors = IconButtonDefaults.filledIconButtonColors(
+                            containerColor = contentColor,
+                            contentColor = containerColor,
+                        ),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.PlayArrow,
+                            contentDescription = null,
+                        )
+                    }
+                }
             }
         }
+    }
+
+    val cardModifier = modifier.aspectRatio(1f)
+    if (onClick == null) {
+        Surface(
+            modifier = cardModifier,
+            color = Color.Transparent,
+            contentColor = contentColor,
+            shape = MaterialTheme.shapes.large,
+            content = cardContent,
+        )
+    } else {
+        Surface(
+            onClick = onClick,
+            modifier = cardModifier,
+            color = Color.Transparent,
+            contentColor = contentColor,
+            shape = MaterialTheme.shapes.large,
+            content = cardContent,
+        )
     }
 }
 
