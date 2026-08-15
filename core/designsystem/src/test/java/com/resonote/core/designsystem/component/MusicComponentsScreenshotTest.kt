@@ -1,9 +1,12 @@
 package com.resonote.core.designsystem.component
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.FontScale
 import androidx.compose.ui.test.ForcedSize
@@ -92,6 +95,31 @@ class MusicComponentsScreenshotTest {
                 roborazziOptions = DefaultRoborazziOptions,
             )
         }
+    }
+
+    @Test
+    fun playlistItem_playCountBadge() {
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                override = DeviceConfigurationOverride.ForcedSize(DpSize(196.dp, 260.dp)),
+            ) {
+                ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                    ResonotePlaylistItem(
+                        metadata = ResonotePlaylistMetadata(
+                            title = "深夜独白：安静的陪伴与城市微光",
+                            playCount = "12.8万",
+                        ),
+                        onClick = {},
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    )
+                }
+            }
+        }
+
+        composeRule.onRoot().captureRoboImage(
+            filePath = "src/test/screenshots/MusicComponents/PlaylistItem_playCountBadge.png",
+            roborazziOptions = DefaultRoborazziOptions,
+        )
     }
 }
 
