@@ -29,6 +29,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,6 +52,7 @@ import com.resonote.core.designsystem.component.ResonoteMusicItem
 import com.resonote.core.designsystem.component.ResonotePlainAction
 import com.resonote.core.designsystem.component.ResonotePlaylistItem
 import com.resonote.core.designsystem.component.ResonotePlaylistMetadata
+import com.resonote.core.designsystem.component.ResonotePullToRefreshIndicator
 import com.resonote.core.designsystem.component.ResonoteSectionHeader
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
 import com.resonote.core.designsystem.tokens.ResonoteTokens
@@ -58,8 +61,10 @@ import com.resonote.core.designsystem.tokens.ResonoteTokens
 @Composable
 fun HomeScreen(
     state: HomeContentUiState,
+    isRefreshing: Boolean,
     playingMediaId: String?,
     bottomContentPadding: Dp,
+    onRefresh: () -> Unit,
     onSearchClick: () -> Unit,
     onRecognitionClick: () -> Unit,
     onPlayRadio: () -> Unit,
@@ -71,126 +76,143 @@ fun HomeScreen(
     onPlaylistClick: (HomePlaylistUiModel) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            ResonoteTopAppBar(
-                title = {
-                    Image(
-                        painter = painterResource(R.drawable.feature_home_impl_resonote_wordmark),
-                        contentDescription = stringResource(R.string.feature_home_impl_brand),
-                        modifier = Modifier
-                            .width(124.dp)
-                            .height(40.dp),
-                        contentScale = ContentScale.Fit,
-                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
-                    )
-                },
-                actions = {
-                    ResonoteIconButton(
-                        label = stringResource(R.string.feature_home_impl_search),
-                        onClick = onSearchClick,
-                        icon = { Icon(Icons.Rounded.Search, contentDescription = null) },
-                    )
-                    ResonoteIconButton(
-                        label = stringResource(R.string.feature_home_impl_recognize),
-                        onClick = onRecognitionClick,
-                        icon = { Icon(Icons.Rounded.Mic, contentDescription = null) },
-                    )
-                },
+    val pullToRefreshState = rememberPullToRefreshState()
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = onRefresh,
+        modifier = modifier
+            .fillMaxSize()
+            .testTag("home-pull-to-refresh"),
+        state = pullToRefreshState,
+        indicator = {
+            ResonotePullToRefreshIndicator(
+                state = pullToRefreshState,
+                isRefreshing = isRefreshing,
+                modifier = Modifier.align(Alignment.TopCenter),
             )
         },
-    ) { scaffoldPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .testTag("home-list")
-                .padding(top = scaffoldPadding.calculateTopPadding()),
-            contentPadding = PaddingValues(
-                start = 16.dp,
-                end = 16.dp,
-                top = 16.dp,
-                bottom = bottomContentPadding,
-            ),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            item(key = "recommendations") {
-                RecommendationArea(
-                    onPlayRadio = onPlayRadio,
-                    onOpenRankings = onOpenRankings,
-                    onOpenFeaturedPlaylists = onOpenFeaturedPlaylists,
-                )
-            }
-            item(key = "daily-header") {
-                ResonoteSectionHeader(
-                    title = stringResource(R.string.feature_home_impl_daily),
-                    supportingText = stringResource(R.string.feature_home_impl_daily_subtitle),
-                    trailingContent = {
-                        HomePlayAllButton(
-                            onClick = { onPlayAll(HomeSongCollection.DAILY_RECOMMENDATIONS) },
+    ) {
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            containerColor = MaterialTheme.colorScheme.background,
+            topBar = {
+                ResonoteTopAppBar(
+                    title = {
+                        Image(
+                            painter = painterResource(R.drawable.feature_home_impl_resonote_wordmark),
+                            contentDescription = stringResource(R.string.feature_home_impl_brand),
+                            modifier = Modifier
+                                .width(124.dp)
+                                .height(40.dp),
+                            contentScale = ContentScale.Fit,
+                            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
+                        )
+                    },
+                    actions = {
+                        ResonoteIconButton(
+                            label = stringResource(R.string.feature_home_impl_search),
+                            onClick = onSearchClick,
+                            icon = { Icon(Icons.Rounded.Search, contentDescription = null) },
+                        )
+                        ResonoteIconButton(
+                            label = stringResource(R.string.feature_home_impl_recognize),
+                            onClick = onRecognitionClick,
+                            icon = { Icon(Icons.Rounded.Mic, contentDescription = null) },
                         )
                     },
                 )
-            }
-            item(key = "daily-songs") {
-                SongCollection(
-                    songs = state.dailySongs,
-                    playingMediaId = playingMediaId,
-                    onSongClick = { onSongClick(HomeSongCollection.DAILY_RECOMMENDATIONS, it) },
-                    onSongMoreClick = onSongMoreClick,
-                )
-            }
-            item(key = "playlist-header") {
-                ResonoteSectionHeader(
-                    title = stringResource(R.string.feature_home_impl_playlists),
-                    supportingText = stringResource(R.string.feature_home_impl_playlists_subtitle),
-                    modifier = Modifier.testTag("home-playlists-header"),
-                )
-            }
-            itemsIndexed(
-                items = state.recommendedPlaylists.chunked(2),
-                key = { index, pair -> "${pair.joinToString { it.id }}-$index" },
-            ) { _, pair ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    pair.forEach { playlist ->
-                        ResonotePlaylistItem(
-                            metadata = ResonotePlaylistMetadata(playlist.title, playlist.playCount),
-                            onClick = { onPlaylistClick(playlist) },
-                            modifier = Modifier.weight(1f),
-                            artworkState = if (playlist.artworkUrl.isNullOrBlank()) {
-                                ResonoteArtworkState.MISSING
-                            } else {
-                                ResonoteArtworkState.LOADED
-                            },
-                            artworkUrl = playlist.artworkUrl,
-                        )
-                    }
-                    if (pair.size == 1) Spacer(Modifier.weight(1f))
+            },
+        ) { scaffoldPadding ->
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .testTag("home-list")
+                    .padding(top = scaffoldPadding.calculateTopPadding()),
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = 16.dp,
+                    bottom = bottomContentPadding,
+                ),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                item(key = "recommendations") {
+                    RecommendationArea(
+                        onPlayRadio = onPlayRadio,
+                        onOpenRankings = onOpenRankings,
+                        onOpenFeaturedPlaylists = onOpenFeaturedPlaylists,
+                    )
                 }
-            }
-            item(key = "new-header") {
-                ResonoteSectionHeader(
-                    title = stringResource(R.string.feature_home_impl_new_releases),
-                    supportingText = stringResource(R.string.feature_home_impl_new_releases_subtitle),
-                    trailingContent = {
-                        HomePlayAllButton(
-                            onClick = { onPlayAll(HomeSongCollection.NEW_SONGS) },
-                        )
-                    },
-                    modifier = Modifier.testTag("home-new-releases-header"),
-                )
-            }
-            item(key = "new-songs") {
-                SongCollection(
-                    songs = state.newSongs,
-                    playingMediaId = playingMediaId,
-                    onSongClick = { onSongClick(HomeSongCollection.NEW_SONGS, it) },
-                    onSongMoreClick = onSongMoreClick,
-                )
+                item(key = "daily-header") {
+                    ResonoteSectionHeader(
+                        title = stringResource(R.string.feature_home_impl_daily),
+                        supportingText = stringResource(R.string.feature_home_impl_daily_subtitle),
+                        trailingContent = {
+                            HomePlayAllButton(
+                                onClick = { onPlayAll(HomeSongCollection.DAILY_RECOMMENDATIONS) },
+                            )
+                        },
+                    )
+                }
+                item(key = "daily-songs") {
+                    SongCollection(
+                        songs = state.dailySongs,
+                        playingMediaId = playingMediaId,
+                        onSongClick = { onSongClick(HomeSongCollection.DAILY_RECOMMENDATIONS, it) },
+                        onSongMoreClick = onSongMoreClick,
+                    )
+                }
+                item(key = "playlist-header") {
+                    ResonoteSectionHeader(
+                        title = stringResource(R.string.feature_home_impl_playlists),
+                        supportingText = stringResource(R.string.feature_home_impl_playlists_subtitle),
+                        modifier = Modifier.testTag("home-playlists-header"),
+                    )
+                }
+                itemsIndexed(
+                    items = state.recommendedPlaylists.chunked(2),
+                    key = { index, pair -> "${pair.joinToString { it.id }}-$index" },
+                ) { _, pair ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        pair.forEach { playlist ->
+                            ResonotePlaylistItem(
+                                metadata = ResonotePlaylistMetadata(playlist.title, playlist.playCount),
+                                onClick = { onPlaylistClick(playlist) },
+                                modifier = Modifier.weight(1f),
+                                artworkState = if (playlist.artworkUrl.isNullOrBlank()) {
+                                    ResonoteArtworkState.MISSING
+                                } else {
+                                    ResonoteArtworkState.LOADED
+                                },
+                                artworkUrl = playlist.artworkUrl,
+                            )
+                        }
+                        if (pair.size == 1) Spacer(Modifier.weight(1f))
+                    }
+                }
+                item(key = "new-header") {
+                    ResonoteSectionHeader(
+                        title = stringResource(R.string.feature_home_impl_new_releases),
+                        supportingText = stringResource(R.string.feature_home_impl_new_releases_subtitle),
+                        trailingContent = {
+                            HomePlayAllButton(
+                                onClick = { onPlayAll(HomeSongCollection.NEW_SONGS) },
+                            )
+                        },
+                        modifier = Modifier.testTag("home-new-releases-header"),
+                    )
+                }
+                item(key = "new-songs") {
+                    SongCollection(
+                        songs = state.newSongs,
+                        playingMediaId = playingMediaId,
+                        onSongClick = { onSongClick(HomeSongCollection.NEW_SONGS, it) },
+                        onSongMoreClick = onSongMoreClick,
+                    )
+                }
             }
         }
     }

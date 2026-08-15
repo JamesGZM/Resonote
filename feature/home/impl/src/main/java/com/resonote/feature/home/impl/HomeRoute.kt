@@ -39,8 +39,10 @@ fun HomeRoute(
         is HomeUiState.Content ->
             HomeScreen(
                 state = state.content,
+                isRefreshing = state.isRefreshing,
                 playingMediaId = playingMediaId,
                 bottomContentPadding = bottomContentPadding,
+                onRefresh = viewModel::refresh,
                 onSearchClick = onSearchClick,
                 onRecognitionClick = onRecognitionClick,
                 onPlayRadio = {
@@ -71,7 +73,7 @@ private fun HomeLoading(modifier: Modifier) {
 }
 
 @Composable
-private fun HomeLoadError(onRetry: () -> Unit, modifier: Modifier) {
+internal fun HomeLoadError(onRetry: () -> Unit, modifier: Modifier) {
     Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Button(onClick = onRetry) {
             Text(stringResource(R.string.feature_home_impl_retry))

@@ -196,6 +196,7 @@ Slot 与一致的调用约定；交互 Icon 使用 Resonote Icon Button 以保�
 - Circular 默认 40dp；Inline 可使用 24dp；Linear 高 4dp、占满所属内容宽度。
 - Determinate 暴露 `progressBarRangeInfo`；Indeterminate 提供 Loading State Description。
 - Reduced Motion 使用静态 Indicator/Label，不以旋转或扫光作为唯一 Loading 信息。
+- 下拉刷新指示器使用 40dp `shapeFull` 容器、20dp 内容、`surfaceContainerHigh` 与 Level 3；下拉阶段显示随进度翻转的 `primary` 箭头，达到阈值时切换 `primaryContainer/onPrimaryContainer`，刷新阶段切换为带 `primaryContainer` 轨道的 `primary` 进度环。页面已有内容时由手势触发并覆盖在 Top App Bar 之上，从状态栏下方随手势进入，不得被 App Bar 遮挡。
 
 #### Snackbar
 
