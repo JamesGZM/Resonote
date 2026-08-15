@@ -387,9 +387,9 @@ private fun SongCollection(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surfaceContainerLow,
-        shape = MaterialTheme.shapes.extraLarge,
+        shape = MaterialTheme.shapes.large,
     ) {
-        Column(modifier = Modifier.padding(vertical = 8.dp)) {
+        Column {
             songs.forEach { song ->
                 ResonoteMusicItem(
                     title = song.title,
