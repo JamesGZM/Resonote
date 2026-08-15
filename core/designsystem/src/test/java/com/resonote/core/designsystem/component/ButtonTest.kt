@@ -147,6 +147,23 @@ class ButtonTest {
     }
 
     @Test
+    fun compactFilledIconButton_hasAccessibleNameAndMinimumTouchTarget() {
+        composeRule.setContent {
+            ResonoteTheme {
+                ResonoteCompactFilledIconButton(
+                    label = "Play",
+                    onClick = {},
+                    icon = { Box(Modifier.fillMaxSize()) },
+                )
+            }
+        }
+
+        val iconButton = composeRule.onNodeWithContentDescription("Play").assertIsEnabled()
+        assertTouchTarget(iconButton.fetchSemanticsNode().touchBoundsInRoot.width, 48f)
+        assertTouchTarget(iconButton.fetchSemanticsNode().touchBoundsInRoot.height, 48f)
+    }
+
+    @Test
     fun uncheckedToggleIconButton_exposesUncheckedState() {
         composeRule.setContent {
             ResonoteTheme {

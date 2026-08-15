@@ -64,6 +64,7 @@ Feature -> Repository interface -> Repository implementation
 - 业务组件消费 `MaterialTheme.colorScheme`、Typography、Shape 和 design-system token，不复制 Hex 或手写主题分支。
 - Navigation、Bottom Bar 等 Material 组件优先使用语义默认映射；品牌覆盖应发生在 Theme，而不是页面单点覆色。
 - 真实悬浮层使用统一 Elevation Token；装饰渐变不能冒充组件阴影规范。
+- 点击反馈必须与组件的视觉轮廓一致：无容器操作使用 `ResonotePlainAction` 的内容淡化反馈；圆角容器优先使用带相同 `shape` 的 `Surface(onClick)`；只有真实的边到边列表行可以使用完整矩形状态层。不得在圆角 `Surface` 外层或无容器内容上直接添加默认矩形 `clickable`。
 - Composable 尽量无状态，状态提升到页面或 ViewModel；预览与截图使用稳定 Fixture。
 - 修改冻结组件时同步更新设计合同、行为测试和必要的 Roborazzi 基线。
 - 代码审计、Token 治理或“规范对齐”不得顺带重排已通过真机验收的视觉布局；文档落后时应报告冲突并更新文档，不得默认回改代码。

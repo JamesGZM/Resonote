@@ -10,6 +10,7 @@ data class ResonoteStateLayers internal constructor(
     val focusOpacity: Float = 0.10f,
     val pressedOpacity: Float = 0.10f,
     val draggedOpacity: Float = 0.16f,
+    val pressedContentOpacity: Float = 0.60f,
     val disabledContentOpacity: Float = 0.38f,
     val disabledContainerOpacity: Float = 0.12f,
     val iconLayerSize: Dp = 40.dp,

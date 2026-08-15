@@ -20,6 +20,7 @@ Android 官方要求后台播放把 Player 与 MediaSession 放入 `MediaSession
 5. 只解析当前选中歌曲，不为整张歌单提前请求短时播放 URL。新的播放目标使用递增 load generation；旧请求返回后不得覆盖新目标。暂停、识曲或进入 MV 会使当前解析代际失效，之后保持暂停。
 6. 第一阶段 MediaSession 只承载已经解析的当前媒体项，系统 play/pause、metadata、通知和音频焦点立即可用。把完整 Queue 逐项交给 Session、系统 next/previous、错误自动跳过、队列持久化、随机历史、音质切换与恢复快照留给后续 playback service 原子切片；UI 不得在此期间建立第二份 Queue 补偿。
 7. App Scaffold 只消费 `PlaybackState` 并发送 Controller 命令。Mini Player 继续使用既有设计系统外观，但播放状态与进度改为真实 Player 事实；解析和播放失败通过类型化问题给出用户反馈。
+8. 后续切片以独立持久快照保存语义 Queue、当前索引、模式和进度检查点，不保存短时播放 URL。进程重建时先恢复暂停态；只有用户再次播放才重新解析当前音源并定位到保存进度。
 
 ## Consequences
 
@@ -33,7 +34,7 @@ Android 官方要求后台播放把 Player 与 MediaSession 放入 `MediaSession
 ### Trade-offs
 
 - 第一阶段的系统 Session 队列只有当前媒体项，蓝牙/系统 next/previous 要等待完整 Session Queue 切片。
-- Queue 尚未持久化，进程死亡后不会恢复。
+- 进度使用周期检查点并在暂停、Seek 和队列变化时立即保存；进程被强制终止时最多回退一个检查点间隔。
 - 随机模式目前只保证不会在有候选项时立即重复当前曲目，尚未保留可逆随机历史。
 - 云盘条目会保留完整 `CloudTrack` 供后续切歌解析，因此公共 Queue 条目比只含 `OnlineSong` 的模型更大；它换取了来源正确性，且不把 provider DTO 泄漏到播放域。
 

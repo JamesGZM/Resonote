@@ -2,7 +2,6 @@ package com.resonote.feature.player.impl
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,6 +12,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -113,7 +113,6 @@ fun PlayerRoute(
         onRetryLyrics = viewModel::retryLyrics,
         onSelectQueueItem = viewModel::selectQueueItem,
         onRemoveQueueItem = viewModel::removeQueueItem,
-        onMoveQueueItem = viewModel::moveQueueItem,
         onClearQueue = viewModel::clearQueue,
         onSongMoreClick = (state.playback.currentItem?.origin as? PlaybackOrigin.Online)?.song?.let { song ->
             { onSongMoreClick(song) }
@@ -135,7 +134,6 @@ fun PlayerScreen(
     onRetryLyrics: () -> Unit,
     onSelectQueueItem: (Int) -> Unit,
     onRemoveQueueItem: (Int) -> Unit,
-    onMoveQueueItem: (Int, Int) -> Unit,
     onClearQueue: () -> Unit,
     modifier: Modifier = Modifier,
     initialPage: Int = 0,
@@ -212,7 +210,6 @@ fun PlayerScreen(
             onDismiss = { queueOpen = false },
             onSelect = onSelectQueueItem,
             onRemove = onRemoveQueueItem,
-            onMove = onMoveQueueItem,
             onClear = onClearQueue,
             onModeChange = onModeChange,
         )
@@ -516,34 +513,40 @@ private fun SyncedLyrics(lines: List<LyricLine>, positionMillis: Long, onSeek: (
         items(lines.size, key = { "${lines[it].timeMillis}-$it" }) { index ->
             val line = lines[index]
             val active = index == activeIndex
-            Text(
-                text = line.text,
+            Surface(
+                onClick = { onSeek(line.timeMillis) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(MaterialTheme.shapes.medium)
-                    .background(
-                        if (active) {
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.52f)
-                        } else {
-                            Color.Transparent
-                        },
-                    )
-                    .padding(horizontal = 14.dp, vertical = 10.dp)
-                    .clickable(onClick = { onSeek(line.timeMillis) }),
+                    .heightIn(min = ResonoteTokens.touchTargets.minimum),
+                shape = MaterialTheme.shapes.medium,
                 color = if (active) {
+                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.52f)
+                } else {
+                    Color.Transparent
+                },
+                contentColor = if (active) {
                     MaterialTheme.colorScheme.onPrimaryContainer
                 } else {
                     MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.72f)
                 },
-                style = if (active) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.titleMedium,
-                fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
-                lineHeight =
-                if (active) {
-                    MaterialTheme.typography.headlineSmall.lineHeight
-                } else {
-                    MaterialTheme.typography.titleMedium.lineHeight
-                },
-            )
+            ) {
+                Text(
+                    text = line.text,
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                    style = if (active) {
+                        MaterialTheme.typography.headlineSmall
+                    } else {
+                        MaterialTheme.typography.titleMedium
+                    },
+                    fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
+                    lineHeight =
+                    if (active) {
+                        MaterialTheme.typography.headlineSmall.lineHeight
+                    } else {
+                        MaterialTheme.typography.titleMedium.lineHeight
+                    },
+                )
+            }
         }
     }
 }

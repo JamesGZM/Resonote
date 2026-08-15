@@ -61,8 +61,8 @@ System Splash：
 
 - 使用 AndroidX Core SplashScreen 与系统 Splash，不创建 Splash Activity 或额外 Compose 品牌页。
 - Launcher 使用 `0.62×` 派生以平衡桌面同列图标的视觉重量；Splash 使用 `0.72×` 派生确保系统圆形内的启动识别度。两者均不修改 Canonical Mark 几何。
-- API 26–30 使用完整 Mark 的静态 VectorDrawable；API 31+ 主 App 使用 AVD。启动动画不循环、不延迟首帧，也不承担状态或进度信息。
-- Motion Scale `0×` 必须直接得到完整终态；系统提前结束或热启动不播放动画时，品牌识别仍须成立。
+- API 26–30 使用完整 Mark 的静态 VectorDrawable；API 31+ 主 App 使用 AVD。启动动画不循环、不阻塞内容初始化，也不承担状态或进度信息。
+- API 31+ 在系统显示 Splash 时，主 App 必须保留 Splash 至 AVD 完整播放后再进入内容页。Motion Scale `0×` 必须直接得到完整终态且不增加停留；热启动未显示 Splash 时，不额外补播动画。
 - Splash 只跟随系统 Light / Dark。AMOLED 从 Compose 首帧开始；在主题偏好能够于 Activity 创建前读取之前，不宣称 AMOLED Splash。
 - 状态：**已冻结；Android 实现完成，V-01 / V-10 仅部分自动化覆盖**。
 - Canonical Source：`design/approved/foundation/00-signal-signature-source.svg`

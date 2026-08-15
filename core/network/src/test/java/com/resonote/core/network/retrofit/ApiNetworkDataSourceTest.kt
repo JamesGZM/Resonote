@@ -368,33 +368,30 @@ class ApiNetworkDataSourceTest {
     }
 
     @Test
-    fun privilegeStatusTwoExpiresAuthenticatedSessionWithoutCodeMapping() = runTest {
+    fun privilegeStatusTwoFallsBackWithoutExpiringAuthenticatedSession() = runTest {
         gatewayServer.enqueue(jsonResponse("""{"status":2,"error_code":20018}"""))
+        gatewayServer.enqueue(jsonResponse("""{"status":1,"url":["https://cdn.example/song.mp3"],"extName":"mp3"}"""))
         val source = dataSource()
 
-        val failure = runCatching { source.resolveSongSource("ABCDEF") }.exceptionOrNull()
+        val song = source.resolveSongSource("ABCDEF")
 
-        assertThat(failure).isInstanceOf(ApiAuthenticationRequiredException::class.java)
-        failure as ApiAuthenticationRequiredException
-        assertThat(failure.reason).isEqualTo(ApiAuthenticationGateReason.SessionExpired)
-        assertThat(failure.serviceCode).isEqualTo("20018")
-        assertThat(source.authenticationClearCount).isEqualTo(1)
-        assertThat(gatewayServer.requestCount).isEqualTo(1)
+        assertThat(song.uri).isEqualTo("https://cdn.example/song.mp3")
+        assertThat(source.authenticationClearCount).isEqualTo(0)
+        assertThat(gatewayServer.requestCount).isEqualTo(2)
     }
 
     @Test
-    fun songUrlInvalidTokenExpiresAuthenticatedSession() = runTest {
+    fun songUrlStatusTwoFailsPlaybackWithoutExpiringAuthenticatedSession() = runTest {
         gatewayServer.enqueue(jsonResponse("""{"status":1,"data":[]}"""))
         gatewayServer.enqueue(jsonResponse("""{"status":2,"error_code":20017}"""))
         val source = dataSource()
 
         val failure = runCatching { source.resolveSongSource("ABCDEF") }.exceptionOrNull()
 
-        assertThat(failure).isInstanceOf(ApiAuthenticationRequiredException::class.java)
-        failure as ApiAuthenticationRequiredException
-        assertThat(failure.reason).isEqualTo(ApiAuthenticationGateReason.SessionExpired)
+        assertThat(failure).isInstanceOf(ApiServiceException::class.java)
+        failure as ApiServiceException
         assertThat(failure.serviceCode).isEqualTo("20017")
-        assertThat(source.authenticationClearCount).isEqualTo(1)
+        assertThat(source.authenticationClearCount).isEqualTo(0)
         assertThat(gatewayServer.requestCount).isEqualTo(2)
     }
 

@@ -53,6 +53,7 @@ fun PlaylistPickerSheet(
     onRetryPlaylists: () -> Unit,
     onPlaylistClick: (UserPlaylist) -> Unit,
     onDismissFailure: () -> Unit,
+    snackbarHost: @Composable () -> Unit = {},
 ) {
     val addition = (state as? MyUiState.Authenticated)?.playlistAddition
     val submitting = addition is PlaylistAdditionUiState.Submitting
@@ -129,6 +130,7 @@ fun PlaylistPickerSheet(
                 }
             }
         }
+        snackbarHost()
     }
 }
 

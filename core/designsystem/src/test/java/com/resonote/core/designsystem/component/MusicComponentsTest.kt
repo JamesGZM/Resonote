@@ -1,5 +1,8 @@
 package com.resonote.core.designsystem.component
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material3.Icon
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -78,6 +81,38 @@ class MusicComponentsTest {
         }
 
         composeRule.onNodeWithContentDescription("More actions for 无更多操作").assertDoesNotExist()
+    }
+
+    @Test
+    fun customTrailingAction_replacesMoreAction_andRemainsIndependent() {
+        var rowClicks = 0
+        var moreClicks = 0
+        var removeClicks = 0
+        composeRule.setContent {
+            ResonoteTheme {
+                ResonoteMusicItem(
+                    title = "待移除歌曲",
+                    supportingText = "Resonote",
+                    duration = "3:00",
+                    onClick = { rowClicks++ },
+                    onMoreClick = { moreClicks++ },
+                    trailingAction = {
+                        ResonoteIconButton(
+                            label = "移除待移除歌曲",
+                            onClick = { removeClicks++ },
+                            icon = { Icon(Icons.Rounded.Close, contentDescription = null) },
+                        )
+                    },
+                )
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("More actions for 待移除歌曲").assertDoesNotExist()
+        composeRule.onNodeWithContentDescription("移除待移除歌曲").performClick()
+
+        assertEquals(0, rowClicks)
+        assertEquals(0, moreClicks)
+        assertEquals(1, removeClicks)
     }
 
     @Test

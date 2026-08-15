@@ -3,7 +3,6 @@
 package com.resonote.feature.discover.impl
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -58,6 +57,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.resonote.core.designsystem.component.ResonoteArtwork
 import com.resonote.core.designsystem.component.ResonoteArtworkState
 import com.resonote.core.designsystem.component.ResonoteMusicItem
+import com.resonote.core.designsystem.component.ResonotePlainAction
 import com.resonote.core.designsystem.component.ResonotePlaylistItem
 import com.resonote.core.designsystem.component.ResonotePlaylistMetadata
 import com.resonote.core.designsystem.component.ResonoteRemoteArtwork
@@ -513,7 +513,8 @@ private fun SongPane(
 @Composable
 private fun RankingCard(position: Int, ranking: Ranking, onClick: () -> Unit) {
     Surface(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
@@ -563,35 +564,42 @@ private fun RankingCard(position: Int, ranking: Ranking, onClick: () -> Unit) {
 
 @Composable
 private fun AlbumCard(album: Album, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Column(modifier.clickable(onClick = onClick)) {
-        ResonoteArtwork(
-            state = if (album.coverUrl.isNullOrBlank()) {
-                ResonoteArtworkState.MISSING
-            } else {
-                ResonoteArtworkState.LOADED
-            },
-            contentDescription = stringResource(R.string.feature_discover_impl_discover_album_artwork, album.name),
-            modifier = Modifier.fillMaxWidth().height(164.dp),
-        ) {
-            ResonoteRemoteArtwork(
-                model = album.coverUrl,
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
+    ResonotePlainAction(onClick = onClick, modifier = modifier) {
+        Column {
+            ResonoteArtwork(
+                state = if (album.coverUrl.isNullOrBlank()) {
+                    ResonoteArtworkState.MISSING
+                } else {
+                    ResonoteArtworkState.LOADED
+                },
+                contentDescription = stringResource(R.string.feature_discover_impl_discover_album_artwork, album.name),
+                modifier = Modifier.fillMaxWidth().height(164.dp),
+            ) {
+                ResonoteRemoteArtwork(
+                    model = album.coverUrl,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                album.name,
+                style = MaterialTheme.typography.bodyLarge,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                stringResource(
+                    R.string.feature_discover_impl_discover_album_metadata,
+                    album.artist.orEmpty(),
+                    album.songCount,
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
-        Spacer(Modifier.height(8.dp))
-        Text(album.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        Text(
-            stringResource(
-                R.string.feature_discover_impl_discover_album_metadata,
-                album.artist.orEmpty(),
-                album.songCount,
-            ),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
     }
 }
 

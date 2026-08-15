@@ -92,8 +92,6 @@ class PlayerViewModel @Inject constructor(
 
     fun removeQueueItem(index: Int) = playbackController.removeQueueItem(index)
 
-    fun moveQueueItem(fromIndex: Int, toIndex: Int) = playbackController.moveQueueItem(fromIndex, toIndex)
-
     fun clearQueue() = playbackController.clear()
 
     private suspend fun loadLyrics(request: LyricsRequest) {

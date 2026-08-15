@@ -1,7 +1,12 @@
 package com.resonote.app
 
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -62,6 +67,35 @@ class OnlineSongActionsScreenshotTest {
             filePath = "src/test/screenshots/SongActions/SongActionsCompact_owned.png",
             roborazziOptions = DefaultRoborazziOptions,
         )
+    }
+
+    @Test
+    fun snackbarRemainsVisibleWhileSongActionsAreOpen() {
+        composeRule.setContent {
+            ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                val snackbarHostState = remember { SnackbarHostState() }
+                LaunchedEffect(snackbarHostState) {
+                    snackbarHostState.showSnackbar(
+                        message = "已添加到播放队列",
+                        duration = SnackbarDuration.Indefinite,
+                    )
+                }
+                OnlineSongActionsSheet(
+                    request = OnlineSongActionRequest(song()),
+                    onDismiss = {},
+                    onPlay = {},
+                    onPlayNext = {},
+                    onAppendToQueue = {},
+                    onAddToPlaylist = {},
+                    onShowInfo = {},
+                    onShareUnavailable = {},
+                    snackbarHost = { ModalSnackbarHost(snackbarHostState) },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("已添加到播放队列").assertIsDisplayed()
+        composeRule.onNodeWithText("晚风信号").assertIsDisplayed()
     }
 
     private fun song() = OnlineSong(

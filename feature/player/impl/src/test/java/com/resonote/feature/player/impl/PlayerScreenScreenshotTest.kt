@@ -135,7 +135,6 @@ class PlayerScreenScreenshotTest {
                         onRetryLyrics = {},
                         onSelectQueueItem = {},
                         onRemoveQueueItem = {},
-                        onMoveQueueItem = { _, _ -> },
                         onClearQueue = {},
                         initialPage = initialPage,
                         onSongMoreClick = onSongMoreClick,

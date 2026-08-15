@@ -5,6 +5,7 @@ import com.resonote.core.model.ContentFailure
 import com.resonote.core.model.PlaybackUnavailableReason
 import com.resonote.core.navigation.TabsShellNavKey
 import com.resonote.core.playback.PlaybackIssue
+import com.resonote.feature.player.api.PlayerNavKey
 import com.resonote.feature.settings.api.SettingsNavKey
 import org.junit.Test
 
@@ -30,5 +31,13 @@ class PlaybackPresentationTest {
         assertThat(TabsShellNavKey.hasPrimaryNavigation()).isTrue()
         assertThat(SettingsNavKey.hasPrimaryNavigation()).isFalse()
         assertThat(null.hasPrimaryNavigation()).isFalse()
+    }
+
+    @Test
+    fun miniPlayerIsGlobalExceptOnTheFullPlayer() {
+        assertThat(TabsShellNavKey.showsMiniPlayer()).isTrue()
+        assertThat(SettingsNavKey.showsMiniPlayer()).isTrue()
+        assertThat(PlayerNavKey.showsMiniPlayer()).isFalse()
+        assertThat(null.showsMiniPlayer()).isFalse()
     }
 }

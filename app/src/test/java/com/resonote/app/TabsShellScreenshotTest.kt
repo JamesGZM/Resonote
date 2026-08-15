@@ -1,5 +1,6 @@
 package com.resonote.app
 
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -22,6 +23,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -85,7 +87,7 @@ class TabsShellScreenshotTest {
         }
 
         composeRule.waitUntil(5_000) {
-            composeRule.onAllNodesWithText("Rankings").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithTag("home-shortcut-rankings").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText("My music").assertExists()
         composeRule.onRoot().captureRoboImage(
@@ -107,18 +109,32 @@ class TabsShellScreenshotTest {
                     dynamicColorEnabled = dynamicColorEnabled,
                 ) {
                     val homeViewModel = remember { HomeViewModel(ScreenshotHomeRepository()) }
-                    TabsShell(
-                        homeViewModel = homeViewModel,
-                        playbackState = PlaybackState(
-                            queue = listOf(PlaybackItem(song("theme-preview"))),
-                            currentIndex = 0,
-                        ),
+                    val playbackState = PlaybackState(
+                        queue = listOf(PlaybackItem(song("theme-preview"))),
+                        currentIndex = 0,
                     )
+                    var tabBarInset by remember { mutableStateOf(0.dp) }
+                    Box(Modifier.fillMaxSize()) {
+                        TabsShell(
+                            homeViewModel = homeViewModel,
+                            playbackState = playbackState,
+                            onBottomBarInsetChanged = { tabBarInset = it },
+                        )
+                        GlobalMiniPlayer(
+                            playbackState = playbackState,
+                            hasTabBar = true,
+                            tabBarInset = tabBarInset,
+                            visible = true,
+                            onOpenPlayer = {},
+                            onTogglePlay = {},
+                            onOpenQueue = {},
+                        )
+                    }
                 }
             }
         }
         composeRule.waitUntil(5_000) {
-            composeRule.onAllNodesWithText("Rankings").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithTag("home-shortcut-rankings").fetchSemanticsNodes().isNotEmpty()
         }
 
         listOf(
@@ -173,9 +189,9 @@ class TabsShellScreenshotTest {
         }
 
         composeRule.waitUntil(5_000) {
-            composeRule.onAllNodesWithText("Rankings").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithTag("home-shortcut-rankings").fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText("Rankings").performClick()
+        composeRule.onNodeWithTag("home-shortcut-rankings").performClick()
         composeRule.waitUntil(5_000) {
             composeRule.onAllNodesWithText("潮汐热歌榜").fetchSemanticsNodes().isNotEmpty()
         }
@@ -199,9 +215,10 @@ class TabsShellScreenshotTest {
         }
 
         composeRule.waitUntil(5_000) {
-            composeRule.onAllNodesWithText("Featured playlists").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithTag("home-shortcut-featured-playlists")
+                .fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText("Featured playlists").performClick()
+        composeRule.onNodeWithTag("home-shortcut-featured-playlists").performClick()
         composeRule.waitUntil(5_000) {
             composeRule.onAllNodesWithText("深夜航线").fetchSemanticsNodes().isNotEmpty()
         }
@@ -238,6 +255,45 @@ class TabsShellScreenshotTest {
         val expectedGapPx = with(composeRule.density) { 8.dp.toPx() }
 
         assertThat(miniPlayerTop - snackbarBottom).isWithin(1f).of(expectedGapPx)
+    }
+
+    @Test
+    fun miniPlayerAnimatesFromAboveTabBarToPageBottom() {
+        var hasTabBar by mutableStateOf(true)
+        val playbackState = PlaybackState(
+            queue = listOf(PlaybackItem(song("moving"))),
+            currentIndex = 0,
+        )
+        val observedAnchorInsets = mutableListOf<Dp>()
+        composeRule.setContent {
+            ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                Box(Modifier.fillMaxSize()) {
+                    GlobalMiniPlayer(
+                        playbackState = playbackState,
+                        hasTabBar = hasTabBar,
+                        tabBarInset = 64.dp,
+                        visible = true,
+                        onOpenPlayer = {},
+                        onTogglePlay = {},
+                        onOpenQueue = {},
+                        onAnchorInsetChanged = observedAnchorInsets::add,
+                        animationSpec = tween(durationMillis = 300),
+                    )
+                }
+            }
+        }
+        composeRule.waitForIdle()
+        val tabPosition = miniPlayerTop()
+
+        composeRule.runOnIdle {
+            observedAnchorInsets.clear()
+            hasTabBar = false
+        }
+        composeRule.waitForIdle()
+        val pagePosition = miniPlayerTop()
+
+        assertThat(pagePosition - tabPosition).isWithin(1f).of(with(composeRule.density) { 64.dp.toPx() })
+        assertThat(observedAnchorInsets.distinct().size).isGreaterThan(2)
     }
 
     @Test
@@ -282,7 +338,8 @@ class TabsShellScreenshotTest {
         composeRule.setContent {
             ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
                 val homeViewModel = remember { HomeViewModel(ScreenshotHomeRepository()) }
-                var snackbarBottomInset by remember { mutableStateOf(0.dp) }
+                var tabBarInset by remember { mutableStateOf(0.dp) }
+                var playbackChromeInset by remember { mutableStateOf(0.dp) }
                 val snackbarSpacing = ResonoteTokens.spacing.space2
                 LaunchedEffect(snackbarHostState) {
                     snackbarHostState.showSnackbar(
@@ -294,7 +351,17 @@ class TabsShellScreenshotTest {
                     TabsShell(
                         homeViewModel = homeViewModel,
                         playbackState = playbackState,
-                        onSnackbarBottomInsetChanged = { snackbarBottomInset = it },
+                        onBottomBarInsetChanged = { tabBarInset = it },
+                    )
+                    GlobalMiniPlayer(
+                        playbackState = playbackState,
+                        hasTabBar = true,
+                        tabBarInset = tabBarInset,
+                        visible = true,
+                        onOpenPlayer = {},
+                        onTogglePlay = {},
+                        onOpenQueue = {},
+                        onAnchorInsetChanged = { playbackChromeInset = it },
                     )
                     ResonoteSnackbarHost(
                         hostState = snackbarHostState,
@@ -303,7 +370,7 @@ class TabsShellScreenshotTest {
                             .padding(
                                 start = snackbarSpacing,
                                 end = snackbarSpacing,
-                                bottom = snackbarSpacing + snackbarBottomInset,
+                                bottom = snackbarSpacing + playbackChromeInset,
                             ),
                     )
                 }
@@ -313,6 +380,9 @@ class TabsShellScreenshotTest {
             composeRule.onAllNodesWithText("Saved to your library").fetchSemanticsNodes().isNotEmpty()
         }
     }
+
+    private fun miniPlayerTop(): Float = composeRule.onNodeWithTag("resonote-mini-player")
+        .fetchSemanticsNode().boundsInRoot.top
 
     private class ScreenshotHomeRepository : HomeRepository {
         private val homeContent =

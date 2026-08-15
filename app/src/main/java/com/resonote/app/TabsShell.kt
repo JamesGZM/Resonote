@@ -18,7 +18,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -34,7 +33,6 @@ import com.resonote.core.model.Album
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.Ranking
 import com.resonote.core.model.UserPlaylist
-import com.resonote.core.playback.PlaybackMode
 import com.resonote.core.playback.PlaybackState
 import com.resonote.feature.discover.impl.DiscoverRoute
 import com.resonote.feature.discover.impl.DiscoverSection
@@ -43,10 +41,6 @@ import com.resonote.feature.home.impl.HomeRoute
 import com.resonote.feature.home.impl.HomeViewModel
 import com.resonote.feature.library.impl.MyRoute
 import com.resonote.feature.library.impl.MyViewModel
-import com.resonote.feature.player.impl.MiniPlayerUiState
-import com.resonote.feature.player.impl.PlaybackQueueSheet
-import com.resonote.feature.player.impl.ResonoteMiniPlayer
-import com.resonote.feature.player.impl.badgeLabel
 
 internal enum class ResonoteTab(val labelRes: Int, @field:DrawableRes val iconRes: Int) {
     HOME(R.string.tab_home, R.drawable.ic_tab_home),
@@ -60,13 +54,6 @@ internal fun TabsShell(
     playbackState: PlaybackState = PlaybackState(),
     onPlaySong: (OnlineSong) -> Unit = {},
     onPlaySongs: (List<OnlineSong>, Int) -> Unit = { _, _ -> },
-    onTogglePlay: () -> Unit = {},
-    onOpenPlayer: () -> Unit = {},
-    onSelectQueueItem: (Int) -> Unit = {},
-    onRemoveQueueItem: (Int) -> Unit = {},
-    onMoveQueueItem: (Int, Int) -> Unit = { _, _ -> },
-    onClearQueue: () -> Unit = {},
-    onModeChange: (PlaybackMode) -> Unit = {},
     onSearchClick: () -> Unit = {},
     onRecognitionClick: () -> Unit = {},
     onSongMoreClick: (OnlineSong) -> Unit = {},
@@ -82,16 +69,14 @@ internal fun TabsShell(
     onCloudClick: () -> Unit = {},
     onLocalMusicClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
-    onSnackbarBottomInsetChanged: (Dp) -> Unit = {},
+    onBottomBarInsetChanged: (Dp) -> Unit = {},
 ) {
     val tabsShellState = rememberTabsShellState()
     val selectedTab = tabsShellState.selectedTab
     val rootStateHolder = rememberSaveableStateHolder()
     var requestedDiscoverSection by remember { mutableStateOf<DiscoverSection?>(null) }
-    var queueOpen by remember { mutableStateOf(false) }
     var shellBottomPx by remember { mutableStateOf(0f) }
     var contentBottomPx by remember { mutableStateOf(0f) }
-    var miniPlayerTopPx by remember { mutableStateOf(0f) }
     val density = LocalDensity.current
 
     fun openDiscover(section: DiscoverSection) {
@@ -102,19 +87,18 @@ internal fun TabsShell(
     BackHandler(enabled = selectedTab != ResonoteTab.HOME) { tabsShellState.handleBack() }
 
     val currentMedia = playbackState.currentMetadata
-    val snackbarAnchorPx = if (currentMedia == null) contentBottomPx else miniPlayerTopPx
-    val snackbarBottomInset = if (shellBottomPx == 0f || snackbarAnchorPx == 0f) {
+    val bottomBarInset = if (shellBottomPx == 0f || contentBottomPx == 0f) {
         0.dp
     } else {
         with(density) {
             val safeDrawingBottomPx = WindowInsets.safeDrawing.getBottom(this)
-            (shellBottomPx - snackbarAnchorPx - safeDrawingBottomPx)
+            (shellBottomPx - contentBottomPx - safeDrawingBottomPx)
                 .coerceAtLeast(0f)
                 .toDp()
         }
     }
-    LaunchedEffect(snackbarBottomInset) {
-        onSnackbarBottomInsetChanged(snackbarBottomInset)
+    LaunchedEffect(bottomBarInset) {
+        onBottomBarInsetChanged(bottomBarInset)
     }
     ResonoteNavigationSuiteScaffold(
         navigationSuiteItems = {
@@ -211,42 +195,7 @@ internal fun TabsShell(
                         }
                     }
                 }
-
-                currentMedia?.let { song ->
-                    ResonoteMiniPlayer(
-                        state = MiniPlayerUiState(
-                            song.mediaId,
-                            song.title,
-                            song.artist.orEmpty(),
-                            song.format.badgeLabel(),
-                            song.isVip,
-                            playbackState.isPlaying,
-                            playbackState.progress,
-                            song.artworkUri,
-                        ),
-                        onOpenPlayer = onOpenPlayer,
-                        onTogglePlay = onTogglePlay,
-                        onOpenQueue = { queueOpen = true },
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(horizontal = 16.dp, vertical = 16.dp)
-                            .testTag("resonote-mini-player")
-                            .onGloballyPositioned { miniPlayerTopPx = it.boundsInRoot().top },
-                    )
-                }
             }
         }
-    }
-
-    if (queueOpen) {
-        PlaybackQueueSheet(
-            playback = playbackState,
-            onDismiss = { queueOpen = false },
-            onSelect = onSelectQueueItem,
-            onRemove = onRemoveQueueItem,
-            onMove = onMoveQueueItem,
-            onClear = onClearQueue,
-            onModeChange = onModeChange,
-        )
     }
 }

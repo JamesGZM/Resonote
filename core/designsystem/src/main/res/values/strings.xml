@@ -4,6 +4,7 @@
     <string name="core_designsystem_playing">Playing</string>
     <string name="core_designsystem_song_artwork">Artwork for %1$s</string>
     <string name="core_designsystem_playlist_artwork">Playlist artwork for %1$s</string>
+    <string name="core_designsystem_refreshing">Refreshing</string>
     <plurals name="core_designsystem_text_field_character_limit_exceeded">
         <item quantity="one">Maximum %1$d character.</item>
         <item quantity="other">Maximum %1$d characters.</item>

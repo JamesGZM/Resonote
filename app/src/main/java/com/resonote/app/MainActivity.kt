@@ -1,5 +1,6 @@
 package com.resonote.app
 
+import android.animation.ValueAnimator
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -17,8 +18,21 @@ class MainActivity : ComponentActivity() {
     private val viewModel: MainActivityViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen()
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+        splashScreen.setOnExitAnimationListener { splashScreenView ->
+            val remainingDurationMillis = remainingSplashAnimationDurationMillis(
+                animationStartMillis = splashScreenView.iconAnimationStartMillis,
+                animationDurationMillis = splashScreenView.iconAnimationDurationMillis,
+                currentTimeMillis = System.currentTimeMillis(),
+                animationsEnabled = ValueAnimator.areAnimatorsEnabled(),
+            )
+            if (remainingDurationMillis == 0L) {
+                splashScreenView.remove()
+            } else {
+                splashScreenView.view.postDelayed(splashScreenView::remove, remainingDurationMillis)
+            }
+        }
         enableEdgeToEdge()
         if (savedInstanceState == null) {
             viewModel.handleExternalImportIntent(intent, finishTaskOnBack = true)
@@ -39,4 +53,16 @@ class MainActivity : ComponentActivity() {
         setIntent(intent)
         viewModel.handleExternalImportIntent(intent, finishTaskOnBack = false)
     }
+}
+
+internal fun remainingSplashAnimationDurationMillis(
+    animationStartMillis: Long,
+    animationDurationMillis: Long,
+    currentTimeMillis: Long,
+    animationsEnabled: Boolean,
+): Long {
+    if (!animationsEnabled || animationStartMillis <= 0L || animationDurationMillis <= 0L) {
+        return 0L
+    }
+    return (animationStartMillis + animationDurationMillis - currentTimeMillis).coerceAtLeast(0L)
 }
