@@ -57,6 +57,8 @@ internal class DefaultPlaybackController internal constructor(
     private val historyRepository: ListeningHistoryRepository,
     private val preferencesRepository: PlaybackPreferencesRepository,
     private val sessionRepository: PlaybackSessionRepository,
+    private val audioPreloader: PlaybackAudioPreloader,
+    private val queueCommandRouter: PlaybackQueueCommandRouter,
     private val elapsedRealtime: () -> Long,
 ) : PlaybackController,
     Player.Listener {
@@ -67,12 +69,16 @@ internal class DefaultPlaybackController internal constructor(
         historyRepository: ListeningHistoryRepository,
         preferencesRepository: PlaybackPreferencesRepository,
         sessionRepository: PlaybackSessionRepository,
+        audioPreloader: PlaybackAudioPreloader,
+        queueCommandRouter: PlaybackQueueCommandRouter,
     ) : this(
         context,
         sourceResolver,
         historyRepository,
         preferencesRepository,
         sessionRepository,
+        audioPreloader,
+        queueCommandRouter,
         SystemClock::elapsedRealtime,
     )
 
@@ -96,6 +102,9 @@ internal class DefaultPlaybackController internal constructor(
     private var positionUpdates: Job? = null
     private var automaticSkipJob: Job? = null
     private var currentSourceRefreshJob: Job? = null
+    private var preloadJob: Job? = null
+    private var preloadAttemptedGeneration = -1L
+    private var prefetchedSource: PrefetchedSource? = null
     private var isRefreshingCurrentSource = false
     private var hasPlaybackMutation = false
     private var lastPositionCheckpointAtMillis = 0L
@@ -105,6 +114,7 @@ internal class DefaultPlaybackController internal constructor(
     override val state: StateFlow<PlaybackState> = mutableState.asStateFlow()
 
     init {
+        queueCommandRouter.bind(onNext = ::next, onPrevious = ::previous)
         scope.launch { restoreSession() }
         controllerFuture.addListener(
             {
@@ -165,6 +175,7 @@ internal class DefaultPlaybackController internal constructor(
         if (items.isEmpty()) return
         hasPlaybackMutation = true
         scope.launch {
+            invalidatePreload()
             queue.append(items)
             publishQueue()
             requestPersistSession()
@@ -175,6 +186,7 @@ internal class DefaultPlaybackController internal constructor(
         if (items.isEmpty()) return
         hasPlaybackMutation = true
         scope.launch {
+            invalidatePreload()
             queue.playNext(items)
             publishQueue()
             requestPersistSession()
@@ -196,6 +208,7 @@ internal class DefaultPlaybackController internal constructor(
     override fun removeQueueItem(index: Int) {
         hasPlaybackMutation = true
         scope.launch {
+            invalidatePreload()
             val removal = queue.removeAt(index) ?: return@launch
             if (!removal.removedCurrent) {
                 publishQueue()
@@ -228,6 +241,7 @@ internal class DefaultPlaybackController internal constructor(
     override fun moveQueueItem(fromIndex: Int, toIndex: Int) {
         hasPlaybackMutation = true
         scope.launch {
+            invalidatePreload()
             if (queue.move(fromIndex, toIndex)) {
                 publishQueue()
                 requestPersistSession()
@@ -274,6 +288,7 @@ internal class DefaultPlaybackController internal constructor(
         loadGeneration++
         isResolving = false
         pendingControllerAction = null
+        cancelPreloadAttempt()
         controller?.pause()
         if (mutableState.value.currentItem != null && mutableState.value.status != PlaybackStatus.Failed) {
             mutableState.value = mutableState.value.copy(status = PlaybackStatus.Paused)
@@ -320,6 +335,7 @@ internal class DefaultPlaybackController internal constructor(
 
     override fun setMode(mode: PlaybackMode) {
         hasPlaybackMutation = true
+        invalidatePreload()
         mutableState.value = mutableState.value.copy(mode = mode)
         requestPersistSession()
     }
@@ -377,6 +393,7 @@ internal class DefaultPlaybackController internal constructor(
             automaticSkipJob = null
             currentSourceRefreshJob?.cancel()
             currentSourceRefreshJob = null
+            invalidatePreload()
             isRefreshingCurrentSource = false
             failureRecovery.reset()
             queue.clear()
@@ -401,6 +418,7 @@ internal class DefaultPlaybackController internal constructor(
     }
 
     override fun onPlayerError(error: PlaybackException) {
+        invalidatePreload()
         sampleHistory(isPlaying = false, endedNaturally = false)
         historyEligibility.reset()
         isResolving = false
@@ -422,6 +440,8 @@ internal class DefaultPlaybackController internal constructor(
     ): Boolean {
         automaticSkipJob?.cancel()
         automaticSkipJob = null
+        val prefetched = consumePrefetchedSource(item.queueKey)
+        cancelPreloadAttempt()
         val preservesCurrentPlayback =
             failureBehavior != FailureBehavior.SkipQueueItem &&
                 ((controller?.mediaItemCount ?: 0) > 0 || failureBehavior == FailureBehavior.RefreshCurrentSource)
@@ -439,7 +459,7 @@ internal class DefaultPlaybackController internal constructor(
             }
         }
 
-        val result = try {
+        val result = prefetched?.let(ResolveSongSourceResult::Resolved) ?: try {
             sourceResolver.resolve(item)
         } catch (cancellation: CancellationException) {
             throw cancellation
@@ -748,6 +768,7 @@ internal class DefaultPlaybackController internal constructor(
                 controller?.let { player ->
                     syncPlayerState(player)
                     handleVipPreviewBoundary(player)
+                    maybePreloadNext(player)
                     val now = elapsedRealtime()
                     if (
                         mutableState.value.status == PlaybackStatus.Playing &&
@@ -759,6 +780,69 @@ internal class DefaultPlaybackController internal constructor(
                 }
             }
         }
+    }
+
+    private fun maybePreloadNext(player: Player) {
+        val status = mutableState.value.status
+        val durationMillis = mutableState.value.durationMillis
+        if (
+            !shouldStartPlaybackPreload(
+                status = status,
+                positionMillis = player.currentPosition.coerceAtLeast(0),
+                durationMillis = durationMillis,
+                alreadyAttempted = preloadAttemptedGeneration == loadGeneration,
+            )
+        ) {
+            return
+        }
+        preloadAttemptedGeneration = loadGeneration
+        val item = playbackPreloadCandidate(queue, mutableState.value.mode) ?: return
+        val generation = loadGeneration
+        preloadJob = scope.launch {
+            val result = try {
+                sourceResolver.resolve(item.copy(resolvedSource = null))
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (_: Exception) {
+                return@launch
+            }
+            if (generation != loadGeneration || result !is ResolveSongSourceResult.Resolved) return@launch
+            prefetchedSource = PrefetchedSource(
+                queueKey = item.queueKey,
+                source = result.source,
+                resolvedAtElapsedRealtimeMillis = elapsedRealtime(),
+            )
+            try {
+                audioPreloader.preload(result.source)
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (_: Exception) {
+                // Preloading is opportunistic. Normal source loading remains the fallback.
+            }
+        }
+    }
+
+    private fun consumePrefetchedSource(queueKey: String): ResolvedSongSource? {
+        val prefetched = prefetchedSource
+        prefetchedSource = null
+        return prefetched?.source?.takeIf {
+            prefetched.queueKey == queueKey &&
+                isPrefetchedSourceFresh(
+                    resolvedAtElapsedRealtimeMillis = prefetched.resolvedAtElapsedRealtimeMillis,
+                    nowElapsedRealtimeMillis = elapsedRealtime(),
+                )
+        }
+    }
+
+    private fun cancelPreloadAttempt() {
+        preloadJob?.cancel()
+        preloadJob = null
+        preloadAttemptedGeneration = -1L
+    }
+
+    private fun invalidatePreload() {
+        cancelPreloadAttempt()
+        prefetchedSource = null
     }
 
     private suspend fun restoreSession() {
@@ -803,6 +887,7 @@ internal class DefaultPlaybackController internal constructor(
         return MediaItem.Builder()
             .setMediaId(queueKey)
             .setUri(source.uri)
+            .apply { source.cacheKey?.let(::setCustomCacheKey) }
             .setMediaMetadata(mediaMetadata)
             .build()
     }
@@ -820,6 +905,12 @@ internal class DefaultPlaybackController internal constructor(
         RefreshCurrentSource,
         SkipQueueItem,
     }
+
+    private data class PrefetchedSource(
+        val queueKey: String,
+        val source: ResolvedSongSource,
+        val resolvedAtElapsedRealtimeMillis: Long,
+    )
 }
 
 internal fun PlaybackItem.toSessionEntry(): PlaybackSessionEntry {

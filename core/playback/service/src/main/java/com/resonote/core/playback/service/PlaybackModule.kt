@@ -13,4 +13,8 @@ internal abstract class PlaybackModule {
     @Binds
     @Singleton
     abstract fun bindPlaybackController(implementation: DefaultPlaybackController): PlaybackController
+
+    @Binds
+    @Singleton
+    abstract fun bindPlaybackAudioPreloader(implementation: DefaultPlaybackAudioPreloader): PlaybackAudioPreloader
 }

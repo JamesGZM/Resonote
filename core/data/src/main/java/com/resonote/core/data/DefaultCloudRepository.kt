@@ -51,6 +51,7 @@ internal class DefaultCloudRepository @Inject constructor(
                     it > 0
                 } ?: track.durationMillis,
                 source.extension,
+                cacheKey = cloudPlaybackCacheKey(track.hash),
             ),
         )
     } catch (unavailable: ApiPlaybackUnavailableException) {
@@ -59,3 +60,5 @@ internal class DefaultCloudRepository @Inject constructor(
         ResolveSongSourceResult.Failed(failure.toContentFailure(riskChallenges))
     }
 }
+
+internal fun cloudPlaybackCacheKey(trackHash: String): String = "cloud:$trackHash"

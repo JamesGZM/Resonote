@@ -349,6 +349,7 @@ class DefaultHomeRepositoryTest {
         val resolved = repository.resolveSource(song) as ResolveSongSourceResult.Resolved
         assertThat(resolved.source.durationMillis).isEqualTo(123_000)
         assertThat(resolved.source.isPreview).isTrue()
+        assertThat(resolved.source.cacheKey).isEqualTo("online:hash:HighResolution:preview")
         assertThat(requestedQuality).isEqualTo("high")
 
         network.source =

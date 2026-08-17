@@ -5,6 +5,7 @@ data class ResolvedSongSource(
     val durationMillis: Long,
     val extension: String?,
     val isPreview: Boolean = false,
+    val cacheKey: String? = null,
 )
 
 enum class OnlinePlaybackQuality {

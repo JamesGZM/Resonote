@@ -208,6 +208,7 @@ class UserRepositoriesTest {
             ).resolveSource(track) as ResolveSongSourceResult.Unavailable
 
         assertThat(resolved.source.durationMillis).isEqualTo(123_000)
+        assertThat(resolved.source.cacheKey).isEqualTo("cloud:hash")
         assertThat(network.cloudSourceRequest).isEqualTo(Triple("hash", "321", "Cloud Song"))
         assertThat(unavailable.reason).isEqualTo(PlaybackUnavailableReason.Cloud)
     }
