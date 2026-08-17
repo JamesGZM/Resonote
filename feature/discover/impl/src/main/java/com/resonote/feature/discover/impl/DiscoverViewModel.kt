@@ -6,10 +6,13 @@ import com.resonote.core.data.ContentCatalogRepository
 import com.resonote.core.data.RankingRepository
 import com.resonote.core.model.AlbumRegion
 import com.resonote.core.model.CollectionLoadResult
+import com.resonote.core.model.ContentFailure
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -23,6 +26,10 @@ class DiscoverViewModel @Inject constructor(
 ) : ViewModel() {
     private val mutableUiState = MutableStateFlow(DiscoverUiState())
     val uiState: StateFlow<DiscoverUiState> = mutableUiState.asStateFlow()
+    private val mutableRefreshFailures = MutableSharedFlow<ContentFailure>(
+        extraBufferCapacity = 1,
+    )
+    val refreshFailures: SharedFlow<ContentFailure> = mutableRefreshFailures
 
     private var categoriesJob: Job? = null
     private var playlistsJob: Job? = null
@@ -84,6 +91,29 @@ class DiscoverViewModel @Inject constructor(
         }
     }
 
+    fun refreshCurrent() {
+        val state = mutableUiState.value
+        if (state.refreshingSection != null) return
+        when (state.selectedSection) {
+            DiscoverSection.PLAYLISTS -> {
+                if (state.playlists !is DiscoverPageState.Content) return
+                loadPlaylists(state.selectedPlaylistCategoryId, page = 1, isRefresh = true)
+            }
+            DiscoverSection.RANKINGS -> {
+                if (state.rankings !is DiscoverLoadState.Content) return
+                loadRankings(isRefresh = true)
+            }
+            DiscoverSection.ALBUMS -> {
+                if (state.albums !is DiscoverLoadState.Content) return
+                loadAlbums(isRefresh = true)
+            }
+            DiscoverSection.SONGS -> {
+                if (state.songs !is DiscoverPageState.Content) return
+                loadSongs(page = 1, isRefresh = true)
+            }
+        }
+    }
+
     fun loadMore() {
         when (mutableUiState.value.selectedSection) {
             DiscoverSection.PLAYLISTS -> {
@@ -123,12 +153,24 @@ class DiscoverViewModel @Inject constructor(
         }
     }
 
-    private fun loadPlaylists(categoryId: Int, page: Int, selectionDebounceMillis: Long = 0) {
+    private fun loadPlaylists(
+        categoryId: Int,
+        page: Int,
+        selectionDebounceMillis: Long = 0,
+        isRefresh: Boolean = false,
+    ) {
         playlistsJob?.cancel()
         val current = mutableUiState.value.playlists as? DiscoverPageState.Content
         mutableUiState.update {
             it.copy(
-                playlists = if (page == 1) {
+                refreshingSection = if (isRefresh) {
+                    DiscoverSection.PLAYLISTS
+                } else {
+                    it.refreshingSection.takeUnless { section -> section == DiscoverSection.PLAYLISTS }
+                },
+                playlists = if (isRefresh) {
+                    requireNotNull(current)
+                } else if (page == 1) {
                     DiscoverPageState.Loading
                 } else {
                     requireNotNull(current).copy(isLoadingMore = true, loadMoreFailure = null)
@@ -148,6 +190,9 @@ class DiscoverViewModel @Inject constructor(
                         latest.items + result.value.filter { seen.add(it.id) }
                     }
                     state.copy(
+                        refreshingSection = state.refreshingSection.takeUnless {
+                            it == DiscoverSection.PLAYLISTS
+                        },
                         playlists = if (items.isEmpty()) {
                             DiscoverPageState.Empty
                         } else {
@@ -159,28 +204,48 @@ class DiscoverViewModel @Inject constructor(
                         },
                     )
                 }
-                is CollectionLoadResult.Failed -> mutableUiState.update { state ->
-                    if (state.selectedPlaylistCategoryId != categoryId) return@update state
-                    state.copy(
-                        playlists = if (page == 1) {
-                            DiscoverPageState.Error(result.failure)
-                        } else {
-                            val latest = state.playlists as? DiscoverPageState.Content ?: return@update state
-                            latest.copy(isLoadingMore = false, loadMoreFailure = result.failure)
-                        },
-                    )
+                is CollectionLoadResult.Failed -> {
+                    mutableUiState.update { state ->
+                        if (state.selectedPlaylistCategoryId != categoryId) return@update state
+                        state.copy(
+                            refreshingSection = state.refreshingSection.takeUnless {
+                                it == DiscoverSection.PLAYLISTS
+                            },
+                            playlists = when {
+                                isRefresh -> state.playlists
+                                page == 1 -> DiscoverPageState.Error(result.failure)
+                                else -> {
+                                    val latest = state.playlists as? DiscoverPageState.Content ?: return@update state
+                                    latest.copy(isLoadingMore = false, loadMoreFailure = result.failure)
+                                }
+                            },
+                        )
+                    }
+                    if (isRefresh) mutableRefreshFailures.emit(result.failure)
                 }
             }
         }
     }
 
-    private fun loadRankings() {
+    private fun loadRankings(isRefresh: Boolean = false) {
         rankingsJob?.cancel()
-        mutableUiState.update { it.copy(rankings = DiscoverLoadState.Loading) }
+        mutableUiState.update {
+            it.copy(
+                refreshingSection = if (isRefresh) {
+                    DiscoverSection.RANKINGS
+                } else {
+                    it.refreshingSection.takeUnless { section -> section == DiscoverSection.RANKINGS }
+                },
+                rankings = if (isRefresh) it.rankings else DiscoverLoadState.Loading,
+            )
+        }
         rankingsJob = viewModelScope.launch {
             when (val result = rankingRepository.loadRankings()) {
                 is CollectionLoadResult.Available -> mutableUiState.update {
                     it.copy(
+                        refreshingSection = it.refreshingSection.takeUnless { section ->
+                            section == DiscoverSection.RANKINGS
+                        },
                         rankings = if (result.value.isEmpty()) {
                             DiscoverLoadState.Empty
                         } else {
@@ -188,20 +253,40 @@ class DiscoverViewModel @Inject constructor(
                         },
                     )
                 }
-                is CollectionLoadResult.Failed -> mutableUiState.update {
-                    it.copy(rankings = DiscoverLoadState.Error(result.failure))
+                is CollectionLoadResult.Failed -> {
+                    mutableUiState.update {
+                        it.copy(
+                            refreshingSection = it.refreshingSection.takeUnless { section ->
+                                section == DiscoverSection.RANKINGS
+                            },
+                            rankings = if (isRefresh) it.rankings else DiscoverLoadState.Error(result.failure),
+                        )
+                    }
+                    if (isRefresh) mutableRefreshFailures.emit(result.failure)
                 }
             }
         }
     }
 
-    private fun loadAlbums() {
+    private fun loadAlbums(isRefresh: Boolean = false) {
         albumsJob?.cancel()
-        mutableUiState.update { it.copy(albums = DiscoverLoadState.Loading) }
+        mutableUiState.update {
+            it.copy(
+                refreshingSection = if (isRefresh) {
+                    DiscoverSection.ALBUMS
+                } else {
+                    it.refreshingSection.takeUnless { section -> section == DiscoverSection.ALBUMS }
+                },
+                albums = if (isRefresh) it.albums else DiscoverLoadState.Loading,
+            )
+        }
         albumsJob = viewModelScope.launch {
             when (val result = catalogRepository.loadNewAlbums(page = 1, pageSize = PAGE_SIZE)) {
                 is CollectionLoadResult.Available -> mutableUiState.update {
                     it.copy(
+                        refreshingSection = it.refreshingSection.takeUnless { section ->
+                            section == DiscoverSection.ALBUMS
+                        },
                         albums = if (result.value.isEmpty()) {
                             DiscoverLoadState.Empty
                         } else {
@@ -209,19 +294,34 @@ class DiscoverViewModel @Inject constructor(
                         },
                     )
                 }
-                is CollectionLoadResult.Failed -> mutableUiState.update {
-                    it.copy(albums = DiscoverLoadState.Error(result.failure))
+                is CollectionLoadResult.Failed -> {
+                    mutableUiState.update {
+                        it.copy(
+                            refreshingSection = it.refreshingSection.takeUnless { section ->
+                                section == DiscoverSection.ALBUMS
+                            },
+                            albums = if (isRefresh) it.albums else DiscoverLoadState.Error(result.failure),
+                        )
+                    }
+                    if (isRefresh) mutableRefreshFailures.emit(result.failure)
                 }
             }
         }
     }
 
-    private fun loadSongs(page: Int) {
+    private fun loadSongs(page: Int, isRefresh: Boolean = false) {
         songsJob?.cancel()
         val current = mutableUiState.value.songs as? DiscoverPageState.Content
         mutableUiState.update {
             it.copy(
-                songs = if (page == 1) {
+                refreshingSection = if (isRefresh) {
+                    DiscoverSection.SONGS
+                } else {
+                    it.refreshingSection.takeUnless { section -> section == DiscoverSection.SONGS }
+                },
+                songs = if (isRefresh) {
+                    requireNotNull(current)
+                } else if (page == 1) {
                     DiscoverPageState.Loading
                 } else {
                     requireNotNull(current).copy(isLoadingMore = true, loadMoreFailure = null)
@@ -239,6 +339,9 @@ class DiscoverViewModel @Inject constructor(
                         latest.items + result.value.songs.filter { seen.add(it.hash) }
                     }
                     state.copy(
+                        refreshingSection = state.refreshingSection.takeUnless {
+                            it == DiscoverSection.SONGS
+                        },
                         songs = if (items.isEmpty()) {
                             DiscoverPageState.Empty
                         } else {
@@ -246,15 +349,23 @@ class DiscoverViewModel @Inject constructor(
                         },
                     )
                 }
-                is CollectionLoadResult.Failed -> mutableUiState.update { state ->
-                    state.copy(
-                        songs = if (page == 1) {
-                            DiscoverPageState.Error(result.failure)
-                        } else {
-                            val latest = state.songs as? DiscoverPageState.Content ?: return@update state
-                            latest.copy(isLoadingMore = false, loadMoreFailure = result.failure)
-                        },
-                    )
+                is CollectionLoadResult.Failed -> {
+                    mutableUiState.update { state ->
+                        state.copy(
+                            refreshingSection = state.refreshingSection.takeUnless {
+                                it == DiscoverSection.SONGS
+                            },
+                            songs = when {
+                                isRefresh -> state.songs
+                                page == 1 -> DiscoverPageState.Error(result.failure)
+                                else -> {
+                                    val latest = state.songs as? DiscoverPageState.Content ?: return@update state
+                                    latest.copy(isLoadingMore = false, loadMoreFailure = result.failure)
+                                }
+                            },
+                        )
+                    }
+                    if (isRefresh) mutableRefreshFailures.emit(result.failure)
                 }
             }
         }

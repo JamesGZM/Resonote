@@ -1,10 +1,5 @@
 package com.resonote.feature.home.impl
 
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -34,20 +29,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
@@ -63,12 +50,14 @@ import com.resonote.core.designsystem.component.ResonoteMusicItem
 import com.resonote.core.designsystem.component.ResonotePlainAction
 import com.resonote.core.designsystem.component.ResonotePlaylistItem
 import com.resonote.core.designsystem.component.ResonotePlaylistMetadata
-import com.resonote.core.designsystem.component.ResonotePullToRefreshIndicator
+import com.resonote.core.designsystem.component.ResonotePullToRefreshBox
 import com.resonote.core.designsystem.component.ResonoteSectionHeader
+import com.resonote.core.designsystem.component.ResonoteShimmer
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
+import com.resonote.core.designsystem.component.rememberResonoteShimmer
+import com.resonote.core.designsystem.component.resonoteShimmer
 import com.resonote.core.designsystem.tokens.ResonoteTokens
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     state: HomeContentUiState,
@@ -87,21 +76,12 @@ fun HomeScreen(
     onPlaylistClick: (HomePlaylistUiModel) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val pullToRefreshState = rememberPullToRefreshState()
-    PullToRefreshBox(
+    ResonotePullToRefreshBox(
         isRefreshing = isRefreshing,
         onRefresh = onRefresh,
         modifier = modifier
             .fillMaxSize()
             .testTag("home-pull-to-refresh"),
-        state = pullToRefreshState,
-        indicator = {
-            ResonotePullToRefreshIndicator(
-                state = pullToRefreshState,
-                isRefreshing = isRefreshing,
-                modifier = Modifier.align(Alignment.TopCenter),
-            )
-        },
     ) {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
@@ -210,16 +190,7 @@ internal fun HomeLoading(
     onRecognitionClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val transition = rememberInfiniteTransition(label = "home-skeleton")
-    val offset = transition.animateFloat(
-        initialValue = -300f,
-        targetValue = 1_200f,
-        animationSpec = infiniteRepeatable(animation = tween(1_200), repeatMode = RepeatMode.Restart),
-        label = "home-skeleton-offset",
-    )
-    val base = MaterialTheme.colorScheme.surfaceVariant
-    val highlight = MaterialTheme.colorScheme.surface
-    val shimmer = remember(offset, base, highlight) { HomeShimmer(offset, base, highlight) }
+    val shimmer = rememberResonoteShimmer(label = "home-skeleton")
 
     Scaffold(
         modifier = modifier.fillMaxSize().testTag("home-loading-skeleton"),
@@ -236,7 +207,7 @@ internal fun HomeLoading(
                     repeat(3) {
                         Spacer(
                             Modifier.weight(1f).aspectRatio(1f)
-                                .homeShimmer(shimmer, MaterialTheme.shapes.large),
+                                .resonoteShimmer(shimmer, MaterialTheme.shapes.large),
                         )
                     }
                 }
@@ -250,7 +221,7 @@ internal fun HomeLoading(
                             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Spacer(
                                     Modifier.fillMaxWidth().aspectRatio(1f)
-                                        .homeShimmer(shimmer, MaterialTheme.shapes.large),
+                                        .resonoteShimmer(shimmer, MaterialTheme.shapes.large),
                                 )
                                 SkeletonLine(shimmer, width = 116.dp, height = 14.dp)
                                 SkeletonLine(shimmer, width = 72.dp, height = 12.dp)
@@ -264,9 +235,9 @@ internal fun HomeLoading(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun HomeTopBar(onSearchClick: () -> Unit, onRecognitionClick: () -> Unit) {
+@OptIn(ExperimentalMaterial3Api::class)
+internal fun HomeTopBar(onSearchClick: () -> Unit, onRecognitionClick: () -> Unit) {
     ResonoteTopAppBar(
         title = {
             Image(
@@ -293,12 +264,12 @@ private fun HomeTopBar(onSearchClick: () -> Unit, onRecognitionClick: () -> Unit
 }
 
 @Composable
-private fun SkeletonSection(shimmer: HomeShimmer, rows: Int) {
+private fun SkeletonSection(shimmer: ResonoteShimmer, rows: Int) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         SkeletonLine(shimmer, width = 156.dp, height = 20.dp)
         repeat(rows) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Spacer(Modifier.size(56.dp).homeShimmer(shimmer, MaterialTheme.shapes.medium))
+                Spacer(Modifier.size(56.dp).resonoteShimmer(shimmer, MaterialTheme.shapes.medium))
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     SkeletonLine(shimmer, width = 180.dp, height = 15.dp)
                     SkeletonLine(shimmer, width = 112.dp, height = 12.dp)
@@ -309,21 +280,8 @@ private fun SkeletonSection(shimmer: HomeShimmer, rows: Int) {
 }
 
 @Composable
-private fun SkeletonLine(shimmer: HomeShimmer, width: Dp, height: Dp) {
-    Spacer(Modifier.width(width).height(height).homeShimmer(shimmer, MaterialTheme.shapes.small))
-}
-
-private data class HomeShimmer(val offset: State<Float>, val base: Color, val highlight: Color)
-
-private fun Modifier.homeShimmer(shimmer: HomeShimmer, shape: Shape): Modifier = clip(shape).drawBehind {
-    val offset = shimmer.offset.value
-    drawRect(
-        brush = Brush.linearGradient(
-            colors = listOf(shimmer.base, shimmer.highlight, shimmer.base),
-            start = Offset(offset - 300f, 0f),
-            end = Offset(offset, 300f),
-        ),
-    )
+private fun SkeletonLine(shimmer: ResonoteShimmer, width: Dp, height: Dp) {
+    Spacer(Modifier.width(width).height(height).resonoteShimmer(shimmer, MaterialTheme.shapes.small))
 }
 
 @Composable

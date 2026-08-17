@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,17 +23,11 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.BarChart
-import androidx.compose.material.icons.rounded.CloudOff
-import androidx.compose.material.icons.rounded.MusicNote
-import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -42,26 +37,34 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.resonote.core.designsystem.component.LocalResonoteSnackbarController
 import com.resonote.core.designsystem.component.ResonoteArtwork
 import com.resonote.core.designsystem.component.ResonoteArtworkState
+import com.resonote.core.designsystem.component.ResonoteEmptyState
+import com.resonote.core.designsystem.component.ResonoteErrorState
 import com.resonote.core.designsystem.component.ResonoteFilterPill
+import com.resonote.core.designsystem.component.ResonoteLoadMoreEffect
+import com.resonote.core.designsystem.component.ResonoteLoadMoreFooter
+import com.resonote.core.designsystem.component.ResonoteLoadMoreState
 import com.resonote.core.designsystem.component.ResonoteMusicItem
 import com.resonote.core.designsystem.component.ResonotePlainAction
 import com.resonote.core.designsystem.component.ResonotePlaylistItem
 import com.resonote.core.designsystem.component.ResonotePlaylistMetadata
+import com.resonote.core.designsystem.component.ResonotePullToRefreshBox
 import com.resonote.core.designsystem.component.ResonoteRemoteArtwork
+import com.resonote.core.designsystem.component.ResonoteSectionHeader
+import com.resonote.core.designsystem.component.ResonoteShimmer
 import com.resonote.core.designsystem.component.ResonoteTabbedToolbar
-import com.resonote.core.designsystem.tokens.ResonoteTokens
+import com.resonote.core.designsystem.component.rememberResonoteShimmer
+import com.resonote.core.designsystem.component.resonoteShimmer
 import com.resonote.core.model.Album
 import com.resonote.core.model.AlbumRegion
 import com.resonote.core.model.AudioQuality
@@ -86,6 +89,11 @@ fun DiscoverRoute(
     viewModel: DiscoverViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarController = LocalResonoteSnackbarController.current
+    val refreshFailureMessage = stringResource(R.string.feature_discover_impl_discover_refresh_failed)
+    LaunchedEffect(viewModel, snackbarController) {
+        viewModel.refreshFailures.collect { snackbarController?.show(refreshFailureMessage) }
+    }
     LaunchedEffect(requestedSection) {
         requestedSection?.let {
             viewModel.selectSection(it)
@@ -102,6 +110,7 @@ fun DiscoverRoute(
         onSelectAlbumRegion = viewModel::selectAlbumRegion,
         onRetryCategories = viewModel::retryCategories,
         onRetry = viewModel::retryCurrent,
+        onRefresh = viewModel::refreshCurrent,
         onLoadMore = viewModel::loadMore,
         onPlaylistClick = onPlaylistClick,
         onRankingClick = onRankingClick,
@@ -123,6 +132,7 @@ fun DiscoverScreen(
     onSelectAlbumRegion: (AlbumRegion?) -> Unit,
     onRetryCategories: () -> Unit,
     onRetry: () -> Unit,
+    onRefresh: () -> Unit,
     onLoadMore: () -> Unit,
     onPlaylistClick: (PlaylistSummary) -> Unit,
     onRankingClick: (Ranking) -> Unit,
@@ -144,7 +154,12 @@ fun DiscoverScreen(
             )
         },
     ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding)) {
+        ResonotePullToRefreshBox(
+            isRefreshing = state.refreshingSection == state.selectedSection,
+            onRefresh = onRefresh,
+            enabled = state.selectedSection.hasContent(state),
+            modifier = Modifier.fillMaxSize().padding(padding).testTag("discover-pull-to-refresh"),
+        ) {
             stateHolder.SaveableStateProvider(state.selectedSection.name) {
                 when (state.selectedSection) {
                     DiscoverSection.PLAYLISTS -> PlaylistPane(
@@ -199,6 +214,14 @@ private fun PlaylistPane(
     onPlaylistClick: (PlaylistSummary) -> Unit,
 ) {
     val listState = rememberLazyListState()
+    val shimmer = rememberResonoteShimmer("discover-playlists-skeleton")
+    val page = state.playlists as? DiscoverPageState.Content
+    ResonoteLoadMoreEffect(
+        listState = listState,
+        itemCount = page?.items?.size ?: 0,
+        enabled = page?.let { it.hasMore && !it.isLoadingMore && it.loadMoreFailure == null } == true,
+        onLoadMore = onLoadMore,
+    )
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize().testTag("discover-playlists"),
@@ -217,11 +240,12 @@ private fun PlaylistPane(
         when (val page = state.playlists) {
             DiscoverPageState.Idle,
             DiscoverPageState.Loading,
-            -> item(key = "loading") { PaneLoading() }
+            -> item(key = "loading") { PlaylistSkeleton(shimmer) }
             DiscoverPageState.Empty -> item(key = "empty") {
-                PaneMessage(
-                    Icons.Rounded.MusicNote,
-                    stringResource(R.string.feature_discover_impl_discover_empty_playlists),
+                ResonoteEmptyState(
+                    title = stringResource(R.string.feature_discover_impl_discover_empty_playlists),
+                    message = stringResource(R.string.feature_discover_impl_discover_empty_playlists_supporting),
+                    modifier = Modifier.fillMaxWidth().height(300.dp),
                 )
             }
             is DiscoverPageState.Error -> item(key = "error") { PaneError(page.failure, onRetry) }
@@ -258,8 +282,17 @@ private fun PlaylistPane(
                         if (row.size == 1) Spacer(Modifier.weight(1f))
                     }
                 }
-                if (page.hasMore || page.isLoadingMore || page.loadMoreFailure != null) {
-                    item(key = "load-more") { PageFooter(page.isLoadingMore, page.loadMoreFailure, onLoadMore) }
+                if (page.isLoadingMore || page.loadMoreFailure != null) {
+                    item(key = "load-more") {
+                        ResonoteLoadMoreFooter(
+                            state = if (page.isLoadingMore) {
+                                ResonoteLoadMoreState.LOADING
+                            } else {
+                                ResonoteLoadMoreState.ERROR
+                            },
+                            onRetry = onLoadMore,
+                        )
+                    }
                 }
             }
         }
@@ -341,6 +374,7 @@ private fun RankingPane(
     onRankingClick: (Ranking) -> Unit,
 ) {
     val listState = rememberLazyListState()
+    val shimmer = rememberResonoteShimmer("discover-rankings-skeleton")
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize().testTag("discover-rankings"),
@@ -350,19 +384,20 @@ private fun RankingPane(
         when (rankings) {
             DiscoverLoadState.Idle,
             DiscoverLoadState.Loading,
-            -> item { PaneLoading() }
+            -> items(6) { RankingSkeleton(shimmer) }
             DiscoverLoadState.Empty -> item {
-                PaneMessage(
-                    Icons.Rounded.BarChart,
-                    stringResource(R.string.feature_discover_impl_discover_empty_rankings),
+                ResonoteEmptyState(
+                    title = stringResource(R.string.feature_discover_impl_discover_empty_rankings),
+                    message = stringResource(R.string.feature_discover_impl_discover_empty_rankings_supporting),
+                    modifier = Modifier.fillMaxWidth().height(300.dp),
                 )
             }
             is DiscoverLoadState.Error -> item { PaneError(rankings.failure, onRetry) }
-            is DiscoverLoadState.Content -> itemsIndexed(
+            is DiscoverLoadState.Content -> items(
                 items = rankings.value,
-                key = { index, item -> "${item.id}-$index" },
-            ) { index, ranking ->
-                RankingCard(index + 1, ranking, onClick = { onRankingClick(ranking) })
+                key = Ranking::id,
+            ) { ranking ->
+                RankingCard(ranking, onClick = { onRankingClick(ranking) })
             }
         }
     }
@@ -378,6 +413,7 @@ private fun AlbumPane(
     onAlbumClick: (Album) -> Unit,
 ) {
     val listState = rememberLazyListState()
+    val shimmer = rememberResonoteShimmer("discover-albums-skeleton")
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize().testTag("discover-albums"),
@@ -412,18 +448,23 @@ private fun AlbumPane(
         when (albums) {
             DiscoverLoadState.Idle,
             DiscoverLoadState.Loading,
-            -> item { PaneLoading() }
+            -> item { AlbumGridSkeleton(shimmer) }
             DiscoverLoadState.Empty -> item {
-                PaneMessage(Icons.Rounded.Album, stringResource(R.string.feature_discover_impl_discover_empty_albums))
+                ResonoteEmptyState(
+                    title = stringResource(R.string.feature_discover_impl_discover_empty_albums),
+                    message = stringResource(R.string.feature_discover_impl_discover_empty_albums_supporting),
+                    modifier = Modifier.fillMaxWidth().height(300.dp),
+                )
             }
             is DiscoverLoadState.Error -> item { PaneError(albums.failure, onRetry) }
             is DiscoverLoadState.Content -> {
                 val filtered = albums.value.filter { selectedRegion == null || it.region == selectedRegion }
                 if (filtered.isEmpty()) {
                     item {
-                        PaneMessage(
-                            Icons.Rounded.Album,
-                            stringResource(R.string.feature_discover_impl_discover_empty_albums),
+                        ResonoteEmptyState(
+                            title = stringResource(R.string.feature_discover_impl_discover_empty_albums),
+                            message = stringResource(R.string.feature_discover_impl_discover_empty_albums_supporting),
+                            modifier = Modifier.fillMaxWidth().height(300.dp),
                         )
                     }
                 } else {
@@ -462,6 +503,14 @@ private fun SongPane(
     onSongMoreClick: ((OnlineSong) -> Unit)?,
 ) {
     val listState = rememberLazyListState()
+    val shimmer = rememberResonoteShimmer("discover-songs-skeleton")
+    val page = songs as? DiscoverPageState.Content
+    ResonoteLoadMoreEffect(
+        listState = listState,
+        itemCount = page?.items?.size ?: 0,
+        enabled = page?.let { it.hasMore && !it.isLoadingMore && it.loadMoreFailure == null } == true,
+        onLoadMore = onLoadMore,
+    )
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize().testTag("discover-songs"),
@@ -470,25 +519,32 @@ private fun SongPane(
         when (songs) {
             DiscoverPageState.Idle,
             DiscoverPageState.Loading,
-            -> item { PaneLoading() }
+            -> item { SongListSkeleton(shimmer) }
             DiscoverPageState.Empty -> item {
-                PaneMessage(
-                    Icons.Rounded.MusicNote,
-                    stringResource(R.string.feature_discover_impl_discover_empty_songs),
+                ResonoteEmptyState(
+                    title = stringResource(R.string.feature_discover_impl_discover_empty_songs),
+                    message = stringResource(R.string.feature_discover_impl_discover_empty_songs_supporting),
+                    modifier = Modifier.fillMaxWidth().height(300.dp),
                 )
             }
             is DiscoverPageState.Error -> item { PaneError(songs.failure, onRetry) }
             is DiscoverPageState.Content -> {
                 item(key = "play-all") {
-                    Button(
-                        onClick = { onPlaySongs(songs.items) },
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp),
-                        contentPadding = PaddingValues(vertical = 14.dp),
-                    ) {
-                        Icon(Icons.Rounded.PlayArrow, null)
-                        Spacer(Modifier.width(8.dp))
-                        Text(stringResource(R.string.feature_discover_impl_discover_play_all))
-                    }
+                    ResonoteSectionHeader(
+                        title = stringResource(R.string.feature_discover_impl_discover_new_songs_title),
+                        supportingText = stringResource(R.string.feature_discover_impl_discover_new_songs_supporting),
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                        trailingContent = {
+                            ResonotePlainAction(onClick = { onPlaySongs(songs.items) }) {
+                                Text(
+                                    text = stringResource(R.string.feature_discover_impl_discover_play_all),
+                                    modifier = Modifier.padding(horizontal = 8.dp),
+                                    color = MaterialTheme.colorScheme.primary,
+                                    style = MaterialTheme.typography.labelLarge,
+                                )
+                            }
+                        },
+                    )
                 }
                 itemsIndexed(
                     items = songs.items,
@@ -497,6 +553,7 @@ private fun SongPane(
                     ResonoteMusicItem(
                         title = song.title,
                         supportingText = song.artist.orEmpty(),
+                        modifier = Modifier.padding(horizontal = 8.dp),
                         duration = song.durationMillis.durationLabel(),
                         qualityLabel = song.quality.label(),
                         isVip = song.vip,
@@ -506,8 +563,17 @@ private fun SongPane(
                         onMoreClick = onSongMoreClick?.let { callback -> { callback(song) } },
                     )
                 }
-                if (songs.hasMore || songs.isLoadingMore || songs.loadMoreFailure != null) {
-                    item(key = "load-more") { PageFooter(songs.isLoadingMore, songs.loadMoreFailure, onLoadMore) }
+                if (songs.isLoadingMore || songs.loadMoreFailure != null) {
+                    item(key = "load-more") {
+                        ResonoteLoadMoreFooter(
+                            state = if (songs.isLoadingMore) {
+                                ResonoteLoadMoreState.LOADING
+                            } else {
+                                ResonoteLoadMoreState.ERROR
+                            },
+                            onRetry = onLoadMore,
+                        )
+                    }
                 }
             }
         }
@@ -515,19 +581,29 @@ private fun SongPane(
 }
 
 @Composable
-private fun RankingCard(position: Int, ranking: Ranking, onClick: () -> Unit) {
-    Surface(
+private fun RankingCard(ranking: Ranking, onClick: () -> Unit) {
+    ResonotePlainAction(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        shape = MaterialTheme.shapes.medium,
     ) {
-        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Box(
-                Modifier.size(72.dp).clip(MaterialTheme.shapes.medium)
+                Modifier.size(60.dp).clip(MaterialTheme.shapes.medium)
                     .background(MaterialTheme.colorScheme.surfaceContainerHighest),
                 contentAlignment = Alignment.Center,
             ) {
+                Icon(
+                    Icons.Rounded.BarChart,
+                    contentDescription = stringResource(
+                        R.string.feature_discover_impl_discover_ranking_artwork,
+                        ranking.title,
+                    ),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
                 if (!ranking.coverUrl.isNullOrBlank()) {
                     ResonoteRemoteArtwork(
                         model = ranking.coverUrl,
@@ -536,20 +612,8 @@ private fun RankingCard(position: Int, ranking: Ranking, onClick: () -> Unit) {
                         fallback = {},
                     )
                 }
-                Surface(
-                    color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.52f),
-                    contentColor = ResonoteTokens.systemColors.onScrim,
-                    shape = MaterialTheme.shapes.small,
-                ) {
-                    Text(
-                        position.toString().padStart(2, '0'),
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
             }
-            Spacer(Modifier.width(16.dp))
+            Spacer(Modifier.width(14.dp))
             Text(
                 ranking.title,
                 modifier = Modifier.weight(1f),
@@ -559,8 +623,9 @@ private fun RankingCard(position: Int, ranking: Ranking, onClick: () -> Unit) {
                 overflow = TextOverflow.Ellipsis,
             )
             Icon(
-                Icons.Rounded.BarChart,
-                stringResource(R.string.feature_discover_impl_discover_ranking_artwork, ranking.title),
+                Icons.Rounded.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -608,21 +673,11 @@ private fun AlbumCard(album: Album, onClick: () -> Unit, modifier: Modifier = Mo
 }
 
 @Composable
-private fun PaneLoading() {
-    Box(Modifier.fillMaxWidth().height(280.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-}
-
-@Composable
 private fun LinearFilterLoading(modifier: Modifier = Modifier) {
+    val shimmer = rememberResonoteShimmer("discover-filter-skeleton")
     Row(modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         repeat(4) {
-            Box(
-                Modifier.width(
-                    72.dp,
-                ).height(
-                    32.dp,
-                ).clip(MaterialTheme.shapes.large).background(MaterialTheme.colorScheme.surfaceContainerHigh),
-            )
+            Spacer(Modifier.width(72.dp).height(32.dp).resonoteShimmer(shimmer, MaterialTheme.shapes.large))
         }
     }
 }
@@ -634,49 +689,102 @@ private fun PaneError(failure: ContentFailure, onRetry: () -> Unit) {
         ContentFailure.AuthenticationRequired -> stringResource(R.string.feature_discover_impl_discover_error_auth)
         else -> stringResource(R.string.feature_discover_impl_discover_error_generic)
     }
-    PaneMessage(
-        icon = Icons.Rounded.CloudOff,
-        text = body,
+    ResonoteErrorState(
+        onRetry = onRetry,
+        message = body,
         title = stringResource(R.string.feature_discover_impl_discover_error_title),
-        action = { Button(onClick = onRetry) { Text(stringResource(R.string.feature_discover_impl_discover_retry)) } },
+        retryLabel = stringResource(R.string.feature_discover_impl_discover_retry),
+        modifier = Modifier.fillMaxWidth().height(300.dp),
     )
 }
 
 @Composable
-private fun PaneMessage(
-    icon: ImageVector,
-    text: String,
-    title: String? = null,
-    action: (@Composable () -> Unit)? = null,
-) {
-    Box(Modifier.fillMaxWidth().height(300.dp).padding(32.dp), contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Icon(
-                icon,
-                contentDescription = null,
-                modifier = Modifier.size(36.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            title?.let { Text(it, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold) }
-            Text(text, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
-            action?.invoke()
+private fun PlaylistSkeleton(shimmer: ResonoteShimmer) {
+    Column(Modifier.padding(horizontal = 16.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        repeat(3) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                repeat(2) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Spacer(
+                            Modifier.fillMaxWidth().aspectRatio(1f)
+                                .resonoteShimmer(shimmer, MaterialTheme.shapes.large),
+                        )
+                        SkeletonLine(shimmer, 116.dp, 15.dp)
+                        SkeletonLine(shimmer, 72.dp, 12.dp)
+                    }
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun PageFooter(isLoading: Boolean, failure: ContentFailure?, onLoadMore: () -> Unit) {
-    Box(Modifier.fillMaxWidth().padding(20.dp), contentAlignment = Alignment.Center) {
-        when {
-            isLoading -> CircularProgressIndicator(Modifier.size(28.dp))
-            failure != null -> TextButton(onClick = onLoadMore) {
-                Text(stringResource(R.string.feature_discover_impl_discover_load_more_retry))
-            }
-            else -> TextButton(onClick = onLoadMore) {
-                Text(stringResource(R.string.feature_discover_impl_discover_load_more))
+private fun RankingSkeleton(shimmer: ResonoteShimmer) {
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Spacer(Modifier.size(60.dp).resonoteShimmer(shimmer, MaterialTheme.shapes.medium))
+        Spacer(Modifier.width(14.dp))
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            SkeletonLine(shimmer, 164.dp, 16.dp)
+            SkeletonLine(shimmer, 96.dp, 11.dp)
+        }
+    }
+}
+
+@Composable
+private fun AlbumGridSkeleton(shimmer: ResonoteShimmer) {
+    Column(Modifier.padding(horizontal = 16.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        repeat(3) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                repeat(2) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Spacer(
+                            Modifier.fillMaxWidth().height(164.dp)
+                                .resonoteShimmer(shimmer, MaterialTheme.shapes.large),
+                        )
+                        SkeletonLine(shimmer, 120.dp, 15.dp)
+                        SkeletonLine(shimmer, 88.dp, 12.dp)
+                    }
+                }
             }
         }
     }
+}
+
+@Composable
+private fun SongListSkeleton(shimmer: ResonoteShimmer) {
+    Column(Modifier.padding(horizontal = 16.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                SkeletonLine(shimmer, 116.dp, 18.dp)
+                SkeletonLine(shimmer, 152.dp, 11.dp)
+            }
+            SkeletonLine(shimmer, 64.dp, 14.dp)
+        }
+        repeat(7) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Spacer(Modifier.size(56.dp).resonoteShimmer(shimmer, MaterialTheme.shapes.medium))
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SkeletonLine(shimmer, 176.dp, 15.dp)
+                    SkeletonLine(shimmer, 108.dp, 12.dp)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SkeletonLine(shimmer: ResonoteShimmer, width: Dp, height: Dp) {
+    Spacer(Modifier.width(width).height(height).resonoteShimmer(shimmer, MaterialTheme.shapes.small))
+}
+
+private fun DiscoverSection.hasContent(state: DiscoverUiState): Boolean = when (this) {
+    DiscoverSection.PLAYLISTS -> state.playlists is DiscoverPageState.Content
+    DiscoverSection.RANKINGS -> state.rankings is DiscoverLoadState.Content
+    DiscoverSection.ALBUMS -> state.albums is DiscoverLoadState.Content
+    DiscoverSection.SONGS -> state.songs is DiscoverPageState.Content
 }
 
 @Composable

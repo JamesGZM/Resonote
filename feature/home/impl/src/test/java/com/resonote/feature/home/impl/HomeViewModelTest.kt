@@ -12,10 +12,13 @@ import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.PlaylistSummary
 import com.resonote.core.model.RadioRecommendationResult
 import com.resonote.core.model.RecommendationMode
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -119,9 +122,26 @@ class HomeViewModelTest {
         assertThat(state.issues).containsExactly(HomeSection.NewSongs)
     }
 
+    @Test
+    fun refreshFailureWithContentEmitsNonDestructiveEvent() = runTest(dispatcher) {
+        val repository = FakeHomeRepository(content())
+        val viewModel = HomeViewModel(repository)
+        advanceUntilIdle()
+        val event = async(start = CoroutineStart.UNDISPATCHED) { viewModel.refreshFailures.first() }
+        repository.refreshResult = HomeRefreshResult.Failed(
+            listOf(HomeIssue(HomeSection.NewSongs, ContentFailure.Network)),
+        )
+
+        viewModel.refresh()
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value).isInstanceOf(HomeUiState.Content::class.java)
+        assertThat(event.await()).containsExactly(HomeSection.NewSongs)
+    }
+
     private class FakeHomeRepository(
         initialContent: HomeContent?,
-        private val refreshResult: HomeRefreshResult =
+        var refreshResult: HomeRefreshResult =
             requireNotNull(initialContent).let { HomeRefreshResult.Updated(it, emptyList()) },
     ) : HomeRepository {
         private val mutableContent = MutableStateFlow(initialContent)
@@ -131,8 +151,9 @@ class HomeViewModelTest {
 
         override suspend fun refresh(): HomeRefreshResult {
             refreshCalls += 1
-            if (refreshResult is HomeRefreshResult.Updated) mutableContent.value = refreshResult.content
-            return refreshResult
+            val result = refreshResult
+            if (result is HomeRefreshResult.Updated) mutableContent.value = result.content
+            return result
         }
 
         override suspend fun loadRadio(mode: RecommendationMode): RadioRecommendationResult {

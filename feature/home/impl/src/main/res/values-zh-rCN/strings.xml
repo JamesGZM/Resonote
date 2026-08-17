@@ -18,4 +18,7 @@
     <string name="feature_home_impl_new_releases_subtitle">第一时间听见新鲜声音</string>
     <string name="feature_home_impl_play_all">播放全部</string>
     <string name="feature_home_impl_retry">重试</string>
+    <string name="feature_home_impl_error_title">首页内容加载失败</string>
+    <string name="feature_home_impl_error_message">请检查网络连接后，重新加载你的推荐内容。</string>
+    <string name="feature_home_impl_refresh_failed">部分首页内容刷新失败，请稍后重试。</string>
 </resources>

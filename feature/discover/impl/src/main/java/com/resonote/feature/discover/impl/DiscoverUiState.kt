@@ -40,6 +40,7 @@ sealed interface DiscoverPageState<out T> {
 @Immutable
 data class DiscoverUiState(
     val selectedSection: DiscoverSection = DiscoverSection.PLAYLISTS,
+    val refreshingSection: DiscoverSection? = null,
     val categories: DiscoverLoadState<List<PlaylistCategory>> = DiscoverLoadState.Idle,
     val selectedParentCategoryId: Int? = null,
     val selectedPlaylistCategoryId: Int = 0,
