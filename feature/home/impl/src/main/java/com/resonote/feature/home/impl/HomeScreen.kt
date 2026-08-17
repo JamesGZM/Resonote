@@ -354,8 +354,8 @@ private fun RecommendationArea(
             iconRes = R.drawable.feature_home_impl_home_ranking_bars,
             iconWidth = 64.dp,
             iconHeight = 43.dp,
-            containerColor = MaterialTheme.colorScheme.secondary,
-            contentColor = MaterialTheme.colorScheme.onSecondary,
+            containerColor = ResonoteTokens.brandColors.harmonicViolet,
+            contentColor = ResonoteTokens.brandColors.onHarmonicViolet,
             onClick = onOpenRankings,
             modifier = Modifier
                 .weight(1f)

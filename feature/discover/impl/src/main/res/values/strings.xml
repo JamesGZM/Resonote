@@ -5,6 +5,7 @@
     <string name="feature_discover_impl_discover_albums">新碟</string>
     <string name="feature_discover_impl_discover_songs">新歌</string>
     <string name="feature_discover_impl_discover_recommended">推荐</string>
+    <string name="feature_discover_impl_discover_all">全部</string>
     <string name="feature_discover_impl_discover_chinese">华语</string>
     <string name="feature_discover_impl_discover_western">欧美</string>
     <string name="feature_discover_impl_discover_japanese">日本</string>

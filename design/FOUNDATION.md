@@ -1,7 +1,7 @@
 # Resonote Foundation
 
 > 状态：执行基线；00–05 已冻结  
-> 更新日期：2026-08-10  
+> 更新日期：2026-08-17
 > 规范范围：Brand、Color、Typography、Shape、Elevation、Layout、Iconography、Imagery、Motion、States、Accessibility  
 > 规范权威：本文件中的 Token、数值、行为与边界  
 > Material 基线：`androidx.compose.material3:material3:1.4.0` 稳定版 Baseline；排除 1.5 Alpha 与 Expressive Token
@@ -49,7 +49,7 @@ Canonical Mark：
 
 - Canonical Mark 使用 `108 × 108` 坐标系；Launcher 派生 Vector 围绕 `54 / 54` 中心缩放至 `0.62×`，Splash 派生保持 `0.72×`。两者使用独立光学尺寸，不改变母版几何。
 - 以 `R + 波形` 的开放结构为唯一 Mark；基准 Stroke 为 `6`、Round Cap、Round Join，不增加文字、音符、阴影、渐变或装饰角标。
-- 主 App 使用白色 Mark + `brandPrimary / Pulse Rose #B83252` 纯色背景；Catalog 伴生版使用白色 Mark + `brandSecondary / Harmonic Violet #66558F` 纯色背景。
+- 主 App 使用白色 Mark + `brandPrimary / Pulse Rose #B83252` 纯色背景；Catalog 伴生版使用白色 Mark + `catalogAccent / Harmonic Violet #66558F` 纯色背景。
 - Launcher 必须同时提供 Adaptive、Round 与 Android 13+ Monochrome 图层，并验证 Circle、Rounded Square、Squircle、Teardrop Mask 与 `16 / 24 / 32 / 48px` 小尺寸。
 
 System Splash：
@@ -97,10 +97,12 @@ Brand Key Colors
 | Token | 名称 | Hex | 用途 |
 |---|---|---|---|
 | `brandPrimary` | Pulse Rose | `#B83252` | 主品牌锚点与 Primary Palette 来源 |
-| `brandSecondary` | Harmonic Violet | `#66558F` | 次品牌锚点与 Secondary Palette 来源 |
+| `brandSecondary` | Echo Rose | `#70585B` | 与主品牌同色相的低彩度 Secondary Palette 来源 |
 | `brandTertiary` | Beat Amber | `#855300` | 节奏强调与 Tertiary Palette 来源 |
+| `catalogAccent` | Harmonic Violet | `#66558F` | Catalog 伴生版身份色；不进入主 App Secondary Palette |
 
 - 状态：**已冻结**。
+- 首页排行榜入口继续通过 Resonote Brand Extension 使用 Harmonic Violet；Light/Dark 保持原有 Violet 角色，Dynamic Color 下跟随平台 Secondary。该扩展只保护已验收首页入口，不派生主 App 的 Tonal Button、Chip 或状态容器。
 - 可复现生成入口：`design/theme-generator`。`npm ci && npm run check` 校验冻结种子与提交的 Tonal Palette 产物一致；运行时不依赖 Material Color Utilities。
 - 辅助视觉证据：`design/approved/foundation/01a-brand-key-colors.png`
 
@@ -109,7 +111,7 @@ Brand Key Colors
 | Palette | Key | T0 | T10 | T20 | T30 | T40 | T50 | T60 | T70 | T80 | T90 | T95 | T99 | T100 |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Primary / Pulse Rose | `#B83252` | `#000000` | `#400012` | `#670022` | `#8D0D35` | `#AE2A4B` | `#D04463` | `#F15E7B` | `#FF869A` | `#FFB2BC` | `#FFD9DD` | `#FFECED` | `#FFFBFF` | `#FFFFFF` |
-| Secondary / Harmonic Violet | `#66558F` | `#000000` | `#210F47` | `#37265D` | `#4E3D75` | `#66558F` | `#7F6DA9` | `#9987C5` | `#B4A1E1` | `#D0BCFE` | `#E9DDFF` | `#F6EDFF` | `#FFFBFF` | `#FFFFFF` |
+| Secondary / Echo Rose | `#70585B` | `#000000` | `#281719` | `#3F2B2E` | `#574144` | `#70585B` | `#8A7174` | `#A58A8D` | `#C1A4A7` | `#DEBFC2` | `#FBDBDE` | `#FFECEE` | `#FFFBFF` | `#FFFFFF` |
 | Tertiary / Beat Amber | `#855300` | `#000000` | `#2A1700` | `#472A00` | `#653E00` | `#855300` | `#A26B1D` | `#C08535` | `#DE9F4D` | `#FDB965` | `#FFDDB8` | `#FFEEDE` | `#FFFBFF` | `#FFFFFF` |
 
 - 状态：**已冻结**。
@@ -134,10 +136,10 @@ Brand Key Colors
 | Primary | `onPrimary` | 100 | `#FFFFFF` |
 | Primary | `primaryContainer` | 90 | `#FFD9DD` |
 | Primary | `onPrimaryContainer` | 10 | `#400012` |
-| Secondary | `secondary` | 40 | `#66558F` |
+| Secondary | `secondary` | 40 | `#70585B` |
 | Secondary | `onSecondary` | 100 | `#FFFFFF` |
-| Secondary | `secondaryContainer` | 90 | `#E9DDFF` |
-| Secondary | `onSecondaryContainer` | 10 | `#210F47` |
+| Secondary | `secondaryContainer` | 90 | `#FBDBDE` |
+| Secondary | `onSecondaryContainer` | 10 | `#281719` |
 | Tertiary | `tertiary` | 40 | `#855300` |
 | Tertiary | `onTertiary` | 100 | `#FFFFFF` |
 | Tertiary | `tertiaryContainer` | 90 | `#FFDDB8` |
@@ -150,10 +152,10 @@ Brand Key Colors
 | Fixed Primary | `primaryFixedDim` | 80 | `#FFB2BC` |
 | Fixed Primary | `onPrimaryFixed` | 10 | `#400012` |
 | Fixed Primary | `onPrimaryFixedVariant` | 30 | `#8D0D35` |
-| Fixed Secondary | `secondaryFixed` | 90 | `#E9DDFF` |
-| Fixed Secondary | `secondaryFixedDim` | 80 | `#D0BCFE` |
-| Fixed Secondary | `onSecondaryFixed` | 10 | `#210F47` |
-| Fixed Secondary | `onSecondaryFixedVariant` | 30 | `#4E3D75` |
+| Fixed Secondary | `secondaryFixed` | 90 | `#FBDBDE` |
+| Fixed Secondary | `secondaryFixedDim` | 80 | `#DEBFC2` |
+| Fixed Secondary | `onSecondaryFixed` | 10 | `#281719` |
+| Fixed Secondary | `onSecondaryFixedVariant` | 30 | `#574144` |
 | Fixed Tertiary | `tertiaryFixed` | 90 | `#FFDDB8` |
 | Fixed Tertiary | `tertiaryFixedDim` | 80 | `#FDB965` |
 | Fixed Tertiary | `onTertiaryFixed` | 10 | `#2A1700` |
@@ -192,10 +194,10 @@ Brand Key Colors
 | Primary | `onPrimary` | 20 | `#670022` |
 | Primary | `primaryContainer` | 30 | `#8D0D35` |
 | Primary | `onPrimaryContainer` | 90 | `#FFD9DD` |
-| Secondary | `secondary` | 80 | `#D0BCFE` |
-| Secondary | `onSecondary` | 20 | `#37265D` |
-| Secondary | `secondaryContainer` | 30 | `#4E3D75` |
-| Secondary | `onSecondaryContainer` | 90 | `#E9DDFF` |
+| Secondary | `secondary` | 80 | `#DEBFC2` |
+| Secondary | `onSecondary` | 20 | `#3F2B2E` |
+| Secondary | `secondaryContainer` | 30 | `#574144` |
+| Secondary | `onSecondaryContainer` | 90 | `#FBDBDE` |
 | Tertiary | `tertiary` | 80 | `#FDB965` |
 | Tertiary | `onTertiary` | 20 | `#472A00` |
 | Tertiary | `tertiaryContainer` | 30 | `#653E00` |
@@ -208,10 +210,10 @@ Brand Key Colors
 | Fixed Primary | `primaryFixedDim` | 80 | `#FFB2BC` |
 | Fixed Primary | `onPrimaryFixed` | 10 | `#400012` |
 | Fixed Primary | `onPrimaryFixedVariant` | 30 | `#8D0D35` |
-| Fixed Secondary | `secondaryFixed` | 90 | `#E9DDFF` |
-| Fixed Secondary | `secondaryFixedDim` | 80 | `#D0BCFE` |
-| Fixed Secondary | `onSecondaryFixed` | 10 | `#210F47` |
-| Fixed Secondary | `onSecondaryFixedVariant` | 30 | `#4E3D75` |
+| Fixed Secondary | `secondaryFixed` | 90 | `#FBDBDE` |
+| Fixed Secondary | `secondaryFixedDim` | 80 | `#DEBFC2` |
+| Fixed Secondary | `onSecondaryFixed` | 10 | `#281719` |
+| Fixed Secondary | `onSecondaryFixedVariant` | 30 | `#574144` |
 | Fixed Tertiary | `tertiaryFixed` | 90 | `#FFDDB8` |
 | Fixed Tertiary | `tertiaryFixedDim` | 80 | `#FDB965` |
 | Fixed Tertiary | `onTertiaryFixed` | 10 | `#2A1700` |
@@ -309,7 +311,7 @@ AMOLED 基于 Dark Scheme 派生。`background`、`surfaceDim`、`surface` 与 `
 | AMOLED Body | `#ECE0E0` | `#000000` | `16.31:1` | PASS | 普通文字 |
 | Beat Amber / AMOLED | `#855300` | `#000000` | `3.23:1` | LIMITED | 仅大文字与关键图形 |
 | Pulse Rose / Container | `#B83252` | `#FFD9DD` | `4.49:1` | FAIL | 不用于普通文字 |
-| Harmonic Violet / Dark | `#66558F` | `#181212` | `2.88:1` | FAIL | 不用于文字或关键图形 |
+| Catalog Violet / Dark | `#66558F` | `#181212` | `2.88:1` | FAIL | 仅用于 Catalog 品牌容器，不用于文字或关键图形 |
 
 - 比率使用 WCAG 相对亮度公式重新计算并保留两位小数。
 - 状态：**已冻结**。

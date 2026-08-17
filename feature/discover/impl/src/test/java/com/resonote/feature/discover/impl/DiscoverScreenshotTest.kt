@@ -38,11 +38,13 @@ class DiscoverScreenshotTest {
         render(
             baseState.copy(
                 categories = DiscoverLoadState.Content(categories),
+                selectedParentCategoryId = 10,
+                selectedPlaylistCategoryId = 11,
                 playlists = DiscoverPageState.Content(playlists, 1, true),
             ),
             "playlists",
         )
-        composeRule.onNodeWithText("推荐").assertExists()
+        composeRule.onNodeWithText("流行").assertExists()
         composeRule.onNodeWithText("深夜航线").assertExists()
     }
 
@@ -129,7 +131,6 @@ class DiscoverScreenshotTest {
             }
         }
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("发现").assertIsDisplayed()
         composeRule.onNodeWithText(
             when (state.selectedSection) {
                 DiscoverSection.PLAYLISTS -> "歌单"

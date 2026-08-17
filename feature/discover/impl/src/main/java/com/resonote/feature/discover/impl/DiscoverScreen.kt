@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.BarChart
@@ -28,13 +29,10 @@ import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -56,12 +54,13 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.resonote.core.designsystem.component.ResonoteArtwork
 import com.resonote.core.designsystem.component.ResonoteArtworkState
+import com.resonote.core.designsystem.component.ResonoteFilterPill
 import com.resonote.core.designsystem.component.ResonoteMusicItem
 import com.resonote.core.designsystem.component.ResonotePlainAction
 import com.resonote.core.designsystem.component.ResonotePlaylistItem
 import com.resonote.core.designsystem.component.ResonotePlaylistMetadata
 import com.resonote.core.designsystem.component.ResonoteRemoteArtwork
-import com.resonote.core.designsystem.component.ResonoteTopAppBar
+import com.resonote.core.designsystem.component.ResonoteTabbedToolbar
 import com.resonote.core.designsystem.tokens.ResonoteTokens
 import com.resonote.core.model.Album
 import com.resonote.core.model.AlbumRegion
@@ -138,22 +137,11 @@ fun DiscoverScreen(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            Column {
-                ResonoteTopAppBar(title = { Text(stringResource(R.string.feature_discover_impl_discover_title)) })
-                PrimaryScrollableTabRow(
-                    selectedTabIndex = state.selectedSection.ordinal,
-                    edgePadding = 12.dp,
-                    containerColor = MaterialTheme.colorScheme.background,
-                ) {
-                    DiscoverSection.entries.forEach { section ->
-                        Tab(
-                            selected = section == state.selectedSection,
-                            onClick = { onSelectSection(section) },
-                            text = { Text(section.label()) },
-                        )
-                    }
-                }
-            }
+            ResonoteTabbedToolbar(
+                labels = DiscoverSection.entries.map { it.label() },
+                selectedIndex = state.selectedSection.ordinal,
+                onSelected = { onSelectSection(DiscoverSection.entries[it]) },
+            )
         },
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
@@ -241,9 +229,14 @@ private fun PlaylistPane(
                 itemsIndexed(
                     items = page.items.chunked(2),
                     key = { index, row -> "row-${row.first().id}-$index" },
-                ) { _, row ->
+                ) { index, row ->
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                        modifier = Modifier.fillMaxWidth().padding(
+                            start = 16.dp,
+                            top = if (index == 0) 16.dp else 8.dp,
+                            end = 16.dp,
+                            bottom = 8.dp,
+                        ),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         row.forEach { playlist ->
@@ -282,42 +275,44 @@ private fun PlaylistFilters(
     onSelectCategory: (Int) -> Unit,
     onRetry: () -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(vertical = 12.dp)) {
+    Column {
         when (categories) {
             DiscoverLoadState.Idle,
             DiscoverLoadState.Loading,
-            -> LinearFilterLoading()
+            -> LinearFilterLoading(Modifier.padding(vertical = 8.dp))
             DiscoverLoadState.Empty -> Unit
             is DiscoverLoadState.Error -> TextButton(
                 onClick = onRetry,
-                modifier = Modifier.padding(horizontal = 8.dp),
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
             ) { Text(stringResource(R.string.feature_discover_impl_discover_categories_unavailable)) }
             is DiscoverLoadState.Content -> {
                 LazyRow(
+                    modifier = Modifier.selectableGroup().padding(vertical = 4.dp),
                     contentPadding = PaddingValues(horizontal = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     item(key = "recommended") {
-                        FilterChip(
+                        ResonoteFilterPill(
+                            label = stringResource(R.string.feature_discover_impl_discover_recommended),
                             selected = selectedParentId == null,
                             onClick = { onSelectParent(null) },
-                            label = { Text(stringResource(R.string.feature_discover_impl_discover_recommended)) },
                         )
                     }
-                    itemsIndexed(
+                    items(
                         items = categories.value,
-                        key = { index, category -> "parent-${category.tagId}-$index" },
-                    ) { _, category ->
-                        FilterChip(
+                        key = { "parent-${it.tagId}" },
+                    ) { category ->
+                        ResonoteFilterPill(
+                            label = category.name,
                             selected = category.tagId == selectedParentId,
                             onClick = { onSelectParent(category.tagId) },
-                            label = { Text(category.name) },
                         )
                     }
                 }
                 categories.value.firstOrNull { it.tagId == selectedParentId }
                     ?.children?.takeIf(List<PlaylistCategory>::isNotEmpty)?.let { children ->
                         LazyRow(
+                            modifier = Modifier.selectableGroup().padding(vertical = 4.dp),
                             contentPadding = PaddingValues(horizontal = 16.dp),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
@@ -325,10 +320,10 @@ private fun PlaylistFilters(
                                 items = children,
                                 key = { index, category -> "child-${category.tagId}-$index" },
                             ) { _, category ->
-                                FilterChip(
+                                ResonoteFilterPill(
+                                    label = category.name,
                                     selected = category.tagId == selectedCategoryId,
                                     onClick = { onSelectCategory(category.tagId) },
-                                    label = { Text(category.name) },
                                 )
                             }
                         }
@@ -389,23 +384,27 @@ private fun AlbumPane(
         contentPadding = PaddingValues(bottom = bottomContentPadding),
     ) {
         item(key = "regions") {
+            val regions = AlbumRegion.entries
             LazyRow(
-                modifier = Modifier.padding(vertical = 12.dp),
+                modifier = Modifier.selectableGroup().padding(vertical = 4.dp),
                 contentPadding = PaddingValues(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 item(key = "all") {
-                    FilterChip(
+                    ResonoteFilterPill(
+                        label = stringResource(R.string.feature_discover_impl_discover_all),
                         selected = selectedRegion == null,
                         onClick = { onSelectRegion(null) },
-                        label = { Text(stringResource(R.string.feature_discover_impl_discover_recommended)) },
                     )
                 }
-                items(AlbumRegion.entries, key = { it.name }) { region ->
-                    FilterChip(
+                items(
+                    items = regions,
+                    key = AlbumRegion::name,
+                ) { region ->
+                    ResonoteFilterPill(
+                        label = region.label(),
                         selected = selectedRegion == region,
                         onClick = { onSelectRegion(region) },
-                        label = { Text(region.label()) },
                     )
                 }
             }
@@ -431,9 +430,14 @@ private fun AlbumPane(
                     itemsIndexed(
                         items = filtered.chunked(2),
                         key = { index, row -> "album-row-${row.first().id}-$index" },
-                    ) { _, row ->
+                    ) { index, row ->
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                            modifier = Modifier.fillMaxWidth().padding(
+                                start = 16.dp,
+                                top = if (index == 0) 16.dp else 8.dp,
+                                end = 16.dp,
+                                bottom = 8.dp,
+                            ),
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
                             row.forEach { album -> AlbumCard(album, { onAlbumClick(album) }, Modifier.weight(1f)) }
@@ -609,8 +613,8 @@ private fun PaneLoading() {
 }
 
 @Composable
-private fun LinearFilterLoading() {
-    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+private fun LinearFilterLoading(modifier: Modifier = Modifier) {
+    Row(modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         repeat(4) {
             Box(
                 Modifier.width(

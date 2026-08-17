@@ -7,6 +7,14 @@ import org.junit.Test
 
 class ThemeColorSchemeTest {
     @Test
+    fun secondaryPaletteUsesMutedBrandRose() {
+        assertThat(ResonoteLightColorScheme.secondary).isEqualTo(Color(0xFF70585B))
+        assertThat(ResonoteLightColorScheme.secondaryContainer).isEqualTo(Color(0xFFFBDBDE))
+        assertThat(ResonoteDarkColorScheme.secondary).isEqualTo(Color(0xFFDEBFC2))
+        assertThat(ResonoteDarkColorScheme.secondaryContainer).isEqualTo(Color(0xFF574144))
+    }
+
+    @Test
     fun lightSurfaceRolesPreserveMaterialHierarchy() {
         assertThat(ResonoteLightColorScheme.surfaceContainerLowest).isEqualTo(Color.White)
         assertThat(ResonoteLightColorScheme.surfaceContainerLow)
@@ -34,6 +42,10 @@ class ThemeColorSchemeTest {
             ResonoteAmoledColorScheme.onSurface to ResonoteAmoledColorScheme.surface,
             ResonoteLightColorScheme.onPrimary to ResonoteLightColorScheme.primary,
             ResonoteDarkColorScheme.onPrimary to ResonoteDarkColorScheme.primary,
+            ResonoteLightColorScheme.onSecondary to ResonoteLightColorScheme.secondary,
+            ResonoteLightColorScheme.onSecondaryContainer to ResonoteLightColorScheme.secondaryContainer,
+            ResonoteDarkColorScheme.onSecondary to ResonoteDarkColorScheme.secondary,
+            ResonoteDarkColorScheme.onSecondaryContainer to ResonoteDarkColorScheme.secondaryContainer,
         ).forEach { (foreground, background) ->
             assertThat(contrastRatio(foreground, background)).isAtLeast(4.5f)
         }

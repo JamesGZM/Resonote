@@ -12,6 +12,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.resonote.core.designsystem.tokens.LocalResonoteArtwork
 import com.resonote.core.designsystem.tokens.LocalResonoteArtworkShapes
 import com.resonote.core.designsystem.tokens.LocalResonoteBorders
+import com.resonote.core.designsystem.tokens.LocalResonoteBrandColors
 import com.resonote.core.designsystem.tokens.LocalResonoteElevation
 import com.resonote.core.designsystem.tokens.LocalResonoteExtendedShapes
 import com.resonote.core.designsystem.tokens.LocalResonoteIcons
@@ -24,6 +25,7 @@ import com.resonote.core.designsystem.tokens.LocalResonoteTouchTargets
 import com.resonote.core.designsystem.tokens.ResonoteArtworkShapes
 import com.resonote.core.designsystem.tokens.ResonoteArtworkTokens
 import com.resonote.core.designsystem.tokens.ResonoteBorders
+import com.resonote.core.designsystem.tokens.ResonoteBrandColors
 import com.resonote.core.designsystem.tokens.ResonoteElevation
 import com.resonote.core.designsystem.tokens.ResonoteExtendedShapes
 import com.resonote.core.designsystem.tokens.ResonoteIconTokens
@@ -65,6 +67,17 @@ fun ResonoteTheme(
         useDarkColors -> ResonoteDarkColorScheme
         else -> ResonoteLightColorScheme
     }
+    val brandColors = when {
+        useDynamicColor -> ResonoteBrandColors(
+            harmonicViolet = colorScheme.secondary,
+            onHarmonicViolet = colorScheme.onSecondary,
+        )
+        useDarkColors -> ResonoteBrandColors(
+            harmonicViolet = androidx.compose.ui.graphics.Color(0xFFD0BCFE),
+            onHarmonicViolet = androidx.compose.ui.graphics.Color(0xFF37265D),
+        )
+        else -> ResonoteBrandColors()
+    }
     CompositionLocalProvider(
         LocalResonoteSpacing provides ResonoteSpacing(),
         LocalResonoteBorders provides ResonoteBorders(),
@@ -78,6 +91,7 @@ fun ResonoteTheme(
         LocalResonoteMotion provides motionScheme,
         LocalResonoteStateLayers provides ResonoteStateLayers(),
         LocalResonoteSystemColors provides ResonoteSystemColors(),
+        LocalResonoteBrandColors provides brandColors,
     ) {
         MaterialTheme(
             colorScheme = colorScheme,
