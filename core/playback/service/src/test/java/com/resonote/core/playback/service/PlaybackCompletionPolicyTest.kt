@@ -6,9 +6,25 @@ import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.ResolvedSongSource
 import com.resonote.core.playback.PlaybackItem
 import com.resonote.core.playback.PlaybackMode
+import com.resonote.core.playback.PlaybackStatus
 import org.junit.Test
 
 class PlaybackCompletionPolicyTest {
+    @Test
+    fun resolvingNextItemIgnoresEventsFromEndedPreviousItem() {
+        assertThat(shouldProcessPlaybackEvents(isResolving = true, status = PlaybackStatus.Resolving)).isFalse()
+    }
+
+    @Test
+    fun failedResolutionIgnoresEventsFromRetainedEndedItem() {
+        assertThat(shouldProcessPlaybackEvents(isResolving = false, status = PlaybackStatus.Failed)).isFalse()
+    }
+
+    @Test
+    fun stablePlaybackStateProcessesPlayerEvents() {
+        assertThat(shouldProcessPlaybackEvents(isResolving = false, status = PlaybackStatus.Playing)).isTrue()
+    }
+
     @Test
     fun vipPreviewInQueueAdvancesAtSourceDuration() {
         assertThat(action(mode = PlaybackMode.ListLoop, queueSize = 3, positionMillis = 59_700))

@@ -3,12 +3,16 @@ package com.resonote.core.playback.service
 import com.resonote.core.playback.PlaybackItem
 import com.resonote.core.playback.PlaybackMode
 import com.resonote.core.playback.PlaybackOrigin
+import com.resonote.core.playback.PlaybackStatus
 
 internal enum class PlaybackCompletionAction {
     Advance,
     Pause,
     Replay,
 }
+
+internal fun shouldProcessPlaybackEvents(isResolving: Boolean, status: PlaybackStatus): Boolean =
+    !isResolving && status != PlaybackStatus.Failed
 
 internal fun PlaybackItem.vipPreviewDurationMillisOrNull(): Long? {
     if (!metadata.isVip) return null

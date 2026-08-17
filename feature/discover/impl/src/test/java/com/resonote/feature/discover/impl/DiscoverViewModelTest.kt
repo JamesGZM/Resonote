@@ -86,6 +86,40 @@ class DiscoverViewModelTest {
     }
 
     @Test
+    fun rapidParentAndChildSelectionOnlyLoadsFinalCategory() = runTest(dispatcher) {
+        val catalog = FakeCatalogRepository()
+        val viewModel = DiscoverViewModel(catalog, FakeRankingRepository())
+        advanceUntilIdle()
+
+        viewModel.selectPlaylistParent(10)
+        viewModel.selectPlaylistCategory(12)
+        advanceUntilIdle()
+
+        assertThat(catalog.playlistRequests).containsExactly(
+            Triple(0, 1, 30),
+            Triple(12, 1, 30),
+        ).inOrder()
+    }
+
+    @Test
+    fun repeatedSelectedFiltersDoNotReloadPlaylists() = runTest(dispatcher) {
+        val catalog = FakeCatalogRepository()
+        val viewModel = DiscoverViewModel(catalog, FakeRankingRepository())
+        advanceUntilIdle()
+
+        viewModel.selectPlaylistParent(10)
+        advanceUntilIdle()
+        viewModel.selectPlaylistParent(10)
+        viewModel.selectPlaylistCategory(11)
+        advanceUntilIdle()
+
+        assertThat(catalog.playlistRequests).containsExactly(
+            Triple(0, 1, 30),
+            Triple(11, 1, 30),
+        ).inOrder()
+    }
+
+    @Test
     fun secondarySectionsLoadLazilyAndRemainCached() = runTest(dispatcher) {
         val catalog = FakeCatalogRepository()
         val rankings = FakeRankingRepository()

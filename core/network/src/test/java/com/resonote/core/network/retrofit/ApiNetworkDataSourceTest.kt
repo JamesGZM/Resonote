@@ -233,7 +233,7 @@ class ApiNetworkDataSourceTest {
         assertThat(body["key"]?.jsonPrimitive?.content).isNotEmpty()
         val nested = body["special_recommend"]?.jsonObject
         assertThat(nested?.get("categoryid")?.jsonPrimitive?.content).isEqualTo("0")
-        assertThat(nested?.get("withsong")?.jsonPrimitive?.content).isEqualTo("1")
+        assertThat(nested?.get("withsong")?.jsonPrimitive?.content).isEqualTo("0")
     }
 
     @Test

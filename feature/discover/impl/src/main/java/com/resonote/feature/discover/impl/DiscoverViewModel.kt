@@ -8,6 +8,7 @@ import com.resonote.core.model.AlbumRegion
 import com.resonote.core.model.CollectionLoadResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -47,6 +48,7 @@ class DiscoverViewModel @Inject constructor(
     }
 
     fun selectPlaylistParent(parentId: Int?) {
+        if (mutableUiState.value.selectedParentCategoryId == parentId) return
         val categories = (mutableUiState.value.categories as? DiscoverLoadState.Content)?.value.orEmpty()
         val parent = parentId?.let { id -> categories.firstOrNull { it.tagId == id } }
         if (parentId != null && parent == null) return
@@ -54,7 +56,7 @@ class DiscoverViewModel @Inject constructor(
         mutableUiState.update {
             it.copy(selectedParentCategoryId = parentId, selectedPlaylistCategoryId = categoryId)
         }
-        loadPlaylists(categoryId, page = 1)
+        loadPlaylists(categoryId, page = 1, selectionDebounceMillis = FILTER_SELECTION_DEBOUNCE_MILLIS)
     }
 
     fun selectPlaylistCategory(categoryId: Int) {
@@ -62,8 +64,9 @@ class DiscoverViewModel @Inject constructor(
         val categories = (state.categories as? DiscoverLoadState.Content)?.value.orEmpty()
         val parent = categories.firstOrNull { it.tagId == state.selectedParentCategoryId } ?: return
         if (parent.children.none { it.tagId == categoryId }) return
+        if (state.selectedPlaylistCategoryId == categoryId) return
         mutableUiState.update { it.copy(selectedPlaylistCategoryId = categoryId) }
-        loadPlaylists(categoryId, page = 1)
+        loadPlaylists(categoryId, page = 1, selectionDebounceMillis = FILTER_SELECTION_DEBOUNCE_MILLIS)
     }
 
     fun selectAlbumRegion(region: AlbumRegion?) {
@@ -120,7 +123,7 @@ class DiscoverViewModel @Inject constructor(
         }
     }
 
-    private fun loadPlaylists(categoryId: Int, page: Int) {
+    private fun loadPlaylists(categoryId: Int, page: Int, selectionDebounceMillis: Long = 0) {
         playlistsJob?.cancel()
         val current = mutableUiState.value.playlists as? DiscoverPageState.Content
         mutableUiState.update {
@@ -133,6 +136,7 @@ class DiscoverViewModel @Inject constructor(
             )
         }
         playlistsJob = viewModelScope.launch {
+            if (selectionDebounceMillis > 0) delay(selectionDebounceMillis)
             when (val result = catalogRepository.loadCategoryPlaylists(categoryId, page, PAGE_SIZE)) {
                 is CollectionLoadResult.Available -> mutableUiState.update { state ->
                     if (state.selectedPlaylistCategoryId != categoryId) return@update state
@@ -257,6 +261,7 @@ class DiscoverViewModel @Inject constructor(
     }
 
     private companion object {
+        const val FILTER_SELECTION_DEBOUNCE_MILLIS = 150L
         const val PAGE_SIZE = 30
     }
 }

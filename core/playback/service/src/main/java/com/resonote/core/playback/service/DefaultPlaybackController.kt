@@ -391,6 +391,7 @@ internal class DefaultPlaybackController internal constructor(
     }
 
     override fun onEvents(player: Player, events: Player.Events) {
+        if (!shouldProcessPlaybackEvents(isResolving, mutableState.value.status)) return
         syncPlayerState(player)
         if (handleVipPreviewBoundary(player)) return
         if (player.playbackState == Player.STATE_ENDED && handledEndedGeneration != loadGeneration) {

@@ -68,7 +68,7 @@ internal class RealCatalogNetworkDataSource @Inject constructor(
             key = signer.signParamsKey(clientTime),
             specialRecommend = SpecialRecommendRequest(
                 withtag = 1,
-                withsong = 1,
+                withsong = 0,
                 sort = 1,
                 ugc = 1,
                 isSelected = 0,
