@@ -64,5 +64,12 @@ internal fun remainingSplashAnimationDurationMillis(
     if (!animationsEnabled || animationStartMillis <= 0L || animationDurationMillis <= 0L) {
         return 0L
     }
-    return (animationStartMillis + animationDurationMillis - currentTimeMillis).coerceAtLeast(0L)
+    return (
+        animationStartMillis +
+            animationDurationMillis +
+            SPLASH_COMPLETION_HOLD_MILLIS -
+            currentTimeMillis
+        ).coerceAtLeast(0L)
 }
+
+private const val SPLASH_COMPLETION_HOLD_MILLIS = 100L

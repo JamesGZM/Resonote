@@ -417,6 +417,7 @@ internal class DefaultPlaybackController internal constructor(
         failureBehavior: FailureBehavior,
         startPositionMillis: Long = 0,
         playWhenReady: Boolean = true,
+        retainLoadedMediaWhileResolving: Boolean = false,
     ): Boolean {
         automaticSkipJob?.cancel()
         automaticSkipJob = null
@@ -431,8 +432,10 @@ internal class DefaultPlaybackController internal constructor(
             handledEndedGeneration = -1L
             pausedPreviewGeneration = -1L
             isResolving = true
-            controller?.stop()
-            controller?.clearMediaItems()
+            if (!retainLoadedMediaWhileResolving) {
+                controller?.stop()
+                controller?.clearMediaItems()
+            }
         }
 
         val result = try {
@@ -445,6 +448,7 @@ internal class DefaultPlaybackController internal constructor(
                 issue = PlaybackIssue.PlayerFailure(failure.message),
                 failureBehavior = failureBehavior,
                 preservesCurrentPlayback = preservesCurrentPlayback,
+                retainLoadedMediaWhileResolving = retainLoadedMediaWhileResolving,
             )
             return false
         }
@@ -468,6 +472,7 @@ internal class DefaultPlaybackController internal constructor(
                     PlaybackIssue.Unavailable(result.reason),
                     failureBehavior,
                     preservesCurrentPlayback,
+                    retainLoadedMediaWhileResolving,
                 )
                 false
             }
@@ -477,6 +482,7 @@ internal class DefaultPlaybackController internal constructor(
                     PlaybackIssue.SourceFailure(result.failure),
                     failureBehavior,
                     preservesCurrentPlayback,
+                    retainLoadedMediaWhileResolving,
                 )
                 false
             }
@@ -530,6 +536,7 @@ internal class DefaultPlaybackController internal constructor(
         issue: PlaybackIssue,
         failureBehavior: FailureBehavior,
         preservesCurrentPlayback: Boolean,
+        retainLoadedMediaWhileResolving: Boolean,
     ) {
         if (generation != loadGeneration) return
         if (preservesCurrentPlayback) {
@@ -540,8 +547,10 @@ internal class DefaultPlaybackController internal constructor(
         historyEligibility.reset()
         isResolving = false
         pendingControllerAction = null
-        controller?.stop()
-        controller?.clearMediaItems()
+        if (!retainLoadedMediaWhileResolving) {
+            controller?.stop()
+            controller?.clearMediaItems()
+        }
         publishQueue(status = PlaybackStatus.Failed, issue = issue)
         if (failureBehavior == FailureBehavior.SkipQueueItem && issue.allowsAutomaticSkip()) {
             scheduleAutomaticSkip(generation)
@@ -567,7 +576,14 @@ internal class DefaultPlaybackController internal constructor(
         }
         publishQueue(status = PlaybackStatus.Resolving)
         requestPersistSession()
-        resolveAndLoad(item, failureBehavior = FailureBehavior.SkipQueueItem)
+        resolveAndLoad(
+            item = item,
+            failureBehavior = FailureBehavior.SkipQueueItem,
+            retainLoadedMediaWhileResolving = shouldRetainLoadedMediaWhileResolvingNext(
+                automatic = automatic,
+                loadedMediaItemCount = controller?.mediaItemCount ?: 0,
+            ),
+        )
     }
 
     private fun replayCurrentItem() {
@@ -628,7 +644,14 @@ internal class DefaultPlaybackController internal constructor(
         if (item == null) return
         publishQueue(status = PlaybackStatus.Resolving)
         requestPersistSession()
-        resolveAndLoad(item, failureBehavior = FailureBehavior.SkipQueueItem)
+        resolveAndLoad(
+            item = item,
+            failureBehavior = FailureBehavior.SkipQueueItem,
+            retainLoadedMediaWhileResolving = shouldRetainLoadedMediaWhileResolvingNext(
+                automatic = true,
+                loadedMediaItemCount = controller?.mediaItemCount ?: 0,
+            ),
+        )
     }
 
     private fun publishQueue(status: PlaybackStatus = mutableState.value.status, issue: PlaybackIssue? = null) {
@@ -830,6 +853,9 @@ internal fun PlaybackItem.toSessionEntry(): PlaybackSessionEntry {
         bitrateBitsPerSecond = localFormat?.bitrateBitsPerSecond,
     )
 }
+
+internal fun shouldRetainLoadedMediaWhileResolvingNext(automatic: Boolean, loadedMediaItemCount: Int): Boolean =
+    automatic && loadedMediaItemCount > 0
 
 internal fun PlaybackSessionEntry.toPlaybackItem(): PlaybackItem? {
     if (mediaId.isBlank() || title.isBlank() || durationMillis < 0) return null

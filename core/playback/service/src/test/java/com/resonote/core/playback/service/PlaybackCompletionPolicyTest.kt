@@ -144,6 +144,36 @@ class PlaybackCompletionPolicyTest {
             .isEqualTo(PlaybackCompletionAction.Advance)
     }
 
+    @Test
+    fun automaticTransitionRetainsLoadedMediaWhileResolving() {
+        assertThat(
+            shouldRetainLoadedMediaWhileResolvingNext(
+                automatic = true,
+                loadedMediaItemCount = 1,
+            ),
+        ).isTrue()
+    }
+
+    @Test
+    fun manualTransitionDoesNotRetainLoadedMediaWhileResolving() {
+        assertThat(
+            shouldRetainLoadedMediaWhileResolvingNext(
+                automatic = false,
+                loadedMediaItemCount = 1,
+            ),
+        ).isFalse()
+    }
+
+    @Test
+    fun automaticTransitionWithoutLoadedMediaDoesNotRetainAnything() {
+        assertThat(
+            shouldRetainLoadedMediaWhileResolvingNext(
+                automatic = true,
+                loadedMediaItemCount = 0,
+            ),
+        ).isFalse()
+    }
+
     private fun action(
         mode: PlaybackMode,
         queueSize: Int,
