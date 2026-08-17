@@ -93,7 +93,6 @@ dependencies {
     implementation(projects.feature.search.impl)
     implementation(projects.feature.settings.api)
     implementation(projects.feature.settings.impl)
-    implementation(projects.feature.vip.api)
     implementation(projects.feature.vip.impl)
     implementation(projects.feature.video.api)
     implementation(projects.feature.video.impl)

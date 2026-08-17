@@ -121,6 +121,31 @@ class MusicComponentsScreenshotTest {
             roborazziOptions = DefaultRoborazziOptions,
         )
     }
+
+    @Test
+    fun playlistItem_supportingText() {
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                override = DeviceConfigurationOverride.ForcedSize(DpSize(196.dp, 260.dp)),
+            ) {
+                ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                    ResonotePlaylistItem(
+                        metadata = ResonotePlaylistMetadata(
+                            title = "凌晨公路与钠灯",
+                            supportingText = "42 首",
+                        ),
+                        onClick = {},
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    )
+                }
+            }
+        }
+
+        composeRule.onRoot().captureRoboImage(
+            filePath = "src/test/screenshots/MusicComponents/PlaylistItem_supportingText.png",
+            roborazziOptions = DefaultRoborazziOptions,
+        )
+    }
 }
 
 private data class MusicScreenshotCase(val name: String, val themeMode: ResonoteThemeMode, val fontScale: Float = 1f)

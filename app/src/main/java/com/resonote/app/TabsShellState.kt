@@ -25,6 +25,8 @@ internal class TabsShellState(initialTab: ResonoteTab) {
         return true
     }
 
+    fun canHandleBack(isActiveDestination: Boolean): Boolean = isActiveDestination && selectedTab != ResonoteTab.HOME
+
     companion object {
         val Saver = Saver<TabsShellState, String>(
             save = { it.selectedTab.name },

@@ -10,11 +10,16 @@ import com.resonote.core.model.CollectionLoadResult
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.PlaylistTrackInput
 import com.resonote.core.model.UserPlaylist
+import com.resonote.core.model.UserProfile
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
@@ -30,6 +35,8 @@ class MyViewModel @Inject constructor(
 ) : ViewModel() {
     private val mutableUiState = MutableStateFlow<MyUiState>(MyUiState.CheckingAccount)
     val uiState: StateFlow<MyUiState> = mutableUiState.asStateFlow()
+    private val mutableRefreshFailures = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val refreshFailures: SharedFlow<Unit> = mutableRefreshFailures.asSharedFlow()
 
     private var activeUserId: String? = null
     private var refreshJob: Job? = null
@@ -73,8 +80,9 @@ class MyViewModel @Inject constructor(
             (state as? MyUiState.Authenticated)?.copy(isRefreshing = true) ?: state
         }
         refreshJob = viewModelScope.launch {
-            loadAll(userId)
+            val succeeded = refreshAll(userId)
             updateAuthenticated(userId) { it.copy(isRefreshing = false) }
+            if (!succeeded) mutableRefreshFailures.tryEmit(Unit)
         }
     }
 
@@ -239,6 +247,42 @@ class MyViewModel @Inject constructor(
     private suspend fun loadAll(userId: String) = supervisorScope {
         launch { loadProfile(userId) }
         launch { loadPlaylists(userId) }
+    }
+
+    private suspend fun refreshAll(userId: String): Boolean = supervisorScope {
+        val profile = async { profileRepository.loadProfile() }
+        val playlists = async { libraryRepository.loadPlaylists() }
+        val profileResult = profile.await()
+        val playlistsResult = playlists.await()
+        applyProfileRefresh(userId, profileResult)
+        applyPlaylistRefresh(userId, playlistsResult)
+        profileResult is CollectionLoadResult.Available && playlistsResult is CollectionLoadResult.Available
+    }
+
+    private fun applyProfileRefresh(userId: String, result: CollectionLoadResult<UserProfile>) {
+        updateAuthenticated(userId) { state ->
+            when (result) {
+                is CollectionLoadResult.Available -> state.copy(profile = MySectionState.Available(result.value))
+                is CollectionLoadResult.Failed -> if (state.profile is MySectionState.Available) {
+                    state
+                } else {
+                    state.copy(profile = MySectionState.Failed(result.failure))
+                }
+            }
+        }
+    }
+
+    private fun applyPlaylistRefresh(userId: String, result: CollectionLoadResult<List<UserPlaylist>>) {
+        updateAuthenticated(userId) { state ->
+            when (result) {
+                is CollectionLoadResult.Available -> state.copy(playlists = MySectionState.Available(result.value))
+                is CollectionLoadResult.Failed -> if (state.playlists is MySectionState.Available) {
+                    state
+                } else {
+                    state.copy(playlists = MySectionState.Failed(result.failure))
+                }
+            }
+        }
     }
 
     private suspend fun loadProfile(userId: String) {

@@ -371,7 +371,11 @@ private fun LoadingMusicText(modifier: Modifier = Modifier) {
 }
 
 @Immutable
-data class ResonotePlaylistMetadata(val title: String, val playCount: String? = null)
+data class ResonotePlaylistMetadata(
+    val title: String,
+    val playCount: String? = null,
+    val supportingText: String? = null,
+)
 
 @Composable
 fun ResonotePlaylistItem(
@@ -447,9 +451,19 @@ fun ResonotePlaylistItem(
                     text = metadata.title,
                     modifier = Modifier.fillMaxWidth(),
                     style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 2,
+                    maxLines = if (metadata.supportingText == null) 2 else 1,
                     overflow = TextOverflow.Ellipsis,
                 )
+                metadata.supportingText?.let {
+                    Text(
+                        text = it,
+                        modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
         }
     }

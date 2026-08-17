@@ -2,18 +2,25 @@
 
 package com.resonote.feature.library.impl
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -25,50 +32,60 @@ import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Cloud
 import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.LibraryMusic
-import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.RippleConfiguration
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.resonote.core.designsystem.component.LocalResonoteSnackbarController
-import com.resonote.core.designsystem.component.ResonoteArtwork
 import com.resonote.core.designsystem.component.ResonoteArtworkState
 import com.resonote.core.designsystem.component.ResonoteButton
-import com.resonote.core.designsystem.component.ResonoteTopAppBar
+import com.resonote.core.designsystem.component.ResonoteContentPhase
+import com.resonote.core.designsystem.component.ResonoteContentStateLayout
+import com.resonote.core.designsystem.component.ResonoteEmptyState
+import com.resonote.core.designsystem.component.ResonoteErrorState
+import com.resonote.core.designsystem.component.ResonoteFilterPill
+import com.resonote.core.designsystem.component.ResonoteIconButton
+import com.resonote.core.designsystem.component.ResonotePlaylistItem
+import com.resonote.core.designsystem.component.ResonotePlaylistMetadata
+import com.resonote.core.designsystem.component.ResonotePullToRefreshBox
+import com.resonote.core.designsystem.component.ResonoteShimmer
+import com.resonote.core.designsystem.component.ResonoteTextButton
+import com.resonote.core.designsystem.component.ResonoteTextField
+import com.resonote.core.designsystem.component.rememberResonoteShimmer
+import com.resonote.core.designsystem.component.resonoteShimmer
 import com.resonote.core.designsystem.tokens.ResonoteTokens
 import com.resonote.core.model.ContentFailure
 import com.resonote.core.model.UserPlaylist
@@ -87,6 +104,11 @@ fun MyRoute(
     viewModel: MyViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarController = LocalResonoteSnackbarController.current
+    val refreshFailureMessage = stringResource(R.string.feature_library_impl_my_refresh_failed)
+    LaunchedEffect(viewModel, snackbarController) {
+        viewModel.refreshFailures.collect { snackbarController?.show(refreshFailureMessage) }
+    }
     MyScreen(
         state = state,
         bottomContentPadding = bottomContentPadding,
@@ -125,13 +147,13 @@ internal fun MyScreen(
     onPlaylistClick: (UserPlaylist) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val listState = rememberLazyListState()
-    val authenticatedState = state as? MyUiState.Authenticated
-    val accountKey = authenticatedState?.userId
+    val authenticated = state as? MyUiState.Authenticated
+    val accountKey = authenticated?.userId
     var createDialogOpen by rememberSaveable(accountKey) { mutableStateOf(false) }
     var playlistName by rememberSaveable(accountKey) { mutableStateOf("") }
+    var selectedPlaylistGroup by rememberSaveable(accountKey) { mutableIntStateOf(0) }
     val snackbarController = LocalResonoteSnackbarController.current
-    val creationState = authenticatedState?.playlistCreation ?: PlaylistCreationUiState.Idle
+    val creationState = authenticated?.playlistCreation ?: PlaylistCreationUiState.Idle
     val creationMessage = when (val creation = creationState) {
         is PlaylistCreationUiState.Created -> stringResource(
             if (creation.refreshFailed) {
@@ -153,50 +175,34 @@ internal fun MyScreen(
         }
     }
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            ResonoteTopAppBar(
-                title = { Text(stringResource(R.string.feature_library_impl_my_title)) },
-                actions = {
-                    if (state is MyUiState.Authenticated) {
-                        if (state.isRefreshing) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.padding(12.dp).size(24.dp),
-                                strokeWidth = 2.dp,
-                            )
-                        } else {
-                            IconButton(onClick = onRefresh) {
-                                Icon(
-                                    Icons.Rounded.Refresh,
-                                    contentDescription = stringResource(R.string.feature_library_impl_my_refresh),
-                                )
-                            }
-                        }
-                    }
-                },
-            )
-        },
-    ) { padding ->
+    ResonotePullToRefreshBox(
+        isRefreshing = authenticated?.isRefreshing == true,
+        onRefresh = onRefresh,
+        enabled = authenticated?.hasRefreshableContent() == true,
+        modifier = modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.statusBars)
+            .testTag("my-pull-to-refresh"),
+    ) {
         LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxSize().padding(padding).testTag("my-list"),
-            contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = bottomContentPadding),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            state = rememberLazyListState(),
+            modifier = Modifier.fillMaxSize().testTag("my-list"),
+            contentPadding = PaddingValues(20.dp, 12.dp, 20.dp, bottomContentPadding),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             when (state) {
-                MyUiState.CheckingAccount -> checkingAccount()
-                MyUiState.Anonymous -> anonymousAccount(
+                MyUiState.CheckingAccount -> item { MyScreenSkeleton(bottomContentPadding) }
+                MyUiState.Anonymous -> anonymousContent(
                     onLoginClick,
-                    onDailyVipClick,
                     onHistoryClick,
                     onCloudClick,
                     onLocalMusicClick,
                     onSettingsClick,
                 )
-                is MyUiState.Authenticated -> authenticatedAccount(
+                is MyUiState.Authenticated -> authenticatedContent(
                     state = state,
+                    selectedPlaylistGroup = selectedPlaylistGroup,
+                    onSelectPlaylistGroup = { selectedPlaylistGroup = it },
                     onRetryProfile = onRetryProfile,
                     onRetryPlaylists = onRetryPlaylists,
                     onDailyVipClick = onDailyVipClick,
@@ -215,7 +221,7 @@ internal fun MyScreen(
         }
     }
 
-    if (createDialogOpen && authenticatedState != null) {
+    if (createDialogOpen && authenticated != null) {
         PlaylistCreationDialog(
             name = playlistName,
             state = creationState,
@@ -232,115 +238,41 @@ internal fun MyScreen(
     }
 }
 
-private fun LazyListScope.checkingAccount() {
-    item(key = "checking") {
-        Column(
-            modifier = Modifier.fillParentMaxHeight(0.7f).fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            CircularProgressIndicator()
-            Text(
-                text = stringResource(R.string.feature_library_impl_my_checking_account),
-                modifier = Modifier.padding(top = 16.dp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
+private fun MyUiState.Authenticated.hasRefreshableContent() =
+    profile is MySectionState.Available || playlists is MySectionState.Available
 
-private fun LazyListScope.anonymousAccount(
+private fun LazyListScope.anonymousContent(
     onLoginClick: () -> Unit,
-    onDailyVipClick: () -> Unit,
     onHistoryClick: () -> Unit,
     onCloudClick: () -> Unit,
     onLocalMusicClick: () -> Unit,
     onSettingsClick: () -> Unit,
 ) {
-    item(key = "anonymous-hero") {
-        Card(
-            modifier = Modifier.fillMaxWidth().testTag("my-anonymous"),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-            shape = MaterialTheme.shapes.extraLarge,
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        Brush.linearGradient(
-                            listOf(
-                                MaterialTheme.colorScheme.primaryContainer,
-                                MaterialTheme.colorScheme.surfaceContainerLow,
-                                MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.55f),
-                            ),
-                        ),
-                    )
-                    .padding(horizontal = 24.dp, vertical = 32.dp),
-            ) {
-                Surface(
-                    modifier = Modifier.align(Alignment.TopEnd).offset(x = 38.dp, y = (-40).dp).size(150.dp),
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.22f),
-                ) {}
-                Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.Start) {
-                    Surface(
-                        modifier = Modifier.size(56.dp),
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(Icons.Rounded.GraphicEq, contentDescription = null, modifier = Modifier.size(28.dp))
-                        }
-                    }
-                    Text(
-                        text = stringResource(R.string.feature_library_impl_my_anonymous_title),
-                        modifier = Modifier.padding(top = 24.dp),
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        text = stringResource(R.string.feature_library_impl_my_anonymous_body),
-                        modifier = Modifier.padding(top = 8.dp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                    ResonoteButton(
-                        label = stringResource(R.string.feature_library_impl_my_login),
-                        onClick = onLoginClick,
-                        modifier = Modifier.padding(top = 24.dp),
-                    )
-                }
-            }
-        }
-    }
-    item(key = "daily-vip") {
-        DailyVipEntryCard(onClick = onDailyVipClick, requiresLogin = true)
-    }
-    item(key = "history") {
-        HistoryEntryCard(onClick = onHistoryClick)
-    }
-    item(key = "cloud") {
-        CloudEntryCard(onClick = onCloudClick, requiresLogin = true)
-    }
-    item(key = "local-music") {
-        LocalMusicEntryCard(onClick = onLocalMusicClick)
-    }
-    item(key = "settings") {
-        SettingsEntryCard(onClick = onSettingsClick)
+    item(key = "anonymous-account") { AnonymousAccountCard(onLoginClick, onSettingsClick) }
+    item(key = "quick-entries") {
+        QuickEntries(
+            likedPlaylist = null,
+            likedRequiresLogin = true,
+            onLikedClick = onLoginClick,
+            onHistoryClick = onHistoryClick,
+            onCloudClick = onCloudClick,
+            onLocalMusicClick = onLocalMusicClick,
+        )
     }
     item(key = "anonymous-note") {
         Text(
             text = stringResource(R.string.feature_library_impl_my_anonymous_local_note),
-            modifier = Modifier.padding(horizontal = 8.dp),
+            modifier = Modifier.padding(horizontal = 6.dp).testTag("my-anonymous"),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodySmall,
         )
     }
 }
 
-private fun LazyListScope.authenticatedAccount(
+private fun LazyListScope.authenticatedContent(
     state: MyUiState.Authenticated,
+    selectedPlaylistGroup: Int,
+    onSelectPlaylistGroup: (Int) -> Unit,
     onRetryProfile: () -> Unit,
     onRetryPlaylists: () -> Unit,
     onDailyVipClick: () -> Unit,
@@ -353,515 +285,528 @@ private fun LazyListScope.authenticatedAccount(
 ) {
     item(key = "profile") {
         when (val profile = state.profile) {
-            MySectionState.Loading -> ProfileLoadingCard()
-            is MySectionState.Available -> ProfileCard(profile.value)
+            MySectionState.Loading -> ProfileSkeleton()
+            is MySectionState.Available -> AccountCard(
+                profile.value,
+                onDailyVipClick,
+                onSettingsClick,
+            )
             is MySectionState.Failed -> SectionFailure(
-                title = stringResource(R.string.feature_library_impl_my_profile_error),
-                failure = profile.failure,
-                onRetry = onRetryProfile,
-                modifier = Modifier.testTag("my-profile-error"),
+                stringResource(R.string.feature_library_impl_my_profile_error),
+                profile.failure,
+                onRetryProfile,
+                Modifier.testTag("my-profile-error"),
             )
         }
     }
-
-    item(key = "daily-vip") {
-        DailyVipEntryCard(onClick = onDailyVipClick, requiresLogin = false)
+    item(key = "quick-entries") {
+        val liked = (state.playlists as? MySectionState.Available)?.value?.firstOrNull { it.isLike }
+        QuickEntries(
+            likedPlaylist = liked,
+            likedRequiresLogin = false,
+            onLikedClick = { liked?.let(onPlaylistClick) },
+            onHistoryClick = onHistoryClick,
+            onCloudClick = onCloudClick,
+            onLocalMusicClick = onLocalMusicClick,
+        )
     }
-    item(key = "history") {
-        HistoryEntryCard(onClick = onHistoryClick)
-    }
-    item(key = "cloud") {
-        CloudEntryCard(onClick = onCloudClick, requiresLogin = false)
-    }
-    item(key = "local-music") {
-        LocalMusicEntryCard(onClick = onLocalMusicClick)
-    }
-    item(key = "settings") {
-        SettingsEntryCard(onClick = onSettingsClick)
-    }
-
-    when (val playlists = state.playlists) {
-        MySectionState.Loading -> item(key = "playlists-loading") { PlaylistsLoadingCard() }
-        is MySectionState.Failed -> item(key = "playlists-error") {
-            SectionFailure(
-                title = stringResource(R.string.feature_library_impl_my_playlists_error),
-                failure = playlists.failure,
-                onRetry = onRetryPlaylists,
-                modifier = Modifier.testTag("my-playlists-error"),
-            )
-        }
-        is MySectionState.Available -> playlistSections(
-            playlists = playlists.value,
+    item(key = "playlists") {
+        PlaylistSection(
+            state = state.playlists,
+            selectedGroup = selectedPlaylistGroup,
+            onSelectGroup = onSelectPlaylistGroup,
             onPlaylistClick = onPlaylistClick,
             onCreatePlaylistClick = onCreatePlaylistClick,
-            createEnabled = !state.isRefreshing && state.playlistCreation != PlaylistCreationUiState.Submitting,
+            onRetry = onRetryPlaylists,
+            createEnabled = !state.isRefreshing &&
+                state.playlistCreation != PlaylistCreationUiState.Submitting,
         )
     }
 }
 
 @Composable
-private fun PlaylistCreationDialog(
-    name: String,
-    state: PlaylistCreationUiState,
-    onNameChange: (String) -> Unit,
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit,
+private fun PlaylistSection(
+    state: MySectionState<List<UserPlaylist>>,
+    selectedGroup: Int,
+    onSelectGroup: (Int) -> Unit,
+    onPlaylistClick: (UserPlaylist) -> Unit,
+    onCreatePlaylistClick: () -> Unit,
+    onRetry: () -> Unit,
+    createEnabled: Boolean,
 ) {
-    val isSubmitting = state == PlaylistCreationUiState.Submitting
-    val failure = (state as? PlaylistCreationUiState.Failed)?.failure
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        icon = { Icon(Icons.AutoMirrored.Rounded.PlaylistAdd, contentDescription = null) },
-        title = { Text(stringResource(R.string.feature_library_impl_create_playlist_title)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(
-                    text = stringResource(R.string.feature_library_impl_create_playlist_body),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium,
+    val playlists = (state as? MySectionState.Available)?.value.orEmpty()
+    val created = playlists.filter { it.isMine && !it.isLike }
+    val collected = playlists.filterNot { it.isMine }
+    val visible = if (selectedGroup == 0) created else collected
+    val phase = when (state) {
+        MySectionState.Loading -> ResonoteContentPhase.LOADING
+        is MySectionState.Failed -> ResonoteContentPhase.ERROR
+        is MySectionState.Available -> if (visible.isEmpty()) {
+            ResonoteContentPhase.EMPTY
+        } else {
+            ResonoteContentPhase.CONTENT
+        }
+    }
+    val stateModifier = if (phase == ResonoteContentPhase.CONTENT) {
+        Modifier.fillMaxWidth()
+    } else {
+        Modifier.fillMaxWidth().heightIn(min = 236.dp)
+    }
+    ResonoteContentStateLayout(
+        phase = phase,
+        modifier = stateModifier.testTag("my-playlist-state"),
+        loading = { PlaylistSkeleton() },
+        empty = {
+            Column {
+                PlaylistHeader(
+                    createdCount = created.size,
+                    collectedCount = collected.size,
+                    selectedGroup = selectedGroup,
+                    onSelectGroup = onSelectGroup,
+                    onCreatePlaylistClick = onCreatePlaylistClick,
+                    createEnabled = createEnabled,
                 )
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = onNameChange,
-                    modifier = Modifier.fillMaxWidth().testTag("my-create-playlist-name"),
-                    enabled = !isSubmitting,
-                    isError = failure != null,
-                    singleLine = true,
-                    label = { Text(stringResource(R.string.feature_library_impl_create_playlist_name)) },
-                    supportingText = failure?.let {
-                        {
-                            Text(
-                                text = it.message(),
-                                color = MaterialTheme.colorScheme.error,
-                            )
-                        }
-                    },
+                ResonoteEmptyState(
+                    title = stringResource(
+                        if (selectedGroup == 0) {
+                            R.string.feature_library_impl_my_created_empty_title
+                        } else {
+                            R.string.feature_library_impl_my_collected_empty_title
+                        },
+                    ),
+                    message = stringResource(
+                        if (selectedGroup == 0) {
+                            R.string.feature_library_impl_my_created_empty
+                        } else {
+                            R.string.feature_library_impl_my_collected_empty
+                        },
+                    ),
+                    modifier = Modifier.height(220.dp),
                 )
             }
         },
-        dismissButton = {
-            TextButton(onClick = onDismiss, enabled = !isSubmitting) {
-                Text(stringResource(R.string.feature_library_impl_create_playlist_cancel))
-            }
-        },
-        confirmButton = {
-            ResonoteButton(
-                label = stringResource(R.string.feature_library_impl_create_playlist_confirm),
-                loadingLabel = stringResource(R.string.feature_library_impl_create_playlist_submitting),
-                onClick = onConfirm,
-                enabled = name.isNotBlank() && !isSubmitting,
-                loading = isSubmitting,
+        error = {
+            ResonoteErrorState(
+                onRetry = onRetry,
+                title = stringResource(R.string.feature_library_impl_my_playlists_error),
+                message = (state as MySectionState.Failed).failure.message(),
+                modifier = Modifier.testTag("my-playlists-error"),
             )
+        },
+        content = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                PlaylistHeader(
+                    createdCount = created.size,
+                    collectedCount = collected.size,
+                    selectedGroup = selectedGroup,
+                    onSelectGroup = onSelectGroup,
+                    onCreatePlaylistClick = onCreatePlaylistClick,
+                    createEnabled = createEnabled,
+                )
+                visible.chunked(2).forEach { row ->
+                    PlaylistRow(row, onPlaylistClick)
+                }
+            }
         },
     )
 }
 
 @Composable
-private fun HistoryEntryCard(onClick: () -> Unit) {
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth().testTag("my-history"),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-        shape = MaterialTheme.shapes.extraLarge,
-    ) {
-        Row(modifier = Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
-            Surface(
-                modifier = Modifier.size(52.dp),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.inverseSurface,
-                contentColor = MaterialTheme.colorScheme.inverseOnSurface,
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Rounded.History, contentDescription = null, modifier = Modifier.size(25.dp))
-                }
-            }
-            Column(modifier = Modifier.weight(1f).padding(start = 14.dp)) {
-                Text(
-                    stringResource(R.string.feature_library_impl_recent_playback),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    stringResource(R.string.feature_library_impl_recent_playback_body),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-            Icon(Icons.Rounded.ChevronRight, contentDescription = null)
-        }
-    }
-}
-
-@Composable
-private fun LocalMusicEntryCard(onClick: () -> Unit) {
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth().testTag("my-local-music"),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-        shape = MaterialTheme.shapes.extraLarge,
-    ) {
-        Row(modifier = Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
-            Surface(
-                modifier = Modifier.size(52.dp),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Rounded.LibraryMusic, contentDescription = null, modifier = Modifier.size(25.dp))
-                }
-            }
-            Column(modifier = Modifier.weight(1f).padding(start = 14.dp)) {
-                Text(
-                    stringResource(R.string.feature_library_impl_local_music),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    stringResource(R.string.feature_library_impl_local_music_body),
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-            Icon(Icons.Rounded.ChevronRight, contentDescription = null)
-        }
-    }
-}
-
-@Composable
-private fun SettingsEntryCard(onClick: () -> Unit) {
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth().testTag("my-settings"),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        shape = MaterialTheme.shapes.extraLarge,
-    ) {
-        Row(modifier = Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
-            Surface(
-                modifier = Modifier.size(52.dp),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                contentColor = MaterialTheme.colorScheme.onSurface,
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Rounded.Settings, contentDescription = null, modifier = Modifier.size(25.dp))
-                }
-            }
-            Column(modifier = Modifier.weight(1f).padding(start = 14.dp)) {
-                Text(
-                    stringResource(R.string.feature_library_impl_settings),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    stringResource(R.string.feature_library_impl_settings_body),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-            Icon(Icons.Rounded.ChevronRight, contentDescription = null)
-        }
-    }
-}
-
-@Composable
-private fun CloudEntryCard(onClick: () -> Unit, requiresLogin: Boolean) {
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth().testTag("my-cloud"),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
-        shape = MaterialTheme.shapes.extraLarge,
-    ) {
-        Row(modifier = Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
-            Surface(
-                modifier = Modifier.size(52.dp),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.secondary,
-                contentColor = MaterialTheme.colorScheme.onSecondary,
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Rounded.Cloud, contentDescription = null, modifier = Modifier.size(25.dp))
-                }
-            }
-            Column(modifier = Modifier.weight(1f).padding(start = 14.dp)) {
-                Text(
-                    stringResource(R.string.feature_library_impl_my_cloud),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    stringResource(
-                        if (requiresLogin) {
-                            R.string.feature_library_impl_my_cloud_login
-                        } else {
-                            R.string.feature_library_impl_my_cloud_body
-                        },
-                    ),
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-            Icon(Icons.Rounded.ChevronRight, contentDescription = null)
-        }
-    }
-}
-
-@Composable
-private fun DailyVipEntryCard(onClick: () -> Unit, requiresLogin: Boolean) {
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth().testTag("my-daily-vip"),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
-        shape = MaterialTheme.shapes.extraLarge,
-    ) {
-        Row(modifier = Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
-            Surface(
-                modifier = Modifier.size(52.dp),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.tertiary,
-                contentColor = MaterialTheme.colorScheme.onTertiary,
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Rounded.CardGiftcard, contentDescription = null, modifier = Modifier.size(25.dp))
-                }
-            }
-            Column(modifier = Modifier.weight(1f).padding(start = 14.dp)) {
-                Text(
-                    stringResource(R.string.feature_library_impl_my_daily_vip),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    stringResource(
-                        if (requiresLogin) {
-                            R.string.feature_library_impl_my_daily_vip_login
-                        } else {
-                            R.string.feature_library_impl_my_daily_vip_body
-                        },
-                    ),
-                    color = MaterialTheme.colorScheme.onTertiaryContainer,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-            Icon(Icons.Rounded.ChevronRight, contentDescription = null)
-        }
-    }
-}
-
-private fun LazyListScope.playlistSections(
-    playlists: List<UserPlaylist>,
-    onPlaylistClick: (UserPlaylist) -> Unit,
+private fun PlaylistHeader(
+    createdCount: Int,
+    collectedCount: Int,
+    selectedGroup: Int,
+    onSelectGroup: (Int) -> Unit,
     onCreatePlaylistClick: () -> Unit,
     createEnabled: Boolean,
 ) {
-    val liked = playlists.firstOrNull(UserPlaylist::isLike)
-    val created = playlists.filter { it.isMine && !it.isLike }
-    val collected = playlists.filterNot(UserPlaylist::isMine)
-
-    if (liked != null) {
-        item(key = "liked-${liked.globalId}") {
-            LikedPlaylistCard(liked, onPlaylistClick)
-        }
-    }
-    playlistGroup(
-        keyPrefix = "created",
-        title = R.string.feature_library_impl_my_created_playlists,
-        emptyText = R.string.feature_library_impl_my_created_empty,
-        playlists = created,
-        onPlaylistClick = onPlaylistClick,
-        onCreateClick = onCreatePlaylistClick,
-        createEnabled = createEnabled,
-    )
-    playlistGroup(
-        keyPrefix = "collected",
-        title = R.string.feature_library_impl_my_collected_playlists,
-        emptyText = R.string.feature_library_impl_my_collected_empty,
-        playlists = collected,
-        onPlaylistClick = onPlaylistClick,
-    )
-}
-
-private fun LazyListScope.playlistGroup(
-    keyPrefix: String,
-    title: Int,
-    emptyText: Int,
-    playlists: List<UserPlaylist>,
-    onPlaylistClick: (UserPlaylist) -> Unit,
-    onCreateClick: (() -> Unit)? = null,
-    createEnabled: Boolean = true,
-) {
-    item(key = "$keyPrefix-title") {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().height(40.dp).testTag("my-playlist-header"),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Text(
-                text = stringResource(title),
-                modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.titleLarge,
+                text = stringResource(R.string.feature_library_impl_my_playlists),
+                modifier = Modifier.weight(1f).testTag("my-playlist-title"),
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
             )
-            Text(
-                text = stringResource(R.string.feature_library_impl_my_playlist_count, playlists.size),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.labelLarge,
+            ResonoteIconButton(
+                label = stringResource(R.string.feature_library_impl_create_playlist_action),
+                onClick = onCreatePlaylistClick,
+                modifier = Modifier.offset(x = 12.dp).testTag("my-create-playlist"),
+                enabled = createEnabled,
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Rounded.PlaylistAdd,
+                    contentDescription = null,
+                    modifier = Modifier.testTag("my-create-playlist-icon"),
+                )
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            ResonoteFilterPill(
+                stringResource(R.string.feature_library_impl_my_created_filter, createdCount),
+                selectedGroup == 0,
+                { onSelectGroup(0) },
             )
-            if (onCreateClick != null) {
-                IconButton(
-                    onClick = onCreateClick,
-                    modifier = Modifier.size(40.dp).testTag("my-create-playlist"),
-                    enabled = createEnabled,
+            ResonoteFilterPill(
+                stringResource(R.string.feature_library_impl_my_collected_filter, collectedCount),
+                selectedGroup == 1,
+                { onSelectGroup(1) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun PlaylistRow(row: List<UserPlaylist>, onPlaylistClick: (UserPlaylist) -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        row.forEach { playlist ->
+            ResonotePlaylistItem(
+                metadata = ResonotePlaylistMetadata(
+                    title = playlist.name,
+                    supportingText = stringResource(
+                        R.string.feature_library_impl_my_song_count,
+                        playlist.count,
+                    ),
+                ),
+                onClick = { onPlaylistClick(playlist) },
+                modifier = Modifier.weight(1f).testTag("my-playlist-${playlist.globalId}"),
+                artworkState = ResonoteArtworkState.LOADED,
+                artworkUrl = playlist.coverUrl,
+            )
+        }
+        if (row.size == 1) Spacer(Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun AccountCard(profile: UserProfile, onDailyVipClick: () -> Unit, onSettingsClick: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxWidth().testTag("my-profile"),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Avatar(profile)
+            Column(modifier = Modifier.weight(1f).padding(start = 16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = profile.nickname.ifBlank {
+                            stringResource(R.string.feature_library_impl_my_unnamed_user)
+                        },
+                        modifier = Modifier.weight(1f, fill = false),
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    if (profile.isVip) VipLabel(profile.vipLabel)
+                }
+                Text(
+                    stringResource(R.string.feature_library_impl_my_user_id, profile.userId),
+                    Modifier.padding(top = 3.dp),
+                    MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                profile.signature.takeIf(String::isNotBlank)?.let {
+                    Text(
+                        text = it,
+                        modifier = Modifier.padding(top = 6.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+            SettingsButton(onSettingsClick)
+        }
+        DailyVipAction(onDailyVipClick)
+        Row(
+            Modifier.fillMaxWidth().padding(vertical = 6.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+        ) {
+            ProfileStat(stringResource(R.string.feature_library_impl_my_follows), profile.follows.compactNumber())
+            ProfileStat(stringResource(R.string.feature_library_impl_my_fans), profile.fans.compactNumber())
+            ProfileStat(
+                stringResource(R.string.feature_library_impl_my_listen_time),
+                profile.listenMinutes.listenTime(),
+            )
+        }
+    }
+}
+
+@Composable
+private fun AnonymousAccountCard(onLoginClick: () -> Unit, onSettingsClick: () -> Unit) {
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Surface(
+                onClick = onLoginClick,
+                modifier = Modifier.weight(1f),
+                shape = MaterialTheme.shapes.large,
+                color = Color.Transparent,
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Surface(
+                        modifier = Modifier.size(64.dp),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.primary,
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(Icons.Rounded.Person, null, Modifier.size(30.dp))
+                        }
+                    }
+                    Column(Modifier.weight(1f).padding(start = 16.dp)) {
+                        Text(
+                            stringResource(R.string.feature_library_impl_my_anonymous_title),
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Text(
+                            stringResource(R.string.feature_library_impl_my_anonymous_body),
+                            Modifier.padding(top = 5.dp),
+                            MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 2,
+                        )
+                    }
+                }
+            }
+            SettingsButton(onSettingsClick)
+        }
+        Row(
+            modifier = Modifier.padding(start = 80.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                Icons.Rounded.CardGiftcard,
+                null,
+                Modifier.size(17.dp),
+                tint = MaterialTheme.colorScheme.primary,
+            )
+            Text(
+                stringResource(R.string.feature_library_impl_my_anonymous_vip_note),
+                Modifier.padding(start = 7.dp),
+                MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.labelSmall,
+            )
+        }
+    }
+}
+
+@Composable
+private fun DailyVipAction(onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().height(48.dp).testTag("my-daily-vip"),
+        shape = MaterialTheme.shapes.large,
+        color = Color.Transparent,
+    ) {
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Surface(
+                modifier = Modifier.size(38.dp).testTag("my-daily-vip-icon"),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.primary,
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(Icons.Rounded.CardGiftcard, null, Modifier.size(19.dp))
+                }
+            }
+            Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
+                Text(
+                    stringResource(R.string.feature_library_impl_my_daily_vip),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    stringResource(R.string.feature_library_impl_my_daily_vip_body),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.labelSmall,
+                )
+            }
+            Chevron(Modifier.offset(x = 4.dp).testTag("my-daily-vip-trailing"))
+        }
+    }
+}
+
+@Composable
+private fun SettingsButton(onClick: () -> Unit) {
+    ResonoteIconButton(
+        label = stringResource(R.string.feature_library_impl_settings),
+        onClick = onClick,
+        modifier = Modifier.offset(x = 12.dp).testTag("my-settings"),
+    ) {
+        Icon(
+            Icons.Rounded.Settings,
+            null,
+            Modifier.testTag("my-settings-icon"),
+        )
+    }
+}
+
+@Composable
+private fun QuickEntries(
+    likedPlaylist: UserPlaylist?,
+    likedRequiresLogin: Boolean,
+    onLikedClick: () -> Unit,
+    onHistoryClick: () -> Unit,
+    onCloudClick: () -> Unit,
+    onLocalMusicClick: () -> Unit,
+) {
+    Row(Modifier.fillMaxWidth().height(76.dp).padding(horizontal = 4.dp)) {
+        QuickEntry(
+            icon = { Icon(Icons.Rounded.Favorite, null) },
+            label = stringResource(R.string.feature_library_impl_my_liked),
+            onClick = onLikedClick,
+            iconColor = MaterialTheme.colorScheme.primary,
+            enabled = likedRequiresLogin || likedPlaylist != null,
+            modifier = Modifier.weight(1f).testTag("my-liked"),
+            iconTestTag = "my-liked-icon",
+            horizontalBias = -1f,
+        )
+        QuickEntry(
+            icon = { Icon(Icons.Rounded.History, null) },
+            label = stringResource(R.string.feature_library_impl_recent_playback),
+            onClick = onHistoryClick,
+            iconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f).testTag("my-history"),
+            iconTestTag = "my-history-icon",
+            horizontalBias = -1f / 3f,
+        )
+        QuickEntry(
+            icon = { Icon(Icons.Rounded.Cloud, null) },
+            label = stringResource(R.string.feature_library_impl_my_cloud),
+            onClick = onCloudClick,
+            iconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f).testTag("my-cloud"),
+            iconTestTag = "my-cloud-icon",
+            horizontalBias = 1f / 3f,
+        )
+        QuickEntry(
+            icon = { Icon(Icons.Rounded.LibraryMusic, null) },
+            label = stringResource(R.string.feature_library_impl_local_music),
+            onClick = onLocalMusicClick,
+            iconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f).testTag("my-local-music"),
+            iconTestTag = "my-local-music-icon",
+            horizontalBias = 1f,
+        )
+    }
+}
+
+@Composable
+private fun QuickEntry(
+    icon: @Composable () -> Unit,
+    label: String,
+    onClick: () -> Unit,
+    iconColor: Color,
+    modifier: Modifier,
+    iconTestTag: String? = null,
+    horizontalBias: Float,
+    enabled: Boolean = true,
+) {
+    CompositionLocalProvider(
+        LocalRippleConfiguration provides RippleConfiguration(color = Color.Transparent),
+    ) {
+        Surface(
+            onClick = onClick,
+            modifier = modifier.fillMaxSize(),
+            enabled = enabled,
+            color = Color.Transparent,
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = BiasAlignment(horizontalBias, 0f),
+            ) {
+                Column(
+                    modifier = Modifier.width(44.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
                 ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.PlaylistAdd,
-                        contentDescription = stringResource(R.string.feature_library_impl_create_playlist_action),
+                    Surface(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .then(if (iconTestTag == null) Modifier else Modifier.testTag(iconTestTag)),
+                        shape = CircleShape,
+                        color = if (iconColor == MaterialTheme.colorScheme.primary) {
+                            MaterialTheme.colorScheme.primaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.surfaceContainerHigh
+                        },
+                        contentColor = if (enabled) {
+                            iconColor
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                        },
+                    ) {
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) { icon() }
+                        }
+                    }
+                    Text(
+                        label,
+                        Modifier.padding(top = 8.dp).wrapContentWidth(unbounded = true),
+                        color = if (enabled) {
+                            MaterialTheme.colorScheme.onSurface
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                        },
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
                     )
                 }
             }
         }
     }
-    if (playlists.isEmpty()) {
-        item(key = "$keyPrefix-empty") {
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.surfaceContainerLow,
-                shape = MaterialTheme.shapes.large,
-            ) {
-                Text(
-                    text = stringResource(emptyText),
-                    modifier = Modifier.padding(20.dp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-        }
-    } else {
-        item(key = "$keyPrefix-list") {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-                shape = MaterialTheme.shapes.extraLarge,
-            ) {
-                playlists.forEachIndexed { index, playlist ->
-                    PlaylistRow(playlist = playlist, onClick = { onPlaylistClick(playlist) })
-                    if (index < playlists.lastIndex) HorizontalDivider(modifier = Modifier.padding(start = 84.dp))
-                }
-            }
-        }
-    }
 }
 
 @Composable
-private fun ProfileCard(profile: UserProfile) {
-    Card(
-        modifier = Modifier.fillMaxWidth().testTag("my-profile"),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        shape = MaterialTheme.shapes.extraLarge,
-    ) {
-        Box(modifier = Modifier.fillMaxWidth().height(112.dp)) {
-            Box(
-                modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primaryContainer),
-            )
-            profile.backgroundUrl?.let {
-                AsyncImage(
-                    model = it,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
-                )
-            }
-            Avatar(
-                profile = profile,
-                modifier = Modifier.align(Alignment.BottomStart).offset(x = 18.dp, y = 34.dp),
-            )
-        }
-        Column(modifier = Modifier.padding(start = 20.dp, top = 42.dp, end = 20.dp, bottom = 20.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = profile.nickname.ifBlank { stringResource(R.string.feature_library_impl_my_unnamed_user) },
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                if (profile.isVip) {
-                    Surface(
-                        color = MaterialTheme.colorScheme.tertiaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                        shape = CircleShape,
-                    ) {
-                        Text(
-                            text = profile.vipLabel.ifBlank { stringResource(R.string.feature_library_impl_my_vip) },
-                            modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp),
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                        )
-                    }
-                }
-            }
-            Text(
-                text = stringResource(R.string.feature_library_impl_my_user_id, profile.userId),
-                modifier = Modifier.padding(top = 3.dp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodySmall,
-            )
-            profile.signature.takeIf(String::isNotBlank)?.let {
-                Text(
-                    text = it,
-                    modifier = Modifier.padding(top = 10.dp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                ProfileStat(
-                    stringResource(R.string.feature_library_impl_my_follows),
-                    profile.follows.compactNumber(),
-                    Modifier.weight(1f),
-                )
-                ProfileStat(
-                    stringResource(R.string.feature_library_impl_my_fans),
-                    profile.fans.compactNumber(),
-                    Modifier.weight(1f),
-                )
-                ProfileStat(
-                    stringResource(R.string.feature_library_impl_my_listen_time),
-                    profile.listenMinutes.listenTime(),
-                    Modifier.weight(1f),
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun Avatar(profile: UserProfile, modifier: Modifier = Modifier) {
+private fun VipLabel(label: String) {
     Surface(
-        modifier = modifier.size(72.dp),
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.surface,
-        shadowElevation = ResonoteTokens.elevation.level2.maximumShadow,
+        modifier = Modifier.padding(start = 8.dp),
+        shape = ResonoteTokens.shapes.full,
+        color = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
     ) {
-        Box(
-            modifier = Modifier.padding(3.dp).clip(CircleShape)
-                .background(MaterialTheme.colorScheme.secondaryContainer),
-            contentAlignment = Alignment.Center,
-        ) {
+        Text(
+            label.ifBlank { stringResource(R.string.feature_library_impl_my_vip) },
+            Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+        )
+    }
+}
+
+@Composable
+private fun Avatar(profile: UserProfile) {
+    Surface(
+        modifier = Modifier.size(64.dp).testTag("my-avatar"),
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.primary,
+    ) {
+        Box(Modifier.clip(CircleShape), contentAlignment = Alignment.Center) {
             Text(
-                text = profile.nickname.take(1).ifBlank { "·" },
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                profile.nickname.take(1).ifBlank { "·" },
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
             )
             profile.avatarUrl?.let {
                 AsyncImage(
-                    model = it,
-                    contentDescription = stringResource(R.string.feature_library_impl_my_avatar, profile.nickname),
+                    it,
+                    stringResource(R.string.feature_library_impl_my_avatar, profile.nickname),
+                    Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
                 )
             }
         }
@@ -869,147 +814,70 @@ private fun Avatar(profile: UserProfile, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun ProfileStat(label: String, value: String, modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier,
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        shape = MaterialTheme.shapes.medium,
-    ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(value, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, maxLines = 1)
-            Text(
-                label,
-                modifier = Modifier.padding(top = 2.dp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.labelSmall,
-                maxLines = 1,
-            )
-        }
+private fun ProfileStat(label: String, value: String) {
+    Column(Modifier.width(88.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        Text(
+            label,
+            Modifier.padding(top = 2.dp),
+            MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.labelSmall,
+        )
     }
 }
 
 @Composable
-private fun LikedPlaylistCard(playlist: UserPlaylist, onPlaylistClick: (UserPlaylist) -> Unit) {
-    Card(
-        onClick = { onPlaylistClick(playlist) },
-        modifier = Modifier.fillMaxWidth().testTag("my-liked"),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-        shape = MaterialTheme.shapes.extraLarge,
+private fun Chevron(modifier: Modifier = Modifier) {
+    Icon(
+        Icons.Rounded.ChevronRight,
+        null,
+        modifier,
+        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+@Composable
+private fun MyScreenSkeleton(bottomContentPadding: Dp) {
+    val shimmer = rememberResonoteShimmer("my-screen-skeleton")
+    Column(
+        Modifier.fillMaxWidth().padding(bottom = bottomContentPadding),
+        verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
-        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Surface(
-                modifier = Modifier.size(52.dp),
-                shape = MaterialTheme.shapes.large,
-                color = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Rounded.Favorite, contentDescription = null, modifier = Modifier.size(24.dp))
+        ProfileSkeleton(shimmer)
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            repeat(4) {
+                Spacer(
+                    Modifier.weight(1f).height(88.dp)
+                        .resonoteShimmer(shimmer, MaterialTheme.shapes.large),
+                )
+            }
+        }
+        PlaylistSkeleton(shimmer)
+    }
+}
+
+@Composable
+private fun ProfileSkeleton(shimmer: ResonoteShimmer = rememberResonoteShimmer("my-profile-skeleton")) {
+    Spacer(
+        Modifier.fillMaxWidth().height(244.dp)
+            .resonoteShimmer(shimmer, MaterialTheme.shapes.extraLarge)
+            .testTag("my-profile-loading"),
+    )
+}
+
+@Composable
+private fun PlaylistSkeleton(shimmer: ResonoteShimmer = rememberResonoteShimmer("my-playlist-skeleton")) {
+    Column(Modifier.fillMaxWidth().testTag("my-playlists-loading"), Arrangement.spacedBy(12.dp)) {
+        Spacer(Modifier.fillMaxWidth().height(80.dp).resonoteShimmer(shimmer, MaterialTheme.shapes.extraLarge))
+        Spacer(Modifier.width(132.dp).height(24.dp).resonoteShimmer(shimmer, MaterialTheme.shapes.small))
+        repeat(3) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Spacer(Modifier.size(52.dp).resonoteShimmer(shimmer, MaterialTheme.shapes.medium))
+                Column(Modifier.padding(start = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Spacer(Modifier.width(156.dp).height(16.dp).resonoteShimmer(shimmer, MaterialTheme.shapes.small))
+                    Spacer(Modifier.width(64.dp).height(12.dp).resonoteShimmer(shimmer, MaterialTheme.shapes.small))
                 }
             }
-            Column(modifier = Modifier.weight(1f).padding(start = 14.dp)) {
-                Text(
-                    stringResource(R.string.feature_library_impl_my_liked),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    stringResource(R.string.feature_library_impl_my_song_count, playlist.count),
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-            Icon(Icons.Rounded.ChevronRight, contentDescription = null)
-        }
-    }
-}
-
-@Composable
-private fun PlaylistRow(playlist: UserPlaylist, onClick: () -> Unit) {
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth().height(76.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-        shape = MaterialTheme.shapes.large,
-    ) {
-        Row(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            PlaylistArtwork(playlist)
-            Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
-                Text(
-                    playlist.name,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    stringResource(R.string.feature_library_impl_my_song_count, playlist.count),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-            Icon(
-                Icons.Rounded.ChevronRight,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
-
-@Composable
-private fun PlaylistArtwork(playlist: UserPlaylist) {
-    ResonoteArtwork(
-        state = if (playlist.coverUrl.isNullOrBlank()) {
-            ResonoteArtworkState.MISSING
-        } else {
-            ResonoteArtworkState.LOADED
-        },
-        contentDescription = stringResource(R.string.feature_library_impl_my_playlist_artwork, playlist.name),
-        modifier = Modifier.size(52.dp),
-    ) {
-        playlist.coverUrl?.let {
-            AsyncImage(
-                model = it,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
-    }
-}
-
-@Composable
-private fun ProfileLoadingCard() {
-    Surface(
-        modifier = Modifier.fillMaxWidth().height(260.dp).testTag("my-profile-loading"),
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        shape = MaterialTheme.shapes.extraLarge,
-    ) {
-        Box(contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-    }
-}
-
-@Composable
-private fun PlaylistsLoadingCard() {
-    Surface(
-        modifier = Modifier.fillMaxWidth().height(150.dp).testTag("my-playlists-loading"),
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        shape = MaterialTheme.shapes.extraLarge,
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-            CircularProgressIndicator(modifier = Modifier.size(28.dp), strokeWidth = 2.dp)
-            Text(
-                stringResource(R.string.feature_library_impl_my_loading_playlists),
-                modifier = Modifier.padding(top = 12.dp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
         }
     }
 }
@@ -1022,30 +890,122 @@ private fun SectionFailure(
     modifier: Modifier = Modifier,
 ) {
     Surface(
-        modifier = modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.errorContainer,
-        contentColor = MaterialTheme.colorScheme.onErrorContainer,
-        shape = MaterialTheme.shapes.extraLarge,
+        modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        shape = MaterialTheme.shapes.large,
+        tonalElevation = 0.dp,
+        shadowElevation = ResonoteTokens.elevation.level2.maximumShadow,
     ) {
-        Row(modifier = Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Rounded.CloudOff, contentDescription = null)
-            Column(modifier = Modifier.weight(1f).padding(horizontal = 14.dp)) {
-                Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Rounded.CloudOff, null, tint = MaterialTheme.colorScheme.primary)
+            Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
+                Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                 Text(
                     failure.message(),
-                    modifier = Modifier.padding(top = 3.dp),
+                    Modifier.padding(top = 3.dp),
+                    MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
-            androidx.compose.material3.TextButton(onClick = onRetry) {
-                Text(stringResource(R.string.feature_library_impl_my_retry))
+            TextButton(onClick = onRetry) { Text(stringResource(R.string.feature_library_impl_my_retry)) }
+        }
+    }
+}
+
+@Composable
+private fun PlaylistCreationDialog(
+    name: String,
+    state: PlaylistCreationUiState,
+    onNameChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    val submitting = state == PlaylistCreationUiState.Submitting
+    val failure = (state as? PlaylistCreationUiState.Failed)?.failure
+    Dialog(
+        onDismissRequest = { if (!submitting) onDismiss() },
+        properties = DialogProperties(
+            dismissOnBackPress = !submitting,
+            dismissOnClickOutside = !submitting,
+            usePlatformDefaultWidth = false,
+        ),
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .widthIn(max = 360.dp)
+                .testTag("my-create-playlist-dialog"),
+            shape = MaterialTheme.shapes.extraLarge,
+            color = MaterialTheme.colorScheme.surfaceContainer,
+            tonalElevation = 0.dp,
+            shadowElevation = ResonoteTokens.elevation.level3.maximumShadow,
+        ) {
+            Column(
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 26.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Surface(
+                    modifier = Modifier.size(52.dp),
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.primary,
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(Icons.AutoMirrored.Rounded.PlaylistAdd, null, Modifier.size(26.dp))
+                    }
+                }
+                Text(
+                    text = stringResource(R.string.feature_library_impl_create_playlist_title),
+                    modifier = Modifier.padding(top = 18.dp),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Center,
+                )
+                Text(
+                    stringResource(R.string.feature_library_impl_create_playlist_body),
+                    modifier = Modifier.padding(top = 8.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                )
+                ResonoteTextField(
+                    value = name,
+                    onValueChange = onNameChange,
+                    label = stringResource(R.string.feature_library_impl_create_playlist_name),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 20.dp)
+                        .testTag("my-create-playlist-name"),
+                    enabled = !submitting,
+                    errorMessage = failure?.message(),
+                )
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(top = 22.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    ResonoteButton(
+                        stringResource(R.string.feature_library_impl_create_playlist_confirm),
+                        onConfirm,
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = name.isNotBlank() && !submitting,
+                        loading = submitting,
+                        loadingLabel = stringResource(R.string.feature_library_impl_create_playlist_submitting),
+                    )
+                    ResonoteTextButton(
+                        label = stringResource(R.string.feature_library_impl_create_playlist_cancel),
+                        onClick = onDismiss,
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !submitting,
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun ContentFailure.message(): String = stringResource(
+private fun ContentFailure.message() = stringResource(
     when (this) {
         ContentFailure.AuthenticationRequired -> R.string.feature_library_impl_my_error_auth
         ContentFailure.Network -> R.string.feature_library_impl_my_error_network
@@ -1056,13 +1016,13 @@ private fun ContentFailure.message(): String = stringResource(
     },
 )
 
-private fun Long.compactNumber(): String = when {
+private fun Long.compactNumber() = when {
     this >= 100_000_000 -> "%.1f亿".format(this / 100_000_000.0)
     this >= 10_000 -> "%.1f万".format(this / 10_000.0)
     else -> toString()
 }
 
-private fun Long.listenTime(): String = when {
+private fun Long.listenTime() = when {
     this >= 60 -> "${this / 60}小时"
     this > 0 -> "${this}分钟"
     else -> "—"

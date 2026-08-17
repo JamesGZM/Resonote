@@ -2,13 +2,16 @@ package com.resonote.feature.library.impl
 
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
+import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -38,7 +41,7 @@ class MyScreenshotTest {
         setScreen(MyUiState.Anonymous, onLoginClick = { loginClicks++ })
 
         composeRule.onNodeWithTag("my-anonymous").assertIsDisplayed()
-        composeRule.onNodeWithText("登录账号").performClick()
+        composeRule.onNodeWithText("登录你的账号").performClick()
         assertThat(loginClicks).isEqualTo(1)
         capture("anonymous")
     }
@@ -51,9 +54,10 @@ class MyScreenshotTest {
         composeRule.onNodeWithTag("my-profile").assertIsDisplayed()
         capture("profile")
 
-        composeRule.onNodeWithTag("my-list").performScrollToIndex(6)
+        composeRule.onNodeWithText("收藏的 2").performClick()
+        composeRule.onNodeWithText("北纬三十度").performScrollTo()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("我喜欢").assertIsDisplayed()
+        composeRule.onNodeWithText("北纬三十度").assertIsDisplayed()
         capture("playlists")
     }
 
@@ -62,10 +66,99 @@ class MyScreenshotTest {
         var settingsClicks = 0
         setScreen(MyUiState.Anonymous, onSettingsClick = { settingsClicks++ })
 
-        composeRule.onNodeWithTag("my-list").performScrollToIndex(5)
         composeRule.onNodeWithTag("my-settings").performClick()
 
         assertThat(settingsClicks).isEqualTo(1)
+    }
+
+    @Test
+    fun playlistGroupsSwitchVisibleContent() {
+        setScreen(authenticatedState())
+
+        composeRule.onNodeWithTag("my-playlist-header").assertHeightIsEqualTo(40.dp)
+        composeRule.onNodeWithText("收藏的 2").performClick()
+
+        composeRule.onNodeWithTag("my-playlist-header").assertHeightIsEqualTo(40.dp)
+        composeRule.onNodeWithText("北纬三十度").assertIsDisplayed()
+    }
+
+    @Test
+    fun emptyCollectedPlaylistsUseSharedContentState() {
+        val playlists = listOf(
+            playlist("我喜欢", 326, true, true),
+            playlist("凌晨公路与钠灯", 42, true, false),
+        )
+        setScreen(authenticatedState().copy(playlists = MySectionState.Available(playlists)))
+
+        composeRule.onNodeWithText("收藏的 0").performClick()
+
+        composeRule.onNodeWithTag("resonote-empty-state").assertIsDisplayed()
+        composeRule.onNodeWithText("还没有收藏歌单").assertIsDisplayed()
+        capture("empty_collected")
+    }
+
+    @Test
+    fun primaryContentUsesSharedHorizontalRails() {
+        setScreen(authenticatedState())
+
+        val leftRail = composeRule.onNodeWithTag("my-avatar", useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot.left
+        listOf("my-daily-vip-icon", "my-playlist-title").forEach { tag ->
+            val left = composeRule.onNodeWithTag(tag, useUnmergedTree = true)
+                .fetchSemanticsNode().boundsInRoot.left
+            assertThat(left).isWithin(1f).of(leftRail)
+        }
+
+        val rightRail = composeRule.onNodeWithTag("my-local-music", useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot.right
+        val rightArtwork = composeRule
+            .onNodeWithTag("my-playlist-global-潮汐来信", useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot.right
+        val quickEntryInset = with(composeRule.density) { 4.dp.toPx() }
+        assertThat(rightArtwork - rightRail).isWithin(1f).of(quickEntryInset)
+    }
+
+    @Test
+    fun quickEntriesAreEqualWidthAlignedAndEvenlySpaced() {
+        setScreen(authenticatedState())
+
+        val entries = listOf("my-liked", "my-history", "my-cloud", "my-local-music")
+        val icons = listOf("my-liked-icon", "my-history-icon", "my-cloud-icon", "my-local-music-icon")
+        val entryBounds = entries.map { tag ->
+            composeRule.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        }
+        val firstWidth = entryBounds.first().width
+        entryBounds.drop(1).forEach { bounds ->
+            assertThat(bounds.width).isWithin(1f).of(firstWidth)
+        }
+        val iconBounds = icons.map { tag ->
+            composeRule.onNodeWithTag(tag, useUnmergedTree = true)
+                .fetchSemanticsNode().boundsInRoot
+        }
+        val firstGap = iconBounds[1].center.x - iconBounds[0].center.x
+        iconBounds.zipWithNext().forEach { (left, right) ->
+            assertThat(right.center.x - left.center.x).isWithin(1f).of(firstGap)
+        }
+
+        val leftRail = composeRule.onNodeWithTag("my-avatar", useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot.left
+        val rightRail = composeRule
+            .onNodeWithTag("my-playlist-global-潮汐来信", useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot.right
+        val quickEntryInset = with(composeRule.density) { 4.dp.toPx() }
+        assertThat(iconBounds.first().left - leftRail).isWithin(1f).of(quickEntryInset)
+        assertThat(rightRail - iconBounds.last().right).isWithin(1f).of(quickEntryInset)
+    }
+
+    @Test
+    fun playlistCreationUsesResonoteDialog() {
+        setScreen(authenticatedState())
+
+        composeRule.onNodeWithContentDescription("新建歌单").performClick()
+        composeRule.onNodeWithTag("my-create-playlist-name").performTextInput("深夜收藏")
+
+        composeRule.onNodeWithTag("my-create-playlist-dialog").assertIsDisplayed()
+        capture("create_playlist")
     }
 
     private fun setScreen(state: MyUiState, onLoginClick: () -> Unit = {}, onSettingsClick: () -> Unit = {}) {

@@ -50,6 +50,8 @@ internal enum class ResonoteTab(val labelRes: Int, @field:DrawableRes val iconRe
 
 @Composable
 internal fun TabsShell(
+    tabsShellState: TabsShellState,
+    isActiveDestination: Boolean = true,
     homeViewModel: HomeViewModel? = null,
     playbackState: PlaybackState = PlaybackState(),
     onPlaySong: (OnlineSong) -> Unit = {},
@@ -71,7 +73,6 @@ internal fun TabsShell(
     onSettingsClick: () -> Unit = {},
     onBottomBarInsetChanged: (Dp) -> Unit = {},
 ) {
-    val tabsShellState = rememberTabsShellState()
     val selectedTab = tabsShellState.selectedTab
     val rootStateHolder = rememberSaveableStateHolder()
     var requestedDiscoverSection by remember { mutableStateOf<DiscoverSection?>(null) }
@@ -84,7 +85,9 @@ internal fun TabsShell(
         tabsShellState.selectTab(ResonoteTab.DISCOVER)
     }
 
-    BackHandler(enabled = selectedTab != ResonoteTab.HOME) { tabsShellState.handleBack() }
+    BackHandler(enabled = tabsShellState.canHandleBack(isActiveDestination)) {
+        tabsShellState.handleBack()
+    }
 
     val currentMedia = playbackState.currentMetadata
     val bottomBarInset = if (shellBottomPx == 0f || contentBottomPx == 0f) {

@@ -20,7 +20,9 @@ import com.resonote.core.model.UserProfile
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -121,6 +123,34 @@ class MyViewModelTest {
         auth.state.value = AuthState.Anonymous
         advanceUntilIdle()
         assertThat(viewModel.uiState.value).isEqualTo(MyUiState.Anonymous)
+    }
+
+    @Test
+    fun refreshFailureKeepsVisibleContentAndEmitsFeedback() = runTest(dispatcher) {
+        val oldProfile = profile("旧名字")
+        val oldPlaylists = listOf(playlist("old"))
+        val viewModel = MyViewModel(
+            FakeAuthRepository(AuthState.Authenticated("42")),
+            FakeProfileRepository(
+                CollectionLoadResult.Available(oldProfile),
+                CollectionLoadResult.Failed(ContentFailure.Network),
+            ),
+            FakeLibraryRepository(
+                CollectionLoadResult.Available(oldPlaylists),
+                CollectionLoadResult.Failed(ContentFailure.Network),
+            ),
+        )
+        advanceUntilIdle()
+        val refreshFailure = async { viewModel.refreshFailures.first() }
+        runCurrent()
+
+        viewModel.refresh()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value as MyUiState.Authenticated
+        assertThat((state.profile as MySectionState.Available).value).isEqualTo(oldProfile)
+        assertThat((state.playlists as MySectionState.Available).value).isEqualTo(oldPlaylists)
+        assertThat(refreshFailure.await()).isEqualTo(Unit)
     }
 
     @Test

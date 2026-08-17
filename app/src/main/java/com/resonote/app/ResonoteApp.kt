@@ -81,8 +81,7 @@ import com.resonote.feature.settings.api.SettingsNavKey
 import com.resonote.feature.settings.impl.SettingsRoute
 import com.resonote.feature.video.api.VideoNavKey
 import com.resonote.feature.video.impl.VideoRoute
-import com.resonote.feature.vip.api.DailyVipNavKey
-import com.resonote.feature.vip.impl.DailyVipRoute
+import com.resonote.feature.vip.impl.DailyVipDialogRoute
 
 @Composable
 internal fun ResonoteApp(
@@ -93,6 +92,7 @@ internal fun ResonoteApp(
     onFinishExternalTask: () -> Unit = {},
 ) {
     val backStack = rememberNavBackStack(TabsShellNavKey)
+    val tabsShellState = rememberTabsShellState()
     val hasTabBar = backStack.lastOrNull().hasPrimaryNavigation()
     val playbackState by playbackViewModel.state.collectAsStateWithLifecycle()
     val authState by viewModel.authState.collectAsStateWithLifecycle()
@@ -104,6 +104,7 @@ internal fun ResonoteApp(
     var tabBarInset by remember { mutableStateOf(0.dp) }
     var playbackChromeInset by remember { mutableStateOf(0.dp) }
     var queueOpen by remember { mutableStateOf(false) }
+    var dailyVipDialogOpen by remember { mutableStateOf(false) }
     var songActionRequest by remember { mutableStateOf<OnlineSongActionRequest?>(null) }
     var playlistPickerSong by remember { mutableStateOf<OnlineSong?>(null) }
     var infoSong by remember { mutableStateOf<OnlineSong?>(null) }
@@ -137,6 +138,7 @@ internal fun ResonoteApp(
         backStack.synchronizeAuthenticationGate(authState)
         if (authState !is AuthState.Authenticated) {
             playlistPickerSong = null
+            dailyVipDialogOpen = false
         }
     }
 
@@ -171,6 +173,8 @@ internal fun ResonoteApp(
                 entryProvider = entryProvider {
                     entry<TabsShellNavKey> {
                         TabsShell(
+                            tabsShellState = tabsShellState,
+                            isActiveDestination = backStack.lastOrNull() == TabsShellNavKey,
                             playbackState = playbackState,
                             onPlaySong = playbackViewModel::play,
                             onPlaySongs = playbackViewModel::playAll,
@@ -183,7 +187,13 @@ internal fun ResonoteApp(
                             onSearchClick = { backStack.add(SearchNavKey()) },
                             onRecognitionClick = { backStack.add(RecognitionNavKey) },
                             onSongMoreClick = { openSongActions(it) },
-                            onDailyVipClick = { backStack.navigateToDailyVip(authState) },
+                            onDailyVipClick = {
+                                if (authState is AuthState.Authenticated) {
+                                    dailyVipDialogOpen = true
+                                } else if (backStack.lastOrNull() !is LoginGateNavKey) {
+                                    backStack.add(LoginGateNavKey(sessionExpired = false))
+                                }
+                            },
                             onHistoryClick = {
                                 backStack.add(
                                     HistoryNavKey(
@@ -321,15 +331,6 @@ internal fun ResonoteApp(
                             onPlayAll = playbackViewModel::playAll,
                             onSongClick = playbackViewModel::play,
                             onSongMoreClick = { openSongActions(it) },
-                        )
-                    }
-                    entry<DailyVipNavKey> {
-                        DailyVipRoute(
-                            onBack = { backStack.removeAt(backStack.lastIndex) },
-                            onRewardApplied = {
-                                myViewModel.refresh()
-                                playbackViewModel.refreshCurrentOnlineSource(force = true)
-                            },
                         )
                     }
                     entry<CloudNavKey> {
@@ -499,6 +500,15 @@ internal fun ResonoteApp(
         infoSong?.let { song ->
             OnlineSongInfoDialog(song = song, onDismiss = { infoSong = null })
         }
+
+        DailyVipDialogRoute(
+            visible = dailyVipDialogOpen,
+            onDismiss = { dailyVipDialogOpen = false },
+            onRewardApplied = {
+                myViewModel.refresh()
+                playbackViewModel.refreshCurrentOnlineSource(force = true)
+            },
+        )
 
         if (snackbarHostSurface == null) {
             GlobalSnackbarHost(

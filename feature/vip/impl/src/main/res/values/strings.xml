@@ -33,6 +33,8 @@
     <string name="feature_vip_impl_daily_vip_upgrade_dialog_already">今日奖励已领取过。服务仍允许尝试升级概念版 VIP。</string>
     <string name="feature_vip_impl_daily_vip_upgrade_confirm">继续升级</string>
     <string name="feature_vip_impl_daily_vip_upgrade_decline">暂不升级</string>
+    <string name="feature_vip_impl_daily_vip_later">稍后再说</string>
+    <string name="feature_vip_impl_daily_vip_done">完成</string>
     <string name="feature_vip_impl_daily_vip_how_title">领取规则</string>
     <string name="feature_vip_impl_daily_vip_rule_confirm">每次领取和升级都需要你明确确认</string>
     <string name="feature_vip_impl_daily_vip_rule_server">领取结果以服务端状态为准</string>

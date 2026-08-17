@@ -30,6 +30,11 @@ class DailyVipViewModel @Inject constructor(private val repository: VipRewardRep
 
     private var operationJob: Job? = null
 
+    fun reset() {
+        if (operationJob?.isActive == true) return
+        mutableUiState.value = DailyVipUiState.Ready(receiveDay)
+    }
+
     fun claim() {
         if (operationJob?.isActive == true) return
         val state = mutableUiState.value
