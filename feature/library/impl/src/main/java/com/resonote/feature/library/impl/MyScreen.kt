@@ -1,7 +1,7 @@
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
-
 package com.resonote.feature.library.impl
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,18 +37,16 @@ import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RippleConfiguration
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -714,57 +712,58 @@ private fun QuickEntry(
     horizontalBias: Float,
     enabled: Boolean = true,
 ) {
-    CompositionLocalProvider(
-        LocalRippleConfiguration provides RippleConfiguration(color = Color.Transparent),
+    Surface(
+        modifier = modifier
+            .fillMaxSize()
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                enabled = enabled,
+                onClick = onClick,
+            ),
+        color = Color.Transparent,
     ) {
-        Surface(
-            onClick = onClick,
-            modifier = modifier.fillMaxSize(),
-            enabled = enabled,
-            color = Color.Transparent,
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = BiasAlignment(horizontalBias, 0f),
         ) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = BiasAlignment(horizontalBias, 0f),
+            Column(
+                modifier = Modifier.width(44.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
             ) {
-                Column(
-                    modifier = Modifier.width(44.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
+                Surface(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .then(if (iconTestTag == null) Modifier else Modifier.testTag(iconTestTag)),
+                    shape = CircleShape,
+                    color = if (iconColor == MaterialTheme.colorScheme.primary) {
+                        MaterialTheme.colorScheme.primaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.surfaceContainerHigh
+                    },
+                    contentColor = if (enabled) {
+                        iconColor
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                    },
                 ) {
-                    Surface(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .then(if (iconTestTag == null) Modifier else Modifier.testTag(iconTestTag)),
-                        shape = CircleShape,
-                        color = if (iconColor == MaterialTheme.colorScheme.primary) {
-                            MaterialTheme.colorScheme.primaryContainer
-                        } else {
-                            MaterialTheme.colorScheme.surfaceContainerHigh
-                        },
-                        contentColor = if (enabled) {
-                            iconColor
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
-                        },
-                    ) {
-                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) { icon() }
-                        }
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) { icon() }
                     }
-                    Text(
-                        label,
-                        Modifier.padding(top = 8.dp).wrapContentWidth(unbounded = true),
-                        color = if (enabled) {
-                            MaterialTheme.colorScheme.onSurface
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
-                        },
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Medium,
-                        maxLines = 1,
-                    )
                 }
+                Text(
+                    label,
+                    Modifier.padding(top = 8.dp).wrapContentWidth(unbounded = true),
+                    color = if (enabled) {
+                        MaterialTheme.colorScheme.onSurface
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                    },
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                )
             }
         }
     }
