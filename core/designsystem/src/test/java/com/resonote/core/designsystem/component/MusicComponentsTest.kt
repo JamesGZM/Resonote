@@ -84,6 +84,27 @@ class MusicComponentsTest {
     }
 
     @Test
+    fun leadingContent_isRenderedInsideClickableItem() {
+        var rowClicks = 0
+        composeRule.setContent {
+            ResonoteTheme {
+                ResonoteMusicItem(
+                    title = "榜单歌曲",
+                    supportingText = "Resonote",
+                    duration = "3:00",
+                    onClick = { rowClicks++ },
+                    onMoreClick = null,
+                    leadingContent = { androidx.compose.material3.Text("1") },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("1").assertExists().performClick()
+
+        assertEquals(1, rowClicks)
+    }
+
+    @Test
     fun customTrailingAction_replacesMoreAction_andRemainsIndependent() {
         var rowClicks = 0
         var moreClicks = 0

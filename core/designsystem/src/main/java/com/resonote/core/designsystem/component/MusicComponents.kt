@@ -190,6 +190,7 @@ fun ResonoteMusicItem(
     isPlaying: Boolean = false,
     isSelected: Boolean = false,
     enabled: Boolean = true,
+    leadingContent: (@Composable () -> Unit)? = null,
     trailingAction: (@Composable () -> Unit)? = null,
 ) {
     val effectiveArtworkState = if (!artworkUrl.isNullOrBlank()) ResonoteArtworkState.LOADED else artworkState
@@ -225,6 +226,10 @@ fun ResonoteMusicItem(
             ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        if (leadingContent != null) {
+            leadingContent()
+            Spacer(Modifier.width(8.dp))
+        }
         ResonoteArtwork(
             state = effectiveArtworkState,
             contentDescription = stringResource(R.string.core_designsystem_song_artwork, title),

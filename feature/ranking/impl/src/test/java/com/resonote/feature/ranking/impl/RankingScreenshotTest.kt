@@ -8,7 +8,6 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.unit.DpSize
@@ -37,29 +36,55 @@ class RankingScreenshotTest {
     fun ranking_compactScrollStates() {
         setRankingContent(ResonoteThemeMode.LIGHT)
 
-        composeRule.onAllNodesWithText("潮汐热歌榜 · 本周上升最快").assertCountEquals(2)
+        composeRule.onAllNodesWithText("潮汐热歌榜 · 本周上升最快").assertCountEquals(1)
         composeRule.onNodeWithContentDescription("潮汐热歌榜 · 本周上升最快的榜单封面").assertExists()
-        composeRule.onNodeWithText("01").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("第 1 名").assertIsDisplayed()
         capture("top")
 
         composeRule.onNodeWithTag("ranking-list").performScrollToIndex(6)
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("加载更多").assertExists()
         capture("songs")
     }
 
     @Test
     fun ranking_compactTopDark() {
         setRankingContent(ResonoteThemeMode.DARK)
-        composeRule.onNodeWithText("01").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("第 1 名").assertIsDisplayed()
         capture("top_dark")
     }
 
     @Test
     fun ranking_compactTopAmoled() {
         setRankingContent(ResonoteThemeMode.AMOLED)
-        composeRule.onNodeWithText("01").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("第 1 名").assertIsDisplayed()
         capture("top_amoled")
+    }
+
+    @Test
+    fun ranking_compactLoadingSkeleton() {
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                override = DeviceConfigurationOverride.ForcedSize(DpSize(390.dp, 844.dp)),
+            ) {
+                ResonoteTheme {
+                    RankingScreen(
+                        state = RankingUiState.Loading(
+                            RankingMetadata("tide-chart", "潮汐热歌榜 · 本周上升最快", null),
+                        ),
+                        playingMediaId = null,
+                        onBack = {},
+                        onRetry = {},
+                        onRefresh = {},
+                        onLoadMore = {},
+                        onPlayAll = {},
+                        onSongClick = {},
+                        onSongMoreClick = null,
+                    )
+                }
+            }
+        }
+        composeRule.onNodeWithTag("ranking-skeleton").assertIsDisplayed()
+        capture("loading")
     }
 
     private fun setRankingContent(themeMode: ResonoteThemeMode) {
@@ -79,6 +104,7 @@ class RankingScreenshotTest {
                         playingMediaId = "tide",
                         onBack = {},
                         onRetry = {},
+                        onRefresh = {},
                         onLoadMore = {},
                         onPlayAll = {},
                         onSongClick = {},
@@ -106,6 +132,11 @@ class RankingScreenshotTest {
             song("light", "舷窗微光", "林澈", AudioQuality.Standard, false),
             song("radio", "凌晨电台", "林澈", AudioQuality.HighQuality, false),
             song("home", "回到海岸", "林澈", AudioQuality.Standard, false),
+            song("rain", "雨夜唱片", "林澈", AudioQuality.Lossless, false),
+            song("station", "末班车站", "林澈", AudioQuality.Standard, false),
+            song("echo", "潮汐回声", "林澈", AudioQuality.HighQuality, false),
+            song("island", "远岛灯塔", "林澈", AudioQuality.Standard, false),
+            song("morning", "清晨航线", "林澈", AudioQuality.HighResolution, false),
         )
 
         fun song(id: String, title: String, artist: String, quality: AudioQuality, vip: Boolean) = OnlineSong(

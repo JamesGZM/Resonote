@@ -62,11 +62,54 @@ class RankingViewModel @Inject constructor(private val repository: RankingReposi
         }
     }
 
+    fun refresh() {
+        val key = rankingKey ?: return
+        val current = mutableUiState.value as? RankingUiState.Content ?: return
+        if (current.isRefreshing) return
+        loadMoreJob?.cancel()
+        mutableUiState.value = current.copy(
+            isLoadingMore = false,
+            loadMoreFailure = null,
+            isRefreshing = true,
+            refreshFailure = null,
+        )
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
+            when (val result = repository.loadSongs(key.rankingId, page = 1)) {
+                is CollectionLoadResult.Available -> {
+                    val value = result.value
+                    mutableUiState.value = if (value.songs.isEmpty()) {
+                        RankingUiState.Empty(current.metadata)
+                    } else {
+                        RankingUiState.Content(
+                            metadata = current.metadata,
+                            songs = value.songs,
+                            page = value.page,
+                            total = value.total,
+                            hasMore = value.hasMore,
+                        )
+                    }
+                }
+                is CollectionLoadResult.Failed -> mutableUiState.update { state ->
+                    val latest = state as? RankingUiState.Content ?: return@update state
+                    latest.copy(isRefreshing = false, refreshFailure = result.failure)
+                }
+            }
+        }
+    }
+
+    fun acknowledgeRefreshFailure() {
+        mutableUiState.update { state ->
+            val content = state as? RankingUiState.Content ?: return@update state
+            content.copy(refreshFailure = null)
+        }
+    }
+
     fun loadMore() {
         if (loadMoreJob?.isActive == true) return
         val key = rankingKey ?: return
         val current = mutableUiState.value as? RankingUiState.Content ?: return
-        if (!current.hasMore || current.isLoadingMore) return
+        if (!current.hasMore || current.isLoadingMore || current.isRefreshing) return
         mutableUiState.value = current.copy(isLoadingMore = true, loadMoreFailure = null)
         loadMoreJob = viewModelScope.launch {
             when (val result = repository.loadSongs(key.rankingId, page = current.page + 1)) {
