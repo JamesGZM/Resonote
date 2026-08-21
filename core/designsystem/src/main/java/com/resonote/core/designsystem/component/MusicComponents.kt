@@ -313,7 +313,13 @@ fun ResonoteMusicItem(
                     label = stringResource(R.string.core_designsystem_more_actions, title),
                     onClick = onMoreClick,
                     enabled = enabled,
-                    icon = { Icon(Icons.Rounded.MoreVert, contentDescription = null) },
+                    icon = {
+                        Icon(
+                            Icons.Rounded.MoreVert,
+                            contentDescription = null,
+                            tint = colors.onSurfaceVariant,
+                        )
+                    },
                 )
             }
         }

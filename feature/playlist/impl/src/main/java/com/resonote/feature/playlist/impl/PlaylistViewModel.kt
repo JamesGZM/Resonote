@@ -98,11 +98,59 @@ class PlaylistViewModel @Inject constructor(
         load(id, listId, accountId)
     }
 
+    fun refresh() {
+        val id = playlistId ?: return
+        val current = mutableUiState.value as? PlaylistUiState.Content ?: return
+        if (current.isRefreshing ||
+            removeJob?.isActive == true ||
+            current.removal != PlaylistRemovalUiState.Idle
+        ) {
+            return
+        }
+        loadMoreJob?.cancel()
+        mutableUiState.value = current.copy(
+            isLoadingMore = false,
+            loadMoreFailure = null,
+            isRefreshing = true,
+            refreshFailure = null,
+        )
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
+            when (val result = repository.loadPlaylist(id, page = 1)) {
+                is CollectionLoadResult.Available -> {
+                    val value = result.value
+                    mutableUiState.value = if (value.details == null && value.songs.isEmpty()) {
+                        PlaylistUiState.Empty
+                    } else {
+                        PlaylistUiState.Content(
+                            details = value.details ?: current.details,
+                            songs = value.songs.distinctBy(OnlineSong::hash),
+                            page = value.page,
+                            hasMore = value.hasMore,
+                            writableListId = current.writableListId,
+                        )
+                    }
+                }
+                is CollectionLoadResult.Failed -> mutableUiState.update { state ->
+                    val latest = state as? PlaylistUiState.Content ?: return@update state
+                    latest.copy(isRefreshing = false, refreshFailure = result.failure)
+                }
+            }
+        }
+    }
+
+    fun acknowledgeRefreshFailure() {
+        mutableUiState.update { state ->
+            val content = state as? PlaylistUiState.Content ?: return@update state
+            content.copy(refreshFailure = null)
+        }
+    }
+
     fun loadMore() {
         if (loadMoreJob?.isActive == true || removeJob?.isActive == true) return
         val id = playlistId ?: return
         val current = mutableUiState.value as? PlaylistUiState.Content ?: return
-        if (!current.hasMore || current.isLoadingMore) return
+        if (!current.hasMore || current.isLoadingMore || current.isRefreshing) return
         mutableUiState.value = current.copy(isLoadingMore = true, loadMoreFailure = null)
         loadMoreJob = viewModelScope.launch {
             when (val result = repository.loadPlaylist(id, page = current.page + 1)) {
@@ -129,6 +177,7 @@ class PlaylistViewModel @Inject constructor(
     fun removeSong(song: OnlineSong) {
         if (removeJob?.isActive == true || loadMoreJob?.isActive == true) return
         val current = mutableUiState.value as? PlaylistUiState.Content ?: return
+        if (current.isRefreshing) return
         val listId = writableListId ?: return
         val accountId = writableAccountId ?: return
         val fileId = song.fileId?.takeIf(String::isNotBlank) ?: return

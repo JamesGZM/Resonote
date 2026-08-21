@@ -17,6 +17,8 @@ sealed interface PlaylistUiState {
         val writableListId: String? = null,
         val isLoadingMore: Boolean = false,
         val loadMoreFailure: ContentFailure? = null,
+        val isRefreshing: Boolean = false,
+        val refreshFailure: ContentFailure? = null,
         val removal: PlaylistRemovalUiState = PlaylistRemovalUiState.Idle,
     ) : PlaylistUiState
 

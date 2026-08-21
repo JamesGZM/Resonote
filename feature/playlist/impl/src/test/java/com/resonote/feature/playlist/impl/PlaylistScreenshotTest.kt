@@ -3,6 +3,7 @@ package com.resonote.feature.playlist.impl
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -36,20 +37,68 @@ class PlaylistScreenshotTest {
 
     @Test
     fun playlist_compactScrollStates() {
-        val songs = listOf(
-            song("quiet", "静默轨道", "Resonote Ensemble", AudioQuality.HighResolution, true),
-            song("room", "蓝色房间", "Lin & The Archive", AudioQuality.Lossless, true),
-            song("years", "那些年我们一起听过的歌", "陈粒", AudioQuality.Lossless, false),
-            song("signal", "晚风信号", "林澈 · 潮汐记忆", AudioQuality.HighResolution, false),
-            song("forest", "写给森林的信", "北岸合唱团", AudioQuality.Standard, false),
-            song("snow", "雪线以北", "远山计划", AudioQuality.HighQuality, false),
-            song("city", "城市醒来之前", "晨雾唱片", AudioQuality.Standard, false),
-        )
+        setPlaylistContent(ResonoteThemeMode.LIGHT)
+
+        composeRule.onAllNodesWithText("深夜独白：安静的陪伴").assertCountEquals(1)
+        composeRule.onNodeWithText("播放全部").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("歌单“深夜独白：安静的陪伴”的封面").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("More actions for 静默轨道").assertExists()
+        capture("top")
+
+        composeRule.onNodeWithTag("playlist-list").performScrollToIndex(7)
+        composeRule.waitForIdle()
+        capture("songs")
+
+        composeRule.onNodeWithContentDescription("More actions for 城市醒来之前").performClick()
+        composeRule.onNodeWithText("从歌单中移除？").assertExists()
+        composeRule.onNodeWithText("“城市醒来之前”将从这个歌单中移除，不会删除歌曲本身。").assertExists()
+    }
+
+    @Test
+    fun playlist_compactTopDark() {
+        setPlaylistContent(ResonoteThemeMode.DARK)
+        composeRule.onNodeWithText("播放全部").assertIsDisplayed()
+        capture("top_dark")
+    }
+
+    @Test
+    fun playlist_compactTopAmoled() {
+        setPlaylistContent(ResonoteThemeMode.AMOLED)
+        composeRule.onNodeWithText("播放全部").assertIsDisplayed()
+        capture("top_amoled")
+    }
+
+    @Test
+    fun playlist_compactLoadingSkeleton() {
         composeRule.setContent {
             DeviceConfigurationOverride(
                 override = DeviceConfigurationOverride.ForcedSize(DpSize(390.dp, 844.dp)),
             ) {
-                ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                ResonoteTheme {
+                    PlaylistScreen(
+                        state = PlaylistUiState.Loading,
+                        playingMediaId = null,
+                        onBack = {},
+                        onRetry = {},
+                        onRefresh = {},
+                        onLoadMore = {},
+                        onPlayAll = {},
+                        onSongClick = {},
+                        onSongMoreClick = null,
+                    )
+                }
+            }
+        }
+        composeRule.onNodeWithTag("playlist-skeleton").assertIsDisplayed()
+        capture("loading")
+    }
+
+    private fun setPlaylistContent(themeMode: ResonoteThemeMode) {
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                override = DeviceConfigurationOverride.ForcedSize(DpSize(390.dp, 844.dp)),
+            ) {
+                ResonoteTheme(themeMode = themeMode) {
                     PlaylistScreen(
                         state = PlaylistUiState.Content(
                             details = PlaylistDetails(
@@ -67,6 +116,7 @@ class PlaylistScreenshotTest {
                         playingMediaId = "room",
                         onBack = {},
                         onRetry = {},
+                        onRefresh = {},
                         onLoadMore = {},
                         onPlayAll = {},
                         onSongClick = {},
@@ -75,20 +125,7 @@ class PlaylistScreenshotTest {
                 }
             }
         }
-
-        composeRule.onAllNodesWithText("深夜独白：安静的陪伴").assertCountEquals(2)
-        composeRule.onNodeWithText("播放全部").assertExists()
-        composeRule.onNodeWithContentDescription("More actions for 静默轨道").assertExists()
-        capture("top")
-
-        composeRule.onNodeWithTag("playlist-list").performScrollToIndex(6)
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("加载更多").assertExists()
-        capture("songs")
-
-        composeRule.onNodeWithContentDescription("More actions for 城市醒来之前").performClick()
-        composeRule.onNodeWithText("从歌单中移除？").assertExists()
-        composeRule.onNodeWithText("“城市醒来之前”将从这个歌单中移除，不会删除歌曲本身。").assertExists()
     }
 
     private fun capture(name: String) {
@@ -98,16 +135,33 @@ class PlaylistScreenshotTest {
         )
     }
 
-    private fun song(id: String, title: String, artist: String, quality: AudioQuality, vip: Boolean) = OnlineSong(
-        hash = id,
-        fileId = "$id-file",
-        title = title,
-        artist = artist,
-        coverUrl = null,
-        albumId = null,
-        albumAudioId = null,
-        durationMillis = 248_000,
-        quality = quality,
-        vip = vip,
-    )
+    private companion object {
+        val songs = listOf(
+            song("quiet", "静默轨道", "Resonote Ensemble", AudioQuality.HighResolution, true),
+            song("room", "蓝色房间", "Lin & The Archive", AudioQuality.Lossless, true),
+            song("years", "那些年我们一起听过的歌", "陈粒", AudioQuality.Lossless, false),
+            song("signal", "晚风信号", "林澈 · 潮汐记忆", AudioQuality.HighResolution, false),
+            song("forest", "写给森林的信", "北岸合唱团", AudioQuality.Standard, false),
+            song("snow", "雪线以北", "远山计划", AudioQuality.HighQuality, false),
+            song("city", "城市醒来之前", "晨雾唱片", AudioQuality.Standard, false),
+            song("harbor", "港口来信", "北岸计划", AudioQuality.Lossless, false),
+            song("rain", "窗外的雨", "林澈", AudioQuality.Standard, false),
+            song("station", "末班站台", "远山计划", AudioQuality.HighResolution, false),
+            song("echo", "夜色回声", "潮汐记忆", AudioQuality.HighQuality, false),
+            song("morning", "清晨之前", "晨雾唱片", AudioQuality.Standard, false),
+        )
+
+        fun song(id: String, title: String, artist: String, quality: AudioQuality, vip: Boolean) = OnlineSong(
+            hash = id,
+            fileId = "$id-file",
+            title = title,
+            artist = artist,
+            coverUrl = null,
+            albumId = null,
+            albumAudioId = null,
+            durationMillis = 248_000,
+            quality = quality,
+            vip = vip,
+        )
+    }
 }

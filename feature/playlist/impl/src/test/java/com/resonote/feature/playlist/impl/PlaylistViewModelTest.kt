@@ -125,6 +125,68 @@ class PlaylistViewModelTest {
     }
 
     @Test
+    fun refreshReplacesFirstPageAndPreservesWriteContext() = runTest(dispatcher) {
+        val repository = FakePlaylistRepository(
+            refreshedFirstPage = PlaylistPage(
+                details = PlaylistDetails("playlist", "更新后的歌单", "新的简介", null, 1),
+                songs = listOf(song("song-refreshed")),
+                page = 1,
+                hasMore = false,
+            ),
+        )
+        val viewModel = PlaylistViewModel(repository, FakeLibraryRepository())
+        viewModel.load("playlist", writableListId = "list-7", accountId = "account-a")
+        advanceUntilIdle()
+
+        viewModel.refresh()
+        assertThat((viewModel.uiState.value as PlaylistUiState.Content).isRefreshing).isTrue()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value as PlaylistUiState.Content
+        assertThat(state.details?.title).isEqualTo("更新后的歌单")
+        assertThat(state.songs.map { it.hash }).containsExactly("song-refreshed")
+        assertThat(state.writableListId).isEqualTo("list-7")
+        assertThat(state.hasMore).isFalse()
+        assertThat(state.isRefreshing).isFalse()
+    }
+
+    @Test
+    fun refreshFailureKeepsContentUntilAcknowledged() = runTest(dispatcher) {
+        val viewModel = PlaylistViewModel(
+            FakePlaylistRepository(failRefresh = true),
+            FakeLibraryRepository(),
+        )
+        viewModel.load("playlist")
+        advanceUntilIdle()
+
+        viewModel.refresh()
+        advanceUntilIdle()
+
+        val failed = viewModel.uiState.value as PlaylistUiState.Content
+        assertThat(failed.songs.map { it.hash }).containsExactly("song-1", "song-2").inOrder()
+        assertThat(failed.refreshFailure).isEqualTo(ContentFailure.Network)
+        assertThat(failed.isRefreshing).isFalse()
+
+        viewModel.acknowledgeRefreshFailure()
+
+        assertThat((viewModel.uiState.value as PlaylistUiState.Content).refreshFailure).isNull()
+    }
+
+    @Test
+    fun loadMoreIsIgnoredWhileRefreshing() = runTest(dispatcher) {
+        val repository = FakePlaylistRepository()
+        val viewModel = PlaylistViewModel(repository, FakeLibraryRepository())
+        viewModel.load("playlist")
+        advanceUntilIdle()
+
+        viewModel.refresh()
+        viewModel.loadMore()
+        advanceUntilIdle()
+
+        assertThat(repository.requests).containsExactly("playlist" to 1, "playlist" to 1).inOrder()
+    }
+
+    @Test
     fun successfulRemovalUsesPlaylistFileIdAndUpdatesLoadedContent() = runTest(dispatcher) {
         val library = FakeLibraryRepository()
         val viewModel = PlaylistViewModel(FakePlaylistRepository(), library)
@@ -224,8 +286,10 @@ class PlaylistViewModelTest {
     private class FakePlaylistRepository(
         var failFirstRequest: Boolean = false,
         private val failSecondPage: Boolean = false,
+        private val failRefresh: Boolean = false,
         private val emptyFirstPage: Boolean = false,
         private val duplicateFirstPageSong: Boolean = false,
+        private val refreshedFirstPage: PlaylistPage? = null,
     ) : PlaylistRepository {
         val requests = mutableListOf<Pair<String, Int>>()
 
@@ -238,6 +302,9 @@ class PlaylistViewModelTest {
             if (page == 1 && failFirstRequest) {
                 return CollectionLoadResult.Failed(ContentFailure.AuthenticationRequired)
             }
+            val isRefresh = page == 1 && requests.count { it.second == 1 } > 1
+            if (isRefresh && failRefresh) return CollectionLoadResult.Failed(ContentFailure.Network)
+            if (isRefresh && refreshedFirstPage != null) return CollectionLoadResult.Available(refreshedFirstPage)
             if (page == 2 && failSecondPage) return CollectionLoadResult.Failed(ContentFailure.Network)
             if (emptyFirstPage) return CollectionLoadResult.Available(PlaylistPage(null, emptyList(), 1, false))
             return CollectionLoadResult.Available(
