@@ -2,6 +2,7 @@
 
 package com.resonote.feature.ranking.impl
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,7 +25,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.BarChart
 import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -40,9 +40,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalDensity
@@ -296,40 +298,51 @@ private fun RankingHeader(metadata: RankingMetadata, songCount: Int, onPlayAll: 
                 ),
             ),
         )
-        Surface(
-            modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth(),
-            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+        Column(
+            modifier = Modifier.align(Alignment.BottomStart).padding(horizontal = 20.dp, vertical = 18.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Column(
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+            val textShadow = Shadow(
+                color = Color.Black.copy(alpha = 0.72f),
+                offset = Offset(0f, 1.5f),
+                blurRadius = 3.5f,
+            )
+            Text(
+                text = title,
+                color = Color.White,
+                style = MaterialTheme.typography.headlineSmall.copy(shadow = textShadow),
+                fontWeight = FontWeight.Bold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = title,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
+                    text = stringResource(R.string.feature_ranking_impl_ranking_song_count, songCount),
+                    color = Color.White.copy(alpha = 0.84f),
+                    style = MaterialTheme.typography.bodyMedium.copy(shadow = textShadow),
                 )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
+                Spacer(Modifier.weight(1f))
+                Surface(
+                    onClick = onPlayAll,
+                    modifier = Modifier.height(40.dp),
+                    shape = CircleShape,
+                    color = Color.Black.copy(alpha = 0.38f),
+                    contentColor = Color.White,
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.2f)),
                 ) {
-                    Text(
-                        text = stringResource(R.string.feature_ranking_impl_ranking_song_count, songCount),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                    Spacer(Modifier.weight(1f))
-                    FilledTonalButton(
-                        onClick = onPlayAll,
-                        modifier = Modifier.height(40.dp),
-                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(Icons.Rounded.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text(stringResource(R.string.feature_ranking_impl_ranking_play_all))
+                        Text(
+                            text = stringResource(R.string.feature_ranking_impl_ranking_play_all),
+                            style = MaterialTheme.typography.labelLarge,
+                        )
                     }
                 }
             }
@@ -469,13 +482,6 @@ private fun RankingSkeleton() {
                             .clip(MaterialTheme.shapes.small)
                             .background(placeholderColor),
                     )
-                    Box(
-                        Modifier
-                            .width(84.dp)
-                            .height(14.dp)
-                            .clip(MaterialTheme.shapes.extraSmall)
-                            .background(placeholderColor),
-                    )
                     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             Modifier
@@ -487,7 +493,7 @@ private fun RankingSkeleton() {
                         Spacer(Modifier.weight(1f))
                         Box(
                             Modifier
-                                .width(112.dp)
+                                .width(108.dp)
                                 .height(40.dp)
                                 .clip(MaterialTheme.shapes.extraLarge)
                                 .background(placeholderColor),
