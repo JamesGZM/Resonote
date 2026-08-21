@@ -55,11 +55,54 @@ class AlbumViewModel @Inject constructor(private val repository: ContentCatalogR
         }
     }
 
+    fun refresh() {
+        val key = albumKey ?: return
+        val current = mutableUiState.value as? AlbumUiState.Content ?: return
+        if (current.isRefreshing) return
+        loadMoreJob?.cancel()
+        mutableUiState.value = current.copy(
+            isLoadingMore = false,
+            loadMoreFailure = null,
+            isRefreshing = true,
+            refreshFailure = null,
+        )
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
+            when (val result = repository.loadAlbumSongs(key.albumId, page = 1)) {
+                is CollectionLoadResult.Available -> {
+                    val page = result.value
+                    val metadata = key.metadata(page.songs.firstOrNull(), page.total)
+                    mutableUiState.value = if (page.songs.isEmpty()) {
+                        AlbumUiState.Empty(metadata)
+                    } else {
+                        AlbumUiState.Content(
+                            metadata = metadata,
+                            songs = page.songs.distinctBy(OnlineSong::hash),
+                            page = page.page,
+                            hasMore = page.hasMore,
+                        )
+                    }
+                }
+                is CollectionLoadResult.Failed -> mutableUiState.update { state ->
+                    val latest = state as? AlbumUiState.Content ?: return@update state
+                    latest.copy(isRefreshing = false, refreshFailure = result.failure)
+                }
+            }
+        }
+    }
+
+    fun acknowledgeRefreshFailure() {
+        mutableUiState.update { state ->
+            val content = state as? AlbumUiState.Content ?: return@update state
+            content.copy(refreshFailure = null)
+        }
+    }
+
     fun loadMore() {
         if (loadMoreJob?.isActive == true) return
         val key = albumKey ?: return
         val current = mutableUiState.value as? AlbumUiState.Content ?: return
-        if (!current.hasMore || current.isLoadingMore) return
+        if (!current.hasMore || current.isLoadingMore || current.isRefreshing) return
         mutableUiState.value = current.copy(isLoadingMore = true, loadMoreFailure = null)
         loadMoreJob = viewModelScope.launch {
             when (val result = repository.loadAlbumSongs(key.albumId, page = current.page + 1)) {
