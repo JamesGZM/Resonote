@@ -4,6 +4,9 @@
     <string name="core_designsystem_playing">正在播放</string>
     <string name="core_designsystem_song_artwork">%1$s 的歌曲封面</string>
     <string name="core_designsystem_playlist_artwork">%1$s 的歌单封面</string>
+    <string name="core_designsystem_artist_artwork">%1$s 的歌手头像</string>
+    <string name="core_designsystem_video_artwork">%1$s 的视频封面</string>
+    <string name="core_designsystem_play_video">播放 %1$s</string>
     <string name="core_designsystem_refreshing">正在刷新</string>
     <string name="core_designsystem_empty_title">这里还没有内容</string>
     <string name="core_designsystem_empty_message">换个分类看看，或稍后再来。</string>

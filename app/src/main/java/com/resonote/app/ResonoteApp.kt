@@ -194,7 +194,7 @@ internal fun ResonoteApp(
                                     backStack.add(LoginGateNavKey(sessionExpired = false))
                                 }
                             },
-                            onSearchClick = { backStack.add(SearchNavKey()) },
+                            onSearchClick = { backStack.add(SearchNavKey(sessionId = System.nanoTime())) },
                             onRecognitionClick = {
                                 backStack.add(RecognitionNavKey(sessionId = System.nanoTime()))
                             },
@@ -252,7 +252,9 @@ internal fun ResonoteApp(
                     }
                     entry<SearchNavKey> { key ->
                         SearchRoute(
+                            sessionId = key.sessionId,
                             initialQuery = key.initialQuery,
+                            playingMediaId = playbackState.currentMetadata?.mediaId,
                             bottomContentPadding = standaloneBottomContentPadding,
                             onBack = { backStack.removeAt(backStack.lastIndex) },
                             onRecognitionClick = {
@@ -409,7 +411,7 @@ internal fun ResonoteApp(
                                 val query = listOfNotNull(match.song.title, match.song.artist)
                                     .filter(String::isNotBlank)
                                     .joinToString(" ")
-                                backStack.add(SearchNavKey(initialQuery = query))
+                                backStack.add(SearchNavKey(sessionId = System.nanoTime(), initialQuery = query))
                             },
                             onAddToPlaylist = ::openPlaylistPicker,
                         )
@@ -542,7 +544,8 @@ internal fun MutableList<NavKey>.leaveLocalMusic(key: LocalMusicNavKey): Boolean
 
 internal fun NavKey?.hasPrimaryNavigation(): Boolean = this is TabsShellNavKey
 
-internal fun NavKey?.showsMiniPlayer(): Boolean = this != null && this !is PlayerNavKey && this !is RecognitionNavKey
+internal fun NavKey?.showsMiniPlayer(): Boolean =
+    this != null && this !is PlayerNavKey && this !is RecognitionNavKey && this !is VideoNavKey
 
 private enum class SnackbarHostSurface {
     PlaybackQueue,

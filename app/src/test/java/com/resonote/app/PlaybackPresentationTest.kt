@@ -8,6 +8,7 @@ import com.resonote.core.playback.PlaybackIssue
 import com.resonote.feature.player.api.PlayerNavKey
 import com.resonote.feature.recognition.api.RecognitionNavKey
 import com.resonote.feature.settings.api.SettingsNavKey
+import com.resonote.feature.video.api.VideoNavKey
 import org.junit.Test
 
 class PlaybackPresentationTest {
@@ -35,11 +36,12 @@ class PlaybackPresentationTest {
     }
 
     @Test
-    fun miniPlayerIsGlobalExceptOnTheFullPlayer() {
+    fun miniPlayerIsHiddenOnDedicatedPlaybackSurfaces() {
         assertThat(TabsShellNavKey.showsMiniPlayer()).isTrue()
         assertThat(SettingsNavKey.showsMiniPlayer()).isTrue()
         assertThat(PlayerNavKey.showsMiniPlayer()).isFalse()
         assertThat(RecognitionNavKey().showsMiniPlayer()).isFalse()
+        assertThat(VideoNavKey("mv", "MV").showsMiniPlayer()).isFalse()
         assertThat(null.showsMiniPlayer()).isFalse()
     }
 }

@@ -1,13 +1,15 @@
 <resources>
     <string name="feature_search_impl_search_title">搜索</string>
-    <string name="feature_search_impl_search_hint">歌曲、歌手、专辑或歌单</string>
+    <string name="feature_search_impl_search_hint">歌曲、歌手、专辑</string>
     <string name="feature_search_impl_search_back">返回</string>
     <string name="feature_search_impl_search_clear">清除搜索内容</string>
     <string name="feature_search_impl_search_submit">搜索</string>
     <string name="feature_search_impl_search_recognition">听歌识曲</string>
     <string name="feature_search_impl_search_hot">热门搜索</string>
     <string name="feature_search_impl_search_history">最近搜索</string>
+    <string name="feature_search_impl_search_history_edit">编辑</string>
     <string name="feature_search_impl_search_history_clear">清空</string>
+    <string name="feature_search_impl_search_history_done">完成</string>
     <string name="feature_search_impl_search_history_remove">删除搜索记录“%1$s”</string>
     <string name="feature_search_impl_search_suggestions">搜索建议</string>
     <string name="feature_search_impl_search_loading">正在搜索“%1$s”</string>
@@ -25,6 +27,11 @@
     <string name="feature_search_impl_search_playlists">歌单</string>
     <string name="feature_search_impl_search_mvs">MV</string>
     <string name="feature_search_impl_search_see_all">查看全部</string>
+    <string name="feature_search_impl_search_section_supporting">与你的搜索相关</string>
+    <string name="feature_search_impl_search_result_count">%1$d 条结果</string>
+    <string name="feature_search_impl_search_song_count">%1$d 首</string>
+    <string name="feature_search_impl_search_playlist_artwork">%1$s 的歌单封面</string>
+    <string name="feature_search_impl_search_album_artwork">%1$s 的专辑封面</string>
     <string name="feature_search_impl_search_load_more">加载更多</string>
     <string name="feature_search_impl_search_load_more_retry">加载失败，点击重试</string>
     <string name="feature_search_impl_search_song_duration">%1$d:%2$02d</string>

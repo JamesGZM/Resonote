@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
@@ -44,6 +45,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
@@ -388,9 +391,47 @@ data class ResonotePlaylistMetadata(
     val supportingText: String? = null,
 )
 
+@Immutable
+data class ResonoteMediaCardMetadata(
+    val title: String,
+    val playCount: String? = null,
+    val supportingText: String? = null,
+)
+
+@Immutable
+data class ResonoteArtistMetadata(val title: String, val supportingText: String? = null)
+
+@Immutable
+data class ResonoteVideoMetadata(val title: String, val supportingText: String? = null, val duration: String? = null)
+
 @Composable
 fun ResonotePlaylistItem(
     metadata: ResonotePlaylistMetadata,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    artworkState: ResonoteArtworkState = ResonoteArtworkState.LOADED,
+    artworkUrl: String? = null,
+    artwork: @Composable BoxScope.() -> Unit = { DefaultPlaylistArtwork(metadata.title) },
+    enabled: Boolean = true,
+) = ResonoteMediaCardItem(
+    metadata = ResonoteMediaCardMetadata(
+        title = metadata.title,
+        playCount = metadata.playCount,
+        supportingText = metadata.supportingText,
+    ),
+    artworkContentDescription = stringResource(R.string.core_designsystem_playlist_artwork, metadata.title),
+    onClick = onClick,
+    modifier = modifier,
+    artworkState = artworkState,
+    artworkUrl = artworkUrl,
+    artwork = artwork,
+    enabled = enabled,
+)
+
+@Composable
+fun ResonoteMediaCardItem(
+    metadata: ResonoteMediaCardMetadata,
+    artworkContentDescription: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     artworkState: ResonoteArtworkState = ResonoteArtworkState.LOADED,
@@ -408,7 +449,7 @@ fun ResonotePlaylistItem(
             Box {
                 ResonoteArtwork(
                     state = effectiveArtworkState,
-                    contentDescription = stringResource(R.string.core_designsystem_playlist_artwork, metadata.title),
+                    contentDescription = artworkContentDescription,
                     modifier = Modifier
                         .fillMaxWidth()
                         .aspectRatio(1f)
@@ -475,6 +516,138 @@ fun ResonotePlaylistItem(
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun ResonoteArtistItem(
+    metadata: ResonoteArtistMetadata,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    artworkState: ResonoteArtworkState = ResonoteArtworkState.LOADED,
+    artworkUrl: String? = null,
+    enabled: Boolean = true,
+) {
+    val effectiveArtworkState = if (!artworkUrl.isNullOrBlank()) ResonoteArtworkState.LOADED else artworkState
+    ResonotePlainAction(onClick = onClick, modifier = modifier, enabled = enabled) {
+        Column(
+            modifier = Modifier.padding(vertical = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            ResonoteArtwork(
+                state = effectiveArtworkState,
+                contentDescription = stringResource(R.string.core_designsystem_artist_artwork, metadata.title),
+                modifier = Modifier.fillMaxWidth().aspectRatio(1f),
+                shape = CircleShape,
+                artwork = {
+                    ResonoteRemoteArtwork(
+                        model = artworkUrl,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                },
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = metadata.title,
+                modifier = Modifier.fillMaxWidth(),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            metadata.supportingText?.let { supportingText ->
+                Text(
+                    text = supportingText,
+                    modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.labelSmall,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ResonoteVideoItem(
+    metadata: ResonoteVideoMetadata,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    artworkState: ResonoteArtworkState = ResonoteArtworkState.LOADED,
+    artworkUrl: String? = null,
+    enabled: Boolean = true,
+) {
+    val effectiveArtworkState = if (!artworkUrl.isNullOrBlank()) ResonoteArtworkState.LOADED else artworkState
+    ResonotePlainAction(onClick = onClick, modifier = modifier, enabled = enabled) {
+        Column {
+            Box {
+                ResonoteArtwork(
+                    state = effectiveArtworkState,
+                    contentDescription = stringResource(R.string.core_designsystem_video_artwork, metadata.title),
+                    modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
+                    shape = ResonoteTokens.artworkShapes.hero,
+                    artwork = {
+                        ResonoteRemoteArtwork(
+                            model = artworkUrl,
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    },
+                )
+                if (effectiveArtworkState != ResonoteArtworkState.LOADING) {
+                    Surface(
+                        modifier = Modifier.align(Alignment.Center),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.5f),
+                        contentColor = ResonoteTokens.systemColors.onScrim,
+                    ) {
+                        Icon(
+                            Icons.Rounded.PlayArrow,
+                            contentDescription = stringResource(R.string.core_designsystem_play_video, metadata.title),
+                            modifier = Modifier.padding(6.dp).size(18.dp),
+                        )
+                    }
+                    metadata.duration?.let { duration ->
+                        Surface(
+                            modifier = Modifier.align(Alignment.BottomEnd).padding(6.dp),
+                            shape = RoundedCornerShape(4.dp),
+                            color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.66f),
+                            contentColor = ResonoteTokens.systemColors.onScrim,
+                        ) {
+                            Text(
+                                text = duration,
+                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                maxLines = 1,
+                            )
+                        }
+                    }
+                }
+            }
+            Spacer(Modifier.height(7.dp))
+            Text(
+                text = metadata.title,
+                modifier = Modifier.fillMaxWidth(),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            metadata.supportingText?.let { supportingText ->
+                Text(
+                    text = supportingText,
+                    modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
         }
     }

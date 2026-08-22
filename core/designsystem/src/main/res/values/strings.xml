@@ -4,6 +4,9 @@
     <string name="core_designsystem_playing">Playing</string>
     <string name="core_designsystem_song_artwork">Artwork for %1$s</string>
     <string name="core_designsystem_playlist_artwork">Playlist artwork for %1$s</string>
+    <string name="core_designsystem_artist_artwork">Artist artwork for %1$s</string>
+    <string name="core_designsystem_video_artwork">Video artwork for %1$s</string>
+    <string name="core_designsystem_play_video">Play %1$s</string>
     <string name="core_designsystem_refreshing">Refreshing</string>
     <string name="core_designsystem_empty_title">Nothing here yet</string>
     <string name="core_designsystem_empty_message">Try another filter or come back later.</string>

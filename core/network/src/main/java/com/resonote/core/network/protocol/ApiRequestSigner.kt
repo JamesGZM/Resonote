@@ -35,6 +35,10 @@ internal class ApiRequestSigner @Inject constructor() {
         }}",
     )
 
+    fun signVideoKey(hash: String, mid: String, userId: String?): String = md5(
+        "$hash$LITE_SONG_KEY_SALT${ApiProtocolConfig.APP_ID}$mid${userId.orEmpty().ifBlank { "0" }}",
+    )
+
     fun signCloudKey(hash: String, pid: Int = CLOUD_PID): String =
         md5("musicclound${hash.lowercase()}$pid$CLOUD_KEY_SALT")
 

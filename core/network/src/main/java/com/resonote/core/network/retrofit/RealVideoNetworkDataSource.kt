@@ -25,11 +25,11 @@ internal class RealVideoNetworkDataSource @Inject constructor(
     override suspend fun resolveVideoUrl(hash: String): String? {
         require(hash.isNotBlank()) { "hash must not be blank" }
         val session = registration.ensureRegisteredSession()
-        val normalizedHash = hash.trim().lowercase()
+        val videoHash = hash.trim()
         val response = calls.execute {
             musicApi.videoUrl(
-                hash = normalizedHash,
-                key = signer.signSongKey(normalizedHash, session.mid, session.userId),
+                hash = videoHash,
+                key = signer.signVideoKey(videoHash, session.mid, session.userId),
             )
         }
         responses.requireSuccess(response)

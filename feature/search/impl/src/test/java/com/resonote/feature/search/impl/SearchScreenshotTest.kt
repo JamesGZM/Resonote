@@ -2,11 +2,16 @@ package com.resonote.feature.search.impl
 
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -14,9 +19,13 @@ import com.google.common.truth.Truth.assertThat
 import com.resonote.core.designsystem.theme.ResonoteTheme
 import com.resonote.core.designsystem.theme.ResonoteThemeMode
 import com.resonote.core.model.AudioQuality
+import com.resonote.core.model.ComplexSearchResult
 import com.resonote.core.model.OnlineSong
+import com.resonote.core.model.SearchAlbum
+import com.resonote.core.model.SearchArtist
 import com.resonote.core.model.SearchKeyword
 import com.resonote.core.model.SearchMv
+import com.resonote.core.model.SearchPlaylist
 import com.resonote.core.screenshottesting.DefaultRoborazziOptions
 import org.junit.Rule
 import org.junit.Test
@@ -47,7 +56,50 @@ class SearchScreenshotTest {
 
         composeRule.onNodeWithText("最近搜索").assertExists()
         composeRule.onNodeWithText("热门搜索").assertExists()
+        composeRule.onNodeWithContentDescription("听歌识曲").assertIsEnabled()
         capture("discovery")
+    }
+
+    @Test
+    fun search_compactDiscoveryWithoutHistory() {
+        setSearchContent(
+            SearchUiState(
+                hotKeywords = listOf(
+                    SearchKeyword("新歌速递", ""),
+                    SearchKeyword("经典粤语", ""),
+                    SearchKeyword("通勤歌单", ""),
+                ),
+            ),
+        )
+
+        composeRule.onNodeWithText("最近搜索").assertDoesNotExist()
+        composeRule.onNodeWithText("热门搜索").assertExists()
+        capture("discovery_without_history")
+    }
+
+    @Test
+    fun search_compactHistoryEditingAndActions() {
+        var removedQuery: String? = null
+        var cleared = false
+        setSearchContent(
+            state = SearchUiState(
+                history = listOf("午夜爵士", "林俊杰", "城市民谣"),
+                hotKeywords = listOf(SearchKeyword("新歌速递", "")),
+            ),
+            onRemoveHistory = { removedQuery = it },
+            onClearHistory = { cleared = true },
+        )
+
+        composeRule.onNodeWithText("编辑").performClick()
+
+        composeRule.onNodeWithText("清空").assertExists()
+        composeRule.onNodeWithText("完成").assertExists()
+        capture("discovery_editing")
+
+        composeRule.onNodeWithContentDescription("删除搜索记录“午夜爵士”").performClick()
+        assertThat(removedQuery).isEqualTo("午夜爵士")
+        composeRule.onNodeWithText("清空").performClick()
+        assertThat(cleared).isTrue()
     }
 
     @Test
@@ -60,7 +112,7 @@ class SearchScreenshotTest {
             song("room", "蓝色房间", "Lin & The Archive", AudioQuality.Lossless, true),
         )
         setSearchContent(
-            SearchUiState(
+            state = SearchUiState(
                 query = "夜",
                 selectedCategory = SearchCategory.SONGS,
                 result = SearchResultUiState.Content(
@@ -74,12 +126,121 @@ class SearchScreenshotTest {
                     ),
                 ),
             ),
+            playingMediaId = "signal",
         )
 
         composeRule.onNodeWithText("单曲").assertExists()
         composeRule.onNodeWithText("加载更多").assertExists()
         composeRule.onNodeWithContentDescription("More actions for 夜曲").assertDoesNotExist()
         capture("songs")
+    }
+
+    @Test
+    fun search_compactAggregateUsesLegacySectionOrderAndSharedCards() {
+        setSearchContent(
+            state = SearchUiState(
+                query = "林澈",
+                result = SearchResultUiState.Content(
+                    query = "林澈",
+                    category = SearchCategory.ALL,
+                    value = SearchContentUiState.Aggregate(
+                        ComplexSearchResult(
+                            artists = listOf(SearchArtist("artist", "林澈", null, 4, 28)),
+                            songs = listOf(song("signal", "潮汐信号", "林澈", AudioQuality.Lossless, false)),
+                            songsTotal = 28,
+                            playlists = listOf(
+                                SearchPlaylist("playlist", "沿海夜行", "林澈", null, 18, 12_600),
+                                SearchPlaylist("playlist-2", "深夜声场", "Resonote", null, 24, 8_800),
+                            ),
+                            playlistsTotal = 3,
+                            albums = listOf(
+                                SearchAlbum("album", "潮汐记忆", "林澈", null, 12, "2026"),
+                                SearchAlbum("album-2", "冬日档案", "林澈", null, 9, "2025"),
+                            ),
+                            albumsTotal = 4,
+                            mvs = listOf(
+                                SearchMv("mv", "海岸线现场", "林澈", null, 265_000),
+                                SearchMv("mv-2", "潮汐信号 Live", "林澈", null, 218_000),
+                            ),
+                            mvsTotal = 2,
+                        ),
+                    ),
+                ),
+            ),
+            playingMediaId = "signal",
+        )
+
+        composeRule.onAllNodesWithText("歌手").assertCountEquals(2)
+        composeRule.onNodeWithText("潮汐信号").assertExists()
+        composeRule.onNodeWithContentDescription("Playing").assertExists()
+        capture("aggregate")
+        composeRule.onNodeWithTag("search-aggregate").performScrollToIndex(5)
+        capture("aggregate_media_grids")
+    }
+
+    @Test
+    fun search_compactPlaylistGrid() {
+        val playlists = listOf(
+            SearchPlaylist("coast", "沿海夜行", "林澈", null, 18, 126_000),
+            SearchPlaylist("jazz", "午夜爵士俱乐部", "Resonote", null, 32, 88_000),
+            SearchPlaylist("rain", "雨天通勤", "北岸", null, 24, 9_600),
+        )
+        setSearchContent(
+            state = pageState(
+                SearchCategory.PLAYLISTS,
+                playlists.map(SearchResultItem::Playlist),
+            ),
+        )
+
+        capture("playlists")
+    }
+
+    @Test
+    fun search_compactAlbumGrid() {
+        val albums = listOf(
+            SearchAlbum("tide", "潮汐记忆", "林澈", null, 12, "2026"),
+            SearchAlbum("winter", "冬日档案", "Winter Archive", null, 9, "2025"),
+            SearchAlbum("forest", "写给森林的信", "北岸合唱团", null, 11, "2024"),
+        )
+        setSearchContent(
+            state = pageState(
+                SearchCategory.ALBUMS,
+                albums.map(SearchResultItem::Album),
+            ),
+        )
+
+        capture("albums")
+    }
+
+    @Test
+    fun search_compactArtistGrid() {
+        val artists = listOf(
+            SearchArtist("lin", "林澈", null, 4, 28),
+            SearchArtist("winter", "Winter Archive", null, 7, 42),
+            SearchArtist("north", "北岸合唱团", null, 3, 19),
+            SearchArtist("forest", "森林计划", null, 5, 31),
+        )
+        setSearchContent(
+            state = pageState(
+                SearchCategory.ARTISTS,
+                artists.map(SearchResultItem::Artist),
+            ),
+        )
+
+        capture("artists")
+    }
+
+    @Test
+    fun search_clearActionEmitsEmptyQuery() {
+        var updatedQuery: String? = null
+        setSearchContent(
+            state = SearchUiState(query = "夜"),
+            onQueryChange = { updatedQuery = it },
+        )
+
+        composeRule.onNodeWithContentDescription("清除搜索内容").performClick()
+
+        assertThat(updatedQuery).isEmpty()
     }
 
     @Test
@@ -135,7 +296,11 @@ class SearchScreenshotTest {
 
     private fun setSearchContent(
         state: SearchUiState,
-        onMvClick: ((SearchMv) -> Unit)? = null,
+        playingMediaId: String? = null,
+        onQueryChange: (String) -> Unit = {},
+        onRemoveHistory: (String) -> Unit = {},
+        onClearHistory: () -> Unit = {},
+        onMvClick: ((SearchMv) -> Unit)? = {},
         themeMode: ResonoteThemeMode = ResonoteThemeMode.LIGHT,
     ) {
         composeRule.setContent {
@@ -145,20 +310,21 @@ class SearchScreenshotTest {
                 ResonoteTheme(themeMode = themeMode) {
                     SearchScreen(
                         state = state,
-                        onQueryChange = {},
+                        playingMediaId = playingMediaId,
+                        onQueryChange = onQueryChange,
                         onSubmit = {},
                         onRetry = {},
                         onSelectCategory = {},
                         onLoadMore = {},
-                        onRemoveHistory = {},
-                        onClearHistory = {},
+                        onRemoveHistory = onRemoveHistory,
+                        onClearHistory = onClearHistory,
                         onBack = {},
-                        onRecognitionClick = null,
+                        onRecognitionClick = {},
                         onSongClick = {},
                         onSongMoreClick = null,
-                        onPlaylistClick = null,
-                        onAlbumClick = null,
-                        onArtistClick = null,
+                        onPlaylistClick = {},
+                        onAlbumClick = {},
+                        onArtistClick = {},
                         onMvClick = onMvClick,
                     )
                 }
@@ -187,6 +353,21 @@ class SearchScreenshotTest {
                 ),
                 page = 1,
                 total = 1,
+                hasMore = false,
+            ),
+        ),
+    )
+
+    private fun pageState(category: SearchCategory, items: List<SearchResultItem>) = SearchUiState(
+        query = "夜",
+        selectedCategory = category,
+        result = SearchResultUiState.Content(
+            query = "夜",
+            category = category,
+            value = SearchContentUiState.Page(
+                items = items,
+                page = 1,
+                total = items.size,
                 hasMore = false,
             ),
         ),

@@ -35,7 +35,7 @@ class VideoScreenshotTest {
         setScreen(state = VideoUiState.Loading)
 
         composeRule.onNodeWithText("正在连接视频源").assertIsDisplayed()
-        composeRule.onAllNodesWithText("潮汐信号：海岸线现场").assertCountEquals(2)
+        composeRule.onAllNodesWithText("潮汐信号：海岸线现场").assertCountEquals(1)
         capture("loading")
     }
 

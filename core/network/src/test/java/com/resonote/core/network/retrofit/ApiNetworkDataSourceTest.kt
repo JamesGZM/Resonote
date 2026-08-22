@@ -1703,7 +1703,7 @@ class ApiNetworkDataSourceTest {
     }
 
     @Test
-    fun videoUrlUsesSongKeyAndRejectsCleartext() = runTest {
+    fun videoUrlPreservesMvHashForItsKeyAndRejectsCleartext() = runTest {
         gatewayServer.enqueue(
             jsonResponse("""{"status":1,"data":{"dynamic":{"backupdownurl":["https://video.example/fixture.mp4"]}}}"""),
         )
@@ -1719,7 +1719,8 @@ class ApiNetworkDataSourceTest {
         val request = gatewayServer.takeRequest()
         assertThat(request.getHeader("x-router")).isEqualTo("trackermv.kugou.com")
         assertThat(request.requestUrl?.queryParameter("cmd")).isEqualTo("123")
-        assertThat(request.requestUrl?.queryParameter("key")).isNotEmpty()
+        assertThat(request.requestUrl?.queryParameter("hash")).isEqualTo("MVHASH")
+        assertThat(request.requestUrl?.queryParameter("key")).isEqualTo("197f1ff2375eaf4228431e5c94368b5f")
     }
 
     @Test
