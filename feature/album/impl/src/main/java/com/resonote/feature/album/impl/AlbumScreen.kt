@@ -54,6 +54,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -85,6 +86,7 @@ fun AlbumRoute(
     onPlayAll: (List<OnlineSong>) -> Unit,
     onSongClick: (OnlineSong) -> Unit,
     onSongMoreClick: ((OnlineSong) -> Unit)?,
+    bottomContentPadding: Dp = 32.dp,
     viewModel: AlbumViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -108,6 +110,7 @@ fun AlbumRoute(
         onPlayAll = onPlayAll,
         onSongClick = onSongClick,
         onSongMoreClick = onSongMoreClick,
+        bottomContentPadding = bottomContentPadding,
     )
 }
 
@@ -122,6 +125,7 @@ fun AlbumScreen(
     onPlayAll: (List<OnlineSong>) -> Unit,
     onSongClick: (OnlineSong) -> Unit,
     onSongMoreClick: ((OnlineSong) -> Unit)?,
+    bottomContentPadding: Dp = 32.dp,
     modifier: Modifier = Modifier,
 ) {
     val fallbackTitle = stringResource(R.string.feature_album_impl_album_title_fallback)
@@ -130,7 +134,7 @@ fun AlbumScreen(
         modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         loading = {
             Box(Modifier.fillMaxSize()) {
-                AlbumSkeleton()
+                AlbumSkeleton(bottomContentPadding)
                 ImmersiveToolbar(title = null, onBack = onBack, collapseProgress = 0f)
             }
         },
@@ -169,6 +173,7 @@ fun AlbumScreen(
                 onPlayAll = onPlayAll,
                 onSongClick = onSongClick,
                 onSongMoreClick = onSongMoreClick,
+                bottomContentPadding = bottomContentPadding,
             )
         },
     )
@@ -184,6 +189,7 @@ private fun AlbumContentLayout(
     onPlayAll: (List<OnlineSong>) -> Unit,
     onSongClick: (OnlineSong) -> Unit,
     onSongMoreClick: ((OnlineSong) -> Unit)?,
+    bottomContentPadding: Dp,
 ) {
     val listState = remember(state.metadata.id) { LazyListState() }
     val collapseProgress = rememberCollapseProgress(listState)
@@ -207,6 +213,7 @@ private fun AlbumContentLayout(
                 onPlayAll = onPlayAll,
                 onSongClick = onSongClick,
                 onSongMoreClick = onSongMoreClick,
+                bottomContentPadding = bottomContentPadding,
             )
             ImmersiveToolbar(
                 title = state.metadata.title,
@@ -226,11 +233,12 @@ private fun AlbumContent(
     onPlayAll: (List<OnlineSong>) -> Unit,
     onSongClick: (OnlineSong) -> Unit,
     onSongMoreClick: ((OnlineSong) -> Unit)?,
+    bottomContentPadding: Dp,
 ) {
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize().testTag("album-list"),
-        contentPadding = PaddingValues(bottom = 32.dp),
+        contentPadding = PaddingValues(bottom = bottomContentPadding),
     ) {
         item(key = "header") {
             AlbumHeader(
@@ -419,11 +427,11 @@ private fun rememberCollapseProgress(listState: LazyListState): Float {
 }
 
 @Composable
-private fun AlbumSkeleton() {
+private fun AlbumSkeleton(bottomContentPadding: Dp) {
     val shimmer = rememberResonoteShimmer("album-skeleton")
     LazyColumn(
         modifier = Modifier.fillMaxSize().testTag("album-skeleton"),
-        contentPadding = PaddingValues(bottom = 32.dp),
+        contentPadding = PaddingValues(bottom = bottomContentPadding),
     ) {
         item(key = "header") {
             Box(

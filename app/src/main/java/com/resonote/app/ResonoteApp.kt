@@ -95,6 +95,7 @@ internal fun ResonoteApp(
     val tabsShellState = rememberTabsShellState()
     val hasTabBar = backStack.lastOrNull().hasPrimaryNavigation()
     val playbackState by playbackViewModel.state.collectAsStateWithLifecycle()
+    val standaloneBottomContentPadding = if (playbackState.currentMetadata == null) 32.dp else 120.dp
     val authState by viewModel.authState.collectAsStateWithLifecycle()
     val externalImportRequests by viewModel.externalImportRequests.collectAsStateWithLifecycle()
     val externalImportRequest = externalImportRequests.firstOrNull()
@@ -132,6 +133,15 @@ internal fun ResonoteApp(
 
     fun openSongActions(song: OnlineSong, onRemoveRequest: (() -> Unit)? = null) {
         songActionRequest = OnlineSongActionRequest(song, onRemoveRequest)
+    }
+
+    fun openPlaylistPicker(song: OnlineSong) {
+        if (authState is AuthState.Authenticated) {
+            myViewModel.preparePlaylistAddition()
+            playlistPickerSong = song
+        } else if (backStack.lastOrNull() !is LoginGateNavKey) {
+            backStack.add(LoginGateNavKey(sessionExpired = false))
+        }
     }
 
     LaunchedEffect(authState) {
@@ -185,7 +195,9 @@ internal fun ResonoteApp(
                                 }
                             },
                             onSearchClick = { backStack.add(SearchNavKey()) },
-                            onRecognitionClick = { backStack.add(RecognitionNavKey) },
+                            onRecognitionClick = {
+                                backStack.add(RecognitionNavKey(sessionId = System.nanoTime()))
+                            },
                             onSongMoreClick = { openSongActions(it) },
                             onDailyVipClick = {
                                 if (authState is AuthState.Authenticated) {
@@ -241,8 +253,11 @@ internal fun ResonoteApp(
                     entry<SearchNavKey> { key ->
                         SearchRoute(
                             initialQuery = key.initialQuery,
+                            bottomContentPadding = standaloneBottomContentPadding,
                             onBack = { backStack.removeAt(backStack.lastIndex) },
-                            onRecognitionClick = { backStack.add(RecognitionNavKey) },
+                            onRecognitionClick = {
+                                backStack.add(RecognitionNavKey(sessionId = System.nanoTime()))
+                            },
                             onSongClick = playbackViewModel::play,
                             onSongMoreClick = { openSongActions(it) },
                             onPlaylistClick = { backStack.add(PlaylistNavKey(it)) },
@@ -296,6 +311,7 @@ internal fun ResonoteApp(
                         PlaylistRoute(
                             key = key,
                             playingMediaId = playbackState.currentMetadata?.mediaId,
+                            bottomContentPadding = standaloneBottomContentPadding,
                             currentAccountId = (authState as? AuthState.Authenticated)?.userId,
                             onBack = { backStack.removeAt(backStack.lastIndex) },
                             onPlayAll = { playbackViewModel.playAll(it) },
@@ -307,6 +323,7 @@ internal fun ResonoteApp(
                         AlbumRoute(
                             key = key,
                             playingMediaId = playbackState.currentMetadata?.mediaId,
+                            bottomContentPadding = standaloneBottomContentPadding,
                             onBack = { backStack.removeAt(backStack.lastIndex) },
                             onPlayAll = playbackViewModel::playAll,
                             onSongClick = playbackViewModel::play,
@@ -317,6 +334,7 @@ internal fun ResonoteApp(
                         ArtistRoute(
                             key = key,
                             playingMediaId = playbackState.currentMetadata?.mediaId,
+                            bottomContentPadding = standaloneBottomContentPadding,
                             onBack = { backStack.removeAt(backStack.lastIndex) },
                             onPlayAll = playbackViewModel::playAll,
                             onSongClick = playbackViewModel::play,
@@ -327,6 +345,7 @@ internal fun ResonoteApp(
                         RankingRoute(
                             key = key,
                             playingMediaId = playbackState.currentMetadata?.mediaId,
+                            bottomContentPadding = standaloneBottomContentPadding,
                             onBack = { backStack.removeAt(backStack.lastIndex) },
                             onPlayAll = playbackViewModel::playAll,
                             onSongClick = playbackViewModel::play,
@@ -336,7 +355,7 @@ internal fun ResonoteApp(
                     entry<CloudNavKey> {
                         CloudRoute(
                             playingMediaId = playbackState.currentMetadata?.mediaId,
-                            bottomContentPadding = if (playbackState.currentMetadata == null) 32.dp else 120.dp,
+                            bottomContentPadding = standaloneBottomContentPadding,
                             onBack = { backStack.removeAt(backStack.lastIndex) },
                             onPlayRequest = { request ->
                                 playbackViewModel.playCloud(request.tracks, request.startIndex, request.source)
@@ -348,7 +367,7 @@ internal fun ResonoteApp(
                         HistoryRoute(
                             initialTab = key.initialTab,
                             playingMediaId = playbackState.currentMetadata?.mediaId,
-                            bottomContentPadding = if (playbackState.currentMetadata == null) 32.dp else 120.dp,
+                            bottomContentPadding = standaloneBottomContentPadding,
                             onBack = { backStack.removeAt(backStack.lastIndex) },
                             onLoginRequest = {
                                 if (backStack.lastOrNull() !is LoginGateNavKey) {
@@ -363,7 +382,7 @@ internal fun ResonoteApp(
                     entry<LocalMusicNavKey> { key ->
                         LocalMusicRoute(
                             playingMediaId = playbackState.currentMetadata?.mediaId,
-                            bottomContentPadding = if (playbackState.currentMetadata == null) 32.dp else 120.dp,
+                            bottomContentPadding = standaloneBottomContentPadding,
                             onBack = {
                                 if (backStack.leaveLocalMusic(key)) onFinishExternalTask()
                             },
@@ -392,6 +411,7 @@ internal fun ResonoteApp(
                                     .joinToString(" ")
                                 backStack.add(SearchNavKey(initialQuery = query))
                             },
+                            onAddToPlaylist = ::openPlaylistPicker,
                         )
                     }
                     entry<LoginGateNavKey> { key ->
@@ -455,12 +475,7 @@ internal fun ResonoteApp(
                 },
                 onAddToPlaylist = {
                     songActionRequest = null
-                    if (authState is AuthState.Authenticated) {
-                        myViewModel.preparePlaylistAddition()
-                        playlistPickerSong = request.song
-                    } else if (backStack.lastOrNull() !is LoginGateNavKey) {
-                        backStack.add(LoginGateNavKey(sessionExpired = false))
-                    }
+                    openPlaylistPicker(request.song)
                 },
                 onShowInfo = {
                     songActionRequest = null
@@ -527,7 +542,7 @@ internal fun MutableList<NavKey>.leaveLocalMusic(key: LocalMusicNavKey): Boolean
 
 internal fun NavKey?.hasPrimaryNavigation(): Boolean = this is TabsShellNavKey
 
-internal fun NavKey?.showsMiniPlayer(): Boolean = this != null && this !is PlayerNavKey
+internal fun NavKey?.showsMiniPlayer(): Boolean = this != null && this !is PlayerNavKey && this !is RecognitionNavKey
 
 private enum class SnackbarHostSurface {
     PlaybackQueue,

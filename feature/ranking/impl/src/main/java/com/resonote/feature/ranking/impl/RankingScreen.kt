@@ -55,6 +55,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -86,6 +87,7 @@ fun RankingRoute(
     onPlayAll: (List<OnlineSong>) -> Unit,
     onSongClick: (OnlineSong) -> Unit,
     onSongMoreClick: ((OnlineSong) -> Unit)?,
+    bottomContentPadding: Dp = 32.dp,
     viewModel: RankingViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -109,6 +111,7 @@ fun RankingRoute(
         onPlayAll = onPlayAll,
         onSongClick = onSongClick,
         onSongMoreClick = onSongMoreClick,
+        bottomContentPadding = bottomContentPadding,
     )
 }
 
@@ -123,6 +126,7 @@ fun RankingScreen(
     onPlayAll: (List<OnlineSong>) -> Unit,
     onSongClick: (OnlineSong) -> Unit,
     onSongMoreClick: ((OnlineSong) -> Unit)?,
+    bottomContentPadding: Dp = 32.dp,
     modifier: Modifier = Modifier,
 ) {
     val metadata = state.metadata()
@@ -132,7 +136,7 @@ fun RankingScreen(
         modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         loading = {
             Box(Modifier.fillMaxSize()) {
-                RankingSkeleton()
+                RankingSkeleton(bottomContentPadding)
                 ImmersiveToolbar(title = null, onBack = onBack, collapseProgress = 0f)
             }
         },
@@ -170,6 +174,7 @@ fun RankingScreen(
                 onPlayAll = onPlayAll,
                 onSongClick = onSongClick,
                 onSongMoreClick = onSongMoreClick,
+                bottomContentPadding = bottomContentPadding,
             )
         },
     )
@@ -185,6 +190,7 @@ private fun RankingContentLayout(
     onPlayAll: (List<OnlineSong>) -> Unit,
     onSongClick: (OnlineSong) -> Unit,
     onSongMoreClick: ((OnlineSong) -> Unit)?,
+    bottomContentPadding: Dp,
 ) {
     val listState = remember(state.metadata.id) { LazyListState() }
     val collapseProgress = rememberCollapseProgress(listState)
@@ -208,6 +214,7 @@ private fun RankingContentLayout(
                 onPlayAll = onPlayAll,
                 onSongClick = onSongClick,
                 onSongMoreClick = onSongMoreClick,
+                bottomContentPadding = bottomContentPadding,
             )
             ImmersiveToolbar(
                 title = state.metadata.title,
@@ -227,11 +234,12 @@ private fun RankingContent(
     onPlayAll: (List<OnlineSong>) -> Unit,
     onSongClick: (OnlineSong) -> Unit,
     onSongMoreClick: ((OnlineSong) -> Unit)?,
+    bottomContentPadding: Dp,
 ) {
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize().testTag("ranking-list"),
-        contentPadding = PaddingValues(bottom = 32.dp),
+        contentPadding = PaddingValues(bottom = bottomContentPadding),
     ) {
         item(key = "header") {
             RankingHeader(
@@ -457,11 +465,11 @@ private fun rememberCollapseProgress(listState: LazyListState): Float {
 }
 
 @Composable
-private fun RankingSkeleton() {
+private fun RankingSkeleton(bottomContentPadding: Dp) {
     val shimmer = rememberResonoteShimmer("ranking-skeleton")
     LazyColumn(
         modifier = Modifier.fillMaxSize().testTag("ranking-skeleton"),
-        contentPadding = PaddingValues(bottom = 32.dp),
+        contentPadding = PaddingValues(bottom = bottomContentPadding),
     ) {
         item(key = "header") {
             Box(

@@ -61,6 +61,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -89,6 +90,7 @@ fun SearchRoute(
     onAlbumClick: ((SearchAlbum) -> Unit)?,
     onArtistClick: ((SearchArtist) -> Unit)?,
     onMvClick: ((SearchMv) -> Unit)?,
+    bottomContentPadding: Dp = 32.dp,
     viewModel: SearchViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -115,6 +117,7 @@ fun SearchRoute(
         onAlbumClick = onAlbumClick,
         onArtistClick = onArtistClick,
         onMvClick = onMvClick,
+        bottomContentPadding = bottomContentPadding,
     )
 }
 
@@ -136,6 +139,7 @@ fun SearchScreen(
     onAlbumClick: ((SearchAlbum) -> Unit)?,
     onArtistClick: ((SearchArtist) -> Unit)?,
     onMvClick: ((SearchMv) -> Unit)?,
+    bottomContentPadding: Dp = 32.dp,
     modifier: Modifier = Modifier,
 ) {
     val keyboard = LocalSoftwareKeyboardController.current
@@ -168,6 +172,7 @@ fun SearchScreen(
                         keyboard?.hide()
                         onSubmit(it)
                     },
+                    bottomContentPadding = bottomContentPadding,
                 )
                 is SearchResultUiState.Loading -> LoadingState(result.query)
                 is SearchResultUiState.Empty -> EmptyState()
@@ -182,6 +187,7 @@ fun SearchScreen(
                     onAlbumClick = onAlbumClick,
                     onArtistClick = onArtistClick,
                     onMvClick = onMvClick,
+                    bottomContentPadding = bottomContentPadding,
                 )
             }
         }
@@ -268,10 +274,11 @@ private fun SearchDiscovery(
     onRemoveHistory: (String) -> Unit,
     onClearHistory: () -> Unit,
     onKeywordClick: (String) -> Unit,
+    bottomContentPadding: Dp,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 32.dp),
+        contentPadding = PaddingValues(bottom = bottomContentPadding),
     ) {
         if (suggestions.isNotEmpty()) {
             item { SectionTitle(stringResource(R.string.feature_search_impl_search_suggestions), Icons.Rounded.Search) }
@@ -386,6 +393,7 @@ private fun SearchResults(
     onAlbumClick: ((SearchAlbum) -> Unit)?,
     onArtistClick: ((SearchArtist) -> Unit)?,
     onMvClick: ((SearchMv) -> Unit)?,
+    bottomContentPadding: Dp,
 ) {
     when (result) {
         is SearchContentUiState.Aggregate -> AggregateSearchResults(
@@ -397,6 +405,7 @@ private fun SearchResults(
             onAlbumClick = onAlbumClick,
             onArtistClick = onArtistClick,
             onMvClick = onMvClick,
+            bottomContentPadding = bottomContentPadding,
         )
         is SearchContentUiState.Page -> PagedSearchResults(
             page = result,
@@ -407,6 +416,7 @@ private fun SearchResults(
             onAlbumClick = onAlbumClick,
             onArtistClick = onArtistClick,
             onMvClick = onMvClick,
+            bottomContentPadding = bottomContentPadding,
         )
     }
 }
@@ -421,10 +431,11 @@ private fun AggregateSearchResults(
     onAlbumClick: ((SearchAlbum) -> Unit)?,
     onArtistClick: ((SearchArtist) -> Unit)?,
     onMvClick: ((SearchMv) -> Unit)?,
+    bottomContentPadding: Dp,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 32.dp),
+        contentPadding = PaddingValues(bottom = bottomContentPadding),
     ) {
         if (result.songs.isNotEmpty()) {
             item {
@@ -521,10 +532,11 @@ private fun PagedSearchResults(
     onAlbumClick: ((SearchAlbum) -> Unit)?,
     onArtistClick: ((SearchArtist) -> Unit)?,
     onMvClick: ((SearchMv) -> Unit)?,
+    bottomContentPadding: Dp,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 32.dp),
+        contentPadding = PaddingValues(bottom = bottomContentPadding),
     ) {
         itemsIndexed(page.items, key = { index, item -> "page-${item.stableId}-$index" }) { _, item ->
             when (item) {

@@ -6,6 +6,7 @@ import com.resonote.core.model.PlaybackUnavailableReason
 import com.resonote.core.navigation.TabsShellNavKey
 import com.resonote.core.playback.PlaybackIssue
 import com.resonote.feature.player.api.PlayerNavKey
+import com.resonote.feature.recognition.api.RecognitionNavKey
 import com.resonote.feature.settings.api.SettingsNavKey
 import org.junit.Test
 
@@ -38,6 +39,7 @@ class PlaybackPresentationTest {
         assertThat(TabsShellNavKey.showsMiniPlayer()).isTrue()
         assertThat(SettingsNavKey.showsMiniPlayer()).isTrue()
         assertThat(PlayerNavKey.showsMiniPlayer()).isFalse()
+        assertThat(RecognitionNavKey().showsMiniPlayer()).isFalse()
         assertThat(null.showsMiniPlayer()).isFalse()
     }
 }

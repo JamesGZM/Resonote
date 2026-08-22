@@ -2,9 +2,9 @@
     <string name="feature_recognition_impl_back">返回</string>
     <string name="feature_recognition_impl_title">听歌识曲</string>
     <string name="feature_recognition_impl_subtitle">环境声纹 · 最长 10 秒</string>
-    <string name="feature_recognition_impl_idle_title">让声音留下线索</string>
+    <string name="feature_recognition_impl_idle_title">让旋律靠近一点</string>
     <string name="feature_recognition_impl_idle_body">靠近正在播放的音源，保持环境安静。点击后才会使用麦克风。</string>
-    <string name="feature_recognition_impl_start">开始聆听</string>
+    <string name="feature_recognition_impl_start">开始识别</string>
     <string name="feature_recognition_impl_privacy">录音只用于这一次识别；完成、取消或失败后立即从内存清除，不保存到媒体库或历史记录。</string>
     <string name="feature_recognition_impl_permission_title">需要麦克风权限</string>
     <string name="feature_recognition_impl_permission_body">允许 Resonote 临时采集环境声音后，才能开始识曲。</string>
@@ -14,7 +14,6 @@
     <string name="feature_recognition_impl_recording_title">正在聆听</string>
     <string name="feature_recognition_impl_recording_time">%1$d / %2$d 秒</string>
     <string name="feature_recognition_impl_stop">停止并识别</string>
-    <string name="feature_recognition_impl_auto_stop">达到 10 秒后会自动停止</string>
     <string name="feature_recognition_impl_recognizing_title">正在比对声纹</string>
     <string name="feature_recognition_impl_recognizing_body">音频采集已经停止，正在寻找可能的歌曲。</string>
     <string name="feature_recognition_impl_no_match_title">没有找到匹配歌曲</string>
@@ -29,11 +28,12 @@
     <string name="feature_recognition_impl_error_risk">账号需要完成安全验证，当前录音已经清除。</string>
     <string name="feature_recognition_impl_error_generic">识曲服务暂时不可用，当前录音已经清除。</string>
     <string name="feature_recognition_impl_retry">重新听一次</string>
-    <string name="feature_recognition_impl_matches_label">MATCHED · 声纹结果</string>
-    <string name="feature_recognition_impl_matches_title">可能是这些歌曲</string>
-    <string name="feature_recognition_impl_matches_body">结果按匹配度排序。播放或继续搜索都需要你明确选择。</string>
     <string name="feature_recognition_impl_confidence">匹配度 %1$d%%</string>
     <string name="feature_recognition_impl_unknown_artist">未知歌手</string>
-    <string name="feature_recognition_impl_search_action">继续搜索</string>
-    <string name="feature_recognition_impl_play_action">播放</string>
+    <string name="feature_recognition_impl_restart">重新识别</string>
+    <string name="feature_recognition_impl_unsatisfied">没有找到满意的结果？</string>
+    <string name="feature_recognition_impl_play">播放</string>
+    <string name="feature_recognition_impl_search">搜索这首歌</string>
+    <string name="feature_recognition_impl_add_playlist">添加到歌单</string>
+    <string name="feature_recognition_impl_artwork">%1$s 的封面</string>
 </resources>

@@ -1,11 +1,11 @@
 package com.resonote.feature.player.impl
 
-import com.resonote.core.model.AudioQuality
+import com.resonote.core.designsystem.component.compactBadgeLabel
 import com.resonote.core.playback.PlaybackFormat
 import java.util.Locale
 
 fun PlaybackFormat.badgeLabel(): String? = when (this) {
-    is PlaybackFormat.Online -> quality.badgeLabel()
+    is PlaybackFormat.Online -> quality.compactBadgeLabel()
     is PlaybackFormat.Cloud -> extension?.uppercase()
     is PlaybackFormat.Local -> buildList {
         (extension ?: mimeType?.substringAfterLast('/'))?.uppercase()?.let(::add)
@@ -13,13 +13,6 @@ fun PlaybackFormat.badgeLabel(): String? = when (this) {
         bitDepth?.let { add("$it-bit") }
         bitrateBitsPerSecond?.let { add("${it / 1_000} kbps") }
     }.takeIf(List<String>::isNotEmpty)?.joinToString(" · ")
-}
-
-private fun AudioQuality.badgeLabel(): String? = when (this) {
-    AudioQuality.Standard -> null
-    AudioQuality.HighQuality -> "HQ"
-    AudioQuality.HighResolution -> "HI-RES"
-    AudioQuality.Lossless -> "LOSSLESS"
 }
 
 private fun Int.sampleRateLabel(): String = if (this % 1_000 == 0) {

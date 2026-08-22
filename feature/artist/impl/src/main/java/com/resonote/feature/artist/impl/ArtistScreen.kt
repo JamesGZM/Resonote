@@ -47,6 +47,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -66,6 +67,7 @@ fun ArtistRoute(
     onPlayAll: (List<OnlineSong>) -> Unit,
     onSongClick: (OnlineSong) -> Unit,
     onSongMoreClick: ((OnlineSong) -> Unit)?,
+    bottomContentPadding: Dp = 32.dp,
     viewModel: ArtistViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -80,6 +82,7 @@ fun ArtistRoute(
         onPlayAll = onPlayAll,
         onSongClick = onSongClick,
         onSongMoreClick = onSongMoreClick,
+        bottomContentPadding = bottomContentPadding,
     )
 }
 
@@ -94,6 +97,7 @@ fun ArtistScreen(
     onPlayAll: (List<OnlineSong>) -> Unit,
     onSongClick: (OnlineSong) -> Unit,
     onSongMoreClick: ((OnlineSong) -> Unit)?,
+    bottomContentPadding: Dp = 32.dp,
     modifier: Modifier = Modifier,
 ) {
     val fallbackTitle = stringResource(R.string.feature_artist_impl_artist_title_fallback)
@@ -129,6 +133,7 @@ fun ArtistScreen(
             onPlayAll = onPlayAll,
             onSongClick = onSongClick,
             onSongMoreClick = onSongMoreClick,
+            bottomContentPadding = bottomContentPadding,
             modifier = Modifier.padding(padding),
         )
     }
@@ -144,12 +149,13 @@ private fun ArtistContent(
     onPlayAll: (List<OnlineSong>) -> Unit,
     onSongClick: (OnlineSong) -> Unit,
     onSongMoreClick: ((OnlineSong) -> Unit)?,
+    bottomContentPadding: Dp,
     modifier: Modifier = Modifier,
 ) {
     val page = state.selectedPage()
     LazyColumn(
         modifier = modifier.fillMaxSize().testTag("artist-list"),
-        contentPadding = PaddingValues(bottom = 32.dp),
+        contentPadding = PaddingValues(bottom = bottomContentPadding),
     ) {
         item(key = "profile") { ArtistHeader(state.profile) }
         item(key = "sections") {

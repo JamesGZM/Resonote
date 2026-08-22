@@ -4,4 +4,4 @@ import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 
 @Serializable
-data object RecognitionNavKey : NavKey
+data class RecognitionNavKey(val sessionId: Long = 0L) : NavKey

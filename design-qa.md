@@ -1,3 +1,33 @@
+# Recognition results design QA
+
+- Source: `/Users/gongziming/.tmp/codex-clipboard-e45c34b9-3108-4afe-bad2-55e901f14ec3.jpg`
+- Implementation: `/Users/gongziming/Android/projects/Resonote/feature/recognition/impl/src/test/screenshots/Recognition/RecognitionCompact_matches.png`
+- Side-by-side evidence: `/Users/gongziming/Android/projects/Resonote/build/design-qa/recognition-results-comparison.png`
+- Viewport: 390 x 844 dp, light theme
+
+## Findings
+
+No actionable P0, P1, or P2 differences remain.
+
+- Layout: the result uses a fixed-height horizontal pager with a 56 dp viewport inset, 12 dp page spacing, and a visible adjacent card. The indicator now sits 8 dp below the card instead of being pushed toward the bottom edge.
+- Immersive shell: the result reuses the accepted recognition gradient, title block, and 40 dp translucent back control. The PCM-responsive acoustic rings and center orb remain exclusive to the listening state. There is no separate white result background or conventional app-bar strip.
+- Card: real recognition artwork fills the image region; confidence remains an image overlay. Title, artist, duration, quality, VIP, filled play action, add-to-playlist action, and search action use Resonote components and Material theme roles.
+- Motion and interaction: cards swipe horizontally, adjacent cards scale and fade slightly, the active page is represented by the existing Resonote pill indicator pattern, and tests verify navigation between results.
+- Retry: the bottom action follows the reference's low-emphasis sentence plus text action and returns to the ready-to-recognize state.
+- Localization decisions: the previously rejected result introduction header remains removed. The reference's add button is wired to Resonote's existing authenticated playlist-picker flow, and search is wired to Resonote's search destination. The reference's pale page background and toolbar-title placement are intentionally replaced by the already accepted immersive recognition shell.
+- Screenshot fixture: artwork is null by design, so the established Resonote artwork fallback appears in test evidence. Production cards use each returned song's real `coverUrl` through `ResonoteRemoteArtwork`.
+
+## Verification
+
+- `:feature:recognition:impl:recordRoborazziDebug`: passed
+- `:app:compileDebugKotlin`: passed
+- `:feature:recognition:impl:spotlessCheck`: passed
+- `git diff --check`: passed
+
+final result: passed
+
+---
+
 # Home recommendation cards design QA
 
 - Source visual truth: `/Users/gongziming/.tmp/codex-clipboard-67460c30-1cc2-46f1-bccd-014af5617b3c.png`

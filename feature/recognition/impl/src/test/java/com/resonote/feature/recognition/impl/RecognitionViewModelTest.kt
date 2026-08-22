@@ -40,7 +40,14 @@ class RecognitionViewModelTest {
         viewModel.startRecording()
         runCurrent()
 
-        assertThat(viewModel.uiState.value).isEqualTo(RecognitionUiState.Recording(2_500))
+        assertThat(viewModel.uiState.value).isEqualTo(
+            RecognitionUiState.Recording(
+                elapsedMillis = 2_500,
+                amplitude = 0.64f,
+                waveform = listOf(0.42f, -0.18f, 0.31f, -0.64f),
+                rippleHistory = listOf(0.2f, 0.64f),
+            ),
+        )
         viewModel.stopRecording()
         advanceUntilIdle()
 
@@ -50,6 +57,10 @@ class RecognitionViewModelTest {
         assertThat(recorder.stopCount).isEqualTo(1)
         assertThat(repository.receivedPcm).hasLength(pcm.size)
         assertThat(repository.receivedPcm!!.all { it == 0.toByte() }).isTrue()
+
+        viewModel.reset()
+
+        assertThat(viewModel.uiState.value).isEqualTo(RecognitionUiState.Idle)
     }
 
     @Test
@@ -82,6 +93,26 @@ class RecognitionViewModelTest {
 
         assertThat(viewModel.uiState.value).isEqualTo(RecognitionUiState.Idle)
         assertThat(recorder.cancelCount).isEqualTo(1)
+    }
+
+    @Test
+    fun consecutivePcmFramesKeepPolarityAlignedAndSmoothLargeChanges() = runTest(dispatcher) {
+        val recorder = SmoothingRecorder()
+        val viewModel = RecognitionViewModel(
+            FakeRecognitionRepository(CollectionLoadResult.Available(emptyList())),
+            recorder,
+        )
+
+        viewModel.startRecording()
+        runCurrent()
+
+        val recording = viewModel.uiState.value as RecognitionUiState.Recording
+        assertThat(recording.waveform[0]).isWithin(0.0001f).of(0.72f)
+        assertThat(recording.waveform[1]).isWithin(0.0001f).of(-0.86f)
+        assertThat(recording.waveform[2]).isWithin(0.0001f).of(0.72f)
+        assertThat(recording.waveform[3]).isWithin(0.0001f).of(-0.86f)
+        viewModel.cancelCapture()
+        runCurrent()
     }
 
     @Test
@@ -136,8 +167,12 @@ class RecognitionViewModelTest {
         var stopCount = 0
         var cancelCount = 0
 
-        override suspend fun capture(maxDurationMillis: Long, onProgress: (Long) -> Unit): RecognitionCaptureResult {
-            onProgress(2_500)
+        override suspend fun capture(
+            maxDurationMillis: Long,
+            onProgress: (Long, Float, List<Float>) -> Unit,
+        ): RecognitionCaptureResult {
+            onProgress(1_200, 0.2f, listOf(0.1f, -0.1f))
+            onProgress(2_500, 0.64f, TEST_WAVEFORM)
             stopped.await()
             return RecognitionCaptureResult.Captured(pcm)
         }
@@ -156,10 +191,32 @@ class RecognitionViewModelTest {
     private class ImmediateRecorder(private val result: RecognitionCaptureResult) : RecognitionRecorder {
         var cancelCount = 0
 
-        override suspend fun capture(maxDurationMillis: Long, onProgress: (Long) -> Unit) = result
+        override suspend fun capture(maxDurationMillis: Long, onProgress: (Long, Float, List<Float>) -> Unit) = result
         override fun stop() = Unit
         override fun cancel() {
             cancelCount += 1
+        }
+    }
+
+    private class SmoothingRecorder : RecognitionRecorder {
+        private val stopped = CompletableDeferred<Unit>()
+
+        override suspend fun capture(
+            maxDurationMillis: Long,
+            onProgress: (Long, Float, List<Float>) -> Unit,
+        ): RecognitionCaptureResult {
+            onProgress(100, 0.3f, listOf(1f, -1f, 1f, -1f))
+            onProgress(200, 0.5f, listOf(-0.5f, 0f, -0.5f, 0f))
+            stopped.await()
+            return RecognitionCaptureResult.Captured(ByteArray(0))
+        }
+
+        override fun stop() {
+            stopped.complete(Unit)
+        }
+
+        override fun cancel() {
+            stopped.complete(Unit)
         }
     }
 
@@ -176,6 +233,8 @@ class RecognitionViewModelTest {
     }
 
     private companion object {
+        val TEST_WAVEFORM = listOf(-0.18f, 0.42f, -0.64f, 0.31f)
+
         fun validRecorder() = ImmediateRecorder(
             RecognitionCaptureResult.Captured(ByteArray(RECOGNITION_SAMPLE_RATE * Short.SIZE_BYTES) { 5 }),
         )

@@ -60,6 +60,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -96,6 +97,7 @@ fun PlaylistRoute(
     onPlayAll: (List<OnlineSong>) -> Unit,
     onSongClick: (OnlineSong) -> Unit,
     onSongMoreClick: PlaylistSongMoreAction?,
+    bottomContentPadding: Dp = 32.dp,
     viewModel: PlaylistViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -126,6 +128,7 @@ fun PlaylistRoute(
         onPlayAll = onPlayAll,
         onSongClick = onSongClick,
         onSongMoreClick = onSongMoreClick,
+        bottomContentPadding = bottomContentPadding,
         onRemoveSong = viewModel::removeSong,
         onDismissRemovalFailure = viewModel::dismissRemovalFailure,
         onAcknowledgeRemoval = viewModel::acknowledgeRemoval,
@@ -143,6 +146,7 @@ fun PlaylistScreen(
     onPlayAll: (List<OnlineSong>) -> Unit,
     onSongClick: (OnlineSong) -> Unit,
     onSongMoreClick: PlaylistSongMoreAction?,
+    bottomContentPadding: Dp = 32.dp,
     modifier: Modifier = Modifier,
     onRemoveSong: (OnlineSong) -> Unit = {},
     onDismissRemovalFailure: () -> Unit = {},
@@ -172,7 +176,7 @@ fun PlaylistScreen(
         modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         loading = {
             Box(Modifier.fillMaxSize()) {
-                PlaylistSkeleton()
+                PlaylistSkeleton(bottomContentPadding)
                 ImmersiveToolbar(title = null, onBack = onBack, collapseProgress = 0f)
             }
         },
@@ -216,6 +220,7 @@ fun PlaylistScreen(
                 onPlayAll = onPlayAll,
                 onSongClick = onSongClick,
                 onSongMoreClick = onSongMoreClick,
+                bottomContentPadding = bottomContentPadding,
                 onRemoveRequest = { pendingRemovalHash = it.hash },
             )
         },
@@ -252,6 +257,7 @@ private fun PlaylistContentLayout(
     onPlayAll: (List<OnlineSong>) -> Unit,
     onSongClick: (OnlineSong) -> Unit,
     onSongMoreClick: PlaylistSongMoreAction?,
+    bottomContentPadding: Dp,
     onRemoveRequest: (OnlineSong) -> Unit,
 ) {
     val listState = remember(state.details?.id) { LazyListState() }
@@ -276,6 +282,7 @@ private fun PlaylistContentLayout(
                 onPlayAll = onPlayAll,
                 onSongClick = onSongClick,
                 onSongMoreClick = onSongMoreClick,
+                bottomContentPadding = bottomContentPadding,
                 onRemoveRequest = onRemoveRequest,
             )
             ImmersiveToolbar(
@@ -296,12 +303,13 @@ private fun PlaylistContent(
     onPlayAll: (List<OnlineSong>) -> Unit,
     onSongClick: (OnlineSong) -> Unit,
     onSongMoreClick: PlaylistSongMoreAction?,
+    bottomContentPadding: Dp,
     onRemoveRequest: (OnlineSong) -> Unit,
 ) {
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize().testTag("playlist-list"),
-        contentPadding = PaddingValues(bottom = 32.dp),
+        contentPadding = PaddingValues(bottom = bottomContentPadding),
     ) {
         item(key = "header") {
             PlaylistHeader(
@@ -555,11 +563,11 @@ private fun rememberCollapseProgress(listState: LazyListState): Float {
 }
 
 @Composable
-private fun PlaylistSkeleton() {
+private fun PlaylistSkeleton(bottomContentPadding: Dp) {
     val shimmer = rememberResonoteShimmer("playlist-skeleton")
     LazyColumn(
         modifier = Modifier.fillMaxSize().testTag("playlist-skeleton"),
-        contentPadding = PaddingValues(bottom = 32.dp),
+        contentPadding = PaddingValues(bottom = bottomContentPadding),
     ) {
         item(key = "header") {
             Box(
