@@ -1703,9 +1703,11 @@ class ApiNetworkDataSourceTest {
     }
 
     @Test
-    fun videoUrlPreservesMvHashForItsKeyAndRejectsCleartext() = runTest {
+    fun videoUrlPreservesMvHashAllowsKugouCdnAndRejectsOtherCleartextHosts() = runTest {
         gatewayServer.enqueue(
-            jsonResponse("""{"status":1,"data":{"dynamic":{"backupdownurl":["https://video.example/fixture.mp4"]}}}"""),
+            jsonResponse(
+                """{"status":1,"data":{"dynamic":{"backupdownurl":["http://fsmvpc.kugou.com/fixture.mkv"]}}}""",
+            ),
         )
         gatewayServer.enqueue(
             jsonResponse("""{"status":1,"data":{"dynamic":{"downurl":"http://video.example/insecure.mp4"}}}"""),
@@ -1714,7 +1716,7 @@ class ApiNetworkDataSourceTest {
         val url = dataSource().resolveVideoUrl("MVHASH")
         val insecure = runCatching { dataSource().resolveVideoUrl("MVHASH") }.exceptionOrNull() as ApiProtocolException
 
-        assertThat(url).isEqualTo("https://video.example/fixture.mp4")
+        assertThat(url).isEqualTo("http://fsmvpc.kugou.com/fixture.mkv")
         assertThat(insecure.reason).isEqualTo(ApiProtocolException.Reason.InsecureMediaUrl)
         val request = gatewayServer.takeRequest()
         assertThat(request.getHeader("x-router")).isEqualTo("trackermv.kugou.com")

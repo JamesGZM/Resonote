@@ -34,18 +34,32 @@ internal class RealVideoNetworkDataSource @Inject constructor(
         }
         responses.requireSuccess(response)
         val entry = response.data.obj()?.values?.firstOrNull().obj() ?: return null
-        val backup = entry["backupdownurl"]
-        val raw = when (backup) {
-            is JsonArray -> (backup.firstOrNull() as? JsonPrimitive)?.contentOrNull
-            is JsonPrimitive -> backup.contentOrNull
-            else -> null
-        }?.takeIf(String::isNotBlank) ?: entry.text("downurl")?.takeIf(String::isNotBlank) ?: return null
-        val parsed = raw.toHttpUrlOrNull() ?: throw malformedResponse()
-        if (!parsed.isHttps) throw ApiProtocolException(ApiProtocolException.Reason.InsecureMediaUrl)
-        return parsed.toString()
+        val rawUrls = buildList {
+            when (val backup = entry["backupdownurl"]) {
+                is JsonArray -> backup.mapNotNullTo(this) { (it as? JsonPrimitive)?.contentOrNull }
+                is JsonPrimitive -> add(backup.contentOrNull.orEmpty())
+                else -> Unit
+            }
+            entry.text("downurl")?.let(::add)
+        }.map(String::trim).filter(String::isNotEmpty)
+        val parsedUrls = rawUrls.mapNotNull { it.toHttpUrlOrNull() }
+        val playableUrl = parsedUrls.firstOrNull { it.isHttps || it.isAllowedCleartextVideoUrl() }
+        if (playableUrl != null) return playableUrl.toString()
+        if (parsedUrls.any { it.scheme == "http" }) {
+            throw ApiProtocolException(ApiProtocolException.Reason.InsecureMediaUrl)
+        }
+        if (rawUrls.isNotEmpty()) throw malformedResponse()
+        return null
     }
 
     private fun JsonElement?.obj(): JsonObject? = this as? JsonObject
     private fun JsonObject.text(name: String): String? = (get(name) as? JsonPrimitive)?.contentOrNull
+    private fun okhttp3.HttpUrl.isAllowedCleartextVideoUrl(): Boolean =
+        scheme == "http" && (host == KUGOU_DOMAIN || host.endsWith(".$KUGOU_DOMAIN"))
+
     private fun malformedResponse() = ApiProtocolException(ApiProtocolException.Reason.MalformedResponse)
+
+    private companion object {
+        const val KUGOU_DOMAIN = "kugou.com"
+    }
 }

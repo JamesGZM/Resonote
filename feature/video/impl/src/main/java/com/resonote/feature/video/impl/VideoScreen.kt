@@ -7,10 +7,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -35,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -62,10 +66,16 @@ fun VideoRoute(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var fullscreen by remember { mutableStateOf(false) }
+    val view = LocalView.current
 
     LaunchedEffect(key.hash) { viewModel.load(key.hash) }
-    DisposableEffect(Unit) {
-        onDispose { onFullscreenChange(false) }
+    DisposableEffect(view) {
+        val previousKeepScreenOn = view.keepScreenOn
+        view.keepScreenOn = true
+        onDispose {
+            view.keepScreenOn = previousKeepScreenOn
+            onFullscreenChange(false)
+        }
     }
     BackHandler(enabled = fullscreen) {
         fullscreen = false
@@ -168,7 +178,10 @@ internal fun VideoScreen(
             modifier = Modifier.fillMaxSize(),
         )
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Surface(

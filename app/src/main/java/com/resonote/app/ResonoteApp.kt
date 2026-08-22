@@ -129,6 +129,7 @@ internal fun ResonoteApp(
         } else {
             MaterialTheme.colorScheme.background
         },
+        forceDarkStatusBar = backStack.lastOrNull() is VideoNavKey,
     )
 
     fun openSongActions(song: OnlineSong, onRemoveRequest: (() -> Unit)? = null) {

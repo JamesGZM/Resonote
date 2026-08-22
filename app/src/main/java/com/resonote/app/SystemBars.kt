@@ -16,10 +16,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 
 @Composable
-internal fun SyncSystemBars(navigationBarColor: Color) {
+internal fun SyncSystemBars(navigationBarColor: Color, forceDarkStatusBar: Boolean = false) {
     val view = LocalView.current
     val activity = LocalContext.current.findComponentActivity()
-    val statusBarIsDark = MaterialTheme.colorScheme.background.luminance() < DARK_SURFACE_LUMINANCE_THRESHOLD
+    val statusBarIsDark =
+        forceDarkStatusBar || MaterialTheme.colorScheme.background.luminance() < DARK_SURFACE_LUMINANCE_THRESHOLD
     val navigationBarIsDark = navigationBarColor.luminance() < DARK_SURFACE_LUMINANCE_THRESHOLD
     if (!view.isInEditMode && activity != null) {
         SideEffect {
