@@ -1,6 +1,7 @@
 package com.resonote.feature.library.impl
 
 import androidx.compose.ui.test.DeviceConfigurationOverride
+import androidx.compose.ui.test.FontScale
 import androidx.compose.ui.test.ForcedSize
 import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertIsDisplayed
@@ -12,6 +13,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.then
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -151,6 +153,19 @@ class MyScreenshotTest {
     }
 
     @Test
+    fun quickEntryLabelsStayWithinTheirCellsAtLargeFontScale() {
+        setScreen(authenticatedState(), fontScale = 1.3f)
+
+        val entryBounds = composeRule.onNodeWithTag("my-local-music", useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot
+        val labelBounds = composeRule.onNodeWithText("本地音乐", useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot
+
+        assertThat(labelBounds.left).isAtLeast(entryBounds.left)
+        assertThat(labelBounds.right).isAtMost(entryBounds.right)
+    }
+
+    @Test
     fun playlistCreationUsesResonoteDialog() {
         setScreen(authenticatedState())
 
@@ -161,10 +176,16 @@ class MyScreenshotTest {
         capture("create_playlist")
     }
 
-    private fun setScreen(state: MyUiState, onLoginClick: () -> Unit = {}, onSettingsClick: () -> Unit = {}) {
+    private fun setScreen(
+        state: MyUiState,
+        onLoginClick: () -> Unit = {},
+        onSettingsClick: () -> Unit = {},
+        fontScale: Float = 1f,
+    ) {
         composeRule.setContent {
             DeviceConfigurationOverride(
-                override = DeviceConfigurationOverride.ForcedSize(DpSize(390.dp, 844.dp)),
+                override = DeviceConfigurationOverride.FontScale(fontScale) then
+                    DeviceConfigurationOverride.ForcedSize(DpSize(390.dp, 844.dp)),
             ) {
                 ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
                     MyScreen(

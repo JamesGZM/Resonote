@@ -55,12 +55,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -712,6 +714,9 @@ private fun QuickEntry(
     horizontalBias: Float,
     enabled: Boolean = true,
 ) {
+    var labelWidth by remember(label) { mutableIntStateOf(0) }
+    val iconWidth = with(LocalDensity.current) { 44.dp.roundToPx() }
+    val edgeLabelOffset = ((labelWidth - iconWidth).coerceAtLeast(0) + 1) / 2
     Surface(
         modifier = modifier
             .fillMaxSize()
@@ -754,7 +759,19 @@ private fun QuickEntry(
                 }
                 Text(
                     label,
-                    Modifier.padding(top = 8.dp).wrapContentWidth(unbounded = true),
+                    Modifier
+                        .padding(top = 8.dp)
+                        .wrapContentWidth(unbounded = true)
+                        .offset {
+                            IntOffset(
+                                x = when {
+                                    horizontalBias <= -1f -> edgeLabelOffset
+                                    horizontalBias >= 1f -> -edgeLabelOffset
+                                    else -> 0
+                                },
+                                y = 0,
+                            )
+                        },
                     color = if (enabled) {
                         MaterialTheme.colorScheme.onSurface
                     } else {
@@ -763,6 +780,8 @@ private fun QuickEntry(
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
+                    softWrap = false,
+                    onTextLayout = { labelWidth = it.size.width },
                 )
             }
         }
