@@ -1,4 +1,4 @@
-package com.resonote.feature.local.impl
+package com.resonote.core.media.local
 
 import android.content.ContentProvider
 import android.content.ContentValues

@@ -1,19 +1,14 @@
-package com.resonote.feature.local.impl
+package com.resonote.core.media.local
 
 import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
 import android.provider.DocumentsContract
-import dagger.Binds
-import dagger.Module
-import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
-import javax.inject.Singleton
 
 interface LocalMediaTreeSource {
     suspend fun scan(treeUri: String): LocalMediaTreeScanResult
@@ -31,7 +26,6 @@ enum class LocalMediaTreeScanFailure {
     Unavailable,
 }
 
-@Singleton
 internal class DocumentsLocalMediaTreeSource @Inject constructor(@ApplicationContext context: Context) :
     LocalMediaTreeSource {
     private val contentResolver = context.contentResolver
@@ -96,11 +90,4 @@ internal class DocumentsLocalMediaTreeSource @Inject constructor(@ApplicationCon
             "aac", "alac", "amr", "ape", "flac", "m4a", "mp3", "ogg", "opus", "wav", "wma",
         )
     }
-}
-
-@Module
-@InstallIn(SingletonComponent::class)
-internal abstract class LocalMediaTreeSourceModule {
-    @Binds
-    abstract fun bindLocalMediaTreeSource(implementation: DocumentsLocalMediaTreeSource): LocalMediaTreeSource
 }

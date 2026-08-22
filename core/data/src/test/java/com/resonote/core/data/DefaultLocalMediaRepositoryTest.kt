@@ -11,6 +11,9 @@ import com.resonote.core.media.local.LocalMediaSourceInspection
 import com.resonote.core.media.local.LocalMediaStore
 import com.resonote.core.media.local.LocalMediaStoreError
 import com.resonote.core.media.local.LocalMediaStoreResult
+import com.resonote.core.media.local.LocalMediaTreeScanFailure
+import com.resonote.core.media.local.LocalMediaTreeScanResult
+import com.resonote.core.media.local.LocalMediaTreeSource
 import com.resonote.core.media.local.StoredLocalMedia
 import com.resonote.core.model.LocalMediaDeleteResult
 import com.resonote.core.model.LocalMediaDuplicateAction
@@ -27,6 +30,23 @@ import org.junit.rules.TemporaryFolder
 class DefaultLocalMediaRepositoryTest {
     @get:Rule
     val temporaryFolder = TemporaryFolder()
+
+    @Test
+    fun directoryScanMapsPlatformResultsToRepositoryContract() = runTest {
+        val treeSource = FakeLocalMediaTreeSource(
+            LocalMediaTreeScanResult.Available(listOf("content://tree/song")),
+        )
+        val repository = repository(FakeLocalMediaDao(), FakeLocalMediaStore(storedMedia()), treeSource = treeSource)
+
+        assertThat(repository.scanDirectory("content://provider/tree/root")).isEqualTo(
+            LocalMediaDirectoryScanResult.Available(listOf("content://tree/song")),
+        )
+
+        treeSource.result = LocalMediaTreeScanResult.Failed(LocalMediaTreeScanFailure.PermissionDenied)
+        assertThat(repository.scanDirectory("content://provider/tree/denied")).isEqualTo(
+            LocalMediaDirectoryScanResult.Failed(LocalMediaDirectoryScanFailure.PermissionDenied),
+        )
+    }
 
     @Test
     fun storageRecoveryRetainsActiveFilesAndFinishesPendingDeletion() = runTest {
@@ -178,13 +198,24 @@ class DefaultLocalMediaRepositoryTest {
         assertThat(repository.resolvePlaybackSource(LocalMediaId("existing"))).isNull()
     }
 
-    private fun repository(dao: FakeLocalMediaDao, store: FakeLocalMediaStore, id: String = "generated-id") =
-        DefaultLocalMediaRepository(
-            dao = dao,
-            store = store,
-            newId = { LocalMediaId(id) },
-            now = { NOW },
-        )
+    private fun repository(
+        dao: FakeLocalMediaDao,
+        store: FakeLocalMediaStore,
+        id: String = "generated-id",
+        treeSource: FakeLocalMediaTreeSource = FakeLocalMediaTreeSource(),
+    ) = DefaultLocalMediaRepository(
+        dao = dao,
+        store = store,
+        treeSource = treeSource,
+        newId = { LocalMediaId(id) },
+        now = { NOW },
+    )
+
+    private class FakeLocalMediaTreeSource(
+        var result: LocalMediaTreeScanResult = LocalMediaTreeScanResult.Available(emptyList()),
+    ) : LocalMediaTreeSource {
+        override suspend fun scan(treeUri: String): LocalMediaTreeScanResult = result
+    }
 
     private class FakeLocalMediaDao(val rows: MutableList<LocalMediaEntity> = mutableListOf()) : LocalMediaDao {
         private val observed = MutableStateFlow(rows.toList())

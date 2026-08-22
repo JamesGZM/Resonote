@@ -14,7 +14,7 @@ Android 官方要求后台播放把 Player 与 MediaSession 放入 `MediaSession
 ## Decision
 
 1. 创建 `:core:playback:api`，只依赖 `core:model` 与 Coroutines/Flow。公共合同包含播放条目、队列、当前索引、状态、位置、时长、缓冲、模式、类型化问题与控制命令，不暴露 `Player`、`MediaItem`、`PlaybackException`、`SessionToken` 或 Android Service。
-2. 创建 `:core:playback:service`。只有 `ResonotePlaybackService` 创建、持有和释放 ExoPlayer 与 MediaSession；标准媒体通知、音频焦点、耳机变得嘈杂事件和系统播放控制由 Media3 承接。
+2. 创建 `:core:playback:service`。后台音频域只有 `ResonotePlaybackService` 创建、持有和释放音频 ExoPlayer 与 MediaSession；标准媒体通知、音频焦点、耳机变得嘈杂事件和系统播放控制由 Media3 承接。前台 MV 的独立资源所有权由 [ADR-0005](0005-video-playback-ownership.md) 定义。
 3. `DefaultPlaybackController` 位于 service 模块，通过真实 `SongPlaybackRepository` 解析在线歌曲，通过 `MediaController` 向 Service 发送媒体项和命令，并把 Player 事件映射回 `PlaybackState`。
 4. Controller 维护唯一语义 Queue。显式“播放全部”替换 Queue；单曲点击跳转已有条目或插入当前条目之后；追加按歌曲 hash 去重。每个条目保留在线或云盘来源语义，分别交给 `SongPlaybackRepository` 或 `CloudRepository` 解析；云盘入口可把已经验证的当前直链附加到选中条目。
 5. 只解析当前选中歌曲，不为整张歌单提前请求短时播放 URL。新的播放目标使用递增 load generation；旧请求返回后不得覆盖新目标。暂停、识曲或进入 MV 会使当前解析代际失效，之后保持暂停。

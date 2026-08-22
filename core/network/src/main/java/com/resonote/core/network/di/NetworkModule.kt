@@ -1,5 +1,9 @@
 package com.resonote.core.network.di
 
+import android.content.Context
+import android.util.Log
+import coil3.ImageLoader
+import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import com.resonote.core.network.AuthNetworkDataSource
 import com.resonote.core.network.CatalogNetworkDataSource
 import com.resonote.core.network.CloudNetworkDataSource
@@ -51,6 +55,7 @@ import dagger.Lazy
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.json.Json
 import okhttp3.Call
@@ -108,6 +113,35 @@ internal object NetworkModule {
 
     @Provides
     @Singleton
+    fun provideImageLoader(
+        @ApplicationContext context: Context,
+        connectionRecovery: NetworkConnectionRecovery,
+    ): ImageLoader {
+        val imageHttpClient = apiHttpClientBuilder()
+            .addInterceptor { chain ->
+                val request = chain.request().newBuilder()
+                    .header("User-Agent", IMAGE_USER_AGENT)
+                    .build()
+                try {
+                    chain.proceed(request).also { response ->
+                        if (!response.isSuccessful) {
+                            Log.w(IMAGE_LOG_TAG, "${request.url.redact()} returned HTTP ${response.code}")
+                        }
+                    }
+                } catch (error: java.io.IOException) {
+                    Log.w(IMAGE_LOG_TAG, "${request.url.redact()} failed", error)
+                    throw error
+                }
+            }
+            .build()
+            .also(connectionRecovery::register)
+        return ImageLoader.Builder(context)
+            .components { add(OkHttpNetworkFetcherFactory(imageHttpClient)) }
+            .build()
+    }
+
+    @Provides
+    @Singleton
     fun provideCallFactory(client: OkHttpClient): Call.Factory = client
 
     @Provides
@@ -124,6 +158,9 @@ internal object NetworkModule {
     fun provideMusicApi(retrofit: Retrofit): MusicApi = retrofit.create(MusicApi::class.java)
 
     private fun String.ensureTrailingSlash(): String = if (endsWith('/')) this else "$this/"
+
+    private const val IMAGE_LOG_TAG = "ResonoteImage"
+    private const val IMAGE_USER_AGENT = "KuGou/11490 (Android)"
 }
 
 internal fun apiHttpClientBuilder(): OkHttpClient.Builder = OkHttpClient.Builder().retryOnConnectionFailure(true)

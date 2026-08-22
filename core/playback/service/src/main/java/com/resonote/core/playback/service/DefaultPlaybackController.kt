@@ -4,34 +4,20 @@ import android.content.ComponentName
 import android.content.Context
 import android.os.SystemClock
 import androidx.core.content.ContextCompat
-import androidx.core.net.toUri
-import androidx.media3.common.C
-import androidx.media3.common.MediaItem
-import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.resonote.core.data.ListeningHistoryRepository
 import com.resonote.core.data.PlaybackPreferencesRepository
-import com.resonote.core.data.PlaybackSessionEntry
-import com.resonote.core.data.PlaybackSessionEntryKind
 import com.resonote.core.data.PlaybackSessionRepository
-import com.resonote.core.data.PlaybackSessionSnapshot
-import com.resonote.core.model.AudioQuality
-import com.resonote.core.model.CloudTrack
-import com.resonote.core.model.LocalMediaId
-import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.model.ResolveSongSourceResult
 import com.resonote.core.model.ResolvedSongSource
 import com.resonote.core.playback.PlaybackController
-import com.resonote.core.playback.PlaybackFormat
 import com.resonote.core.playback.PlaybackIssue
 import com.resonote.core.playback.PlaybackItem
-import com.resonote.core.playback.PlaybackMetadata
 import com.resonote.core.playback.PlaybackMode
-import com.resonote.core.playback.PlaybackOrigin
 import com.resonote.core.playback.PlaybackState
 import com.resonote.core.playback.PlaybackStatus
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -56,7 +42,7 @@ internal class DefaultPlaybackController internal constructor(
     private val sourceResolver: PlaybackSourceResolver,
     private val historyRepository: ListeningHistoryRepository,
     private val preferencesRepository: PlaybackPreferencesRepository,
-    private val sessionRepository: PlaybackSessionRepository,
+    sessionRepository: PlaybackSessionRepository,
     private val audioPreloader: PlaybackAudioPreloader,
     private val queueCommandRouter: PlaybackQueueCommandRouter,
     private val elapsedRealtime: () -> Long,
@@ -84,7 +70,7 @@ internal class DefaultPlaybackController internal constructor(
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val persistenceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    private val sessionPersister = PlaybackSessionPersister(sessionRepository, persistenceScope)
+    private val sessionCoordinator = PlaybackSessionCoordinator(sessionRepository, persistenceScope)
     private val queue = PlaybackQueue()
     private val mutableState = MutableStateFlow(PlaybackState())
     private val controllerFuture = MediaController.Builder(
@@ -102,13 +88,16 @@ internal class DefaultPlaybackController internal constructor(
     private var positionUpdates: Job? = null
     private var automaticSkipJob: Job? = null
     private var currentSourceRefreshJob: Job? = null
-    private var preloadJob: Job? = null
-    private var preloadAttemptedGeneration = -1L
-    private var prefetchedSource: PrefetchedSource? = null
+    private val preloadCoordinator = PlaybackPreloadCoordinator(
+        sourceResolver = sourceResolver,
+        audioPreloader = audioPreloader,
+        scope = scope,
+        elapsedRealtime = elapsedRealtime,
+    )
     private var isRefreshingCurrentSource = false
     private var hasPlaybackMutation = false
     private var lastPositionCheckpointAtMillis = 0L
-    private val historyEligibility = PlaybackHistoryEligibilityTracker()
+    private val historyRecorder = PlaybackHistoryRecorder(historyRepository, scope, elapsedRealtime)
     private val failureRecovery = PlaybackFailureRecovery(MAX_CONSECUTIVE_AUTOMATIC_SKIPS)
 
     override val state: StateFlow<PlaybackState> = mutableState.asStateFlow()
@@ -175,7 +164,7 @@ internal class DefaultPlaybackController internal constructor(
         if (items.isEmpty()) return
         hasPlaybackMutation = true
         scope.launch {
-            invalidatePreload()
+            preloadCoordinator.invalidate()
             queue.append(items)
             publishQueue()
             requestPersistSession()
@@ -186,7 +175,7 @@ internal class DefaultPlaybackController internal constructor(
         if (items.isEmpty()) return
         hasPlaybackMutation = true
         scope.launch {
-            invalidatePreload()
+            preloadCoordinator.invalidate()
             queue.playNext(items)
             publishQueue()
             requestPersistSession()
@@ -208,7 +197,7 @@ internal class DefaultPlaybackController internal constructor(
     override fun removeQueueItem(index: Int) {
         hasPlaybackMutation = true
         scope.launch {
-            invalidatePreload()
+            preloadCoordinator.invalidate()
             val removal = queue.removeAt(index) ?: return@launch
             if (!removal.removedCurrent) {
                 publishQueue()
@@ -216,8 +205,8 @@ internal class DefaultPlaybackController internal constructor(
                 return@launch
             }
 
-            sampleHistory(controller?.isPlaying == true, endedNaturally = false)
-            historyEligibility.reset()
+            historyRecorder.sample(controller?.isPlaying == true, endedNaturally = false)
+            historyRecorder.reset()
             loadGeneration++
             isResolving = false
             pendingControllerAction = null
@@ -241,7 +230,7 @@ internal class DefaultPlaybackController internal constructor(
     override fun moveQueueItem(fromIndex: Int, toIndex: Int) {
         hasPlaybackMutation = true
         scope.launch {
-            invalidatePreload()
+            preloadCoordinator.invalidate()
             if (queue.move(fromIndex, toIndex)) {
                 publishQueue()
                 requestPersistSession()
@@ -284,11 +273,11 @@ internal class DefaultPlaybackController internal constructor(
 
     override fun pause() {
         hasPlaybackMutation = true
-        sampleHistory(controller?.isPlaying == true, endedNaturally = false)
+        historyRecorder.sample(controller?.isPlaying == true, endedNaturally = false)
         loadGeneration++
         isResolving = false
         pendingControllerAction = null
-        cancelPreloadAttempt()
+        preloadCoordinator.cancelAttempt()
         controller?.pause()
         if (mutableState.value.currentItem != null && mutableState.value.status != PlaybackStatus.Failed) {
             mutableState.value = mutableState.value.copy(status = PlaybackStatus.Paused)
@@ -335,7 +324,7 @@ internal class DefaultPlaybackController internal constructor(
 
     override fun setMode(mode: PlaybackMode) {
         hasPlaybackMutation = true
-        invalidatePreload()
+        preloadCoordinator.invalidate()
         mutableState.value = mutableState.value.copy(mode = mode)
         requestPersistSession()
     }
@@ -384,8 +373,8 @@ internal class DefaultPlaybackController internal constructor(
     override fun clear() {
         hasPlaybackMutation = true
         scope.launch {
-            sampleHistory(controller?.isPlaying == true, endedNaturally = false)
-            historyEligibility.reset()
+            historyRecorder.sample(controller?.isPlaying == true, endedNaturally = false)
+            historyRecorder.reset()
             loadGeneration++
             isResolving = false
             pendingControllerAction = null
@@ -393,7 +382,7 @@ internal class DefaultPlaybackController internal constructor(
             automaticSkipJob = null
             currentSourceRefreshJob?.cancel()
             currentSourceRefreshJob = null
-            invalidatePreload()
+            preloadCoordinator.invalidate()
             isRefreshingCurrentSource = false
             failureRecovery.reset()
             queue.clear()
@@ -418,9 +407,9 @@ internal class DefaultPlaybackController internal constructor(
     }
 
     override fun onPlayerError(error: PlaybackException) {
-        invalidatePreload()
-        sampleHistory(isPlaying = false, endedNaturally = false)
-        historyEligibility.reset()
+        preloadCoordinator.invalidate()
+        historyRecorder.sample(isPlaying = false, endedNaturally = false)
+        historyRecorder.reset()
         isResolving = false
         mutableState.value = mutableState.value.copy(
             status = PlaybackStatus.Failed,
@@ -440,15 +429,15 @@ internal class DefaultPlaybackController internal constructor(
     ): Boolean {
         automaticSkipJob?.cancel()
         automaticSkipJob = null
-        val prefetched = consumePrefetchedSource(item.queueKey)
-        cancelPreloadAttempt()
+        val prefetched = preloadCoordinator.consume(item.queueKey)
+        preloadCoordinator.cancelAttempt()
         val preservesCurrentPlayback =
             failureBehavior != FailureBehavior.SkipQueueItem &&
                 ((controller?.mediaItemCount ?: 0) > 0 || failureBehavior == FailureBehavior.RefreshCurrentSource)
         val generation = ++loadGeneration
         if (!preservesCurrentPlayback) {
-            sampleHistory(controller?.isPlaying == true, endedNaturally = false)
-            historyEligibility.reset()
+            historyRecorder.sample(controller?.isPlaying == true, endedNaturally = false)
+            historyRecorder.reset()
             activeFailureBehavior = failureBehavior
             handledEndedGeneration = -1L
             pausedPreviewGeneration = -1L
@@ -519,8 +508,8 @@ internal class DefaultPlaybackController internal constructor(
         playWhenReady: Boolean,
     ) {
         if (preservesCurrentPlayback) {
-            sampleHistory(controller?.isPlaying == true, endedNaturally = false)
-            historyEligibility.reset()
+            historyRecorder.sample(controller?.isPlaying == true, endedNaturally = false)
+            historyRecorder.reset()
             activeFailureBehavior = FailureBehavior.RejectWithoutQueueMutation
             handledEndedGeneration = -1L
             pausedPreviewGeneration = -1L
@@ -540,10 +529,9 @@ internal class DefaultPlaybackController internal constructor(
         runWithController { player ->
             if (generation != loadGeneration) return@runWithController
             isResolving = false
-            historyEligibility.start(
+            historyRecorder.start(
                 record = item.toDeviceHistoryRecordOrNull()?.copy(durationMillis = resolvedDuration),
                 durationMillis = resolvedDuration,
-                elapsedRealtimeMillis = elapsedRealtime(),
             )
             player.setMediaItem(item.toMediaItem(source), boundedStartPositionMillis)
             player.prepare()
@@ -565,7 +553,7 @@ internal class DefaultPlaybackController internal constructor(
             mutableState.value = mutableState.value.withNonInterruptingIssue(issue)
             return
         }
-        historyEligibility.reset()
+        historyRecorder.reset()
         isResolving = false
         pendingControllerAction = null
         if (!retainLoadedMediaWhileResolving) {
@@ -707,57 +695,18 @@ internal class DefaultPlaybackController internal constructor(
 
     private fun syncPlayerState(player: Player) {
         if (isResolving) return
-        val hasLoadedMedia = player.mediaItemCount > 0
-        val duration = queue.currentItem?.vipPreviewDurationMillisOrNull()
-            ?: player.duration.takeUnless { it == C.TIME_UNSET || it < 0 }
-            ?: queue.currentItem?.resolvedSource?.durationMillis
-            ?: queue.currentItem?.metadata?.durationMillis
-            ?: 0L
-        val status = when {
-            player.playerError != null -> PlaybackStatus.Failed
-            player.playbackState == Player.STATE_BUFFERING -> PlaybackStatus.Buffering
-            player.playbackState == Player.STATE_ENDED &&
-                pausedPreviewGeneration == loadGeneration -> PlaybackStatus.Paused
-            player.playbackState == Player.STATE_ENDED -> PlaybackStatus.Ended
-            player.isPlaying -> PlaybackStatus.Playing
-            queue.currentItem != null -> PlaybackStatus.Paused
-            else -> PlaybackStatus.Idle
-        }
-        if (status == PlaybackStatus.Playing) failureRecovery.onPlaybackStarted()
-        mutableState.value = mutableState.value.copy(
-            queue = queue.items,
-            currentIndex = queue.currentIndex,
-            status = status,
-            positionMillis = if (hasLoadedMedia) {
-                player.currentPosition.coerceAtLeast(0)
-            } else {
-                mutableState.value.positionMillis
-            },
-            durationMillis = duration,
-            bufferedPositionMillis = if (hasLoadedMedia) {
-                player.bufferedPosition.coerceAtLeast(0)
-            } else {
-                mutableState.value.bufferedPositionMillis
-            },
-            issue = player.playerError?.let { PlaybackIssue.PlayerFailure(it.message) },
+        val updatedState = player.snapshotPlaybackState(
+            queue = queue,
+            previousState = mutableState.value,
+            pausedPreviewGeneration = pausedPreviewGeneration,
+            loadGeneration = loadGeneration,
         )
-        sampleHistory(
-            isPlaying = status == PlaybackStatus.Playing,
-            endedNaturally = status == PlaybackStatus.Ended,
+        if (updatedState.status == PlaybackStatus.Playing) failureRecovery.onPlaybackStarted()
+        mutableState.value = updatedState
+        historyRecorder.sample(
+            isPlaying = updatedState.status == PlaybackStatus.Playing,
+            endedNaturally = updatedState.status == PlaybackStatus.Ended,
         )
-    }
-
-    private fun sampleHistory(isPlaying: Boolean, endedNaturally: Boolean) {
-        val qualification =
-            historyEligibility.sample(
-                isPlaying = isPlaying,
-                endedNaturally = endedNaturally,
-                elapsedRealtimeMillis = elapsedRealtime(),
-            ) ?: return
-        scope.launch {
-            val persisted = historyRepository.recordDevicePlayback(qualification.record)
-            historyEligibility.onPersistenceResult(qualification, persisted)
-        }
     }
 
     private fun startPositionUpdates() {
@@ -768,7 +717,7 @@ internal class DefaultPlaybackController internal constructor(
                 controller?.let { player ->
                     syncPlayerState(player)
                     handleVipPreviewBoundary(player)
-                    maybePreloadNext(player)
+                    preloadCoordinator.maybePreload(player, mutableState.value, queue, loadGeneration)
                     val now = elapsedRealtime()
                     if (
                         mutableState.value.status == PlaybackStatus.Playing &&
@@ -782,114 +731,20 @@ internal class DefaultPlaybackController internal constructor(
         }
     }
 
-    private fun maybePreloadNext(player: Player) {
-        val status = mutableState.value.status
-        val durationMillis = mutableState.value.durationMillis
-        if (
-            !shouldStartPlaybackPreload(
-                status = status,
-                positionMillis = player.currentPosition.coerceAtLeast(0),
-                durationMillis = durationMillis,
-                alreadyAttempted = preloadAttemptedGeneration == loadGeneration,
-            )
-        ) {
-            return
-        }
-        preloadAttemptedGeneration = loadGeneration
-        val item = playbackPreloadCandidate(queue, mutableState.value.mode) ?: return
-        val generation = loadGeneration
-        preloadJob = scope.launch {
-            val result = try {
-                sourceResolver.resolve(item.copy(resolvedSource = null))
-            } catch (cancellation: CancellationException) {
-                throw cancellation
-            } catch (_: Exception) {
-                return@launch
-            }
-            if (generation != loadGeneration || result !is ResolveSongSourceResult.Resolved) return@launch
-            prefetchedSource = PrefetchedSource(
-                queueKey = item.queueKey,
-                source = result.source,
-                resolvedAtElapsedRealtimeMillis = elapsedRealtime(),
-            )
-            try {
-                audioPreloader.preload(result.source)
-            } catch (cancellation: CancellationException) {
-                throw cancellation
-            } catch (_: Exception) {
-                // Preloading is opportunistic. Normal source loading remains the fallback.
-            }
-        }
-    }
-
-    private fun consumePrefetchedSource(queueKey: String): ResolvedSongSource? {
-        val prefetched = prefetchedSource
-        prefetchedSource = null
-        return prefetched?.source?.takeIf {
-            prefetched.queueKey == queueKey &&
-                isPrefetchedSourceFresh(
-                    resolvedAtElapsedRealtimeMillis = prefetched.resolvedAtElapsedRealtimeMillis,
-                    nowElapsedRealtimeMillis = elapsedRealtime(),
-                )
-        }
-    }
-
-    private fun cancelPreloadAttempt() {
-        preloadJob?.cancel()
-        preloadJob = null
-        preloadAttemptedGeneration = -1L
-    }
-
-    private fun invalidatePreload() {
-        cancelPreloadAttempt()
-        prefetchedSource = null
-    }
-
     private suspend fun restoreSession() {
-        val snapshot = runCatching { sessionRepository.load() }.getOrNull() ?: return
+        val restoredState = sessionCoordinator.load(mutableState.value.playbackSpeed) ?: return
         if (hasPlaybackMutation || queue.currentItem != null) return
-        val restoredState = snapshot.toPlaybackState(mutableState.value.playbackSpeed) ?: return
         queue.replace(restoredState.queue, restoredState.currentIndex)
         mutableState.value = restoredState
         lastPositionCheckpointAtMillis = elapsedRealtime()
     }
 
     private fun requestPersistSession(positionMillis: Long = mutableState.value.positionMillis) {
-        val items = queue.items
-        val currentIndex = queue.currentIndex
-        if (items.isEmpty() || currentIndex !in items.indices) {
-            requestClearSession()
-            return
-        }
-        sessionPersister.save(
-            items = items,
-            currentIndex = currentIndex,
-            positionMillis = positionMillis,
-            mode = mutableState.value.mode.name,
-        )
+        sessionCoordinator.persist(queue, mutableState.value, positionMillis)
     }
 
     private fun requestClearSession() {
-        sessionPersister.clear()
-    }
-
-    private fun PlaybackItem.toMediaItem(source: ResolvedSongSource): MediaItem {
-        val playbackMetadata = metadata
-        val mediaMetadata = MediaMetadata.Builder()
-            .setTitle(playbackMetadata.title)
-            .setArtist(playbackMetadata.artist)
-            .setAlbumTitle(playbackMetadata.albumTitle)
-            .setArtworkUri(playbackMetadata.artworkUri?.toUri())
-            .setDurationMs(source.durationMillis.takeIf { it > 0 } ?: playbackMetadata.durationMillis)
-            .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
-            .setIsPlayable(true)
-            .build()
-        return MediaItem.Builder()
-            .setMediaId(queueKey)
-            .setUri(source.uri)
-            .apply { source.cacheKey?.let(::setCustomCacheKey) }
-            .setMediaMetadata(mediaMetadata)
-            .build()
+        sessionCoordinator.clear()
     }
 
     private companion object {
@@ -905,123 +760,4 @@ internal class DefaultPlaybackController internal constructor(
         RefreshCurrentSource,
         SkipQueueItem,
     }
-
-    private data class PrefetchedSource(
-        val queueKey: String,
-        val source: ResolvedSongSource,
-        val resolvedAtElapsedRealtimeMillis: Long,
-    )
-}
-
-internal fun PlaybackItem.toSessionEntry(): PlaybackSessionEntry {
-    val playbackMetadata = metadata
-    val localFormat = playbackMetadata.format as? PlaybackFormat.Local
-    return PlaybackSessionEntry(
-        kind = when (origin) {
-            is PlaybackOrigin.Online -> PlaybackSessionEntryKind.Online
-            is PlaybackOrigin.Cloud -> PlaybackSessionEntryKind.Cloud
-            is PlaybackOrigin.Local -> PlaybackSessionEntryKind.Local
-        },
-        mediaId = playbackMetadata.mediaId,
-        title = playbackMetadata.title,
-        artist = playbackMetadata.artist,
-        albumTitle = playbackMetadata.albumTitle,
-        artworkUri = playbackMetadata.artworkUri,
-        durationMillis = playbackMetadata.durationMillis,
-        isVip = playbackMetadata.isVip,
-        audioQuality = (origin as? PlaybackOrigin.Online)?.song?.quality,
-        albumId = (origin as? PlaybackOrigin.Online)?.song?.albumId,
-        albumAudioId = when (val value = origin) {
-            is PlaybackOrigin.Online -> value.song.albumAudioId
-            is PlaybackOrigin.Cloud -> value.track.albumAudioId
-            is PlaybackOrigin.Local -> null
-        },
-        fileId = (origin as? PlaybackOrigin.Online)?.song?.fileId,
-        previewDurationMillis = (origin as? PlaybackOrigin.Online)?.song?.previewDurationMillis,
-        mimeType = localFormat?.mimeType,
-        extension = localFormat?.extension,
-        sampleRateHz = localFormat?.sampleRateHz,
-        bitDepth = localFormat?.bitDepth,
-        bitrateBitsPerSecond = localFormat?.bitrateBitsPerSecond,
-    )
-}
-
-internal fun shouldRetainLoadedMediaWhileResolvingNext(automatic: Boolean, loadedMediaItemCount: Int): Boolean =
-    automatic && loadedMediaItemCount > 0
-
-internal fun PlaybackSessionEntry.toPlaybackItem(): PlaybackItem? {
-    if (mediaId.isBlank() || title.isBlank() || durationMillis < 0) return null
-    val metadata = PlaybackMetadata(
-        mediaId = mediaId,
-        title = title,
-        artist = artist,
-        albumTitle = albumTitle,
-        artworkUri = artworkUri,
-        durationMillis = durationMillis,
-        format = when (kind) {
-            PlaybackSessionEntryKind.Online -> PlaybackFormat.Online(audioQuality ?: AudioQuality.Standard)
-            PlaybackSessionEntryKind.Cloud -> PlaybackFormat.Cloud(extension = null)
-            PlaybackSessionEntryKind.Local -> PlaybackFormat.Local(
-                mimeType = mimeType,
-                extension = extension,
-                sampleRateHz = sampleRateHz,
-                bitDepth = bitDepth,
-                bitrateBitsPerSecond = bitrateBitsPerSecond,
-            )
-        },
-        isVip = isVip,
-    )
-    val origin = when (kind) {
-        PlaybackSessionEntryKind.Online -> PlaybackOrigin.Online(
-            OnlineSong(
-                hash = mediaId,
-                title = title,
-                artist = artist,
-                coverUrl = artworkUri,
-                albumId = albumId,
-                albumAudioId = albumAudioId,
-                durationMillis = durationMillis,
-                quality = audioQuality ?: AudioQuality.Standard,
-                vip = isVip,
-                albumTitle = albumTitle,
-                fileId = fileId,
-                previewDurationMillis = previewDurationMillis,
-            ),
-        )
-        PlaybackSessionEntryKind.Cloud -> PlaybackOrigin.Cloud(
-            CloudTrack(
-                hash = mediaId,
-                title = title,
-                artist = artist,
-                album = albumTitle,
-                coverUrl = artworkUri,
-                durationMillis = durationMillis,
-                albumAudioId = albumAudioId,
-            ),
-        )
-        PlaybackSessionEntryKind.Local -> PlaybackOrigin.Local(LocalMediaId(mediaId))
-    }
-    return PlaybackItem(metadata = metadata, origin = origin)
-}
-
-internal fun PlaybackSessionSnapshot.toPlaybackState(playbackSpeed: PlaybackSpeed): PlaybackState? {
-    val restoredItems = entries.mapNotNull(PlaybackSessionEntry::toPlaybackItem)
-    if (restoredItems.isEmpty() || restoredItems.size != entries.size || currentIndex !in restoredItems.indices) {
-        return null
-    }
-    val snapshotIndex = currentIndex
-    val restoredQueue = PlaybackQueue().apply { replace(restoredItems, snapshotIndex) }
-    val currentItem = restoredQueue.currentItem ?: return null
-    val duration = currentItem.metadata.durationMillis
-    return PlaybackState(
-        queue = restoredQueue.items,
-        currentIndex = restoredQueue.currentIndex,
-        status = PlaybackStatus.Paused,
-        positionMillis = positionMillis.coerceIn(0, duration.takeIf { it > 0 } ?: Long.MAX_VALUE),
-        durationMillis = duration,
-        bufferedPositionMillis = 0,
-        mode = PlaybackMode.entries.firstOrNull { it.name == mode } ?: PlaybackMode.ListLoop,
-        playbackSpeed = playbackSpeed,
-        issue = null,
-    )
 }

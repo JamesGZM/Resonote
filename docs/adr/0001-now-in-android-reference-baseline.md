@@ -2,6 +2,7 @@
 
 - 状态：Accepted
 - 日期：2026-08-10
+- 修订：2026-08-23
 - 决策者：Resonote 项目
 - 关联文档：[Resonote Architecture](../ARCHITECTURE.md)
 
@@ -17,9 +18,9 @@ Now in Android 是官方 Android 架构指导的完整参考实现，覆盖分�
 
 Resonote 采用“原则全量参考、模块按业务裁剪”的策略：
 
-1. 采用 NIA 的 UI/Data/可选 Domain 分层、UDF、Flow、Repository、离线优先和本地单一事实源。
-2. 采用 `app` 组合根、core 模块、按需拆分的 feature `api/impl`、sync/test-support 和 included `build-logic` 的模块类型与依赖规则。只有需要被其他 feature 独立导航或调用的稳定公共面才建立 `api`；顶层根页面不为形式统一创建空 `api` 模块。
-3. 采用 Hilt、Coroutines/Flow、kotlinx.serialization、OkHttp3、Retrofit2、Room、Proto DataStore、WorkManager、Coil、Navigation 3、Roborazzi/Robolectric/Turbine 等库族。
+1. 采用 NIA 的 UI/Data/可选 Domain 分层、UDF、Flow 与 Repository。离线优先和本地单一事实源适用于用户持久状态、设备历史、本地媒体和明确批准缓存的首页快照；搜索、榜单、在线歌单、艺人/专辑、云盘和短时播放地址以远端为事实源，除非后续产品合同与 ADR 明确批准离线能力。
+2. 采用 `app` 组合根、core 模块、按需拆分的 feature `api/impl`、test-support 和 included `build-logic` 的模块类型与依赖规则。只有存在需要后台更新的本地事实源时才引入 sync；只有需要被其他 feature 独立导航或调用的稳定公共面才建立 `api`；顶层根页面不为形式统一创建空 `api` 模块。
+3. 采用 Hilt、Coroutines/Flow、kotlinx.serialization、OkHttp3、Retrofit2、Room、Proto DataStore、Coil、Navigation 3、Roborazzi/Robolectric/Turbine 等库族；WorkManager 在出现真实后台工作后再接入生产代码。
 4. 除冻结的 Material3 `1.4.0` 外，不在文档阶段锁定 Resonote 的最终版本；创建工程前形成完整稳定兼容矩阵。
 5. Alpha/RC 依赖默认禁止。只有稳定版无法满足已批准需求时，才能通过独立 ADR 引入。
 6. 不采用 NIA 的资讯 feature 名称和模型；“首页 / 发现 / 我的”的内部模块边界等待 API 与产品 IA 明确。

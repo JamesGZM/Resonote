@@ -27,6 +27,9 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest
+
       - name: Assemble debug applications, run lint, and verify screenshots
         run: ./gradlew :app:assembleDebug :app-resonote-catalog:assembleDebug lint verifyRoborazziDebug
 

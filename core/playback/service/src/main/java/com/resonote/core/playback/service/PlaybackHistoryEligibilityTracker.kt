@@ -1,11 +1,41 @@
 package com.resonote.core.playback.service
 
+import com.resonote.core.data.ListeningHistoryRepository
 import com.resonote.core.model.DeviceHistoryRecord
 import com.resonote.core.model.DeviceHistorySource
 import com.resonote.core.playback.PlaybackItem
 import com.resonote.core.playback.PlaybackOrigin
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 internal data class PlaybackHistoryQualification(val sessionId: Long, val record: DeviceHistoryRecord)
+
+internal class PlaybackHistoryRecorder(
+    private val repository: ListeningHistoryRepository,
+    private val scope: CoroutineScope,
+    private val elapsedRealtime: () -> Long,
+    private val eligibility: PlaybackHistoryEligibilityTracker = PlaybackHistoryEligibilityTracker(),
+) {
+    fun start(record: DeviceHistoryRecord?, durationMillis: Long) {
+        eligibility.start(record, durationMillis, elapsedRealtime())
+    }
+
+    fun reset() {
+        eligibility.reset()
+    }
+
+    fun sample(isPlaying: Boolean, endedNaturally: Boolean) {
+        val qualification = eligibility.sample(
+            isPlaying = isPlaying,
+            endedNaturally = endedNaturally,
+            elapsedRealtimeMillis = elapsedRealtime(),
+        ) ?: return
+        scope.launch {
+            val persisted = repository.recordDevicePlayback(qualification.record)
+            eligibility.onPersistenceResult(qualification, persisted)
+        }
+    }
+}
 
 internal class PlaybackHistoryEligibilityTracker(
     private val thresholdMillis: Long = HISTORY_THRESHOLD_MILLIS,

@@ -95,6 +95,8 @@ class PlaybackSourceResolverTest {
 
         override fun observeAll() = flowOf(emptyList<LocalMedia>())
 
+        override suspend fun scanDirectory(treeUri: String) = error("unused")
+
         override suspend fun importFromUri(
             sourceUri: String,
             duplicateAction: LocalMediaDuplicateAction,

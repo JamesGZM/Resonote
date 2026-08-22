@@ -12,4 +12,8 @@ internal abstract class LocalMediaModule {
     @Binds
     @Singleton
     abstract fun bindLocalMediaStore(implementation: AndroidLocalMediaStore): LocalMediaStore
+
+    @Binds
+    @Singleton
+    abstract fun bindLocalMediaTreeSource(implementation: DocumentsLocalMediaTreeSource): LocalMediaTreeSource
 }

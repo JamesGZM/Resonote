@@ -13,6 +13,8 @@ interface LocalMediaRepository {
 
     fun observeAll(): Flow<List<LocalMedia>>
 
+    suspend fun scanDirectory(treeUri: String): LocalMediaDirectoryScanResult
+
     suspend fun importFromUri(
         sourceUri: String,
         duplicateAction: LocalMediaDuplicateAction = LocalMediaDuplicateAction.RequireConfirmation,
@@ -21,4 +23,16 @@ interface LocalMediaRepository {
     suspend fun delete(id: LocalMediaId): LocalMediaDeleteResult
 
     suspend fun resolvePlaybackSource(id: LocalMediaId): LocalMediaPlaybackSource?
+}
+
+sealed interface LocalMediaDirectoryScanResult {
+    data class Available(val documentUris: List<String>) : LocalMediaDirectoryScanResult
+
+    data class Failed(val reason: LocalMediaDirectoryScanFailure) : LocalMediaDirectoryScanResult
+}
+
+enum class LocalMediaDirectoryScanFailure {
+    InvalidTree,
+    PermissionDenied,
+    Unavailable,
 }

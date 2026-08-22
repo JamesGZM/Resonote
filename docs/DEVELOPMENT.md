@@ -22,7 +22,8 @@
 | 偏好或小型持久状态 | `core:datastore` / `datastore-proto` |
 | 文件导入、媒体扫描和本地 metadata | `core:media:local` |
 | 跨页面播放合同 | `core:playback:api` |
-| ExoPlayer、Queue、MediaSession、播放恢复 | `core:playback:service` |
+| 后台音频 ExoPlayer、Queue、MediaSession、播放恢复 | `core:playback:service` |
+| 前台 MV Player 与页面生命周期 | `feature:video:impl`，遵循 ADR-0005 |
 | 主题 Token 与通用原子组件 | `core:designsystem` |
 | 应用级组合、全局导航、Shell | `app` |
 

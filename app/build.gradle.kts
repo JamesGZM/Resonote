@@ -108,9 +108,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.coil.compose)
-    implementation(libs.coil.network.okhttp)
-    implementation(platform(libs.okhttp.bom))
-    implementation(libs.okhttp.core)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

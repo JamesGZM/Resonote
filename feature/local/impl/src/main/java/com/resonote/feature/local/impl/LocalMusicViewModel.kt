@@ -2,6 +2,8 @@ package com.resonote.feature.local.impl
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.resonote.core.data.LocalMediaDirectoryScanFailure
+import com.resonote.core.data.LocalMediaDirectoryScanResult
 import com.resonote.core.data.LocalMediaRepository
 import com.resonote.core.model.LocalMedia
 import com.resonote.core.model.LocalMediaDeleteResult
@@ -20,10 +22,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class LocalMusicViewModel @Inject constructor(
-    private val repository: LocalMediaRepository,
-    private val treeSource: LocalMediaTreeSource,
-) : ViewModel() {
+class LocalMusicViewModel @Inject constructor(private val repository: LocalMediaRepository) : ViewModel() {
     private val mutableUiState = MutableStateFlow(LocalMusicUiState())
     val uiState: StateFlow<LocalMusicUiState> = mutableUiState.asStateFlow()
 
@@ -78,8 +77,8 @@ class LocalMusicViewModel @Inject constructor(
         scanJob = viewModelScope.launch {
             mutableUiState.update { it.copy(importState = LocalImportUiState.ScanningDirectory) }
             try {
-                when (val result = treeSource.scan(treeUri)) {
-                    is LocalMediaTreeScanResult.Available -> {
+                when (val result = repository.scanDirectory(treeUri)) {
+                    is LocalMediaDirectoryScanResult.Available -> {
                         scanJob = null
                         if (result.documentUris.isEmpty()) {
                             mutableUiState.update {
@@ -93,7 +92,7 @@ class LocalMusicViewModel @Inject constructor(
                             importUris(result.documentUris)
                         }
                     }
-                    is LocalMediaTreeScanResult.Failed -> {
+                    is LocalMediaDirectoryScanResult.Failed -> {
                         scanJob = null
                         mutableUiState.update {
                             it.copy(importState = LocalImportUiState.DirectoryFailed(result.reason.asUiFailure()))
@@ -271,9 +270,9 @@ class LocalMusicViewModel @Inject constructor(
         }
     }
 
-    private fun LocalMediaTreeScanFailure.asUiFailure() = when (this) {
-        LocalMediaTreeScanFailure.InvalidTree -> LocalDirectoryImportFailure.InvalidTree
-        LocalMediaTreeScanFailure.PermissionDenied -> LocalDirectoryImportFailure.PermissionDenied
-        LocalMediaTreeScanFailure.Unavailable -> LocalDirectoryImportFailure.Unavailable
+    private fun LocalMediaDirectoryScanFailure.asUiFailure() = when (this) {
+        LocalMediaDirectoryScanFailure.InvalidTree -> LocalDirectoryImportFailure.InvalidTree
+        LocalMediaDirectoryScanFailure.PermissionDenied -> LocalDirectoryImportFailure.PermissionDenied
+        LocalMediaDirectoryScanFailure.Unavailable -> LocalDirectoryImportFailure.Unavailable
     }
 }

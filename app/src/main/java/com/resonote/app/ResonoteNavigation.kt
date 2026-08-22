@@ -1,0 +1,315 @@
+package com.resonote.app
+
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.Dp
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.ui.NavDisplay
+import com.resonote.core.model.AuthState
+import com.resonote.core.model.OnlineSong
+import com.resonote.core.navigation.LoginGateNavKey
+import com.resonote.core.navigation.TabsShellNavKey
+import com.resonote.core.playback.PlaybackState
+import com.resonote.feature.album.api.AlbumNavKey
+import com.resonote.feature.album.impl.AlbumRoute
+import com.resonote.feature.artist.api.ArtistNavKey
+import com.resonote.feature.artist.impl.ArtistRoute
+import com.resonote.feature.auth.impl.LoginRoute
+import com.resonote.feature.cloud.api.CloudNavKey
+import com.resonote.feature.cloud.impl.CloudRoute
+import com.resonote.feature.history.api.HistoryNavKey
+import com.resonote.feature.history.api.HistoryTab
+import com.resonote.feature.history.impl.HistoryRoute
+import com.resonote.feature.library.impl.MyViewModel
+import com.resonote.feature.local.api.LocalMusicNavKey
+import com.resonote.feature.local.impl.LocalMusicRoute
+import com.resonote.feature.player.api.PlayerNavKey
+import com.resonote.feature.player.impl.PlayerRoute
+import com.resonote.feature.playlist.api.PlaylistNavKey
+import com.resonote.feature.playlist.impl.PlaylistRoute
+import com.resonote.feature.ranking.api.RankingNavKey
+import com.resonote.feature.ranking.impl.RankingRoute
+import com.resonote.feature.recognition.api.RecognitionNavKey
+import com.resonote.feature.recognition.impl.RecognitionRoute
+import com.resonote.feature.search.api.SearchNavKey
+import com.resonote.feature.search.impl.SearchRoute
+import com.resonote.feature.settings.api.SettingsNavKey
+import com.resonote.feature.settings.impl.SettingsRoute
+import com.resonote.feature.video.api.VideoNavKey
+import com.resonote.feature.video.impl.VideoRoute
+
+@Composable
+internal fun ResonoteNavDisplay(
+    backStack: NavBackStack<NavKey>,
+    tabsShellState: TabsShellState,
+    playbackState: PlaybackState,
+    standaloneBottomContentPadding: Dp,
+    authState: AuthState,
+    externalImportRequest: ExternalLocalImportRequest?,
+    viewModel: MainActivityViewModel,
+    playbackViewModel: PlaybackViewModel,
+    myViewModel: MyViewModel,
+    onFinishExternalTask: () -> Unit,
+    onOpenSongActions: (OnlineSong, (() -> Unit)?) -> Unit,
+    onOpenPlaylistPicker: (OnlineSong) -> Unit,
+    onOpenDailyVip: () -> Unit,
+    onTabBarInsetChanged: (Dp) -> Unit,
+    onVideoFullscreenChange: (Boolean) -> Unit,
+) {
+    NavDisplay(
+        backStack = backStack,
+        entryProvider = entryProvider {
+            entry<TabsShellNavKey> {
+                TabsShell(
+                    tabsShellState = tabsShellState,
+                    isActiveDestination = backStack.lastOrNull() == TabsShellNavKey,
+                    playbackState = playbackState,
+                    onPlaySong = playbackViewModel::play,
+                    onPlaySongs = playbackViewModel::playAll,
+                    myViewModel = myViewModel,
+                    onLoginRequest = {
+                        if (backStack.lastOrNull() !is LoginGateNavKey) {
+                            backStack.add(LoginGateNavKey(sessionExpired = false))
+                        }
+                    },
+                    onSearchClick = { backStack.add(SearchNavKey(sessionId = System.nanoTime())) },
+                    onRecognitionClick = {
+                        backStack.add(RecognitionNavKey(sessionId = System.nanoTime()))
+                    },
+                    onSongMoreClick = { onOpenSongActions(it, null) },
+                    onDailyVipClick = {
+                        if (authState is AuthState.Authenticated) {
+                            onOpenDailyVip()
+                        } else if (backStack.lastOrNull() !is LoginGateNavKey) {
+                            backStack.add(LoginGateNavKey(sessionExpired = false))
+                        }
+                    },
+                    onHistoryClick = {
+                        backStack.add(
+                            HistoryNavKey(
+                                initialTab = if (authState is AuthState.Authenticated) {
+                                    HistoryTab.Online
+                                } else {
+                                    HistoryTab.Device
+                                },
+                            ),
+                        )
+                    },
+                    onCloudClick = { backStack.navigateToCloud(authState) },
+                    onLocalMusicClick = { backStack.add(LocalMusicNavKey()) },
+                    onSettingsClick = { backStack.add(SettingsNavKey) },
+                    onBottomBarInsetChanged = onTabBarInsetChanged,
+                    onPlaylistClick = { backStack.add(PlaylistNavKey(it)) },
+                    onUserPlaylistClick = { playlist ->
+                        val accountId = (authState as? AuthState.Authenticated)?.userId
+                        val canWrite = playlist.isMine && accountId != null
+                        backStack.add(
+                            PlaylistNavKey(
+                                playlistId = playlist.globalId,
+                                writableListId = playlist.listId.takeIf { canWrite },
+                                writableAccountId = accountId.takeIf { canWrite },
+                            ),
+                        )
+                    },
+                    onAlbumClick = { album ->
+                        backStack.add(
+                            AlbumNavKey(
+                                albumId = album.id,
+                                name = album.name,
+                                artist = album.artist,
+                                coverUrl = album.coverUrl,
+                                publishDate = album.publishDate,
+                                songCount = album.songCount,
+                            ),
+                        )
+                    },
+                    onRankingClick = { ranking ->
+                        backStack.add(RankingNavKey(ranking.id, ranking.title, ranking.coverUrl))
+                    },
+                )
+            }
+            entry<SearchNavKey> { key ->
+                SearchRoute(
+                    sessionId = key.sessionId,
+                    initialQuery = key.initialQuery,
+                    playingMediaId = playbackState.currentMetadata?.mediaId,
+                    bottomContentPadding = standaloneBottomContentPadding,
+                    onBack = { backStack.removeAt(backStack.lastIndex) },
+                    onRecognitionClick = {
+                        backStack.add(RecognitionNavKey(sessionId = System.nanoTime()))
+                    },
+                    onSongClick = playbackViewModel::play,
+                    onSongMoreClick = { onOpenSongActions(it, null) },
+                    onPlaylistClick = { backStack.add(PlaylistNavKey(it)) },
+                    onAlbumClick = { album ->
+                        backStack.add(
+                            AlbumNavKey(
+                                albumId = album.id,
+                                name = album.name,
+                                artist = album.artist,
+                                coverUrl = album.coverUrl,
+                                publishDate = album.publishDate,
+                                songCount = album.songCount,
+                            ),
+                        )
+                    },
+                    onArtistClick = { artist ->
+                        backStack.add(
+                            ArtistNavKey(
+                                artistId = artist.id,
+                                name = artist.name,
+                                avatarUrl = artist.avatarUrl,
+                                songCount = artist.songCount,
+                                albumCount = artist.albumCount,
+                            ),
+                        )
+                    },
+                    onMvClick = { mv ->
+                        playbackViewModel.pause()
+                        backStack.add(
+                            VideoNavKey(
+                                hash = mv.hash,
+                                title = mv.name,
+                                singer = mv.singer,
+                                coverUrl = mv.coverUrl,
+                                durationMillis = mv.durationMillis,
+                            ),
+                        )
+                    },
+                )
+            }
+            entry<PlayerNavKey> {
+                PlayerRoute(
+                    onBack = { backStack.removeAt(backStack.lastIndex) },
+                    onSongMoreClick = { onOpenSongActions(it, null) },
+                )
+            }
+            entry<SettingsNavKey> {
+                SettingsRoute(onBack = { backStack.removeAt(backStack.lastIndex) })
+            }
+            entry<PlaylistNavKey> { key ->
+                PlaylistRoute(
+                    key = key,
+                    playingMediaId = playbackState.currentMetadata?.mediaId,
+                    bottomContentPadding = standaloneBottomContentPadding,
+                    currentAccountId = (authState as? AuthState.Authenticated)?.userId,
+                    onBack = { backStack.removeAt(backStack.lastIndex) },
+                    onPlayAll = { playbackViewModel.playAll(it) },
+                    onSongClick = playbackViewModel::play,
+                    onSongMoreClick = onOpenSongActions,
+                )
+            }
+            entry<AlbumNavKey> { key ->
+                AlbumRoute(
+                    key = key,
+                    playingMediaId = playbackState.currentMetadata?.mediaId,
+                    bottomContentPadding = standaloneBottomContentPadding,
+                    onBack = { backStack.removeAt(backStack.lastIndex) },
+                    onPlayAll = playbackViewModel::playAll,
+                    onSongClick = playbackViewModel::play,
+                    onSongMoreClick = { onOpenSongActions(it, null) },
+                )
+            }
+            entry<ArtistNavKey> { key ->
+                ArtistRoute(
+                    key = key,
+                    playingMediaId = playbackState.currentMetadata?.mediaId,
+                    bottomContentPadding = standaloneBottomContentPadding,
+                    onBack = { backStack.removeAt(backStack.lastIndex) },
+                    onPlayAll = playbackViewModel::playAll,
+                    onSongClick = playbackViewModel::play,
+                    onSongMoreClick = { onOpenSongActions(it, null) },
+                )
+            }
+            entry<RankingNavKey> { key ->
+                RankingRoute(
+                    key = key,
+                    playingMediaId = playbackState.currentMetadata?.mediaId,
+                    bottomContentPadding = standaloneBottomContentPadding,
+                    onBack = { backStack.removeAt(backStack.lastIndex) },
+                    onPlayAll = playbackViewModel::playAll,
+                    onSongClick = playbackViewModel::play,
+                    onSongMoreClick = { onOpenSongActions(it, null) },
+                )
+            }
+            entry<CloudNavKey> {
+                CloudRoute(
+                    playingMediaId = playbackState.currentMetadata?.mediaId,
+                    bottomContentPadding = standaloneBottomContentPadding,
+                    onBack = { backStack.removeAt(backStack.lastIndex) },
+                    onPlayRequest = { request ->
+                        playbackViewModel.playCloud(request.tracks, request.startIndex, request.source)
+                    },
+                    onAppendTracks = playbackViewModel::appendCloud,
+                )
+            }
+            entry<HistoryNavKey> { key ->
+                HistoryRoute(
+                    initialTab = key.initialTab,
+                    playingMediaId = playbackState.currentMetadata?.mediaId,
+                    bottomContentPadding = standaloneBottomContentPadding,
+                    onBack = { backStack.removeAt(backStack.lastIndex) },
+                    onLoginRequest = {
+                        if (backStack.lastOrNull() !is LoginGateNavKey) {
+                            backStack.add(LoginGateNavKey(sessionExpired = false))
+                        }
+                    },
+                    onPlayOnline = playbackViewModel::playAll,
+                    onSongMoreClick = { onOpenSongActions(it, null) },
+                    onPlayDevice = playbackViewModel::playDeviceHistory,
+                )
+            }
+            entry<LocalMusicNavKey> { key ->
+                LocalMusicRoute(
+                    playingMediaId = playbackState.currentMetadata?.mediaId,
+                    bottomContentPadding = standaloneBottomContentPadding,
+                    onBack = {
+                        if (backStack.leaveLocalMusic(key)) onFinishExternalTask()
+                    },
+                    onPlayAll = playbackViewModel::playAllLocal,
+                    onPlayMedia = playbackViewModel::playLocal,
+                    pendingImportRequestId = externalImportRequest?.id,
+                    pendingImportUris = externalImportRequest?.uris.orEmpty(),
+                    onPendingImportAccepted = viewModel::acknowledgeExternalImportRequest,
+                )
+            }
+            entry<VideoNavKey> { key ->
+                VideoRoute(
+                    key = key,
+                    onBack = { backStack.removeAt(backStack.lastIndex) },
+                    onFullscreenChange = onVideoFullscreenChange,
+                )
+            }
+            entry<RecognitionNavKey> {
+                RecognitionRoute(
+                    onBack = { backStack.removeAt(backStack.lastIndex) },
+                    onCaptureStarted = playbackViewModel::pause,
+                    onPlay = playbackViewModel::play,
+                    onSearch = { match ->
+                        val query = listOfNotNull(match.song.title, match.song.artist)
+                            .filter(String::isNotBlank)
+                            .joinToString(" ")
+                        backStack.add(SearchNavKey(sessionId = System.nanoTime(), initialQuery = query))
+                    },
+                    onAddToPlaylist = onOpenPlaylistPicker,
+                )
+            }
+            entry<LoginGateNavKey> { key ->
+                LoginRoute(
+                    sessionExpired = key.sessionExpired,
+                    onBack = {
+                        if (backStack.lastOrNull() is LoginGateNavKey) backStack.removeAt(backStack.lastIndex)
+                        viewModel.acknowledgeAuthenticationGate()
+                    },
+                )
+            }
+        },
+    )
+}
+
+internal fun MutableList<NavKey>.leaveLocalMusic(key: LocalMusicNavKey): Boolean {
+    if (key.finishTaskOnBack) return true
+    if (lastOrNull() == key) removeAt(lastIndex)
+    return false
+}
