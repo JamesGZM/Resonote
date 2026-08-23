@@ -31,6 +31,7 @@ import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.SearchAlbum
 import com.resonote.core.model.SearchArtist
 import com.resonote.core.model.SearchMv
+import com.resonote.core.model.SearchPlaylist
 
 @Composable
 internal fun SearchResults(
@@ -41,7 +42,7 @@ internal fun SearchResults(
     onLoadMore: () -> Unit,
     onSongClick: (OnlineSong) -> Unit,
     onSongMoreClick: ((OnlineSong) -> Unit)?,
-    onPlaylistClick: ((String) -> Unit)?,
+    onPlaylistClick: ((SearchPlaylist) -> Unit)?,
     onAlbumClick: ((SearchAlbum) -> Unit)?,
     onArtistClick: ((SearchArtist) -> Unit)?,
     onMvClick: ((SearchMv) -> Unit)?,
@@ -83,7 +84,7 @@ private fun AggregateSearchResults(
     onSelectCategory: (SearchCategory) -> Unit,
     onSongClick: (OnlineSong) -> Unit,
     onSongMoreClick: ((OnlineSong) -> Unit)?,
-    onPlaylistClick: ((String) -> Unit)?,
+    onPlaylistClick: ((SearchPlaylist) -> Unit)?,
     onAlbumClick: ((SearchAlbum) -> Unit)?,
     onArtistClick: ((SearchArtist) -> Unit)?,
     onMvClick: ((SearchMv) -> Unit)?,
@@ -153,7 +154,7 @@ private fun AggregateSearchResults(
                                 SearchPlaylistItem(
                                     playlist = playlist,
                                     modifier = Modifier.weight(1f),
-                                    onClick = onPlaylistClick?.let { callback -> { callback(playlist.id) } },
+                                    onClick = onPlaylistClick?.let { callback -> { callback(playlist) } },
                                 )
                             }
                             if (row.size == 1) Spacer(Modifier.weight(1f))
@@ -225,7 +226,7 @@ private fun PagedSearchResults(
     onLoadMore: () -> Unit,
     onSongClick: (OnlineSong) -> Unit,
     onSongMoreClick: ((OnlineSong) -> Unit)?,
-    onPlaylistClick: ((String) -> Unit)?,
+    onPlaylistClick: ((SearchPlaylist) -> Unit)?,
     onAlbumClick: ((SearchAlbum) -> Unit)?,
     onArtistClick: ((SearchArtist) -> Unit)?,
     onMvClick: ((SearchMv) -> Unit)?,
@@ -259,7 +260,7 @@ private fun PagedSearchResults(
                             SearchPlaylistItem(
                                 playlist = item.value,
                                 modifier = Modifier.weight(1f),
-                                onClick = onPlaylistClick?.let { callback -> { callback(item.value.id) } },
+                                onClick = onPlaylistClick?.let { callback -> { callback(item.value) } },
                             )
                         }
                         if (row.size == 1) Spacer(Modifier.weight(1f))

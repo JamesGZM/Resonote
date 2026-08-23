@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.resonote.core.designsystem.component.ResonoteArtworkState
 import com.resonote.core.designsystem.component.ResonoteLoadMoreEffect
 import com.resonote.core.designsystem.component.ResonoteLoadMoreFooter
 import com.resonote.core.designsystem.component.ResonoteLoadMoreState
@@ -28,7 +29,8 @@ import com.resonote.core.model.OnlineSong
 
 @Composable
 internal fun AlbumContentLayout(
-    state: AlbumUiState.Content,
+    state: AlbumUiState.Content?,
+    metadata: AlbumMetadata,
     playingMediaId: String?,
     onBack: () -> Unit,
     onRefresh: () -> Unit,
@@ -38,22 +40,27 @@ internal fun AlbumContentLayout(
     onSongMoreClick: ((OnlineSong) -> Unit)?,
     bottomContentPadding: Dp,
 ) {
-    val listState = remember(state.metadata.id) { LazyListState() }
+    val listState = remember(metadata.id) { LazyListState() }
     val collapseProgress = rememberCollapseProgress(listState)
     ResonoteLoadMoreEffect(
         listState = listState,
-        itemCount = state.songs.size,
-        enabled = state.hasMore && !state.isLoadingMore && !state.isRefreshing && state.loadMoreFailure == null,
+        itemCount = state?.songs?.size ?: 0,
+        enabled = state != null &&
+            state.hasMore &&
+            !state.isLoadingMore &&
+            !state.isRefreshing &&
+            state.loadMoreFailure == null,
         onLoadMore = onLoadMore,
     )
     ResonotePullToRefreshBox(
-        isRefreshing = state.isRefreshing,
+        isRefreshing = state?.isRefreshing == true,
         onRefresh = onRefresh,
         modifier = Modifier.fillMaxSize().testTag("album-pull-to-refresh"),
     ) {
         Box(Modifier.fillMaxSize()) {
             AlbumContent(
                 state = state,
+                metadata = metadata,
                 listState = listState,
                 playingMediaId = playingMediaId,
                 onLoadMore = onLoadMore,
@@ -63,7 +70,7 @@ internal fun AlbumContentLayout(
                 bottomContentPadding = bottomContentPadding,
             )
             ImmersiveToolbar(
-                title = state.metadata.title,
+                title = metadata.title,
                 onBack = onBack,
                 collapseProgress = collapseProgress,
             )
@@ -73,7 +80,8 @@ internal fun AlbumContentLayout(
 
 @Composable
 private fun AlbumContent(
-    state: AlbumUiState.Content,
+    state: AlbumUiState.Content?,
+    metadata: AlbumMetadata,
     listState: LazyListState,
     playingMediaId: String?,
     onLoadMore: () -> Unit,
@@ -84,32 +92,54 @@ private fun AlbumContent(
 ) {
     LazyColumn(
         state = listState,
-        modifier = Modifier.fillMaxSize().testTag("album-list"),
+        modifier = Modifier.fillMaxSize().testTag(if (state == null) "album-skeleton" else "album-list"),
         contentPadding = PaddingValues(bottom = bottomContentPadding),
     ) {
         item(key = "header") {
-            AlbumHeader(
-                metadata = state.metadata,
-                loadedSongCount = state.songs.size,
-                onPlayAll = { onPlayAll(state.songs) },
-            )
+            if (metadata.id.isBlank()) {
+                AlbumLoadingHeader()
+            } else {
+                AlbumHeader(
+                    metadata = metadata,
+                    loadedSongCount = state?.songs?.size ?: 0,
+                    onPlayAll = { state?.songs?.let(onPlayAll) },
+                    canPlay = state?.songs?.isNotEmpty() == true,
+                )
+            }
         }
         item(key = "list-top-spacing") { Spacer(Modifier.height(12.dp)) }
-        itemsIndexed(state.songs, key = { index, song -> "song-${song.hash}-$index" }) { _, song ->
-            ResonoteMusicItem(
-                title = song.title,
-                supportingText = song.artist.orEmpty(),
-                duration = song.durationMillis.durationLabel(),
-                modifier = Modifier.padding(horizontal = 8.dp),
-                qualityLabel = song.quality.label(),
-                isVip = song.vip,
-                isPlaying = song.hash == playingMediaId,
-                artworkUrl = song.coverUrl,
-                onClick = { onSongClick(song) },
-                onMoreClick = onSongMoreClick?.let { callback -> { callback(song) } },
-            )
+        if (state == null) {
+            repeat(6) { index ->
+                item(key = "loading-song-$index") {
+                    ResonoteMusicItem(
+                        title = "",
+                        supportingText = "",
+                        duration = "",
+                        modifier = Modifier.padding(horizontal = 8.dp),
+                        artworkState = ResonoteArtworkState.LOADING,
+                        enabled = false,
+                        onClick = {},
+                        onMoreClick = null,
+                    )
+                }
+            }
+        } else {
+            itemsIndexed(state.songs, key = { index, song -> "song-${song.hash}-$index" }) { _, song ->
+                ResonoteMusicItem(
+                    title = song.title,
+                    supportingText = song.artist.orEmpty(),
+                    duration = song.durationMillis.durationLabel(),
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                    qualityLabel = song.quality.label(),
+                    isVip = song.vip,
+                    isPlaying = song.hash == playingMediaId,
+                    artworkUrl = song.coverUrl,
+                    onClick = { onSongClick(song) },
+                    onMoreClick = onSongMoreClick?.let { callback -> { callback(song) } },
+                )
+            }
         }
-        if (state.isLoadingMore || state.loadMoreFailure != null) {
+        if (state?.isLoadingMore == true || state?.loadMoreFailure != null) {
             item(key = "load-more") {
                 ResonoteLoadMoreFooter(
                     state = if (state.isLoadingMore) {

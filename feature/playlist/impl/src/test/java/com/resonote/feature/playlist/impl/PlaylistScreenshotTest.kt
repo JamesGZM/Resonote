@@ -1,5 +1,8 @@
 package com.resonote.feature.playlist.impl
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
 import androidx.compose.ui.test.assertCountEquals
@@ -21,6 +24,7 @@ import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.PlaylistDetails
 import com.resonote.core.screenshottesting.DefaultRoborazziOptions
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -91,6 +95,48 @@ class PlaylistScreenshotTest {
         }
         composeRule.onNodeWithTag("playlist-skeleton").assertIsDisplayed()
         capture("loading")
+    }
+
+    @Test
+    fun playlist_loadingToContent_keepsHeroNode() {
+        val initialDetails = PlaylistDetails(
+            id = "stable-hero",
+            title = "稳定封面",
+            description = "",
+            coverUrl = null,
+            songCount = 1,
+        )
+        var state by mutableStateOf<PlaylistUiState>(PlaylistUiState.Loading)
+        composeRule.setContent {
+            ResonoteTheme {
+                PlaylistScreen(
+                    state = state,
+                    initialDetails = initialDetails,
+                    heroPlaylistId = initialDetails.id,
+                    playingMediaId = null,
+                    onBack = {},
+                    onRetry = {},
+                    onRefresh = {},
+                    onLoadMore = {},
+                    onPlayAll = {},
+                    onSongClick = {},
+                    onSongMoreClick = null,
+                )
+            }
+        }
+        val loadingHeroId = composeRule.onNodeWithTag("playlist-hero").fetchSemanticsNode().id
+
+        composeRule.runOnIdle {
+            state = PlaylistUiState.Content(
+                details = initialDetails,
+                songs = listOf(songs.first()),
+                page = 1,
+                hasMore = false,
+            )
+        }
+
+        val contentHeroId = composeRule.onNodeWithTag("playlist-hero").fetchSemanticsNode().id
+        assertEquals(loadingHeroId, contentHeroId)
     }
 
     private fun setPlaylistContent(themeMode: ResonoteThemeMode) {

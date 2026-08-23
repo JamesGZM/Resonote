@@ -39,6 +39,7 @@ import com.resonote.core.model.OnlineSong
 @Composable
 internal fun ArtistContent(
     state: ArtistUiState,
+    profile: ArtistProfile? = state.profile,
     playingMediaId: String?,
     onSelectSection: (ArtistSongSection) -> Unit,
     onRetry: () -> Unit,
@@ -54,7 +55,7 @@ internal fun ArtistContent(
         modifier = modifier.fillMaxSize().testTag("artist-list"),
         contentPadding = PaddingValues(bottom = bottomContentPadding),
     ) {
-        item(key = "profile") { ArtistHeader(state.profile) }
+        item(key = "profile") { ArtistHeader(profile) }
         item(key = "sections") {
             PrimaryTabRow(
                 selectedTabIndex = state.selectedSection.ordinal,

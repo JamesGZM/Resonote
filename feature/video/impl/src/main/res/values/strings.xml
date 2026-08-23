@@ -2,6 +2,12 @@
     <string name="feature_video_impl_back">返回</string>
     <string name="feature_video_impl_fullscreen">进入全屏</string>
     <string name="feature_video_impl_exit_fullscreen">退出全屏</string>
+    <string name="feature_video_impl_play">播放</string>
+    <string name="feature_video_impl_pause">暂停</string>
+    <string name="feature_video_impl_seek_back">快退 10 秒</string>
+    <string name="feature_video_impl_seek_forward">快进 10 秒</string>
+    <string name="feature_video_impl_brightness">亮度</string>
+    <string name="feature_video_impl_volume">音量</string>
     <string name="feature_video_impl_video_label">MV · VIDEO</string>
     <string name="feature_video_impl_loading">正在连接视频源</string>
     <string name="feature_video_impl_loading_body">解析可播放版本后将自动开始播放</string>

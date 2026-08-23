@@ -97,6 +97,7 @@ dependencies {
     implementation(projects.feature.video.api)
     implementation(projects.feature.video.impl)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.compose.animation)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.compose.material3)

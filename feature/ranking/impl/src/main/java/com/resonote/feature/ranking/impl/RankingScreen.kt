@@ -19,7 +19,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.resonote.core.designsystem.component.LocalResonoteSnackbarController
-import com.resonote.core.designsystem.component.ResonoteContentStateLayout
 import com.resonote.core.designsystem.component.ResonoteEmptyState
 import com.resonote.core.designsystem.component.ResonoteErrorState
 import com.resonote.core.model.ContentFailure
@@ -50,6 +49,7 @@ fun RankingRoute(
     }
     RankingScreen(
         state = state,
+        initialMetadata = key.toInitialMetadata(),
         playingMediaId = playingMediaId,
         onBack = onBack,
         onRetry = viewModel::retry,
@@ -65,6 +65,7 @@ fun RankingRoute(
 @Composable
 fun RankingScreen(
     state: RankingUiState,
+    initialMetadata: RankingMetadata? = null,
     playingMediaId: String?,
     onBack: () -> Unit,
     onRetry: () -> Unit,
@@ -76,18 +77,25 @@ fun RankingScreen(
     bottomContentPadding: Dp = 32.dp,
     modifier: Modifier = Modifier,
 ) {
-    val metadata = state.metadata()
+    val stateMetadata = state.metadata()
+    val metadata = stateMetadata.takeIf { it.id.isNotBlank() } ?: initialMetadata ?: stateMetadata
     val title = metadata.title ?: stringResource(R.string.feature_ranking_impl_ranking_title_fallback)
-    ResonoteContentStateLayout(
-        phase = state.phase(),
-        modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
-        loading = {
-            Box(Modifier.fillMaxSize()) {
-                RankingSkeleton(bottomContentPadding)
-                ImmersiveToolbar(title = null, onBack = onBack, collapseProgress = 0f)
-            }
-        },
-        empty = {
+    Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        val rankingContent = state as? RankingUiState.Content
+        if (state is RankingUiState.Loading || rankingContent != null) {
+            RankingContentLayout(
+                state = rankingContent,
+                metadata = metadata,
+                playingMediaId = playingMediaId,
+                onBack = onBack,
+                onRefresh = onRefresh,
+                onLoadMore = onLoadMore,
+                onPlayAll = onPlayAll,
+                onSongClick = onSongClick,
+                onSongMoreClick = onSongMoreClick,
+                bottomContentPadding = bottomContentPadding,
+            )
+        } else if (state is RankingUiState.Empty) {
             StandardStateScaffold(title = title, onBack = onBack) { padding ->
                 ResonoteEmptyState(
                     icon = Icons.Rounded.BarChart,
@@ -96,8 +104,7 @@ fun RankingScreen(
                     modifier = Modifier.padding(padding),
                 )
             }
-        },
-        error = {
+        } else {
             val failure = (state as? RankingUiState.Error)?.failure ?: ContentFailure.Protocol
             StandardStateScaffold(title = title, onBack = onBack) { padding ->
                 ResonoteErrorState(
@@ -109,20 +116,12 @@ fun RankingScreen(
                     retryLabel = stringResource(R.string.feature_ranking_impl_ranking_retry),
                 )
             }
-        },
-        content = {
-            val content = state as? RankingUiState.Content ?: return@ResonoteContentStateLayout
-            RankingContentLayout(
-                state = content,
-                playingMediaId = playingMediaId,
-                onBack = onBack,
-                onRefresh = onRefresh,
-                onLoadMore = onLoadMore,
-                onPlayAll = onPlayAll,
-                onSongClick = onSongClick,
-                onSongMoreClick = onSongMoreClick,
-                bottomContentPadding = bottomContentPadding,
-            )
-        },
-    )
+        }
+    }
 }
+
+private fun RankingNavKey.toInitialMetadata() = RankingMetadata(
+    id = rankingId,
+    title = title?.takeIf(String::isNotBlank),
+    coverUrl = coverUrl?.takeIf(String::isNotBlank),
+)

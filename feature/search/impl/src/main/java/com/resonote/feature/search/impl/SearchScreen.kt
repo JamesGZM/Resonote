@@ -53,6 +53,7 @@ import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.SearchAlbum
 import com.resonote.core.model.SearchArtist
 import com.resonote.core.model.SearchMv
+import com.resonote.core.model.SearchPlaylist
 
 @Composable
 fun SearchRoute(
@@ -63,7 +64,7 @@ fun SearchRoute(
     onRecognitionClick: (() -> Unit)?,
     onSongClick: (OnlineSong) -> Unit,
     onSongMoreClick: ((OnlineSong) -> Unit)?,
-    onPlaylistClick: ((String) -> Unit)?,
+    onPlaylistClick: ((SearchPlaylist) -> Unit)?,
     onAlbumClick: ((SearchAlbum) -> Unit)?,
     onArtistClick: ((SearchArtist) -> Unit)?,
     onMvClick: ((SearchMv) -> Unit)?,
@@ -109,7 +110,7 @@ fun SearchScreen(
     onRecognitionClick: (() -> Unit)?,
     onSongClick: (OnlineSong) -> Unit,
     onSongMoreClick: ((OnlineSong) -> Unit)?,
-    onPlaylistClick: ((String) -> Unit)?,
+    onPlaylistClick: ((SearchPlaylist) -> Unit)?,
     onAlbumClick: ((SearchAlbum) -> Unit)?,
     onArtistClick: ((SearchArtist) -> Unit)?,
     onMvClick: ((SearchMv) -> Unit)?,

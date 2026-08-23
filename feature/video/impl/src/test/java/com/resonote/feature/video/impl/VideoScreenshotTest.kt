@@ -1,5 +1,10 @@
 package com.resonote.feature.video.impl
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
 import androidx.compose.ui.test.assertCountEquals
@@ -9,9 +14,12 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.media3.test.utils.FakePlayer
 import com.github.takahirom.roborazzi.captureRoboImage
+import com.google.common.truth.Truth.assertThat
 import com.resonote.core.designsystem.theme.ResonoteTheme
 import com.resonote.core.designsystem.theme.ResonoteThemeMode
 import com.resonote.core.screenshottesting.DefaultRoborazziOptions
@@ -59,6 +67,34 @@ class VideoScreenshotTest {
         composeRule.onNodeWithTag("video-fullscreen").assertIsDisplayed()
         composeRule.onNodeWithText("正在连接视频源").assertIsDisplayed()
         capture("fullscreen_loading")
+    }
+
+    @Test
+    fun video_compactControls() {
+        val player = FakePlayer()
+        var fullscreenClicks = 0
+        composeRule.setContent {
+            DeviceConfigurationOverride(override = DeviceConfigurationOverride.ForcedSize(DpSize(390.dp, 844.dp))) {
+                ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                    Box(Modifier.fillMaxSize().background(Color.Black)) {
+                        VideoPlayerControls(
+                            key = videoKey,
+                            player = player,
+                            fullscreen = false,
+                            onBack = {},
+                            onToggleFullscreen = { fullscreenClicks += 1 },
+                        )
+                    }
+                }
+            }
+        }
+
+        composeRule.onNodeWithTag("video-play-pause").assertIsDisplayed()
+        composeRule.onNodeWithTag("video-progress").assertIsDisplayed()
+        composeRule.onNodeWithTag("video-fullscreen-action").assertIsDisplayed()
+        composeRule.onNodeWithTag("video-fullscreen-action").performClick()
+        assertThat(fullscreenClicks).isEqualTo(1)
+        capture("controls")
     }
 
     private fun setScreen(state: VideoUiState, fullscreen: Boolean = false, size: DpSize = DpSize(390.dp, 844.dp)) {

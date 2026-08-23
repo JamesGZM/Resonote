@@ -679,16 +679,17 @@ class ApiNetworkDataSourceTest {
     }
 
     @Test
-    fun playlistRejectsListInfoWithoutRequiredTitle() {
+    fun playlistIgnoresIncompleteListInfoWithoutRejectingThePage() = runTest {
         gatewayServer.enqueue(
             jsonResponse(
                 """{"status":1,"data":{"count":1,"list_info":{"intro":"missing title"},"songs":[]}}""",
             ),
         )
 
-        assertThrows(ApiProtocolException::class.java) {
-            runTest { dataSource().playlistSongs("gid") }
-        }
+        val page = dataSource().playlistSongs("gid")
+
+        assertThat(page.info).isNull()
+        assertThat(page.songs).isEmpty()
     }
 
     @Test

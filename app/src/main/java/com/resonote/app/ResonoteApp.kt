@@ -18,6 +18,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.resonote.core.designsystem.component.LocalResonoteSnackbarController
+import com.resonote.core.designsystem.component.ResonoteHeroTransitionLayout
 import com.resonote.core.designsystem.component.ResonoteSnackbarController
 import com.resonote.core.designsystem.component.rememberResonoteSnackbarController
 import com.resonote.core.model.AuthState
@@ -114,23 +115,25 @@ internal fun ResonoteApp(
 
     Box(Modifier.fillMaxSize()) {
         CompositionLocalProvider(LocalResonoteSnackbarController provides snackbarController) {
-            ResonoteNavDisplay(
-                backStack = backStack,
-                tabsShellState = tabsShellState,
-                playbackState = playbackState,
-                standaloneBottomContentPadding = standaloneBottomContentPadding,
-                authState = authState,
-                externalImportRequest = externalImportRequest,
-                viewModel = viewModel,
-                playbackViewModel = playbackViewModel,
-                myViewModel = myViewModel,
-                onFinishExternalTask = onFinishExternalTask,
-                onOpenSongActions = ::openSongActions,
-                onOpenPlaylistPicker = ::openPlaylistPicker,
-                onOpenDailyVip = { overlayState.dailyVipDialogOpen = true },
-                onTabBarInsetChanged = { tabBarInset = it },
-                onVideoFullscreenChange = setVideoFullscreen,
-            )
+            ResonoteHeroTransitionLayout {
+                ResonoteNavDisplay(
+                    backStack = backStack,
+                    tabsShellState = tabsShellState,
+                    playbackState = playbackState,
+                    standaloneBottomContentPadding = standaloneBottomContentPadding,
+                    authState = authState,
+                    externalImportRequest = externalImportRequest,
+                    viewModel = viewModel,
+                    playbackViewModel = playbackViewModel,
+                    myViewModel = myViewModel,
+                    onFinishExternalTask = onFinishExternalTask,
+                    onOpenSongActions = ::openSongActions,
+                    onOpenPlaylistPicker = ::openPlaylistPicker,
+                    onOpenDailyVip = { overlayState.dailyVipDialogOpen = true },
+                    onTabBarInsetChanged = { tabBarInset = it },
+                    onVideoFullscreenChange = setVideoFullscreen,
+                )
+            }
         }
         GlobalMiniPlayer(
             playbackState = playbackState,

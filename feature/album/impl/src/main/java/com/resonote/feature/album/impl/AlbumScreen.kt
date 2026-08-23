@@ -19,7 +19,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.resonote.core.designsystem.component.LocalResonoteSnackbarController
-import com.resonote.core.designsystem.component.ResonoteContentStateLayout
 import com.resonote.core.designsystem.component.ResonoteEmptyState
 import com.resonote.core.designsystem.component.ResonoteErrorState
 import com.resonote.core.model.ContentFailure
@@ -50,6 +49,7 @@ fun AlbumRoute(
     }
     AlbumScreen(
         state = state,
+        initialMetadata = key.toInitialMetadata(),
         playingMediaId = playingMediaId,
         onBack = onBack,
         onRetry = viewModel::retry,
@@ -65,6 +65,7 @@ fun AlbumRoute(
 @Composable
 fun AlbumScreen(
     state: AlbumUiState,
+    initialMetadata: AlbumMetadata? = null,
     playingMediaId: String?,
     onBack: () -> Unit,
     onRetry: () -> Unit,
@@ -77,16 +78,24 @@ fun AlbumScreen(
     modifier: Modifier = Modifier,
 ) {
     val fallbackTitle = stringResource(R.string.feature_album_impl_album_title_fallback)
-    ResonoteContentStateLayout(
-        phase = state.phase(),
-        modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
-        loading = {
-            Box(Modifier.fillMaxSize()) {
-                AlbumSkeleton(bottomContentPadding)
-                ImmersiveToolbar(title = null, onBack = onBack, collapseProgress = 0f)
-            }
-        },
-        empty = {
+    Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        val albumContent = state as? AlbumUiState.Content
+        if (state is AlbumUiState.Loading || albumContent != null) {
+            val metadata = albumContent?.metadata.mergeInitial(initialMetadata)
+                ?: AlbumMetadata("", null, null, null, null, null)
+            AlbumContentLayout(
+                state = albumContent,
+                metadata = metadata,
+                playingMediaId = playingMediaId,
+                onBack = onBack,
+                onRefresh = onRefresh,
+                onLoadMore = onLoadMore,
+                onPlayAll = onPlayAll,
+                onSongClick = onSongClick,
+                onSongMoreClick = onSongMoreClick,
+                bottomContentPadding = bottomContentPadding,
+            )
+        } else if (state is AlbumUiState.Empty) {
             val title = (state as? AlbumUiState.Empty)?.metadata?.title ?: fallbackTitle
             StandardStateScaffold(title = title, onBack = onBack) { padding ->
                 ResonoteEmptyState(
@@ -96,8 +105,7 @@ fun AlbumScreen(
                     modifier = Modifier.padding(padding),
                 )
             }
-        },
-        error = {
+        } else {
             val error = state as? AlbumUiState.Error
             StandardStateScaffold(title = error?.title ?: fallbackTitle, onBack = onBack) { padding ->
                 ResonoteErrorState(
@@ -109,20 +117,27 @@ fun AlbumScreen(
                     retryLabel = stringResource(R.string.feature_album_impl_album_retry),
                 )
             }
-        },
-        content = {
-            val content = state as? AlbumUiState.Content ?: return@ResonoteContentStateLayout
-            AlbumContentLayout(
-                state = content,
-                playingMediaId = playingMediaId,
-                onBack = onBack,
-                onRefresh = onRefresh,
-                onLoadMore = onLoadMore,
-                onPlayAll = onPlayAll,
-                onSongClick = onSongClick,
-                onSongMoreClick = onSongMoreClick,
-                bottomContentPadding = bottomContentPadding,
-            )
-        },
+        }
+    }
+}
+
+private fun AlbumNavKey.toInitialMetadata() = AlbumMetadata(
+    id = albumId,
+    title = name?.takeIf(String::isNotBlank),
+    artist = artist?.takeIf(String::isNotBlank),
+    coverUrl = coverUrl?.takeIf(String::isNotBlank),
+    publishDate = publishDate?.takeIf(String::isNotBlank),
+    songCount = songCount,
+)
+
+private fun AlbumMetadata?.mergeInitial(initial: AlbumMetadata?): AlbumMetadata? {
+    val loaded = this ?: return initial
+    if (initial == null) return loaded
+    return loaded.copy(
+        title = loaded.title ?: initial.title,
+        artist = loaded.artist ?: initial.artist,
+        coverUrl = initial.coverUrl ?: loaded.coverUrl,
+        publishDate = loaded.publishDate ?: initial.publishDate,
+        songCount = loaded.songCount ?: initial.songCount,
     )
 }

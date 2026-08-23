@@ -63,6 +63,7 @@ fun ResonotePlaylistItem(
     modifier: Modifier = Modifier,
     artworkState: ResonoteArtworkState = ResonoteArtworkState.LOADED,
     artworkUrl: String? = null,
+    heroKey: String? = null,
     artwork: @Composable BoxScope.() -> Unit = { DefaultPlaylistArtwork(metadata.title) },
     enabled: Boolean = true,
 ) = ResonoteMediaCardItem(
@@ -76,6 +77,7 @@ fun ResonotePlaylistItem(
     modifier = modifier,
     artworkState = artworkState,
     artworkUrl = artworkUrl,
+    heroKey = heroKey,
     artwork = artwork,
     enabled = enabled,
 )
@@ -88,6 +90,7 @@ fun ResonoteMediaCardItem(
     modifier: Modifier = Modifier,
     artworkState: ResonoteArtworkState = ResonoteArtworkState.LOADED,
     artworkUrl: String? = null,
+    heroKey: String? = null,
     artwork: @Composable BoxScope.() -> Unit = { DefaultPlaylistArtwork(metadata.title) },
     enabled: Boolean = true,
 ) {
@@ -103,6 +106,7 @@ fun ResonoteMediaCardItem(
                     state = effectiveArtworkState,
                     contentDescription = artworkContentDescription,
                     modifier = Modifier
+                        .resonoteHero(heroKey)
                         .fillMaxWidth()
                         .aspectRatio(1f)
                         .clip(ResonoteTokens.artworkShapes.hero),
@@ -180,6 +184,7 @@ fun ResonoteArtistItem(
     modifier: Modifier = Modifier,
     artworkState: ResonoteArtworkState = ResonoteArtworkState.LOADED,
     artworkUrl: String? = null,
+    heroKey: String? = null,
     enabled: Boolean = true,
 ) {
     val effectiveArtworkState = if (!artworkUrl.isNullOrBlank()) ResonoteArtworkState.LOADED else artworkState
@@ -191,7 +196,7 @@ fun ResonoteArtistItem(
             ResonoteArtwork(
                 state = effectiveArtworkState,
                 contentDescription = stringResource(R.string.core_designsystem_artist_artwork, metadata.title),
-                modifier = Modifier.fillMaxWidth().aspectRatio(1f),
+                modifier = Modifier.resonoteHero(heroKey).fillMaxWidth().aspectRatio(1f),
                 shape = CircleShape,
                 artwork = {
                     ResonoteRemoteArtwork(
@@ -233,6 +238,7 @@ fun ResonoteVideoItem(
     modifier: Modifier = Modifier,
     artworkState: ResonoteArtworkState = ResonoteArtworkState.LOADED,
     artworkUrl: String? = null,
+    heroKey: String? = null,
     enabled: Boolean = true,
 ) {
     val effectiveArtworkState = if (!artworkUrl.isNullOrBlank()) ResonoteArtworkState.LOADED else artworkState
@@ -242,7 +248,7 @@ fun ResonoteVideoItem(
                 ResonoteArtwork(
                     state = effectiveArtworkState,
                     contentDescription = stringResource(R.string.core_designsystem_video_artwork, metadata.title),
-                    modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
+                    modifier = Modifier.resonoteHero(heroKey).fillMaxWidth().aspectRatio(16f / 9f),
                     shape = ResonoteTokens.artworkShapes.hero,
                     artwork = {
                         ResonoteRemoteArtwork(

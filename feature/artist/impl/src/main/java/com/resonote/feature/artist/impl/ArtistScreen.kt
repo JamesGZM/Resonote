@@ -41,6 +41,7 @@ fun ArtistRoute(
     LaunchedEffect(key) { viewModel.load(key) }
     ArtistScreen(
         state = state,
+        initialProfile = key.toProfile(),
         playingMediaId = playingMediaId,
         onBack = onBack,
         onSelectSection = viewModel::selectSection,
@@ -56,6 +57,7 @@ fun ArtistRoute(
 @Composable
 fun ArtistScreen(
     state: ArtistUiState,
+    initialProfile: ArtistProfile? = null,
     playingMediaId: String?,
     onBack: () -> Unit,
     onSelectSection: (ArtistSongSection) -> Unit,
@@ -93,6 +95,7 @@ fun ArtistScreen(
     ) { padding ->
         ArtistContent(
             state = state,
+            profile = state.profile ?: initialProfile,
             playingMediaId = playingMediaId,
             onSelectSection = onSelectSection,
             onRetry = onRetry,

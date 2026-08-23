@@ -29,6 +29,7 @@ import com.resonote.core.designsystem.component.ResonoteContentStateLayout
 import com.resonote.core.designsystem.component.ResonoteEmptyState
 import com.resonote.core.designsystem.component.ResonoteErrorState
 import com.resonote.core.designsystem.component.ResonoteFilterPill
+import com.resonote.core.designsystem.component.ResonoteHeroKeys
 import com.resonote.core.designsystem.component.ResonoteIconButton
 import com.resonote.core.designsystem.component.ResonotePlaylistItem
 import com.resonote.core.designsystem.component.ResonotePlaylistMetadata
@@ -188,6 +189,7 @@ private fun PlaylistRow(row: List<UserPlaylist>, onPlaylistClick: (UserPlaylist)
                 modifier = Modifier.weight(1f).testTag("my-playlist-${playlist.globalId}"),
                 artworkState = ResonoteArtworkState.LOADED,
                 artworkUrl = playlist.coverUrl,
+                heroKey = ResonoteHeroKeys.playlist(playlist.globalId),
             )
         }
         if (row.size == 1) Spacer(Modifier.weight(1f))

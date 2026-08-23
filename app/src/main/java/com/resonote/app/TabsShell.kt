@@ -48,6 +48,8 @@ internal enum class ResonoteTab(val labelRes: Int, @field:DrawableRes val iconRe
     MY(R.string.tab_my, R.drawable.ic_tab_my),
 }
 
+internal data class PlaylistDestinationSeed(val id: String, val title: String, val coverUrl: String?)
+
 @Composable
 internal fun TabsShell(
     tabsShellState: TabsShellState,
@@ -59,7 +61,7 @@ internal fun TabsShell(
     onSearchClick: () -> Unit = {},
     onRecognitionClick: () -> Unit = {},
     onSongMoreClick: (OnlineSong) -> Unit = {},
-    onPlaylistClick: (String) -> Unit = {},
+    onPlaylistClick: (PlaylistDestinationSeed) -> Unit = {},
     onUserPlaylistClick: (UserPlaylist) -> Unit = {},
     onAlbumClick: (Album) -> Unit = {},
     onRankingClick: (Ranking) -> Unit = {},
@@ -145,7 +147,9 @@ internal fun TabsShell(
                                         onOpenRankings = { openDiscover(DiscoverSection.RANKINGS) },
                                         onOpenFeaturedPlaylists = { openDiscover(DiscoverSection.PLAYLISTS) },
                                         onSongMoreClick = onSongMoreClick,
-                                        onPlaylistClick = { onPlaylistClick(it.id) },
+                                        onPlaylistClick = {
+                                            onPlaylistClick(PlaylistDestinationSeed(it.id, it.title, it.artworkUrl))
+                                        },
                                     )
                                 } else {
                                     HomeRoute(
@@ -157,7 +161,9 @@ internal fun TabsShell(
                                         onOpenRankings = { openDiscover(DiscoverSection.RANKINGS) },
                                         onOpenFeaturedPlaylists = { openDiscover(DiscoverSection.PLAYLISTS) },
                                         onSongMoreClick = onSongMoreClick,
-                                        onPlaylistClick = { onPlaylistClick(it.id) },
+                                        onPlaylistClick = {
+                                            onPlaylistClick(PlaylistDestinationSeed(it.id, it.title, it.artworkUrl))
+                                        },
                                         viewModel = suppliedViewModel,
                                     )
                                 }
@@ -172,7 +178,9 @@ internal fun TabsShell(
                                 playingMediaId = playbackState.currentMetadata?.mediaId,
                                 requestedSection = requestedDiscoverSection,
                                 onRequestedSectionConsumed = { requestedDiscoverSection = null },
-                                onPlaylistClick = { onPlaylistClick(it.id) },
+                                onPlaylistClick = {
+                                    onPlaylistClick(PlaylistDestinationSeed(it.id, it.title, it.coverUrl))
+                                },
                                 onRankingClick = onRankingClick,
                                 onAlbumClick = onAlbumClick,
                                 onPlaySongs = { onPlaySongs(it, 0) },

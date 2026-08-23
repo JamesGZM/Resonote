@@ -1,5 +1,8 @@
 package com.resonote.feature.artist.impl
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
 import androidx.compose.ui.test.assertCountEquals
@@ -18,6 +21,7 @@ import com.resonote.core.designsystem.theme.ResonoteThemeMode
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.screenshottesting.DefaultRoborazziOptions
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -31,6 +35,34 @@ import org.robolectric.annotation.GraphicsMode
 class ArtistScreenshotTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Test
+    fun artist_firstFrameUsesRouteHeroAndKeepsNode() {
+        val profile = ArtistProfile("stable-artist", "稳定歌手", null, null, 1, 1, null, null)
+        var state by mutableStateOf(ArtistUiState())
+        composeRule.setContent {
+            ResonoteTheme {
+                ArtistScreen(
+                    state = state,
+                    initialProfile = profile,
+                    playingMediaId = null,
+                    onBack = {},
+                    onSelectSection = {},
+                    onRetry = {},
+                    onLoadMore = {},
+                    onPlayAll = {},
+                    onSongClick = {},
+                    onSongMoreClick = null,
+                )
+            }
+        }
+        val initialHeroId = composeRule.onNodeWithTag("artist-hero").fetchSemanticsNode().id
+
+        composeRule.runOnIdle { state = ArtistUiState(profile = profile) }
+
+        val loadedHeroId = composeRule.onNodeWithTag("artist-hero").fetchSemanticsNode().id
+        assertEquals(initialHeroId, loadedHeroId)
+    }
 
     @Test
     fun artist_compactScrollStates() {

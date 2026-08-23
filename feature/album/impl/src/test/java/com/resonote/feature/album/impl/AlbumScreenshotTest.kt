@@ -1,5 +1,8 @@
 package com.resonote.feature.album.impl
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
 import androidx.compose.ui.test.assertCountEquals
@@ -19,6 +22,7 @@ import com.resonote.core.designsystem.theme.ResonoteThemeMode
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.screenshottesting.DefaultRoborazziOptions
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -84,6 +88,36 @@ class AlbumScreenshotTest {
         }
         composeRule.onNodeWithTag("album-skeleton").assertIsDisplayed()
         capture("loading")
+    }
+
+    @Test
+    fun album_loadingToContent_keepsHeroNode() {
+        val metadata = AlbumMetadata("stable-album", "稳定专辑", "歌手", null, null, 1)
+        var state by mutableStateOf<AlbumUiState>(AlbumUiState.Loading)
+        composeRule.setContent {
+            ResonoteTheme {
+                AlbumScreen(
+                    state = state,
+                    initialMetadata = metadata,
+                    playingMediaId = null,
+                    onBack = {},
+                    onRetry = {},
+                    onRefresh = {},
+                    onLoadMore = {},
+                    onPlayAll = {},
+                    onSongClick = {},
+                    onSongMoreClick = null,
+                )
+            }
+        }
+        val loadingHeroId = composeRule.onNodeWithTag("album-hero").fetchSemanticsNode().id
+
+        composeRule.runOnIdle {
+            state = AlbumUiState.Content(metadata, listOf(songs.first()), 1, false)
+        }
+
+        val contentHeroId = composeRule.onNodeWithTag("album-hero").fetchSemanticsNode().id
+        assertEquals(loadingHeroId, contentHeroId)
     }
 
     private fun setAlbumContent(themeMode: ResonoteThemeMode) {

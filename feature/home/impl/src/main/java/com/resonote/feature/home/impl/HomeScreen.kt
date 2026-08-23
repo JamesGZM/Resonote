@@ -20,6 +20,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.resonote.core.designsystem.component.ResonoteArtworkState
+import com.resonote.core.designsystem.component.ResonoteHeroKeys
 import com.resonote.core.designsystem.component.ResonotePlaylistItem
 import com.resonote.core.designsystem.component.ResonotePlaylistMetadata
 import com.resonote.core.designsystem.component.ResonotePullToRefreshBox
@@ -120,6 +121,7 @@ fun HomeScreen(
                                     ResonoteArtworkState.LOADED
                                 },
                                 artworkUrl = playlist.artworkUrl,
+                                heroKey = ResonoteHeroKeys.playlist(playlist.id),
                             )
                         }
                         if (pair.size == 1) Spacer(Modifier.weight(1f))

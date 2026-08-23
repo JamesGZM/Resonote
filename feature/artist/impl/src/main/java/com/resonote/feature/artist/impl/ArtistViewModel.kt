@@ -142,7 +142,7 @@ class ArtistViewModel @Inject constructor(private val repository: ContentCatalog
     }
 }
 
-private fun ArtistNavKey.toProfile() = ArtistProfile(
+internal fun ArtistNavKey.toProfile() = ArtistProfile(
     id = artistId,
     name = name.nonBlank(),
     avatarUrl = avatarUrl.nonBlank(),

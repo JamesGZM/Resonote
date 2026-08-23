@@ -22,7 +22,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.resonote.core.designsystem.component.LocalResonoteSnackbarController
-import com.resonote.core.designsystem.component.ResonoteContentStateLayout
 import com.resonote.core.designsystem.component.ResonoteEmptyState
 import com.resonote.core.designsystem.component.ResonoteErrorState
 import com.resonote.core.model.ContentFailure
@@ -63,6 +62,8 @@ fun PlaylistRoute(
     }
     PlaylistScreen(
         state = state,
+        initialDetails = key.toInitialDetails(),
+        heroPlaylistId = key.playlistId,
         playingMediaId = playingMediaId,
         onBack = onBack,
         onRetry = viewModel::retry,
@@ -81,6 +82,8 @@ fun PlaylistRoute(
 @Composable
 fun PlaylistScreen(
     state: PlaylistUiState,
+    initialDetails: com.resonote.core.model.PlaylistDetails? = null,
+    heroPlaylistId: String? = initialDetails?.id,
     playingMediaId: String?,
     onBack: () -> Unit,
     onRetry: () -> Unit,
@@ -114,16 +117,25 @@ fun PlaylistScreen(
         }
     }
 
-    ResonoteContentStateLayout(
-        phase = state.phase(),
-        modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
-        loading = {
-            Box(Modifier.fillMaxSize()) {
-                PlaylistSkeleton(bottomContentPadding)
-                ImmersiveToolbar(title = null, onBack = onBack, collapseProgress = 0f)
-            }
-        },
-        empty = {
+    Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        val playlistContent = state as? PlaylistUiState.Content
+        if (state is PlaylistUiState.Loading || playlistContent != null) {
+            val displayDetails = playlistContent?.details.mergeInitial(initialDetails)
+            PlaylistContentLayout(
+                state = playlistContent,
+                details = displayDetails,
+                heroPlaylistId = heroPlaylistId,
+                playingMediaId = playingMediaId,
+                onBack = onBack,
+                onRefresh = onRefresh,
+                onLoadMore = onLoadMore,
+                onPlayAll = onPlayAll,
+                onSongClick = onSongClick,
+                onSongMoreClick = onSongMoreClick,
+                bottomContentPadding = bottomContentPadding,
+                onRemoveRequest = { pendingRemovalHash = it.hash },
+            )
+        } else if (state is PlaylistUiState.Empty) {
             StandardStateScaffold(
                 title = stringResource(R.string.feature_playlist_impl_playlist_title_fallback),
                 onBack = onBack,
@@ -135,8 +147,7 @@ fun PlaylistScreen(
                     modifier = Modifier.padding(padding),
                 )
             }
-        },
-        error = {
+        } else {
             val failure = (state as? PlaylistUiState.Error)?.failure ?: ContentFailure.Protocol
             StandardStateScaffold(
                 title = stringResource(R.string.feature_playlist_impl_playlist_title_fallback),
@@ -151,23 +162,8 @@ fun PlaylistScreen(
                     retryLabel = stringResource(R.string.feature_playlist_impl_playlist_retry),
                 )
             }
-        },
-        content = {
-            val playlistContent = state as? PlaylistUiState.Content ?: return@ResonoteContentStateLayout
-            PlaylistContentLayout(
-                state = playlistContent,
-                playingMediaId = playingMediaId,
-                onBack = onBack,
-                onRefresh = onRefresh,
-                onLoadMore = onLoadMore,
-                onPlayAll = onPlayAll,
-                onSongClick = onSongClick,
-                onSongMoreClick = onSongMoreClick,
-                bottomContentPadding = bottomContentPadding,
-                onRemoveRequest = { pendingRemovalHash = it.hash },
-            )
-        },
-    )
+        }
+    }
 
     val pendingSong = content?.songs?.firstOrNull { it.hash == pendingRemovalHash }
     if (pendingSong != null && content.writableListId != null) {
@@ -188,4 +184,26 @@ fun PlaylistScreen(
             onConfirm = { onRemoveSong(pendingSong) },
         )
     }
+}
+
+private fun PlaylistNavKey.toInitialDetails(): com.resonote.core.model.PlaylistDetails? {
+    val initialTitle = title?.takeIf(String::isNotBlank) ?: return null
+    return com.resonote.core.model.PlaylistDetails(
+        id = playlistId,
+        title = initialTitle,
+        description = "",
+        coverUrl = coverUrl?.takeIf(String::isNotBlank),
+        songCount = 0,
+    )
+}
+
+private fun com.resonote.core.model.PlaylistDetails?.mergeInitial(
+    initial: com.resonote.core.model.PlaylistDetails?,
+): com.resonote.core.model.PlaylistDetails? {
+    val loaded = this ?: return initial
+    if (initial == null) return loaded
+    return loaded.copy(
+        title = loaded.title.takeIf(String::isNotBlank) ?: initial.title,
+        coverUrl = initial.coverUrl ?: loaded.coverUrl,
+    )
 }

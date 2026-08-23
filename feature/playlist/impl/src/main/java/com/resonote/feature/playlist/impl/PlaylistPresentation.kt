@@ -56,17 +56,25 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.resonote.core.designsystem.component.ResonoteArtworkState
 import com.resonote.core.designsystem.component.ResonoteContentPhase
+import com.resonote.core.designsystem.component.ResonoteHeroKeys
 import com.resonote.core.designsystem.component.ResonoteMusicItem
 import com.resonote.core.designsystem.component.ResonoteRemoteArtwork
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
 import com.resonote.core.designsystem.component.rememberResonoteShimmer
+import com.resonote.core.designsystem.component.resonoteHero
 import com.resonote.core.designsystem.component.resonoteShimmer
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.ContentFailure
 import com.resonote.core.model.PlaylistDetails
 
 @Composable
-internal fun PlaylistHeader(details: PlaylistDetails?, loadedSongCount: Int, canPlay: Boolean, onPlayAll: () -> Unit) {
+internal fun PlaylistHeader(
+    details: PlaylistDetails?,
+    loadedSongCount: Int,
+    canPlay: Boolean,
+    onPlayAll: () -> Unit,
+    heroPlaylistId: String? = details?.id,
+) {
     val title = details?.title ?: stringResource(R.string.feature_playlist_impl_playlist_title_fallback)
     val artworkDescription = stringResource(R.string.feature_playlist_impl_playlist_artwork, title)
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
@@ -80,7 +88,10 @@ internal fun PlaylistHeader(details: PlaylistDetails?, loadedSongCount: Int, can
         ResonoteRemoteArtwork(
             model = details?.coverUrl,
             contentDescription = null,
-            modifier = Modifier.matchParentSize(),
+            modifier = Modifier
+                .resonoteHero(heroPlaylistId?.let(ResonoteHeroKeys::playlist))
+                .testTag("playlist-hero")
+                .matchParentSize(),
             fallback = {
                 Box(Modifier.matchParentSize().background(MaterialTheme.colorScheme.primaryContainer))
             },
@@ -210,54 +221,68 @@ internal fun rememberCollapseProgress(listState: LazyListState): Float {
 }
 
 @Composable
-internal fun PlaylistSkeleton(bottomContentPadding: Dp) {
+internal fun PlaylistSkeleton(
+    bottomContentPadding: Dp,
+    initialDetails: PlaylistDetails? = null,
+    heroPlaylistId: String? = initialDetails?.id,
+) {
     val shimmer = rememberResonoteShimmer("playlist-skeleton")
     LazyColumn(
         modifier = Modifier.fillMaxSize().testTag("playlist-skeleton"),
         contentPadding = PaddingValues(bottom = bottomContentPadding),
     ) {
         item(key = "header") {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(320.dp)
-                    .resonoteShimmer(shimmer, RectangleShape),
-            ) {
-                Column(
-                    modifier = Modifier.align(Alignment.BottomStart).padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
+            if (initialDetails != null) {
+                PlaylistHeader(
+                    details = initialDetails,
+                    loadedSongCount = 0,
+                    canPlay = false,
+                    onPlayAll = {},
+                    heroPlaylistId = heroPlaylistId,
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(320.dp)
+                        .resonoteShimmer(shimmer, RectangleShape),
                 ) {
-                    val placeholderColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f)
-                    Box(
-                        Modifier
-                            .fillMaxWidth(0.7f)
-                            .height(28.dp)
-                            .clip(MaterialTheme.shapes.small)
-                            .background(placeholderColor),
-                    )
-                    Box(
-                        Modifier
-                            .fillMaxWidth(0.82f)
-                            .height(12.dp)
-                            .clip(MaterialTheme.shapes.extraSmall)
-                            .background(placeholderColor),
-                    )
-                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Column(
+                        modifier = Modifier.align(Alignment.BottomStart).padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        val placeholderColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f)
                         Box(
                             Modifier
-                                .width(84.dp)
-                                .height(14.dp)
+                                .fillMaxWidth(0.7f)
+                                .height(28.dp)
+                                .clip(MaterialTheme.shapes.small)
+                                .background(placeholderColor),
+                        )
+                        Box(
+                            Modifier
+                                .fillMaxWidth(0.82f)
+                                .height(12.dp)
                                 .clip(MaterialTheme.shapes.extraSmall)
                                 .background(placeholderColor),
                         )
-                        Spacer(Modifier.weight(1f))
-                        Box(
-                            Modifier
-                                .width(108.dp)
-                                .height(40.dp)
-                                .clip(MaterialTheme.shapes.extraLarge)
-                                .background(placeholderColor),
-                        )
+                        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                Modifier
+                                    .width(84.dp)
+                                    .height(14.dp)
+                                    .clip(MaterialTheme.shapes.extraSmall)
+                                    .background(placeholderColor),
+                            )
+                            Spacer(Modifier.weight(1f))
+                            Box(
+                                Modifier
+                                    .width(108.dp)
+                                    .height(40.dp)
+                                    .clip(MaterialTheme.shapes.extraLarge)
+                                    .background(placeholderColor),
+                            )
+                        }
                     }
                 }
             }
@@ -274,6 +299,55 @@ internal fun PlaylistSkeleton(bottomContentPadding: Dp) {
                 onClick = {},
                 onMoreClick = null,
             )
+        }
+    }
+}
+
+@Composable
+internal fun PlaylistLoadingHeader() {
+    val shimmer = rememberResonoteShimmer("playlist-loading-header")
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(320.dp)
+            .resonoteShimmer(shimmer, RectangleShape),
+    ) {
+        Column(
+            modifier = Modifier.align(Alignment.BottomStart).padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            val placeholderColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f)
+            Box(
+                Modifier
+                    .fillMaxWidth(0.7f)
+                    .height(28.dp)
+                    .clip(MaterialTheme.shapes.small)
+                    .background(placeholderColor),
+            )
+            Box(
+                Modifier
+                    .fillMaxWidth(0.82f)
+                    .height(12.dp)
+                    .clip(MaterialTheme.shapes.extraSmall)
+                    .background(placeholderColor),
+            )
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    Modifier
+                        .width(84.dp)
+                        .height(14.dp)
+                        .clip(MaterialTheme.shapes.extraSmall)
+                        .background(placeholderColor),
+                )
+                Spacer(Modifier.weight(1f))
+                Box(
+                    Modifier
+                        .width(108.dp)
+                        .height(40.dp)
+                        .clip(MaterialTheme.shapes.extraLarge)
+                        .background(placeholderColor),
+                )
+            }
         }
     }
 }

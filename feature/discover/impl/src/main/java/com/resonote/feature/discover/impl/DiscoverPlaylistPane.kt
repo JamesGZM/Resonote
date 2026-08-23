@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import com.resonote.core.designsystem.component.ResonoteArtworkState
 import com.resonote.core.designsystem.component.ResonoteEmptyState
 import com.resonote.core.designsystem.component.ResonoteFilterPill
+import com.resonote.core.designsystem.component.ResonoteHeroKeys
 import com.resonote.core.designsystem.component.ResonoteLoadMoreEffect
 import com.resonote.core.designsystem.component.ResonoteLoadMoreFooter
 import com.resonote.core.designsystem.component.ResonoteLoadMoreState
@@ -114,6 +115,7 @@ internal fun PlaylistPane(
                                     ResonoteArtworkState.LOADED
                                 },
                                 artworkUrl = playlist.coverUrl,
+                                heroKey = ResonoteHeroKeys.playlist(playlist.id),
                             )
                         }
                         if (row.size == 1) Spacer(Modifier.weight(1f))

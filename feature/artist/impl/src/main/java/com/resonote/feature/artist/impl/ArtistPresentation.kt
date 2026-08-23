@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -36,7 +37,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.resonote.core.designsystem.component.ResonoteHeroKeys
 import com.resonote.core.designsystem.component.ResonoteRemoteArtwork
+import com.resonote.core.designsystem.component.resonoteHero
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.ContentFailure
 
@@ -56,8 +59,10 @@ internal fun ArtistHeader(profile: ArtistProfile?) {
                 )
                 Box(
                     modifier = Modifier
-                        .size(124.dp)
                         .align(Alignment.BottomEnd)
+                        .resonoteHero(profile?.id?.let(ResonoteHeroKeys::artist))
+                        .testTag("artist-hero")
+                        .size(124.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.surfaceContainerHighest)
                         .semantics { contentDescription = portraitDescription },

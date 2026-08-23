@@ -35,10 +35,12 @@ import androidx.compose.ui.unit.dp
 import com.resonote.core.designsystem.component.ResonoteArtwork
 import com.resonote.core.designsystem.component.ResonoteArtworkState
 import com.resonote.core.designsystem.component.ResonoteErrorState
+import com.resonote.core.designsystem.component.ResonoteHeroKeys
 import com.resonote.core.designsystem.component.ResonotePlainAction
 import com.resonote.core.designsystem.component.ResonoteRemoteArtwork
 import com.resonote.core.designsystem.component.ResonoteShimmer
 import com.resonote.core.designsystem.component.rememberResonoteShimmer
+import com.resonote.core.designsystem.component.resonoteHero
 import com.resonote.core.designsystem.component.resonoteShimmer
 import com.resonote.core.model.Album
 import com.resonote.core.model.AlbumRegion
@@ -58,7 +60,8 @@ internal fun RankingCard(ranking: Ranking, onClick: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                Modifier.size(60.dp).clip(MaterialTheme.shapes.medium)
+                Modifier.resonoteHero(ResonoteHeroKeys.ranking(ranking.id)).size(60.dp)
+                    .clip(MaterialTheme.shapes.medium)
                     .background(MaterialTheme.colorScheme.surfaceContainerHighest),
                 contentAlignment = Alignment.Center,
             ) {
@@ -108,7 +111,7 @@ internal fun AlbumCard(album: Album, onClick: () -> Unit, modifier: Modifier = M
                     ResonoteArtworkState.LOADED
                 },
                 contentDescription = stringResource(R.string.feature_discover_impl_discover_album_artwork, album.name),
-                modifier = Modifier.fillMaxWidth().height(164.dp),
+                modifier = Modifier.resonoteHero(ResonoteHeroKeys.album(album.id)).fillMaxWidth().height(164.dp),
             ) {
                 ResonoteRemoteArtwork(
                     model = album.coverUrl,

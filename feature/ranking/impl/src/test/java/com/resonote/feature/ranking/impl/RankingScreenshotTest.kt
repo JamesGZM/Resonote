@@ -1,5 +1,8 @@
 package com.resonote.feature.ranking.impl
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
 import androidx.compose.ui.test.assertCountEquals
@@ -18,6 +21,7 @@ import com.resonote.core.designsystem.theme.ResonoteThemeMode
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.screenshottesting.DefaultRoborazziOptions
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -85,6 +89,36 @@ class RankingScreenshotTest {
         }
         composeRule.onNodeWithTag("ranking-skeleton").assertIsDisplayed()
         capture("loading")
+    }
+
+    @Test
+    fun ranking_loadingToContent_keepsRouteHeroNode() {
+        val metadata = RankingMetadata("stable-ranking", "稳定榜单", null)
+        var state by mutableStateOf<RankingUiState>(RankingUiState.Loading(RankingMetadata("", null, null)))
+        composeRule.setContent {
+            ResonoteTheme {
+                RankingScreen(
+                    state = state,
+                    initialMetadata = metadata,
+                    playingMediaId = null,
+                    onBack = {},
+                    onRetry = {},
+                    onRefresh = {},
+                    onLoadMore = {},
+                    onPlayAll = {},
+                    onSongClick = {},
+                    onSongMoreClick = null,
+                )
+            }
+        }
+        val loadingHeroId = composeRule.onNodeWithTag("ranking-hero").fetchSemanticsNode().id
+
+        composeRule.runOnIdle {
+            state = RankingUiState.Content(metadata, listOf(songs.first()), 1, 1, false)
+        }
+
+        val contentHeroId = composeRule.onNodeWithTag("ranking-hero").fetchSemanticsNode().id
+        assertEquals(loadingHeroId, contentHeroId)
     }
 
     private fun setRankingContent(themeMode: ResonoteThemeMode) {

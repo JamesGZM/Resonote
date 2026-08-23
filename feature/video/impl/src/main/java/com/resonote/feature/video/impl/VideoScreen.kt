@@ -6,26 +6,15 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.CloudOff
-import androidx.compose.material.icons.rounded.Fullscreen
-import androidx.compose.material.icons.rounded.FullscreenExit
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -42,7 +31,6 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -50,12 +38,14 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.compose.ContentFrame
 import coil3.compose.AsyncImage
 import com.resonote.core.designsystem.component.ResonoteButton
+import com.resonote.core.designsystem.component.ResonoteHeroKeys
+import com.resonote.core.designsystem.component.resonoteHero
 import com.resonote.core.designsystem.tokens.ResonoteTokens
 import com.resonote.core.model.ContentFailure
 import com.resonote.feature.video.api.VideoNavKey
-import androidx.media3.ui.compose.material3.Player as Media3Player
 
 @Composable
 fun VideoRoute(
@@ -77,10 +67,19 @@ fun VideoRoute(
             onFullscreenChange(false)
         }
     }
-    BackHandler(enabled = fullscreen) {
+
+    val exitFullscreen = {
         fullscreen = false
         onFullscreenChange(false)
     }
+    val handleBack = {
+        dispatchVideoBack(
+            fullscreen = fullscreen,
+            onExitFullscreen = exitFullscreen,
+            onNavigateBack = onBack,
+        )
+    }
+    BackHandler(enabled = fullscreen, onBack = handleBack)
 
     val toggleFullscreen = {
         fullscreen = !fullscreen
@@ -90,10 +89,14 @@ fun VideoRoute(
         key = key,
         state = state,
         fullscreen = fullscreen,
-        onBack = onBack,
+        onBack = handleBack,
         onToggleFullscreen = toggleFullscreen,
         onRetry = viewModel::retry,
     )
+}
+
+internal fun dispatchVideoBack(fullscreen: Boolean, onExitFullscreen: () -> Unit, onNavigateBack: () -> Unit) {
+    if (fullscreen) onExitFullscreen() else onNavigateBack()
 }
 
 @Composable
@@ -175,51 +178,19 @@ internal fun VideoScreen(
             playbackFailed = playbackFailed,
             coverUrl = key.coverUrl,
             onRetry = onRetry,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.resonoteHero(ResonoteHeroKeys.video(key.hash)).fillMaxSize(),
         )
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .windowInsetsPadding(WindowInsets.statusBars)
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Surface(
-                shape = CircleShape,
-                color = mediaColors.mediaCanvas.copy(alpha = 0.52f),
-                contentColor = mediaColors.onMediaCanvas,
-            ) {
-                IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.feature_video_impl_back))
-                }
-            }
-            Text(
-                key.title,
-                modifier = Modifier.weight(1f).padding(horizontal = 10.dp),
-                color = mediaColors.onMediaCanvas,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+        if (state is VideoUiState.Ready && player != null && !playbackFailed) {
+            VideoPlayerControls(
+                key = key,
+                player = player,
+                fullscreen = fullscreen,
+                onBack = onBack,
+                onToggleFullscreen = onToggleFullscreen,
+                modifier = Modifier.fillMaxSize(),
             )
-            Surface(
-                shape = CircleShape,
-                color = mediaColors.mediaCanvas.copy(alpha = 0.52f),
-                contentColor = mediaColors.onMediaCanvas,
-            ) {
-                IconButton(onClick = onToggleFullscreen, enabled = state is VideoUiState.Ready) {
-                    Icon(
-                        if (fullscreen) Icons.Rounded.FullscreenExit else Icons.Rounded.Fullscreen,
-                        stringResource(
-                            if (fullscreen) {
-                                R.string.feature_video_impl_exit_fullscreen
-                            } else {
-                                R.string.feature_video_impl_fullscreen
-                            },
-                        ),
-                    )
-                }
-            }
+        } else {
+            VideoLoadingTopBar(key = key, onBack = onBack)
         }
     }
 }
@@ -253,7 +224,7 @@ private fun VideoStage(
                     body = stringResource(R.string.feature_video_impl_playback_error_body),
                     onRetry = onRetry,
                 )
-                state is VideoUiState.Ready -> Media3Player(
+                state is VideoUiState.Ready && player != null -> ContentFrame(
                     player = player,
                     modifier = Modifier.fillMaxSize(),
                 )

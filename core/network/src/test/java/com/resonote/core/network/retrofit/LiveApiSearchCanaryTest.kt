@@ -158,6 +158,28 @@ class LiveApiSearchCanaryTest {
             .isTrue()
     }
 
+    @Test
+    fun publicPlaylistPaginationIsConsumable() = runTest {
+        assumeTrue(System.getenv("RESONOTE_RUN_LIVE_API_TESTS") == "true")
+        val dataSource = registeredLiveFixture().dataSource
+        val playlists = dataSource.recommendedPlaylists(page = 1, pageSize = 12)
+        val pagedPlaylist = playlists.firstNotNullOfOrNull { playlist ->
+            runCatching { dataSource.playlistSongs(playlist.id, page = 1, pageSize = 50) }
+                .getOrNull()
+                ?.takeIf { it.songs.isNotEmpty() && it.hasMore }
+                ?.let { playlist to it }
+        }
+
+        assertWithMessage("No recommended playlist exposes a second page").that(pagedPlaylist).isNotNull()
+        val (playlist, firstPage) = checkNotNull(pagedPlaylist)
+        val secondPage = dataSource.playlistSongs(playlist.id, page = 2, pageSize = 50)
+
+        assertThat(firstPage.songs).isNotEmpty()
+        assertThat(secondPage.songs).isNotEmpty()
+        assertThat(secondPage.songs.map { it.hash }.toSet())
+            .containsNoneIn(firstPage.songs.map { it.hash }.toSet())
+    }
+
     private fun liveFixture(): LiveFixture {
         val json = Json { ignoreUnknownKeys = true }
         val sessions = ApiSessionManager(Optional.of(MemoryStore()), ApiDeviceIdentityFactory())

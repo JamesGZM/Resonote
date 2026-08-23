@@ -56,16 +56,18 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.resonote.core.designsystem.component.ResonoteArtworkState
 import com.resonote.core.designsystem.component.ResonoteContentPhase
+import com.resonote.core.designsystem.component.ResonoteHeroKeys
 import com.resonote.core.designsystem.component.ResonoteMusicItem
 import com.resonote.core.designsystem.component.ResonoteRemoteArtwork
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
 import com.resonote.core.designsystem.component.rememberResonoteShimmer
+import com.resonote.core.designsystem.component.resonoteHero
 import com.resonote.core.designsystem.component.resonoteShimmer
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.ContentFailure
 
 @Composable
-internal fun RankingHeader(metadata: RankingMetadata, songCount: Int, onPlayAll: () -> Unit) {
+internal fun RankingHeader(metadata: RankingMetadata, songCount: Int, onPlayAll: () -> Unit, canPlay: Boolean = true) {
     val title = metadata.title ?: stringResource(R.string.feature_ranking_impl_ranking_title_fallback)
     val artworkDescription = stringResource(R.string.feature_ranking_impl_ranking_artwork, title)
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
@@ -79,7 +81,10 @@ internal fun RankingHeader(metadata: RankingMetadata, songCount: Int, onPlayAll:
         ResonoteRemoteArtwork(
             model = metadata.coverUrl,
             contentDescription = null,
-            modifier = Modifier.matchParentSize(),
+            modifier = Modifier
+                .resonoteHero(ResonoteHeroKeys.ranking(metadata.id))
+                .testTag("ranking-hero")
+                .matchParentSize(),
             fallback = {
                 Box(Modifier.matchParentSize().background(MaterialTheme.colorScheme.primaryContainer))
             },
@@ -120,6 +125,7 @@ internal fun RankingHeader(metadata: RankingMetadata, songCount: Int, onPlayAll:
                 Spacer(Modifier.weight(1f))
                 Surface(
                     onClick = onPlayAll,
+                    enabled = canPlay,
                     modifier = Modifier.height(40.dp),
                     shape = CircleShape,
                     color = Color.Black.copy(alpha = 0.38f),
@@ -250,47 +256,51 @@ internal fun rememberCollapseProgress(listState: LazyListState): Float {
 }
 
 @Composable
-internal fun RankingSkeleton(bottomContentPadding: Dp) {
+internal fun RankingSkeleton(bottomContentPadding: Dp, metadata: RankingMetadata? = null) {
     val shimmer = rememberResonoteShimmer("ranking-skeleton")
     LazyColumn(
         modifier = Modifier.fillMaxSize().testTag("ranking-skeleton"),
         contentPadding = PaddingValues(bottom = bottomContentPadding),
     ) {
         item(key = "header") {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(300.dp)
-                    .resonoteShimmer(shimmer, RectangleShape),
-            ) {
-                Column(
-                    modifier = Modifier.align(Alignment.BottomStart).padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+            if (metadata != null && metadata.id.isNotBlank()) {
+                RankingHeader(metadata = metadata, songCount = 0, onPlayAll = {}, canPlay = false)
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(300.dp)
+                        .resonoteShimmer(shimmer, RectangleShape),
                 ) {
-                    val placeholderColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f)
-                    Box(
-                        Modifier
-                            .fillMaxWidth(0.7f)
-                            .height(28.dp)
-                            .clip(MaterialTheme.shapes.small)
-                            .background(placeholderColor),
-                    )
-                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Column(
+                        modifier = Modifier.align(Alignment.BottomStart).padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        val placeholderColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f)
                         Box(
                             Modifier
-                                .width(84.dp)
-                                .height(14.dp)
-                                .clip(MaterialTheme.shapes.extraSmall)
+                                .fillMaxWidth(0.7f)
+                                .height(28.dp)
+                                .clip(MaterialTheme.shapes.small)
                                 .background(placeholderColor),
                         )
-                        Spacer(Modifier.weight(1f))
-                        Box(
-                            Modifier
-                                .width(108.dp)
-                                .height(40.dp)
-                                .clip(MaterialTheme.shapes.extraLarge)
-                                .background(placeholderColor),
-                        )
+                        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                Modifier
+                                    .width(84.dp)
+                                    .height(14.dp)
+                                    .clip(MaterialTheme.shapes.extraSmall)
+                                    .background(placeholderColor),
+                            )
+                            Spacer(Modifier.weight(1f))
+                            Box(
+                                Modifier
+                                    .width(108.dp)
+                                    .height(40.dp)
+                                    .clip(MaterialTheme.shapes.extraLarge)
+                                    .background(placeholderColor),
+                            )
+                        }
                     }
                 }
             }

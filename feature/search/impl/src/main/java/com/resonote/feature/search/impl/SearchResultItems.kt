@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import com.resonote.core.designsystem.component.ResonoteArtistItem
 import com.resonote.core.designsystem.component.ResonoteArtistMetadata
 import com.resonote.core.designsystem.component.ResonoteArtworkState
+import com.resonote.core.designsystem.component.ResonoteHeroKeys
 import com.resonote.core.designsystem.component.ResonoteMediaCardItem
 import com.resonote.core.designsystem.component.ResonoteMediaCardMetadata
 import com.resonote.core.designsystem.component.ResonoteMusicItem
@@ -89,6 +90,7 @@ internal fun SearchPlaylistItem(playlist: SearchPlaylist, modifier: Modifier, on
             ResonoteArtworkState.LOADED
         },
         artworkUrl = playlist.coverUrl,
+        heroKey = ResonoteHeroKeys.playlist(playlist.id),
         enabled = onClick != null,
     )
 }
@@ -117,6 +119,7 @@ internal fun SearchAlbumItem(album: SearchAlbum, modifier: Modifier, onClick: ((
             ResonoteArtworkState.LOADED
         },
         artworkUrl = album.coverUrl,
+        heroKey = ResonoteHeroKeys.album(album.id),
         enabled = onClick != null,
     )
 }
@@ -140,6 +143,7 @@ internal fun SearchArtistItem(artist: SearchArtist, modifier: Modifier, onClick:
             ResonoteArtworkState.LOADED
         },
         artworkUrl = artist.avatarUrl,
+        heroKey = ResonoteHeroKeys.artist(artist.id),
         enabled = onClick != null,
     )
 }
@@ -156,6 +160,7 @@ internal fun SearchMvItem(mv: SearchMv, modifier: Modifier, onClick: (() -> Unit
         modifier = modifier,
         artworkState = if (mv.coverUrl.isNullOrBlank()) ResonoteArtworkState.MISSING else ResonoteArtworkState.LOADED,
         artworkUrl = mv.coverUrl,
+        heroKey = ResonoteHeroKeys.video(mv.hash),
         enabled = onClick != null,
     )
 }
