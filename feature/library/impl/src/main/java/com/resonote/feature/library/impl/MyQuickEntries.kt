@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Cloud
@@ -25,19 +23,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.resonote.core.model.UserPlaylist
 
@@ -49,8 +41,15 @@ internal fun QuickEntries(
     onHistoryClick: () -> Unit,
     onCloudClick: () -> Unit,
     onLocalMusicClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Row(Modifier.fillMaxWidth().height(76.dp).padding(horizontal = 4.dp)) {
+    Row(
+        modifier
+            .bleedHorizontally(20.dp)
+            .fillMaxWidth()
+            .height(76.dp)
+            .padding(horizontal = 5.dp),
+    ) {
         QuickEntry(
             icon = { Icon(Icons.Rounded.Favorite, null) },
             label = stringResource(R.string.feature_library_impl_my_liked),
@@ -59,7 +58,6 @@ internal fun QuickEntries(
             enabled = likedRequiresLogin || likedPlaylist != null,
             modifier = Modifier.weight(1f).testTag("my-liked"),
             iconTestTag = "my-liked-icon",
-            horizontalBias = -1f,
         )
         QuickEntry(
             icon = { Icon(Icons.Rounded.History, null) },
@@ -68,7 +66,6 @@ internal fun QuickEntries(
             iconColor = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f).testTag("my-history"),
             iconTestTag = "my-history-icon",
-            horizontalBias = -1f / 3f,
         )
         QuickEntry(
             icon = { Icon(Icons.Rounded.Cloud, null) },
@@ -77,7 +74,6 @@ internal fun QuickEntries(
             iconColor = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f).testTag("my-cloud"),
             iconTestTag = "my-cloud-icon",
-            horizontalBias = 1f / 3f,
         )
         QuickEntry(
             icon = { Icon(Icons.Rounded.LibraryMusic, null) },
@@ -86,7 +82,6 @@ internal fun QuickEntries(
             iconColor = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f).testTag("my-local-music"),
             iconTestTag = "my-local-music-icon",
-            horizontalBias = 1f,
         )
     }
 }
@@ -99,12 +94,8 @@ private fun QuickEntry(
     iconColor: Color,
     modifier: Modifier,
     iconTestTag: String? = null,
-    horizontalBias: Float,
     enabled: Boolean = true,
 ) {
-    var labelWidth by remember(label) { mutableIntStateOf(0) }
-    val iconWidth = with(LocalDensity.current) { 44.dp.roundToPx() }
-    val edgeLabelOffset = ((labelWidth - iconWidth).coerceAtLeast(0) + 1) / 2
     Surface(
         modifier = modifier
             .fillMaxSize()
@@ -118,10 +109,10 @@ private fun QuickEntry(
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
-            contentAlignment = BiasAlignment(horizontalBias, 0f),
+            contentAlignment = Alignment.Center,
         ) {
             Column(
-                modifier = Modifier.width(44.dp),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
@@ -147,19 +138,7 @@ private fun QuickEntry(
                 }
                 Text(
                     label,
-                    Modifier
-                        .padding(top = 8.dp)
-                        .wrapContentWidth(unbounded = true)
-                        .offset {
-                            IntOffset(
-                                x = when {
-                                    horizontalBias <= -1f -> edgeLabelOffset
-                                    horizontalBias >= 1f -> -edgeLabelOffset
-                                    else -> 0
-                                },
-                                y = 0,
-                            )
-                        },
+                    Modifier.padding(top = 8.dp).offset(y = 5.dp),
                     color = if (enabled) {
                         MaterialTheme.colorScheme.onSurface
                     } else {
@@ -169,7 +148,6 @@ private fun QuickEntry(
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
                     softWrap = false,
-                    onTextLayout = { labelWidth = it.size.width },
                 )
             }
         }

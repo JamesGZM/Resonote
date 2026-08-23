@@ -93,7 +93,7 @@ class CloudViewModelTest {
     }
 
     @Test
-    fun sortAndViewModeAreAppliedWithoutReloading() = runTest(dispatcher) {
+    fun sortIsAppliedWithoutReloading() = runTest(dispatcher) {
         val repository = FakeCloudRepository(
             pages = mutableMapOf(
                 1 to availablePage(
@@ -111,10 +111,8 @@ class CloudViewModelTest {
         advanceUntilIdle()
 
         viewModel.updateSort(CloudSort.Duration)
-        viewModel.updateViewMode(CloudViewMode.Grid)
 
         assertThat(viewModel.uiState.value.visibleTracks.map { it.hash }).containsExactly("a", "z").inOrder()
-        assertThat(viewModel.uiState.value.viewMode).isEqualTo(CloudViewMode.Grid)
         assertThat(repository.pageRequests).containsExactly(1)
     }
 

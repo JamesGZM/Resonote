@@ -8,7 +8,12 @@ import com.resonote.core.playback.PlaybackOrigin
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-internal data class PlaybackHistoryQualification(val sessionId: Long, val record: DeviceHistoryRecord)
+internal sealed interface PlaybackHistoryTarget {
+    data class Device(val record: DeviceHistoryRecord) : PlaybackHistoryTarget
+    data class Account(val albumAudioId: String) : PlaybackHistoryTarget
+}
+
+internal data class PlaybackHistoryQualification(val sessionId: Long, val target: PlaybackHistoryTarget)
 
 internal class PlaybackHistoryRecorder(
     private val repository: ListeningHistoryRepository,
@@ -16,8 +21,8 @@ internal class PlaybackHistoryRecorder(
     private val elapsedRealtime: () -> Long,
     private val eligibility: PlaybackHistoryEligibilityTracker = PlaybackHistoryEligibilityTracker(),
 ) {
-    fun start(record: DeviceHistoryRecord?, durationMillis: Long) {
-        eligibility.start(record, durationMillis, elapsedRealtime())
+    fun start(target: PlaybackHistoryTarget?, durationMillis: Long) {
+        eligibility.start(target, durationMillis, elapsedRealtime())
     }
 
     fun reset() {
@@ -31,7 +36,10 @@ internal class PlaybackHistoryRecorder(
             elapsedRealtimeMillis = elapsedRealtime(),
         ) ?: return
         scope.launch {
-            val persisted = repository.recordDevicePlayback(qualification.record)
+            val persisted = when (val target = qualification.target) {
+                is PlaybackHistoryTarget.Device -> repository.recordDevicePlayback(target.record)
+                is PlaybackHistoryTarget.Account -> repository.recordAccountPlayback(target.albumAudioId)
+            }
             eligibility.onPersistenceResult(qualification, persisted)
         }
     }
@@ -42,7 +50,7 @@ internal class PlaybackHistoryEligibilityTracker(
     private val shortCompletionToleranceMillis: Long = SHORT_COMPLETION_TOLERANCE_MILLIS,
 ) {
     private var sessionId = 0L
-    private var record: DeviceHistoryRecord? = null
+    private var target: PlaybackHistoryTarget? = null
     private var durationMillis = 0L
     private var activePlaybackMillis = 0L
     private var lastSampleMillis: Long? = null
@@ -51,16 +59,16 @@ internal class PlaybackHistoryEligibilityTracker(
     private var persistencePending = false
     private var persisted = false
 
-    fun start(record: DeviceHistoryRecord?, durationMillis: Long, elapsedRealtimeMillis: Long) {
+    fun start(target: PlaybackHistoryTarget?, durationMillis: Long, elapsedRealtimeMillis: Long) {
         reset()
-        this.record = record
+        this.target = target
         this.durationMillis = durationMillis.coerceAtLeast(0)
         lastSampleMillis = elapsedRealtimeMillis
     }
 
     fun reset() {
         sessionId += 1
-        record = null
+        target = null
         durationMillis = 0
         activePlaybackMillis = 0
         lastSampleMillis = null
@@ -83,16 +91,17 @@ internal class PlaybackHistoryEligibilityTracker(
         wasPlaying = isPlaying
         eligible =
             eligible ||
+            (target is PlaybackHistoryTarget.Account && isPlaying) ||
             activePlaybackMillis >= thresholdMillis ||
             completedShortTrack(endedNaturally)
-        val currentRecord = record
-        if (!eligible || currentRecord == null || persistencePending || persisted) return null
+        val currentTarget = target
+        if (!eligible || currentTarget == null || persistencePending || persisted) return null
         persistencePending = true
-        return PlaybackHistoryQualification(sessionId, currentRecord)
+        return PlaybackHistoryQualification(sessionId, currentTarget)
     }
 
     fun onPersistenceResult(qualification: PlaybackHistoryQualification, success: Boolean) {
-        if (qualification.sessionId != sessionId || qualification.record != record) return
+        if (qualification.sessionId != sessionId || qualification.target != target) return
         persistencePending = false
         persisted = success
     }
@@ -107,28 +116,36 @@ internal class PlaybackHistoryEligibilityTracker(
     }
 }
 
-internal fun PlaybackItem.toDeviceHistoryRecordOrNull(): DeviceHistoryRecord? = when (val value = origin) {
+internal fun PlaybackItem.toHistoryTargetOrNull(): PlaybackHistoryTarget? = when (val value = origin) {
     is PlaybackOrigin.Local ->
-        DeviceHistoryRecord(
-            source = DeviceHistorySource.Local,
-            mediaId = value.id.value,
-            title = metadata.title,
-            artist = metadata.artist,
-            albumTitle = metadata.albumTitle,
-            artworkUri = metadata.artworkUri,
-            durationMillis = metadata.durationMillis,
-            albumAudioId = null,
+        PlaybackHistoryTarget.Device(
+            DeviceHistoryRecord(
+                source = DeviceHistorySource.Local,
+                mediaId = value.id.value,
+                title = metadata.title,
+                artist = metadata.artist,
+                albumTitle = metadata.albumTitle,
+                artworkUri = metadata.artworkUri,
+                durationMillis = metadata.durationMillis,
+                albumAudioId = null,
+            ),
         )
     is PlaybackOrigin.Cloud ->
-        DeviceHistoryRecord(
-            source = DeviceHistorySource.Cloud,
-            mediaId = value.track.hash,
-            title = metadata.title,
-            artist = metadata.artist,
-            albumTitle = metadata.albumTitle,
-            artworkUri = metadata.artworkUri,
-            durationMillis = metadata.durationMillis,
-            albumAudioId = value.track.albumAudioId,
+        PlaybackHistoryTarget.Device(
+            DeviceHistoryRecord(
+                source = DeviceHistorySource.Cloud,
+                mediaId = value.track.hash,
+                title = metadata.title,
+                artist = metadata.artist,
+                albumTitle = metadata.albumTitle,
+                artworkUri = metadata.artworkUri,
+                durationMillis = metadata.durationMillis,
+                albumAudioId = value.track.albumAudioId,
+            ),
         )
-    is PlaybackOrigin.Online -> null
+    is PlaybackOrigin.Online ->
+        value.song.albumAudioId
+            ?.trim()
+            ?.takeIf(String::isNotEmpty)
+            ?.let(PlaybackHistoryTarget::Account)
 }

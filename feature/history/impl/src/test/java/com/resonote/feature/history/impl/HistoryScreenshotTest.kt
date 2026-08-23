@@ -79,11 +79,10 @@ class HistoryScreenshotTest {
             ),
         )
 
-        composeRule.onNodeWithTag("history-archive").assertIsDisplayed()
+        composeRule.onNodeWithText("4 首记录").assertIsDisplayed()
         composeRule.onNodeWithText("最近播放").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("返回").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("刷新在线记录").assertIsDisplayed()
-        composeRule.onNodeWithText("账号收听足迹").assertIsDisplayed()
+        composeRule.onNodeWithTag("history-pull-to-refresh").assertIsDisplayed()
         capture("online")
     }
 
@@ -102,7 +101,7 @@ class HistoryScreenshotTest {
             ),
         )
 
-        composeRule.onNodeWithText("这台设备的播放档案").assertIsDisplayed()
+        composeRule.onNodeWithText("3 首记录").assertIsDisplayed()
         composeRule.onNodeWithText("云盘 · Winter Archive · 播放 1 次").assertIsDisplayed()
         capture("device")
     }

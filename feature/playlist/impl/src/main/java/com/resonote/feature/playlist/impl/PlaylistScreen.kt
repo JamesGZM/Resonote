@@ -36,6 +36,7 @@ fun PlaylistRoute(
     playingMediaId: String?,
     currentAccountId: String?,
     onBack: () -> Unit,
+    onLoginRequest: () -> Unit,
     onPlayAll: (List<OnlineSong>) -> Unit,
     onSongClick: (OnlineSong) -> Unit,
     onSongMoreClick: PlaylistSongMoreAction?,
@@ -45,19 +46,29 @@ fun PlaylistRoute(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarController = LocalResonoteSnackbarController.current
     val refreshFailureMessage = stringResource(R.string.feature_playlist_impl_playlist_refresh_failed)
+    val favoriteFailureMessage = stringResource(R.string.feature_playlist_impl_favorite_failed)
     val refreshFailure = (state as? PlaylistUiState.Content)?.refreshFailure
+    val favoriteFailure = ((state as? PlaylistUiState.Content)?.favorite as? PlaylistFavoriteUiState.Available)
+        ?.updateFailure
     val writableListId = key.writableListId.takeIf { key.writableAccountId == currentAccountId }
     LaunchedEffect(key.playlistId, writableListId, currentAccountId) {
-        viewModel.load(key.playlistId, writableListId, currentAccountId)
+        viewModel.load(key.playlistId, writableListId, currentAccountId, key.title)
     }
     LaunchedEffect(currentAccountId) {
         val error = viewModel.uiState.value as? PlaylistUiState.Error
         if (currentAccountId != null && error?.failure == ContentFailure.AuthenticationRequired) viewModel.retry()
     }
+    LaunchedEffect(viewModel) { viewModel.loginRequests.collect { onLoginRequest() } }
     LaunchedEffect(refreshFailure, snackbarController) {
         if (refreshFailure != null) {
             snackbarController?.show(refreshFailureMessage)
             viewModel.acknowledgeRefreshFailure()
+        }
+    }
+    LaunchedEffect(favoriteFailure, snackbarController) {
+        if (favoriteFailure != null) {
+            snackbarController?.show(favoriteFailureMessage)
+            viewModel.acknowledgeFavoriteFailure()
         }
     }
     PlaylistScreen(
@@ -70,6 +81,7 @@ fun PlaylistRoute(
         onRefresh = viewModel::refresh,
         onLoadMore = viewModel::loadMore,
         onPlayAll = onPlayAll,
+        onFavoriteClick = viewModel::toggleFavorite,
         onSongClick = onSongClick,
         onSongMoreClick = onSongMoreClick,
         bottomContentPadding = bottomContentPadding,
@@ -90,6 +102,7 @@ fun PlaylistScreen(
     onRefresh: () -> Unit,
     onLoadMore: () -> Unit,
     onPlayAll: (List<OnlineSong>) -> Unit,
+    onFavoriteClick: () -> Unit = {},
     onSongClick: (OnlineSong) -> Unit,
     onSongMoreClick: PlaylistSongMoreAction?,
     bottomContentPadding: Dp = 32.dp,
@@ -130,6 +143,7 @@ fun PlaylistScreen(
                 onRefresh = onRefresh,
                 onLoadMore = onLoadMore,
                 onPlayAll = onPlayAll,
+                onFavoriteClick = onFavoriteClick,
                 onSongClick = onSongClick,
                 onSongMoreClick = onSongMoreClick,
                 bottomContentPadding = bottomContentPadding,

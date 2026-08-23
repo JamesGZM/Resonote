@@ -4,6 +4,10 @@
     <string name="feature_playlist_impl_playlist_artwork">歌单“%1$s”的封面</string>
     <string name="feature_playlist_impl_playlist_song_count">共 %1$d 首</string>
     <string name="feature_playlist_impl_playlist_play_all">播放全部</string>
+    <string name="feature_playlist_impl_favorite">收藏</string>
+    <string name="feature_playlist_impl_favorited">已收藏</string>
+    <string name="feature_playlist_impl_favorite_retry">重试</string>
+    <string name="feature_playlist_impl_favorite_failed">歌单收藏状态更新失败，请稍后重试</string>
     <string name="feature_playlist_impl_playlist_empty_title">歌单暂无内容</string>
     <string name="feature_playlist_impl_playlist_empty_body">歌单可能已被清空或暂时不可用</string>
     <string name="feature_playlist_impl_playlist_error_title">无法载入歌单</string>

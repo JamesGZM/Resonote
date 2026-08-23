@@ -7,7 +7,6 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -47,18 +46,9 @@ class CloudScreenshotTest {
     fun cloud_listTop() {
         setScreen(state())
 
-        composeRule.onNodeWithTag("cloud-vault").assertIsDisplayed()
-        composeRule.onNodeWithText("播放当前结果").assertIsDisplayed()
+        composeRule.onNodeWithTag("cloud-summary").assertIsDisplayed()
+        composeRule.onNodeWithText("播放全部").assertIsDisplayed()
         capture("list_top")
-    }
-
-    @Test
-    fun cloud_grid() {
-        setScreen(state().copy(viewMode = CloudViewMode.Grid))
-        composeRule.onNodeWithTag("cloud-list").performScrollToIndex(4)
-        composeRule.waitForIdle()
-        composeRule.onNodeWithText("潮汐来信").assertIsDisplayed()
-        capture("grid")
     }
 
     @Test
@@ -94,7 +84,6 @@ class CloudScreenshotTest {
                         onRefresh = {},
                         onQueryChange = {},
                         onSortChange = {},
-                        onViewModeChange = {},
                         onPlayAll = {},
                         onPlayTrack = {},
                         onAppendTracks = {},

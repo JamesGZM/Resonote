@@ -37,6 +37,7 @@ internal data class UserDetailData(
     @Serializable(with = FlexibleLongSerializer::class) val fans: Long? = null,
     @Serializable(with = FlexibleLongSerializer::class) val follows: Long? = null,
     @Serializable(with = FlexibleLongSerializer::class) val duration: Long? = null,
+    @Serializable(with = FlexibleLongSerializer::class) val rtime: Long? = null,
 )
 
 @Serializable

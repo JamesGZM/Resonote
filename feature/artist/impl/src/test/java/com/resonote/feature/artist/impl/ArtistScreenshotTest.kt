@@ -247,6 +247,7 @@ class ArtistScreenshotTest {
         composeRule.onNodeWithText("热门").assertExists()
         composeRule.onNodeWithText("MV").performClick()
         composeRule.onNodeWithText("潮汐 MV").assertExists()
+        composeRule.onNodeWithText("共 1 个 MV").assertExists()
         composeRule.onNodeWithText("热门").assertDoesNotExist()
         composeRule.onNodeWithText("最新").assertDoesNotExist()
     }

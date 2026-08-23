@@ -36,6 +36,19 @@ fun Modifier.resonoteHero(key: String?): Modifier {
     }
 }
 
+@Composable
+fun Modifier.resonoteHeroElement(key: String?): Modifier {
+    if (key.isNullOrBlank()) return this
+    val sharedTransitionScope = LocalResonoteSharedTransitionScope.current ?: return this
+    val animatedVisibilityScope = LocalNavAnimatedContentScope.current
+    return with(sharedTransitionScope) {
+        sharedElement(
+            sharedContentState = rememberSharedContentState(key),
+            animatedVisibilityScope = animatedVisibilityScope,
+        )
+    }
+}
+
 object ResonoteHeroKeys {
     fun playlist(id: String): String = "playlist:${id.trim()}"
     fun ranking(id: String): String = "ranking:${id.trim()}"

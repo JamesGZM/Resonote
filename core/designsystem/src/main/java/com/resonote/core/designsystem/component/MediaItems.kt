@@ -64,6 +64,7 @@ fun ResonotePlaylistItem(
     artworkState: ResonoteArtworkState = ResonoteArtworkState.LOADED,
     artworkUrl: String? = null,
     heroKey: String? = null,
+    artworkAspectRatio: Float = 1f,
     artwork: @Composable BoxScope.() -> Unit = { DefaultPlaylistArtwork(metadata.title) },
     enabled: Boolean = true,
 ) = ResonoteMediaCardItem(
@@ -78,6 +79,7 @@ fun ResonotePlaylistItem(
     artworkState = artworkState,
     artworkUrl = artworkUrl,
     heroKey = heroKey,
+    artworkAspectRatio = artworkAspectRatio,
     artwork = artwork,
     enabled = enabled,
 )
@@ -91,6 +93,7 @@ fun ResonoteMediaCardItem(
     artworkState: ResonoteArtworkState = ResonoteArtworkState.LOADED,
     artworkUrl: String? = null,
     heroKey: String? = null,
+    artworkAspectRatio: Float = 1f,
     artwork: @Composable BoxScope.() -> Unit = { DefaultPlaylistArtwork(metadata.title) },
     enabled: Boolean = true,
 ) {
@@ -108,7 +111,7 @@ fun ResonoteMediaCardItem(
                     modifier = Modifier
                         .resonoteHero(heroKey)
                         .fillMaxWidth()
-                        .aspectRatio(1f)
+                        .aspectRatio(artworkAspectRatio)
                         .clip(ResonoteTokens.artworkShapes.hero),
                     artwork = {
                         if (artworkUrl.isNullOrBlank()) {
@@ -196,7 +199,7 @@ fun ResonoteArtistItem(
             ResonoteArtwork(
                 state = effectiveArtworkState,
                 contentDescription = stringResource(R.string.core_designsystem_artist_artwork, metadata.title),
-                modifier = Modifier.resonoteHero(heroKey).fillMaxWidth().aspectRatio(1f),
+                modifier = Modifier.resonoteHeroElement(heroKey).fillMaxWidth().aspectRatio(1f),
                 shape = CircleShape,
                 artwork = {
                     ResonoteRemoteArtwork(

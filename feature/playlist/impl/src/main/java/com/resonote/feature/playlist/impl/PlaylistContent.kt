@@ -39,6 +39,7 @@ internal fun PlaylistContentLayout(
     onRefresh: () -> Unit,
     onLoadMore: () -> Unit,
     onPlayAll: (List<OnlineSong>) -> Unit,
+    onFavoriteClick: () -> Unit,
     onSongClick: (OnlineSong) -> Unit,
     onSongMoreClick: PlaylistSongMoreAction?,
     bottomContentPadding: Dp,
@@ -70,6 +71,7 @@ internal fun PlaylistContentLayout(
                 playingMediaId = playingMediaId,
                 onLoadMore = onLoadMore,
                 onPlayAll = onPlayAll,
+                onFavoriteClick = onFavoriteClick,
                 onSongClick = onSongClick,
                 onSongMoreClick = onSongMoreClick,
                 bottomContentPadding = bottomContentPadding,
@@ -93,6 +95,7 @@ private fun PlaylistContent(
     playingMediaId: String?,
     onLoadMore: () -> Unit,
     onPlayAll: (List<OnlineSong>) -> Unit,
+    onFavoriteClick: () -> Unit,
     onSongClick: (OnlineSong) -> Unit,
     onSongMoreClick: PlaylistSongMoreAction?,
     bottomContentPadding: Dp,
@@ -113,6 +116,8 @@ private fun PlaylistContent(
                     loadedSongCount = state?.songs?.size ?: 0,
                     canPlay = state?.songs?.isNotEmpty() == true,
                     onPlayAll = { state?.songs?.let(onPlayAll) },
+                    favorite = state?.favorite ?: PlaylistFavoriteUiState.Loading,
+                    onFavoriteClick = onFavoriteClick,
                 )
             }
         }

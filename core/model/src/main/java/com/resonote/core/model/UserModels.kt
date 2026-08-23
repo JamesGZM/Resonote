@@ -11,6 +11,7 @@ data class UserProfile(
     val listenMinutes: Long,
     val isVip: Boolean,
     val vipLabel: String,
+    val musicAgeYears: Int? = null,
 )
 
 data class UserPlaylist(

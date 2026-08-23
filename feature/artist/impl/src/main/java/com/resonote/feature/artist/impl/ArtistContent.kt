@@ -51,6 +51,7 @@ import com.resonote.core.model.OnlineSong
 internal fun ArtistContent(
     state: ArtistUiState,
     profile: ArtistProfile? = state.profile,
+    heroArtworkUrl: String? = profile?.avatarUrl,
     playingMediaId: String?,
     onBack: () -> Unit,
     onFollowClick: () -> Unit,
@@ -99,6 +100,7 @@ internal fun ArtistContent(
                 item(key = "profile") {
                     ArtistHeader(
                         profile = profile,
+                        artworkUrl = heroArtworkUrl,
                         follow = state.follow,
                         onFollowClick = onFollowClick,
                     )
@@ -112,16 +114,14 @@ internal fun ArtistContent(
                         windowInsets = WindowInsets(0, 0, 0, 0),
                     )
                 }
-                if (state.selectedSection != ArtistSection.MVS) {
-                    item(key = "section-actions") {
-                        ArtistSectionActions(
-                            section = state.selectedSection,
-                            sort = state.selectedSort,
-                            content = content,
-                            onSelectSort = onSelectSort,
-                            onPlayAll = onPlayAll,
-                        )
-                    }
+                item(key = "section-actions") {
+                    ArtistSectionActions(
+                        section = state.selectedSection,
+                        sort = state.selectedSort,
+                        content = content,
+                        onSelectSort = onSelectSort,
+                        onPlayAll = onPlayAll,
+                    )
                 }
                 when (page) {
                     ArtistPageUiState.Idle,
@@ -207,21 +207,25 @@ private fun ArtistSectionActions(
             when (section) {
                 ArtistSection.SONGS -> stringResource(R.string.feature_artist_impl_artist_song_count, total)
                 ArtistSection.ALBUMS -> stringResource(R.string.feature_artist_impl_artist_album_count, total)
-                ArtistSection.MVS -> ""
+                ArtistSection.MVS -> stringResource(R.string.feature_artist_impl_artist_mv_count, total)
             }
         }.orEmpty(),
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-        trailingContent = {
-            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                ArtistSortAction(sort, onSelectSort)
-                if (section == ArtistSection.SONGS && songs.isNotEmpty()) {
-                    ResonotePlainAction(onClick = { onPlayAll(songs) }) {
-                        Text(
-                            text = stringResource(R.string.feature_artist_impl_artist_play_all),
-                            modifier = Modifier.padding(horizontal = 8.dp),
-                            color = MaterialTheme.colorScheme.primary,
-                            style = MaterialTheme.typography.labelLarge,
-                        )
+        trailingContent = if (section == ArtistSection.MVS) {
+            null
+        } else {
+            {
+                Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    ArtistSortAction(sort, onSelectSort)
+                    if (section == ArtistSection.SONGS && songs.isNotEmpty()) {
+                        ResonotePlainAction(onClick = { onPlayAll(songs) }) {
+                            Text(
+                                text = stringResource(R.string.feature_artist_impl_artist_play_all),
+                                modifier = Modifier.padding(horizontal = 8.dp),
+                                color = MaterialTheme.colorScheme.primary,
+                                style = MaterialTheme.typography.labelLarge,
+                            )
+                        }
                     }
                 }
             }

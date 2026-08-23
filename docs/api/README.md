@@ -49,9 +49,9 @@
 | `sendMobileCode`, `loginWithMobileCode`, `loginWithPassword` | 特殊协议 `POST` 到 mobile-code、mobile-login 与 gateway 登录 Origin | 登录前设备身份；成功后原子提交 Session | 登录结果模型 |
 | `createQrLoginKey`, `checkQrLogin` | Retrofit 动态 QR Login HTTPS URL，Web 签名 | 登录前/轮询后提交 Session | `NetworkQrLoginStatus` |
 | `userDetail`, `userVip` | Retrofit `POST /v3/get_my_info` 与 VIP 动态 URL | 必需 | `NetworkUserDetail`, `NetworkUserVip` |
-| `userPlaylists`, `createPlaylist`, `addPlaylistTracks`, `deletePlaylistTracks` | Retrofit `/v7/get_all_list`, `/cloudlist.service/v5/add_list`, `/cloudlist.service/v6/add_song`, `/v4/delete_songs` | 必需 | `NetworkUserPlaylist` 或写入结果 |
+| `userPlaylists`, `createPlaylist`, `favoritePlaylist`, `deletePlaylist`, `addPlaylistTracks`, `deletePlaylistTracks` | Retrofit `/v7/get_all_list`, `/cloudlist.service/v5/add_list`, `/cloudlist.service/v6/add_song`, `/v4/delete_songs`；Protocol `/v2/delete_list` | 必需 | `NetworkUserPlaylist` 或写入结果 |
 | `cloudTracks` | 特殊协议 `POST https://mcloudservice.kugou.com/v1/get_list` | 必需 | `NetworkCloudPage` |
-| `accountHistory` | 特殊协议 `POST https://listenservice.kugou.com/v2/get_list` | 必需 | `List<NetworkSong>` |
+| `accountHistory`, `uploadAccountPlayback` | 特殊协议 `POST https://gateway.kugou.com/playhistory/v1/get_songs`, `POST https://gateway.kugou.com/playhistory/v1/upload_songs` | 必需 | 游标分页的最近播放 `NetworkListeningHistoryPage`；在线播放达记录门槛后上报 `album_audio_id/MixSongID` |
 | `claimDailyVip`, `upgradeDailyVip` | Retrofit youth VIP 路径 | 必需 | `NetworkVipRewardResult` |
 
 设备注册与风控验证是共享协议能力，不作为页面 Endpoint：设备注册使用 `POST https://userservice.kugou.com/risk/v2/r_register_dev`；风控上下文与提交分别使用 gateway verify-info 和 `https://verifyservice.kugou.com/v4/verify_user_info`。

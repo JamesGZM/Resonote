@@ -247,6 +247,7 @@ private fun LazyListScope.authenticatedContent(
             onHistoryClick = onHistoryClick,
             onCloudClick = onCloudClick,
             onLocalMusicClick = onLocalMusicClick,
+            modifier = Modifier.padding(vertical = 12.dp),
         )
     }
     item(key = "playlists") {

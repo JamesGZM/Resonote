@@ -60,11 +60,16 @@ import androidx.compose.ui.unit.dp
 import com.resonote.core.designsystem.component.ResonoteHeroKeys
 import com.resonote.core.designsystem.component.ResonoteRemoteArtwork
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
-import com.resonote.core.designsystem.component.resonoteHero
+import com.resonote.core.designsystem.component.resonoteHeroElement
 import com.resonote.core.model.AudioQuality
 
 @Composable
-internal fun ArtistHeader(profile: ArtistProfile?, follow: ArtistFollowUiState, onFollowClick: () -> Unit) {
+internal fun ArtistHeader(
+    profile: ArtistProfile?,
+    artworkUrl: String? = profile?.avatarUrl,
+    follow: ArtistFollowUiState,
+    onFollowClick: () -> Unit,
+) {
     val name = profile?.name ?: stringResource(R.string.feature_artist_impl_artist_title_fallback)
     val portraitDescription = stringResource(R.string.feature_artist_impl_artist_portrait, name)
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
@@ -81,10 +86,10 @@ internal fun ArtistHeader(profile: ArtistProfile?, follow: ArtistFollowUiState, 
             .semantics { contentDescription = portraitDescription },
     ) {
         ResonoteRemoteArtwork(
-            model = profile?.avatarUrl,
+            model = artworkUrl,
             contentDescription = null,
             modifier = Modifier
-                .resonoteHero(profile?.id?.let(ResonoteHeroKeys::artist))
+                .resonoteHeroElement(profile?.id?.let(ResonoteHeroKeys::artist))
                 .testTag("artist-hero")
                 .matchParentSize(),
             fallback = {

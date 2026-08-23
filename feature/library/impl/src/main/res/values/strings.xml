@@ -8,9 +8,9 @@
     <string name="feature_library_impl_my_login">登录账号</string>
     <string name="feature_library_impl_my_anonymous_local_note">本地音乐属于此设备，不会因为登录或换号而被清除。</string>
     <string name="feature_library_impl_my_unnamed_user">未命名用户</string>
+    <string name="feature_library_impl_my_default_signature">还没有填写个性签名</string>
     <string name="feature_library_impl_my_vip">VIP</string>
-    <string name="feature_library_impl_my_daily_vip">每日 VIP</string>
-    <string name="feature_library_impl_my_daily_vip_body">由你确认后领取今日畅听权益</string>
+    <string name="feature_library_impl_my_daily_vip_check_in">签到</string>
     <string name="feature_library_impl_my_daily_vip_login">登录后领取，返回时不会自动签到</string>
     <string name="feature_library_impl_my_cloud">我的云盘</string>
     <string name="feature_library_impl_my_cloud_body">浏览并播放账号云端音乐</string>
@@ -27,6 +27,8 @@
     <string name="feature_library_impl_my_follows">关注</string>
     <string name="feature_library_impl_my_fans">粉丝</string>
     <string name="feature_library_impl_my_listen_time">听歌时长</string>
+    <string name="feature_library_impl_my_music_age">乐龄</string>
+    <string name="feature_library_impl_my_music_age_years">%1$d年</string>
     <string name="feature_library_impl_my_liked">我喜欢</string>
     <string name="feature_library_impl_my_playlists">我的歌单</string>
     <string name="feature_library_impl_my_created_filter">创建的 %1$d</string>

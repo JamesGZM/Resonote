@@ -9,6 +9,7 @@ data class NetworkUserDetail(
     val fans: Long,
     val follows: Long,
     val listenMinutes: Long,
+    val registrationEpochSeconds: Long? = null,
 )
 
 data class NetworkUserVip(val isVip: Boolean, val label: String)

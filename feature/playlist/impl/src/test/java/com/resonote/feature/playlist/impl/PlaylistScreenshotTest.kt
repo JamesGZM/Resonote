@@ -73,6 +73,17 @@ class PlaylistScreenshotTest {
     }
 
     @Test
+    fun playlist_compactFavoriteAction() {
+        setPlaylistContent(
+            themeMode = ResonoteThemeMode.LIGHT,
+            favorite = PlaylistFavoriteUiState.Available(isFavorited = false),
+            writable = false,
+        )
+        composeRule.onNodeWithText("收藏").assertIsDisplayed()
+        capture("favorite")
+    }
+
+    @Test
     fun playlist_compactLoadingSkeleton() {
         composeRule.setContent {
             DeviceConfigurationOverride(
@@ -139,7 +150,11 @@ class PlaylistScreenshotTest {
         assertEquals(loadingHeroId, contentHeroId)
     }
 
-    private fun setPlaylistContent(themeMode: ResonoteThemeMode) {
+    private fun setPlaylistContent(
+        themeMode: ResonoteThemeMode,
+        favorite: PlaylistFavoriteUiState = PlaylistFavoriteUiState.Hidden,
+        writable: Boolean = true,
+    ) {
         composeRule.setContent {
             DeviceConfigurationOverride(
                 override = DeviceConfigurationOverride.ForcedSize(DpSize(390.dp, 844.dp)),
@@ -157,7 +172,8 @@ class PlaylistScreenshotTest {
                             songs = songs,
                             page = 1,
                             hasMore = true,
-                            writableListId = "list-midnight",
+                            writableListId = "list-midnight".takeIf { writable },
+                            favorite = favorite,
                         ),
                         playingMediaId = "room",
                         onBack = {},

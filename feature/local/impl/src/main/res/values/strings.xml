@@ -14,13 +14,14 @@
     <string name="feature_local_impl_sort_title">标题</string>
     <string name="feature_local_impl_sort_artist">艺人</string>
     <string name="feature_local_impl_sort_duration">时长</string>
-    <string name="feature_local_impl_play_all">播放全部（%1$d）</string>
+    <string name="feature_local_impl_play_all">播放全部</string>
     <string name="feature_local_impl_loading">正在读取本地音乐</string>
     <string name="feature_local_impl_empty_title">把音乐带进 Resonote</string>
     <string name="feature_local_impl_empty_body">选择一个或多个音频文件。验证成功后会复制到 App 私有目录并长期保留。</string>
     <string name="feature_local_impl_choose_files">选择音频文件</string>
     <string name="feature_local_impl_choose_directory">选择文件夹</string>
     <string name="feature_local_impl_no_results">没有找到“%1$s”</string>
+    <string name="feature_local_impl_more_actions">%1$s 的更多操作</string>
     <string name="feature_local_impl_delete">删除本地副本</string>
     <string name="feature_local_impl_delete_title">删除这首本地音乐？</string>
     <string name="feature_local_impl_delete_body">“%1$s”的 App 私有副本和索引会被永久删除，原始文件不会受影响。</string>
@@ -31,7 +32,7 @@
     <string name="feature_local_impl_importing">正在导入本地音乐</string>
     <string name="feature_local_impl_import_progress">已处理 %1$d/%2$d · 成功 %3$d · 失败 %4$d</string>
     <string name="feature_local_impl_cancel_remaining">取消剩余任务</string>
-    <string name="feature_local_impl_import_complete">导入任务已完成</string>
+    <string name="feature_local_impl_import_complete">导入完成</string>
     <string name="feature_local_impl_import_result">成功 %1$d · 跳过 %2$d · 失败 %3$d</string>
     <string name="feature_local_impl_duplicate_title">发现相同音频</string>
     <string name="feature_local_impl_duplicate_body">“%1$s”与已导入文件内容完全相同。要保留一个独立副本吗？</string>

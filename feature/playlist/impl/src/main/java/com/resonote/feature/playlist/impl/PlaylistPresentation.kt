@@ -23,6 +23,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -73,6 +76,8 @@ internal fun PlaylistHeader(
     loadedSongCount: Int,
     canPlay: Boolean,
     onPlayAll: () -> Unit,
+    favorite: PlaylistFavoriteUiState = PlaylistFavoriteUiState.Loading,
+    onFavoriteClick: () -> Unit = {},
     heroPlaylistId: String? = details?.id,
 ) {
     val title = details?.title ?: stringResource(R.string.feature_playlist_impl_playlist_title_fallback)
@@ -140,6 +145,8 @@ internal fun PlaylistHeader(
                     style = MaterialTheme.typography.bodyMedium.copy(shadow = textShadow),
                 )
                 Spacer(Modifier.weight(1f))
+                PlaylistFavoriteButton(favorite = favorite, onClick = onFavoriteClick)
+                if (favorite !is PlaylistFavoriteUiState.Hidden) Spacer(Modifier.width(8.dp))
                 Surface(
                     onClick = onPlayAll,
                     enabled = canPlay,
@@ -162,6 +169,43 @@ internal fun PlaylistHeader(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun PlaylistFavoriteButton(favorite: PlaylistFavoriteUiState, onClick: () -> Unit) {
+    if (favorite is PlaylistFavoriteUiState.Hidden) return
+    val available = favorite as? PlaylistFavoriteUiState.Available
+    val isFavorited = available?.isFavorited == true
+    val isBusy = favorite is PlaylistFavoriteUiState.Loading || available?.isUpdating == true
+    val label = when {
+        favorite is PlaylistFavoriteUiState.Error -> stringResource(R.string.feature_playlist_impl_favorite_retry)
+        isFavorited -> stringResource(R.string.feature_playlist_impl_favorited)
+        else -> stringResource(R.string.feature_playlist_impl_favorite)
+    }
+    val containerColor = if (isFavorited) Color.White.copy(alpha = 0.18f) else Color.White
+    val contentColor = if (isFavorited) Color.White else Color.Black.copy(alpha = 0.82f)
+    Button(
+        onClick = onClick,
+        enabled = !isBusy,
+        modifier = Modifier.height(34.dp).testTag("playlist-favorite"),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = containerColor,
+            contentColor = contentColor,
+            disabledContainerColor = containerColor,
+            disabledContentColor = contentColor,
+        ),
+        contentPadding = PaddingValues(horizontal = 14.dp),
+    ) {
+        if (isBusy) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(16.dp),
+                color = contentColor,
+                strokeWidth = 2.dp,
+            )
+        } else {
+            Text(text = label, style = MaterialTheme.typography.labelLarge)
         }
     }
 }

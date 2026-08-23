@@ -12,6 +12,7 @@ import com.resonote.core.network.api.model.UserPlaylistsRequest
 import com.resonote.core.network.model.NetworkPlaylistTrackInput
 import com.resonote.core.network.model.NetworkUserPlaylist
 import com.resonote.core.network.protocol.DeviceRegistrationCoordinator
+import com.resonote.core.network.protocol.PlaylistMutationProtocolClient
 import java.time.Clock
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -23,6 +24,7 @@ internal class RealLibraryNetworkDataSource @Inject constructor(
     private val clock: Clock,
     private val calls: ApiCallExecutor,
     private val responses: ApiResponseVerifier,
+    private val mutations: PlaylistMutationProtocolClient,
 ) : LibraryNetworkDataSource {
     override suspend fun userPlaylists(page: Int, pageSize: Int): List<NetworkUserPlaylist> {
         require(page > 0) { "page must be positive" }
@@ -72,6 +74,30 @@ internal class RealLibraryNetworkDataSource @Inject constructor(
         }
         responses.requireWriteSuccess(response)
         return response.data?.info?.listid?.takeIf(String::isNotBlank) ?: throw missingField()
+    }
+
+    override suspend fun favoritePlaylist(name: String, globalCollectionId: String): String {
+        val normalizedName = name.trim()
+        val normalizedGlobalId = globalCollectionId.trim()
+        require(normalizedName.isNotEmpty()) { "name must not be blank" }
+        require(normalizedGlobalId.isNotEmpty()) { "globalCollectionId must not be blank" }
+        val session = registration.requireAuthenticatedSession()
+        val userId = requireNotNull(session.userId)
+        val token = requireNotNull(session.token)
+        val response = calls.execute {
+            musicApi.createPlaylist(
+                lastTime = clock.millis() / 1_000,
+                userId = userId.toLongOrNull() ?: throw missingField(),
+                token = token,
+                body = PlaylistCreateRequest(userId, token, 0, normalizedName, 1, 1, 0, userId, normalizedGlobalId, 0),
+            )
+        }
+        responses.requireWriteSuccess(response)
+        return response.data?.info?.listid?.takeIf(String::isNotBlank) ?: throw missingField()
+    }
+
+    override suspend fun deletePlaylist(listId: String) {
+        mutations.deletePlaylist(listId)
     }
 
     override suspend fun addPlaylistTracks(listId: String, tracks: List<NetworkPlaylistTrackInput>) {

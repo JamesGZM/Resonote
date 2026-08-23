@@ -508,6 +508,7 @@ class MyViewModelTest {
             listenMinutes = 9_840,
             isVip = true,
             vipLabel = "SVIP",
+            musicAgeYears = 8,
         )
 
         fun playlist(name: String, isMine: Boolean = true, isLike: Boolean = false) = UserPlaylist(

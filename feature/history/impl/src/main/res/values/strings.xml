@@ -3,16 +3,10 @@
     <string name="feature_history_impl_back">返回</string>
     <string name="feature_history_impl_online_tab">在线</string>
     <string name="feature_history_impl_device_tab">本机</string>
-    <string name="feature_history_impl_refresh">刷新在线记录</string>
     <string name="feature_history_impl_clear">清空本机记录</string>
-    <string name="feature_history_impl_archive_label">LISTENING ARCHIVE</string>
-    <string name="feature_history_impl_online_archive">账号收听足迹</string>
-    <string name="feature_history_impl_online_archive_body">由账号服务返回，不包含本地与云盘播放。</string>
-    <string name="feature_history_impl_device_archive">这台设备的播放档案</string>
-    <string name="feature_history_impl_device_archive_body">仅记录达到播放条件的本地与云盘音乐，最多保留 500 首。</string>
     <string name="feature_history_impl_track_count">%1$d 首记录</string>
     <string name="feature_history_impl_play_all">播放全部</string>
-    <string name="feature_history_impl_online_loading">正在取回账号收听足迹</string>
+    <string name="feature_history_impl_online_loading">正在取回最近播放</string>
     <string name="feature_history_impl_online_empty_title">还没有在线记录</string>
     <string name="feature_history_impl_online_empty_body">通过在线曲库播放过的音乐会显示在这里。</string>
     <string name="feature_history_impl_online_login_title">登录后查看在线足迹</string>
@@ -24,6 +18,7 @@
     <string name="feature_history_impl_error_risk">账号需要完成安全验证，当前请求已停止。</string>
     <string name="feature_history_impl_error_generic">服务响应暂时无法使用，请稍后重试。</string>
     <string name="feature_history_impl_retry">重试</string>
+    <string name="feature_history_impl_refresh_failed">最近播放刷新失败，请稍后重试。</string>
     <string name="feature_history_impl_device_loading">正在读取本机播放档案</string>
     <string name="feature_history_impl_device_empty_title">本机档案还是空的</string>
     <string name="feature_history_impl_device_empty_body">本地或云盘歌曲有效播放 10 秒后，会在这里留下记录。</string>

@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.AudioFile
+import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.FolderOpen
 import androidx.compose.material3.AlertDialog
@@ -75,43 +76,54 @@ internal fun ImportProgressCard(state: LocalImportUiState.Running, onCancel: () 
 
 @Composable
 internal fun ImportResultCard(state: LocalImportUiState.Completed, onDismiss: () -> Unit) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-        modifier = Modifier.fillMaxWidth().testTag("local-import-result"),
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("local-import-result")
+            .padding(start = 8.dp, top = 6.dp, end = 4.dp, bottom = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Rounded.AudioFile, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-            Column(modifier = Modifier.weight(1f).padding(horizontal = 14.dp)) {
-                Text(
-                    stringResource(R.string.feature_local_impl_import_complete),
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    stringResource(
-                        R.string.feature_local_impl_import_result,
-                        state.imported,
-                        state.skipped,
-                        state.failures.size,
-                    ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                if (state.failures.isNotEmpty()) {
-                    Column(modifier = Modifier.padding(top = 5.dp)) {
-                        for ((failure, count) in state.failures.groupingBy { it }.eachCount()) {
-                            Text(
-                                "${failure.label()} ×$count",
-                                color = MaterialTheme.colorScheme.error,
-                                style = MaterialTheme.typography.bodySmall,
-                            )
-                        }
+        Icon(
+            Icons.Rounded.CheckCircle,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+            tint = MaterialTheme.colorScheme.primary,
+        )
+        Column(modifier = Modifier.weight(1f).padding(start = 10.dp)) {
+            Text(
+                stringResource(R.string.feature_local_impl_import_complete),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                stringResource(
+                    R.string.feature_local_impl_import_result,
+                    state.imported,
+                    state.skipped,
+                    state.failures.size,
+                ),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodySmall,
+            )
+            if (state.failures.isNotEmpty()) {
+                Column(modifier = Modifier.padding(top = 2.dp)) {
+                    for ((failure, count) in state.failures.groupingBy { it }.eachCount()) {
+                        Text(
+                            "${failure.label()} ×$count",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
                     }
                 }
             }
-            IconButton(onClick = onDismiss) {
-                Icon(Icons.Rounded.Close, stringResource(R.string.feature_local_impl_dismiss))
-            }
+        }
+        IconButton(onClick = onDismiss, modifier = Modifier.size(40.dp)) {
+            Icon(
+                Icons.Rounded.Close,
+                stringResource(R.string.feature_local_impl_dismiss),
+                modifier = Modifier.size(18.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }

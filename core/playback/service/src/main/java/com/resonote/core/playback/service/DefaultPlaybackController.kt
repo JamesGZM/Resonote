@@ -530,7 +530,13 @@ internal class DefaultPlaybackController internal constructor(
             if (generation != loadGeneration) return@runWithController
             isResolving = false
             historyRecorder.start(
-                record = item.toDeviceHistoryRecordOrNull()?.copy(durationMillis = resolvedDuration),
+                target = item.toHistoryTargetOrNull()?.let { target ->
+                    if (target is PlaybackHistoryTarget.Device) {
+                        target.copy(record = target.record.copy(durationMillis = resolvedDuration))
+                    } else {
+                        target
+                    }
+                },
                 durationMillis = resolvedDuration,
             )
             player.setMediaItem(item.toMediaItem(source), boundedStartPositionMillis)

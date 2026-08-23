@@ -24,7 +24,14 @@ enum class HistoryAccountState {
 sealed interface OnlineHistoryUiState {
     data object NotLoaded : OnlineHistoryUiState
     data object Loading : OnlineHistoryUiState
-    data class Available(val songs: List<OnlineSong>) : OnlineHistoryUiState
+    data class Available(
+        val songs: List<OnlineSong>,
+        val nextCursor: String? = null,
+        val hasMore: Boolean = false,
+        val isRefreshing: Boolean = false,
+        val isLoadingMore: Boolean = false,
+        val loadMoreFailure: ContentFailure? = null,
+    ) : OnlineHistoryUiState
     data class Failed(val failure: ContentFailure) : OnlineHistoryUiState
 }
 

@@ -82,3 +82,47 @@ Accepted implementation adaptation:
 - Real-device TalkBack focus order, pressed feedback, Dark/AMOLED appearance, Dynamic Color, and 200% font scaling were not captured in this pass.
 
 final result: passed
+
+---
+
+# My Profile Header Design QA
+
+- Source visual truth: `/Users/gongziming/.codex/generated_images/01a02f2e-5add-7a63-828c-012da25be585/exec-39c01a84-3db2-4cb3-ac8a-505de9c37ce9.png`
+- Implementation screenshot: `/Users/gongziming/Android/projects/Resonote/feature/library/impl/src/test/screenshots/My/MyCompact_profile.png`
+- Full-view comparison: `/Users/gongziming/Android/projects/Resonote/build/design-qa/my-profile-comparison.png`
+- Focused header comparison: `/Users/gongziming/Android/projects/Resonote/build/design-qa/my-profile-header-comparison.png`
+- Viewport: 390 x 844 dp, authenticated profile, light theme
+- Source pixels: 852 x 1846
+- Implementation pixels: 510 x 1105
+- Normalization: both inputs were Lanczos-scaled to 390 x 844 and placed side by side at 1:1 comparison size
+
+## Findings
+
+No actionable P0, P1, or P2 differences remain.
+
+- Fonts and typography: the implementation uses Resonote Material typography and optical weights. The nickname uses a 20 sp `titleLarge` treatment matching the selected visual; ID, signature, statistic values, labels, and truncation behavior preserve the product type hierarchy.
+- Spacing and layout rhythm: the normalized comparison aligns the 96 dp avatar, nickname/ID/signature baselines, four full-width statistic columns, four quick-entry columns, playlist header, filters, and artwork rows. The compact check-in control opts out of Material's default 48 dp layout minimum so its invisible touch sizing no longer stretches the three-line identity block.
+- Colors and visual tokens: the implementation uses existing semantic primary, primary-container, surface-container, and on-surface colors. The avatar ring and statistic separators match the source emphasis without introducing a new palette.
+- Image quality and asset fidelity: production avatars continue to use `AsyncImage` with a circular crop. The screenshot fixture intentionally uses the initial fallback. Existing Material icons and playlist artwork are retained at native quality.
+- Copy and content: nickname, VIP status, ID, check-in, signature, follows, fans, listening time, music age, quick actions, playlist filters, and playlist metadata match the selected state. Music age is backed by the real `rtime` registration timestamp instead of fixture-only text.
+
+## Interaction Evidence
+
+- Daily VIP check-in remains clickable beside the user ID.
+- Settings remains available and is vertically aligned with the avatar region at the right edge.
+- Four profile statistics and four quick entries occupy measured full-page columns.
+- Playlist group switching and primary content alignment remain covered by Compose tests.
+
+## Comparison History
+
+1. Initial implementation: blocked by a P1 settings-button placement error and a P2 overly compact vertical rhythm.
+2. First fix: placed settings at the top right through a reliable parent row, but the review was incorrectly marked passed while the identity block and statistics were still visibly misaligned.
+3. User review reopened QA. Measurement found nickname at 52 dp versus 68 dp in the source, the compact check-in surface reserving a 48 dp minimum, outer statistic columns inset by roughly 15 dp, and downstream sections carrying accumulated vertical error.
+4. The identity block now uses explicit line spacing, the avatar and settings control use measured vertical offsets, and the statistic and quick-entry rows use full-page four-column geometry.
+5. The final pass aligns quick-entry labels, playlist artwork offset and aspect ratio, and the nickname width. The normalized full and focused comparisons show no remaining P0/P1/P2 mismatch.
+
+## Follow-up Polish
+
+No blocking follow-up. Real-device review may confirm the status-bar inset and real avatar crop with live account data.
+
+final result: passed

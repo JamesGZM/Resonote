@@ -7,7 +7,6 @@
     <string name="feature_cloud_impl_cloud_storage_available">可用 %1$s</string>
     <string name="feature_cloud_impl_cloud_storage_unknown">容量信息暂不可用</string>
     <string name="feature_cloud_impl_cloud_total_tracks">%1$d 首云盘歌曲</string>
-    <string name="feature_cloud_impl_cloud_search_label">搜索云盘</string>
     <string name="feature_cloud_impl_cloud_search_placeholder">歌曲、艺人或专辑</string>
     <string name="feature_cloud_impl_cloud_clear_search">清除搜索</string>
     <string name="feature_cloud_impl_cloud_indexing">正在载入完整云盘，以搜索全部歌曲…</string>
@@ -16,10 +15,7 @@
     <string name="feature_cloud_impl_cloud_sort_title">歌曲名</string>
     <string name="feature_cloud_impl_cloud_sort_artist">艺人</string>
     <string name="feature_cloud_impl_cloud_sort_duration">时长</string>
-    <string name="feature_cloud_impl_cloud_list_view">列表视图</string>
-    <string name="feature_cloud_impl_cloud_grid_view">网格视图</string>
-    <string name="feature_cloud_impl_cloud_play_all">播放当前结果</string>
-    <string name="feature_cloud_impl_cloud_append_all">全部加入队尾</string>
+    <string name="feature_cloud_impl_cloud_play_all">播放全部</string>
     <string name="feature_cloud_impl_cloud_append_track">将 %1$s 加入队尾</string>
     <string name="feature_cloud_impl_cloud_loading">正在打开云端档案库</string>
     <string name="feature_cloud_impl_cloud_empty_title">云盘还是空的</string>

@@ -41,6 +41,7 @@ import com.resonote.core.network.protocol.DeviceRegistrationCoordinator
 import com.resonote.core.network.protocol.DeviceRegistrationProfile
 import com.resonote.core.network.protocol.DeviceRegistrationProfileProvider
 import com.resonote.core.network.protocol.MobileAuthProtocolClient
+import com.resonote.core.network.protocol.PlaylistMutationProtocolClient
 import com.resonote.core.network.protocol.ProtocolRandom
 import com.resonote.core.network.protocol.ProtocolTransport
 import com.resonote.core.network.risk.ApiRiskChallengeDetector
@@ -1161,7 +1162,7 @@ class ApiNetworkDataSourceTest {
     fun userDetailUsesAuthenticatedMobileContractAndMapsConsumerFields() = runTest {
         gatewayServer.enqueue(
             jsonResponse(
-                """{"status":1,"data":{"userid":99,"nickname":"Fixture User","pic":"https://avatar/{size}","bg_pic":"https://background/{size}","descri":"signature","fans":"12","follows":3,"duration":456}}""",
+                """{"status":1,"data":{"userid":99,"nickname":"Fixture User","pic":"https://avatar/{size}","bg_pic":"https://background/{size}","descri":"signature","fans":"12","follows":3,"duration":456,"rtime":"1530403200"}}""",
             ),
         )
 
@@ -1171,6 +1172,7 @@ class ApiNetworkDataSourceTest {
         assertThat(detail.nickname).isEqualTo("Fixture User")
         assertThat(detail.fans).isEqualTo(12)
         assertThat(detail.listenMinutes).isEqualTo(456)
+        assertThat(detail.registrationEpochSeconds).isEqualTo(1_530_403_200)
         val request = gatewayServer.takeRequest()
         assertThat(request.requestUrl?.encodedPath).isEqualTo("/v3/get_my_info")
         assertThat(request.requestUrl?.queryParameter("plat")).isEqualTo("1")
@@ -1326,6 +1328,50 @@ class ApiNetworkDataSourceTest {
         assertThat(body["source"]?.jsonPrimitive?.content).isEqualTo("1")
         assertThat(body["list_create_userid"]?.jsonPrimitive?.content).isEqualTo("99")
         assertThat(body["list_create_gid"]?.jsonPrimitive?.content).isEmpty()
+    }
+
+    @Test
+    fun favoritePlaylistUsesCollectedTypeAndSourceGlobalId() = runTest {
+        gatewayServer.enqueue(jsonResponse("""{"status":1,"data":{"info":{"listid":654}}}"""))
+
+        val listId = dataSource().favoritePlaylist("  深夜歌单  ", "  collection-id  ")
+
+        assertThat(listId).isEqualTo("654")
+        val request = gatewayServer.takeRequest()
+        assertThat(request.requestUrl?.encodedPath).isEqualTo("/cloudlist.service/v5/add_list")
+        val body = json.parseToJsonElement(request.body.readUtf8()).jsonObject
+        assertThat(body["name"]?.jsonPrimitive?.content).isEqualTo("深夜歌单")
+        assertThat(body["type"]?.jsonPrimitive?.content).isEqualTo("1")
+        assertThat(body["list_create_userid"]?.jsonPrimitive?.content).isEqualTo("99")
+        assertThat(body["list_create_gid"]?.jsonPrimitive?.content).isEqualTo("collection-id")
+    }
+
+    @Test
+    fun deletePlaylistUsesEncryptedCloudListContract() = runTest {
+        gatewayServer.enqueue(encryptedCloudResponse("""{"status":1,"data":{}}"""))
+
+        dataSource().deletePlaylist("654")
+
+        val request = gatewayServer.takeRequest()
+        assertThat(request.requestUrl?.encodedPath).isEqualTo("/v2/delete_list")
+        assertThat(request.getHeader("x-router")).isEqualTo("cloudlist.service.kugou.com")
+        assertThat(request.requestUrl?.queryParameter("clienttime")).isEqualTo("1700000000")
+        assertThat(request.requestUrl?.queryParameter("last_time")).isEqualTo("1700000000")
+        assertThat(request.requestUrl?.queryParameter("key")).isNotEmpty()
+        assertThat(request.requestUrl?.queryParameter("p")).isNotEmpty()
+        assertThat(request.requestUrl?.queryParameter("signature")).isNotEmpty()
+        val bodyBytes = request.body.readByteArray()
+        val signedParameters = request.requestUrl!!.queryParameterNames
+            .filterNot { it == "signature" }
+            .associateWith { request.requestUrl!!.queryParameter(it).orEmpty() }
+        assertThat(request.requestUrl?.queryParameter("signature"))
+            .isEqualTo(ApiRequestSigner().sign(signedParameters, bodyBytes))
+        val body = json.parseToJsonElement(
+            crypto.decryptPlaylist(bodyBytes, "aaaaaa"),
+        ).jsonObject
+        assertThat(body["listid"]?.jsonPrimitive?.content).isEqualTo("654")
+        assertThat(body["total_ver"]?.jsonPrimitive?.content).isEqualTo("0")
+        assertThat(body["type"]?.jsonPrimitive?.content).isEqualTo("1")
     }
 
     @Test
@@ -1989,6 +2035,15 @@ class ApiNetworkDataSourceTest {
             origins,
             riskDetector,
         )
+        val playlistMutations = PlaylistMutationProtocolClient(
+            executor,
+            registration,
+            json,
+            crypto,
+            signer,
+            origins,
+            riskDetector,
+        )
         val responses = ApiResponseVerifier(riskDetector, sessions)
         val calls = ApiCallExecutor(sessions)
         val home = RealHomeNetworkDataSource(musicApi, registration, signer, clock, responses, calls)
@@ -2033,7 +2088,7 @@ class ApiNetworkDataSourceTest {
             calls,
             responses,
         )
-        val library = RealLibraryNetworkDataSource(musicApi, registration, clock, calls, responses)
+        val library = RealLibraryNetworkDataSource(musicApi, registration, clock, calls, responses, playlistMutations)
         val vip = RealVipNetworkDataSource(musicApi, registration, calls, responses)
         return TestNetworkDataSource(
             home,

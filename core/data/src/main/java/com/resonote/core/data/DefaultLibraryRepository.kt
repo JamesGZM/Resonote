@@ -33,6 +33,17 @@ internal class DefaultLibraryRepository @Inject constructor(
         network.createPlaylist(name.trim())
     }
 
+    override suspend fun favoritePlaylist(name: String, globalCollectionId: String) = loadCollection(riskChallenges) {
+        require(name.isNotBlank()) { "name must not be blank" }
+        require(globalCollectionId.isNotBlank()) { "globalCollectionId must not be blank" }
+        network.favoritePlaylist(name.trim(), globalCollectionId.trim())
+    }
+
+    override suspend fun deletePlaylist(listId: String) = loadCollection(riskChallenges) {
+        require(listId.isNotBlank()) { "listId must not be blank" }
+        network.deletePlaylist(listId.trim())
+    }
+
     override suspend fun addTracks(listId: String, tracks: List<PlaylistTrackInput>) = loadCollection(riskChallenges) {
         require(listId.isNotBlank()) { "listId must not be blank" }
         require(tracks.isNotEmpty()) { "tracks must not be empty" }

@@ -64,6 +64,53 @@ class MyScreenshotTest {
     }
 
     @Test
+    fun dailyVipCheckInIsBesideUserIdAndClickable() {
+        var dailyVipClicks = 0
+        setScreen(authenticatedState(), onDailyVipClick = { dailyVipClicks++ })
+
+        val userIdBounds = composeRule.onNodeWithTag("my-user-id", useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot
+        val checkInBounds = composeRule.onNodeWithTag("my-daily-vip", useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot
+
+        assertThat(checkInBounds.left).isAtLeast(userIdBounds.right)
+        assertThat(checkInBounds.center.y).isWithin(1f).of(userIdBounds.center.y)
+        composeRule.onNodeWithText("签到").performClick()
+        assertThat(dailyVipClicks).isEqualTo(1)
+    }
+
+    @Test
+    fun emptySignatureUsesDefaultCopyWithoutCollapsingProfileLayout() {
+        val state = authenticatedState()
+        val profile = (state.profile as MySectionState.Available<UserProfile>).value.copy(signature = "")
+        setScreen(state.copy(profile = MySectionState.Available(profile)))
+
+        composeRule.onNodeWithTag("my-signature").assertIsDisplayed()
+        composeRule.onNodeWithText("还没有填写个性签名").assertIsDisplayed()
+        capture("profile_default_signature")
+    }
+
+    @Test
+    fun profileStatsAreFourEqualColumns() {
+        setScreen(authenticatedState())
+
+        val stats = listOf("my-stat-follows", "my-stat-fans", "my-stat-listen-time", "my-stat-music-age")
+            .map { tag ->
+                composeRule.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+            }
+        val firstWidth = stats.first().width
+
+        stats.drop(1).forEach { bounds ->
+            assertThat(bounds.width).isWithin(2f).of(firstWidth)
+        }
+        val screenWidth = composeRule.onNodeWithTag("my-list").fetchSemanticsNode().boundsInRoot.width
+        val expectedFirstCenter = screenWidth / 8f
+        assertThat(stats.first().center.x).isWithin(2f).of(expectedFirstCenter)
+        composeRule.onNodeWithText("8年").assertIsDisplayed()
+        composeRule.onNodeWithText("乐龄").assertIsDisplayed()
+    }
+
+    @Test
     fun settingsEntryIsAvailableWithoutAccount() {
         var settingsClicks = 0
         setScreen(MyUiState.Anonymous, onSettingsClick = { settingsClicks++ })
@@ -105,19 +152,11 @@ class MyScreenshotTest {
 
         val leftRail = composeRule.onNodeWithTag("my-avatar", useUnmergedTree = true)
             .fetchSemanticsNode().boundsInRoot.left
-        listOf("my-daily-vip-icon", "my-playlist-title").forEach { tag ->
+        listOf("my-playlist-title").forEach { tag ->
             val left = composeRule.onNodeWithTag(tag, useUnmergedTree = true)
                 .fetchSemanticsNode().boundsInRoot.left
             assertThat(left).isWithin(1f).of(leftRail)
         }
-
-        val rightRail = composeRule.onNodeWithTag("my-local-music", useUnmergedTree = true)
-            .fetchSemanticsNode().boundsInRoot.right
-        val rightArtwork = composeRule
-            .onNodeWithTag("my-playlist-global-潮汐来信", useUnmergedTree = true)
-            .fetchSemanticsNode().boundsInRoot.right
-        val quickEntryInset = with(composeRule.density) { 4.dp.toPx() }
-        assertThat(rightArtwork - rightRail).isWithin(1f).of(quickEntryInset)
     }
 
     @Test
@@ -142,14 +181,11 @@ class MyScreenshotTest {
             assertThat(right.center.x - left.center.x).isWithin(1f).of(firstGap)
         }
 
-        val leftRail = composeRule.onNodeWithTag("my-avatar", useUnmergedTree = true)
-            .fetchSemanticsNode().boundsInRoot.left
-        val rightRail = composeRule
-            .onNodeWithTag("my-playlist-global-潮汐来信", useUnmergedTree = true)
-            .fetchSemanticsNode().boundsInRoot.right
-        val quickEntryInset = with(composeRule.density) { 4.dp.toPx() }
-        assertThat(iconBounds.first().left - leftRail).isWithin(1f).of(quickEntryInset)
-        assertThat(rightRail - iconBounds.last().right).isWithin(1f).of(quickEntryInset)
+        val screenWidth = composeRule.onNodeWithTag("my-list").fetchSemanticsNode().boundsInRoot.width
+        val horizontalInset = with(composeRule.density) { 5.dp.toPx() }
+        val cellWidth = (screenWidth - horizontalInset * 2f) / 4f
+        assertThat(iconBounds.first().center.x).isWithin(1f).of(horizontalInset + cellWidth / 2f)
+        assertThat(iconBounds.last().center.x).isWithin(1f).of(screenWidth - horizontalInset - cellWidth / 2f)
     }
 
     @Test
@@ -179,6 +215,7 @@ class MyScreenshotTest {
     private fun setScreen(
         state: MyUiState,
         onLoginClick: () -> Unit = {},
+        onDailyVipClick: () -> Unit = {},
         onSettingsClick: () -> Unit = {},
         fontScale: Float = 1f,
     ) {
@@ -192,7 +229,7 @@ class MyScreenshotTest {
                         state = state,
                         bottomContentPadding = 24.dp,
                         onLoginClick = onLoginClick,
-                        onDailyVipClick = {},
+                        onDailyVipClick = onDailyVipClick,
                         onHistoryClick = {},
                         onCloudClick = {},
                         onLocalMusicClick = {},
@@ -224,6 +261,7 @@ class MyScreenshotTest {
                 listenMinutes = 9_840,
                 isVip = true,
                 vipLabel = "SVIP",
+                musicAgeYears = 8,
             ),
         ),
         playlists = MySectionState.Available(

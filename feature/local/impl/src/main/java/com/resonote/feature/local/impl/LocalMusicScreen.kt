@@ -4,21 +4,16 @@ package com.resonote.feature.local.impl
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.FolderOpen
-import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,7 +32,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.resonote.core.designsystem.component.ResonoteButton
 import com.resonote.core.designsystem.component.ResonoteDestructiveTextButton
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
 import com.resonote.core.model.LocalMedia
@@ -112,27 +106,21 @@ internal fun LocalMusicScreen(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             ResonoteTopAppBar(
-                title = { Text(stringResource(R.string.feature_local_impl_title)) },
+                title = {
+                    LocalSearchInput(
+                        value = state.query,
+                        onValueChange = onQueryChange,
+                        placeholder = stringResource(R.string.feature_local_impl_search_hint),
+                        clearLabel = stringResource(R.string.feature_local_impl_clear_search),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
                             Icons.AutoMirrored.Rounded.ArrowBack,
                             stringResource(R.string.feature_local_impl_back),
                         )
-                    }
-                },
-                actions = {
-                    IconButton(
-                        onClick = onPickDirectory,
-                        enabled = !state.importState.isBusy(),
-                    ) {
-                        Icon(Icons.Rounded.FolderOpen, stringResource(R.string.feature_local_impl_import_directory))
-                    }
-                    IconButton(
-                        onClick = onPickFiles,
-                        enabled = !state.importState.isBusy(),
-                    ) {
-                        Icon(Icons.Rounded.Add, stringResource(R.string.feature_local_impl_import))
                     }
                 },
             )
@@ -148,7 +136,16 @@ internal fun LocalMusicScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            item(key = "summary") { LocalLibraryCard(state.media) }
+            if (!state.isLoading && state.media.isNotEmpty()) {
+                item(key = "summary") {
+                    LocalLibrarySummary(
+                        media = state.media,
+                        importEnabled = !state.importState.isBusy(),
+                        onPickFiles = onPickFiles,
+                        onPickDirectory = onPickDirectory,
+                    )
+                }
+            }
 
             when (val importState = state.importState) {
                 LocalImportUiState.Idle -> Unit
@@ -173,20 +170,7 @@ internal fun LocalMusicScreen(
 
             if (!state.isLoading && state.media.isNotEmpty()) {
                 item(key = "tools") {
-                    LocalMusicTools(state, onQueryChange, onSortChange)
-                }
-                if (state.visibleMedia.isNotEmpty()) {
-                    item(key = "play-all") {
-                        ResonoteButton(
-                            label = stringResource(
-                                R.string.feature_local_impl_play_all,
-                                state.visibleMedia.size,
-                            ),
-                            onClick = onPlayAll,
-                            leadingIcon = { Icon(Icons.Rounded.PlayArrow, contentDescription = null) },
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
+                    LocalMusicTools(state, onSortChange, onPlayAll)
                 }
             }
 

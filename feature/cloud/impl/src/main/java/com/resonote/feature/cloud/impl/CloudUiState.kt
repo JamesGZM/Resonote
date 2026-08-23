@@ -19,7 +19,6 @@ data class CloudUiState(
     val loadMoreFailure: ContentFailure? = null,
     val query: String = "",
     val sort: CloudSort = CloudSort.UploadOrder,
-    val viewMode: CloudViewMode = CloudViewMode.List,
     val playback: CloudPlaybackUiState = CloudPlaybackUiState.Idle,
 ) {
     val visibleTracks: List<CloudTrack>
@@ -56,8 +55,6 @@ data class CloudUiState(
 }
 
 enum class CloudSort { UploadOrder, Title, Artist, Duration }
-
-enum class CloudViewMode { List, Grid }
 
 sealed interface CloudPlaybackUiState {
     data object Idle : CloudPlaybackUiState

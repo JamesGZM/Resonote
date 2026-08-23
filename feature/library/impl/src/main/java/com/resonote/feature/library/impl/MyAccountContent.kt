@@ -1,5 +1,7 @@
 package com.resonote.feature.library.impl
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,10 +20,12 @@ import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -34,6 +38,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.resonote.core.designsystem.component.ResonoteIconButton
 import com.resonote.core.designsystem.tokens.ResonoteTokens
@@ -42,35 +47,47 @@ import com.resonote.core.model.UserProfile
 @Composable
 internal fun AccountCard(profile: UserProfile, onDailyVipClick: () -> Unit, onSettingsClick: () -> Unit) {
     Column(
-        modifier = Modifier.fillMaxWidth().testTag("my-profile"),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+        modifier = Modifier.fillMaxWidth().padding(top = 34.dp).testTag("my-profile"),
+        verticalArrangement = Arrangement.spacedBy(37.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Avatar(profile)
-            Column(modifier = Modifier.weight(1f).padding(start = 16.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.fillMaxWidth().height(96.dp).padding(end = 32.dp),
+                verticalAlignment = Alignment.Top,
+            ) {
+                Avatar(profile, Modifier.offset(y = 6.dp))
+                Column(modifier = Modifier.weight(1f).padding(start = 14.dp, top = 16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = profile.nickname.ifBlank {
+                                stringResource(R.string.feature_library_impl_my_unnamed_user)
+                            },
+                            modifier = Modifier.weight(1f, fill = false),
+                            style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp),
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        if (profile.isVip) VipLabel(profile.vipLabel)
+                    }
+                    Row(
+                        modifier = Modifier.padding(top = 7.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.feature_library_impl_my_user_id, profile.userId),
+                            modifier = Modifier.weight(1f, fill = false).testTag("my-user-id"),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        DailyVipAction(onDailyVipClick)
+                    }
                     Text(
-                        text = profile.nickname.ifBlank {
-                            stringResource(R.string.feature_library_impl_my_unnamed_user)
-                        },
-                        modifier = Modifier.weight(1f, fill = false),
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    if (profile.isVip) VipLabel(profile.vipLabel)
-                }
-                Text(
-                    stringResource(R.string.feature_library_impl_my_user_id, profile.userId),
-                    Modifier.padding(top = 3.dp),
-                    MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall,
-                )
-                profile.signature.takeIf(String::isNotBlank)?.let {
-                    Text(
-                        text = it,
-                        modifier = Modifier.padding(top = 6.dp),
+                        text = profile.signature.takeIf(String::isNotBlank)
+                            ?: stringResource(R.string.feature_library_impl_my_default_signature),
+                        modifier = Modifier.padding(top = 7.dp).testTag("my-signature"),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodyMedium,
                         maxLines = 1,
@@ -78,18 +95,44 @@ internal fun AccountCard(profile: UserProfile, onDailyVipClick: () -> Unit, onSe
                     )
                 }
             }
-            SettingsButton(onSettingsClick)
+            Box(
+                modifier = Modifier.fillMaxWidth().height(96.dp),
+                contentAlignment = Alignment.CenterEnd,
+            ) {
+                SettingsButton(onSettingsClick, Modifier.offset(y = 9.dp))
+            }
         }
-        DailyVipAction(onDailyVipClick)
         Row(
-            Modifier.fillMaxWidth().padding(vertical = 6.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
+            Modifier
+                .bleedHorizontally(20.dp)
+                .fillMaxWidth()
+                .padding(vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            ProfileStat(stringResource(R.string.feature_library_impl_my_follows), profile.follows.compactNumber())
-            ProfileStat(stringResource(R.string.feature_library_impl_my_fans), profile.fans.compactNumber())
+            ProfileStat(
+                stringResource(R.string.feature_library_impl_my_follows),
+                profile.follows.compactNumber(),
+                Modifier.weight(1f).testTag("my-stat-follows"),
+            )
+            ProfileStatDivider()
+            ProfileStat(
+                stringResource(R.string.feature_library_impl_my_fans),
+                profile.fans.compactNumber(),
+                Modifier.weight(1f).testTag("my-stat-fans"),
+            )
+            ProfileStatDivider()
             ProfileStat(
                 stringResource(R.string.feature_library_impl_my_listen_time),
                 profile.listenMinutes.listenTime(),
+                Modifier.weight(1f).testTag("my-stat-listen-time"),
+            )
+            ProfileStatDivider()
+            ProfileStat(
+                stringResource(R.string.feature_library_impl_my_music_age),
+                profile.musicAgeYears?.let {
+                    stringResource(R.string.feature_library_impl_my_music_age_years, it)
+                } ?: "—",
+                Modifier.weight(1f).testTag("my-stat-music-age"),
             )
         }
     }
@@ -156,49 +199,30 @@ internal fun AnonymousAccountCard(onLoginClick: () -> Unit, onSettingsClick: () 
 
 @Composable
 private fun DailyVipAction(onClick: () -> Unit) {
-    Surface(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth().height(48.dp).testTag("my-daily-vip"),
-        shape = MaterialTheme.shapes.large,
-        color = Color.Transparent,
-    ) {
-        Row(
-            Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
+    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
+        Surface(
+            onClick = onClick,
+            modifier = Modifier.padding(start = 8.dp).testTag("my-daily-vip"),
+            shape = ResonoteTokens.shapes.full,
+            color = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
         ) {
-            Surface(
-                modifier = Modifier.size(38.dp).testTag("my-daily-vip-icon"),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.primary,
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Rounded.CardGiftcard, null, Modifier.size(19.dp))
-                }
-            }
-            Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
-                Text(
-                    stringResource(R.string.feature_library_impl_my_daily_vip),
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    stringResource(R.string.feature_library_impl_my_daily_vip_body),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.labelSmall,
-                )
-            }
-            Chevron(Modifier.offset(x = 4.dp).testTag("my-daily-vip-trailing"))
+            Text(
+                text = stringResource(R.string.feature_library_impl_my_daily_vip_check_in),
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
         }
     }
 }
 
 @Composable
-private fun SettingsButton(onClick: () -> Unit) {
+private fun SettingsButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     ResonoteIconButton(
         label = stringResource(R.string.feature_library_impl_settings),
         onClick = onClick,
-        modifier = Modifier.offset(x = 12.dp).testTag("my-settings"),
+        modifier = modifier.offset(x = 12.dp).testTag("my-settings"),
     ) {
         Icon(
             Icons.Rounded.Settings,
@@ -226,34 +250,37 @@ private fun VipLabel(label: String) {
 }
 
 @Composable
-private fun Avatar(profile: UserProfile) {
-    Surface(
-        modifier = Modifier.size(64.dp).testTag("my-avatar"),
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.primaryContainer,
-        contentColor = MaterialTheme.colorScheme.primary,
+private fun Avatar(profile: UserProfile, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .size(96.dp)
+            .testTag("my-avatar")
+            .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.18f), CircleShape)
+            .padding(3.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.primaryContainer),
+        contentAlignment = Alignment.Center,
     ) {
-        Box(Modifier.clip(CircleShape), contentAlignment = Alignment.Center) {
-            Text(
-                profile.nickname.take(1).ifBlank { "·" },
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
+        Text(
+            profile.nickname.take(1).ifBlank { "·" },
+            color = MaterialTheme.colorScheme.primary,
+            style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.Bold,
+        )
+        profile.avatarUrl?.let {
+            AsyncImage(
+                it,
+                stringResource(R.string.feature_library_impl_my_avatar, profile.nickname),
+                Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
             )
-            profile.avatarUrl?.let {
-                AsyncImage(
-                    it,
-                    stringResource(R.string.feature_library_impl_my_avatar, profile.nickname),
-                    Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop,
-                )
-            }
         }
     }
 }
 
 @Composable
-private fun ProfileStat(label: String, value: String) {
-    Column(Modifier.width(88.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+private fun ProfileStat(label: String, value: String, modifier: Modifier = Modifier) {
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Text(value, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
         Text(
             label,
@@ -262,6 +289,16 @@ private fun ProfileStat(label: String, value: String) {
             style = MaterialTheme.typography.labelSmall,
         )
     }
+}
+
+@Composable
+private fun ProfileStatDivider() {
+    Box(
+        Modifier
+            .width(1.dp)
+            .height(32.dp)
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)),
+    )
 }
 
 @Composable

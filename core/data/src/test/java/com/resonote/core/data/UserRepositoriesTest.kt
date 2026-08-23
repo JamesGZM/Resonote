@@ -33,6 +33,8 @@ import com.resonote.core.network.model.NetworkVipRewardResult
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import java.io.IOException
+import java.time.Year
+import java.time.ZoneOffset
 
 class UserRepositoriesTest {
     @Test
@@ -47,8 +49,16 @@ class UserRepositoriesTest {
         assertThat(result.value.backgroundUrl).isEqualTo("https://background/720")
         assertThat(result.value.isVip).isTrue()
         assertThat(result.value.vipLabel).isEqualTo("SVIP")
+        assertThat(result.value.musicAgeYears).isEqualTo(Year.now().value - 2018)
         assertThat(network.detailCalls).isEqualTo(1)
         assertThat(network.vipCalls).isEqualTo(1)
+    }
+
+    @Test
+    fun musicAgeUsesRegistrationYearWithoutInventingMissingValues() {
+        assertThat(1_530_403_200L.musicAgeYears(currentYear = 2026, zoneId = ZoneOffset.UTC)).isEqualTo(8)
+        assertThat(0L.musicAgeYears(currentYear = 2026, zoneId = ZoneOffset.UTC)).isNull()
+        assertThat(4_102_444_800L.musicAgeYears(currentYear = 2026, zoneId = ZoneOffset.UTC)).isEqualTo(0)
     }
 
     @Test
@@ -148,6 +158,8 @@ class UserRepositoriesTest {
         val repository = DefaultLibraryRepository(network, RiskChallengeRegistry())
 
         val created = repository.createPlaylist("  Road Trip  ") as CollectionLoadResult.Available
+        val favorited = repository.favoritePlaylist("  深夜歌单  ", "  collection-id  ")
+        val deleted = repository.deletePlaylist("  77  ")
         val added =
             repository.addTracks(
                 "list-id",
@@ -156,9 +168,13 @@ class UserRepositoriesTest {
         val removed = repository.removeTracks("list-id", listOf("91", "92"))
 
         assertThat(created.value).isEqualTo("created-list")
+        assertThat(favorited).isEqualTo(CollectionLoadResult.Available("favorited-list"))
+        assertThat(deleted).isEqualTo(CollectionLoadResult.Available(Unit))
         assertThat(added).isEqualTo(CollectionLoadResult.Available(Unit))
         assertThat(removed).isEqualTo(CollectionLoadResult.Available(Unit))
         assertThat(network.createdName).isEqualTo("Road Trip")
+        assertThat(network.favoriteRequest).isEqualTo("深夜歌单" to "collection-id")
+        assertThat(network.deletedListId).isEqualTo("77")
         assertThat(network.addedTracks.single().albumAudioId).isEqualTo("34")
         assertThat(network.removedFileIds).containsExactly("91", "92").inOrder()
     }
@@ -248,6 +264,8 @@ class UserRepositoriesTest {
         var vipCalls = 0
         var playlistRequest: Pair<Int, Int>? = null
         var createdName: String? = null
+        var favoriteRequest: Pair<String, String>? = null
+        var deletedListId: String? = null
         var addedTracks: List<NetworkPlaylistTrackInput> = emptyList()
         var removedFileIds: List<String> = emptyList()
         var cloudRequest: Pair<Int, Int>? = null
@@ -265,6 +283,7 @@ class UserRepositoriesTest {
                 1,
                 2,
                 3,
+                1_530_403_200,
             )
         }
 
@@ -283,6 +302,17 @@ class UserRepositoriesTest {
             mutationFailure?.let { throw it }
             createdName = name
             return "created-list"
+        }
+
+        override suspend fun favoritePlaylist(name: String, globalCollectionId: String): String {
+            mutationFailure?.let { throw it }
+            favoriteRequest = name to globalCollectionId
+            return "favorited-list"
+        }
+
+        override suspend fun deletePlaylist(listId: String) {
+            mutationFailure?.let { throw it }
+            deletedListId = listId
         }
 
         override suspend fun addPlaylistTracks(listId: String, tracks: List<NetworkPlaylistTrackInput>) {

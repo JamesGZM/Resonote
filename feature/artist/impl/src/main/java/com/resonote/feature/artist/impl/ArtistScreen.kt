@@ -99,6 +99,7 @@ fun ArtistScreen(
         ArtistContent(
             state = state,
             profile = state.profile ?: initialProfile,
+            heroArtworkUrl = initialProfile?.avatarUrl ?: state.profile?.avatarUrl,
             playingMediaId = playingMediaId,
             onBack = onBack,
             onFollowClick = onFollowClick,

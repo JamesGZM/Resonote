@@ -15,20 +15,35 @@ class PlaybackHistoryEligibilityTrackerTest {
     @Test
     fun continuousPlaybackQualifiesAtTenSecondsOnlyOnce() {
         val tracker = PlaybackHistoryEligibilityTracker()
-        tracker.start(localRecord(), durationMillis = 60_000, elapsedRealtimeMillis = 0)
+        tracker.start(deviceTarget(), durationMillis = 60_000, elapsedRealtimeMillis = 0)
 
         assertThat(tracker.sample(isPlaying = true, endedNaturally = false, elapsedRealtimeMillis = 0)).isNull()
         val qualification = tracker.sample(isPlaying = true, endedNaturally = false, elapsedRealtimeMillis = 10_000)
 
-        assertThat(qualification?.record).isEqualTo(localRecord())
+        assertThat(qualification?.target).isEqualTo(deviceTarget())
         tracker.onPersistenceResult(requireNotNull(qualification), success = true)
         assertThat(tracker.sample(isPlaying = true, endedNaturally = false, elapsedRealtimeMillis = 20_000)).isNull()
     }
 
     @Test
+    fun onlinePlaybackQualifiesAsSoonAsPlaybackStarts() {
+        val tracker = PlaybackHistoryEligibilityTracker()
+        val target = PlaybackHistoryTarget.Account("32155307")
+        tracker.start(target, durationMillis = 60_000, elapsedRealtimeMillis = 0)
+
+        val qualification = tracker.sample(
+            isPlaying = true,
+            endedNaturally = false,
+            elapsedRealtimeMillis = 0,
+        )
+
+        assertThat(qualification?.target).isEqualTo(target)
+    }
+
+    @Test
     fun pausedAndBufferedTimeDoesNotCountTowardThreshold() {
         val tracker = PlaybackHistoryEligibilityTracker()
-        tracker.start(localRecord(), durationMillis = 60_000, elapsedRealtimeMillis = 0)
+        tracker.start(deviceTarget(), durationMillis = 60_000, elapsedRealtimeMillis = 0)
 
         tracker.sample(isPlaying = true, endedNaturally = false, elapsedRealtimeMillis = 0)
         tracker.sample(isPlaying = false, endedNaturally = false, elapsedRealtimeMillis = 6_000)
@@ -41,7 +56,7 @@ class PlaybackHistoryEligibilityTrackerTest {
     @Test
     fun seekToEndDoesNotQualifyShortTrack() {
         val tracker = PlaybackHistoryEligibilityTracker()
-        tracker.start(localRecord(), durationMillis = 8_000, elapsedRealtimeMillis = 0)
+        tracker.start(deviceTarget(), durationMillis = 8_000, elapsedRealtimeMillis = 0)
         tracker.sample(isPlaying = true, endedNaturally = false, elapsedRealtimeMillis = 0)
 
         val qualification =
@@ -53,19 +68,19 @@ class PlaybackHistoryEligibilityTrackerTest {
     @Test
     fun naturallyCompletedShortTrackQualifiesWithCallbackTolerance() {
         val tracker = PlaybackHistoryEligibilityTracker()
-        tracker.start(localRecord(), durationMillis = 8_000, elapsedRealtimeMillis = 0)
+        tracker.start(deviceTarget(), durationMillis = 8_000, elapsedRealtimeMillis = 0)
         tracker.sample(isPlaying = true, endedNaturally = false, elapsedRealtimeMillis = 0)
 
         val qualification =
             tracker.sample(isPlaying = false, endedNaturally = true, elapsedRealtimeMillis = 7_500)
 
-        assertThat(qualification?.record).isEqualTo(localRecord())
+        assertThat(qualification?.target).isEqualTo(deviceTarget())
     }
 
     @Test
     fun failedPersistenceCanRetryButLateResultCannotAffectNewSession() {
         val tracker = PlaybackHistoryEligibilityTracker()
-        tracker.start(localRecord("first"), durationMillis = 60_000, elapsedRealtimeMillis = 0)
+        tracker.start(deviceTarget("first"), durationMillis = 60_000, elapsedRealtimeMillis = 0)
         tracker.sample(isPlaying = true, endedNaturally = false, elapsedRealtimeMillis = 0)
         val first = requireNotNull(
             tracker.sample(isPlaying = true, endedNaturally = false, elapsedRealtimeMillis = 10_000),
@@ -73,26 +88,26 @@ class PlaybackHistoryEligibilityTrackerTest {
         tracker.onPersistenceResult(first, success = false)
         assertThat(tracker.sample(isPlaying = true, endedNaturally = false, elapsedRealtimeMillis = 10_001)).isNotNull()
 
-        tracker.start(localRecord("second"), durationMillis = 60_000, elapsedRealtimeMillis = 20_000)
+        tracker.start(deviceTarget("second"), durationMillis = 60_000, elapsedRealtimeMillis = 20_000)
         tracker.onPersistenceResult(first, success = true)
         tracker.sample(isPlaying = true, endedNaturally = false, elapsedRealtimeMillis = 20_000)
 
-        assertThat(tracker.sample(isPlaying = true, endedNaturally = false, elapsedRealtimeMillis = 30_000)?.record)
-            .isEqualTo(localRecord("second"))
+        assertThat(tracker.sample(isPlaying = true, endedNaturally = false, elapsedRealtimeMillis = 30_000)?.target)
+            .isEqualTo(deviceTarget("second"))
     }
 
     @Test
-    fun onlyLocalAndCloudPlaybackProduceDeviceHistoryRecords() {
-        val local = PlaybackItem(localMedia()).toDeviceHistoryRecordOrNull()
-        val cloud = PlaybackItem(cloudTrack()).toDeviceHistoryRecordOrNull()
-        val online = PlaybackItem(onlineSong()).toDeviceHistoryRecordOrNull()
+    fun playbackMapsLocalAndCloudToDeviceHistoryAndOnlineToAccountHistory() {
+        val local = PlaybackItem(localMedia()).toHistoryTargetOrNull() as PlaybackHistoryTarget.Device
+        val cloud = PlaybackItem(cloudTrack()).toHistoryTargetOrNull() as PlaybackHistoryTarget.Device
+        val online = PlaybackItem(onlineSong()).toHistoryTargetOrNull()
 
-        assertThat(local?.source).isEqualTo(DeviceHistorySource.Local)
-        assertThat(local?.mediaId).isEqualTo("local-id")
-        assertThat(cloud?.source).isEqualTo(DeviceHistorySource.Cloud)
-        assertThat(cloud?.mediaId).isEqualTo("cloud-hash")
-        assertThat(cloud?.albumAudioId).isEqualTo("cloud-audio")
-        assertThat(online).isNull()
+        assertThat(local.record.source).isEqualTo(DeviceHistorySource.Local)
+        assertThat(local.record.mediaId).isEqualTo("local-id")
+        assertThat(cloud.record.source).isEqualTo(DeviceHistorySource.Cloud)
+        assertThat(cloud.record.mediaId).isEqualTo("cloud-hash")
+        assertThat(cloud.record.albumAudioId).isEqualTo("cloud-audio")
+        assertThat(online).isEqualTo(PlaybackHistoryTarget.Account("32155307"))
     }
 
     private companion object {
@@ -106,6 +121,8 @@ class PlaybackHistoryEligibilityTrackerTest {
             durationMillis = 60_000,
             albumAudioId = null,
         )
+
+        fun deviceTarget(id: String = "local-id") = PlaybackHistoryTarget.Device(localRecord(id))
 
         fun localMedia() = LocalMedia(
             id = LocalMediaId("local-id"),
@@ -140,7 +157,7 @@ class PlaybackHistoryEligibilityTrackerTest {
             artist = "Artist",
             coverUrl = null,
             albumId = null,
-            albumAudioId = null,
+            albumAudioId = "32155307",
             durationMillis = 60_000,
             quality = AudioQuality.Standard,
             vip = false,

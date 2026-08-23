@@ -2,9 +2,11 @@ package com.resonote.app
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.Dp
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.navigation3.ui.defaultPopTransitionSpec
 import com.resonote.core.model.AuthState
@@ -60,6 +62,10 @@ internal fun ResonoteNavDisplay(
 ) {
     NavDisplay(
         backStack = backStack,
+        entryDecorators = listOf(
+            rememberSaveableStateHolderNavEntryDecorator(),
+            rememberViewModelStoreNavEntryDecorator(),
+        ),
         predictivePopTransitionSpec = { _ ->
             defaultPopTransitionSpec<NavKey>().invoke(this)
         },
@@ -218,6 +224,11 @@ internal fun ResonoteNavDisplay(
                     bottomContentPadding = standaloneBottomContentPadding,
                     currentAccountId = (authState as? AuthState.Authenticated)?.userId,
                     onBack = { backStack.removeLastOrNull() },
+                    onLoginRequest = {
+                        if (backStack.lastOrNull() !is LoginGateNavKey) {
+                            backStack.add(LoginGateNavKey(sessionExpired = false))
+                        }
+                    },
                     onPlayAll = { playbackViewModel.playAll(it) },
                     onSongClick = playbackViewModel::play,
                     onSongMoreClick = onOpenSongActions,

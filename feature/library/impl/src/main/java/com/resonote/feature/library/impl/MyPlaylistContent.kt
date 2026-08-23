@@ -105,7 +105,7 @@ internal fun PlaylistSection(
             )
         },
         content = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column {
                 PlaylistHeader(
                     createdCount = created.size,
                     collectedCount = collected.size,
@@ -114,7 +114,8 @@ internal fun PlaylistSection(
                     onCreatePlaylistClick = onCreatePlaylistClick,
                     createEnabled = createEnabled,
                 )
-                visible.chunked(2).forEach { row ->
+                visible.chunked(2).forEachIndexed { index, row ->
+                    Spacer(Modifier.height(if (index == 0) 16.dp else 12.dp))
                     PlaylistRow(row, onPlaylistClick)
                 }
             }
@@ -189,6 +190,7 @@ private fun PlaylistRow(row: List<UserPlaylist>, onPlaylistClick: (UserPlaylist)
                 modifier = Modifier.weight(1f).testTag("my-playlist-${playlist.globalId}"),
                 artworkState = ResonoteArtworkState.LOADED,
                 artworkUrl = playlist.coverUrl,
+                artworkAspectRatio = 0.94f,
                 heroKey = ResonoteHeroKeys.playlist(playlist.globalId),
             )
         }

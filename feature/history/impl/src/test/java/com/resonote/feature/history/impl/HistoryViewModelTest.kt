@@ -9,6 +9,7 @@ import com.resonote.core.model.CollectionLoadResult
 import com.resonote.core.model.DeviceHistoryItem
 import com.resonote.core.model.DeviceHistoryRecord
 import com.resonote.core.model.DeviceHistorySource
+import com.resonote.core.model.ListeningHistoryPage
 import com.resonote.core.model.MobileCodeLoginResult
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.PasswordLoginResult
@@ -76,7 +77,7 @@ class HistoryViewModelTest {
     @Test
     fun authenticatedOnlineTabLoadsRealRepositoryResult() = runTest(dispatcher) {
         val repository = FakeHistoryRepository(
-            accountResults = ArrayDeque(listOf(CollectionLoadResult.Available(listOf(song("first"))))),
+            accountResults = ArrayDeque(listOf(availablePage("first"))),
         )
         val viewModel = HistoryViewModel(repository, FakeAuthRepository(AuthState.Authenticated("user-a")))
         viewModel.initialize(HistoryTab.Online)
@@ -94,8 +95,8 @@ class HistoryViewModelTest {
         val repository = FakeHistoryRepository(
             accountResults = ArrayDeque(
                 listOf(
-                    CollectionLoadResult.Available(listOf(song("first-account"))),
-                    CollectionLoadResult.Available(listOf(song("second-account"))),
+                    availablePage("first-account"),
+                    availablePage("second-account"),
                 ),
             ),
         )
@@ -109,6 +110,29 @@ class HistoryViewModelTest {
         val online = viewModel.uiState.value.online as OnlineHistoryUiState.Available
         assertThat(online.songs.map(OnlineSong::hash)).containsExactly("second-account")
         assertThat(repository.accountLoads).isEqualTo(2)
+    }
+
+    @Test
+    fun onlineHistoryLoadsTheNextCursorAndKeepsExistingSongs() = runTest(dispatcher) {
+        val repository = FakeHistoryRepository(
+            accountResults = ArrayDeque(
+                listOf(
+                    availablePage("first", nextCursor = "next", hasMore = true),
+                    availablePage("second"),
+                ),
+            ),
+        )
+        val viewModel = HistoryViewModel(repository, FakeAuthRepository(AuthState.Authenticated("user-a")))
+        viewModel.initialize(HistoryTab.Online)
+        advanceUntilIdle()
+
+        viewModel.loadMoreOnline()
+        advanceUntilIdle()
+
+        val online = viewModel.uiState.value.online as OnlineHistoryUiState.Available
+        assertThat(online.songs.map(OnlineSong::hash)).containsExactly("first", "second").inOrder()
+        assertThat(repository.requestedCursors).containsExactly(null, "next").inOrder()
+        assertThat(online.hasMore).isFalse()
     }
 
     @Test
@@ -145,19 +169,23 @@ class HistoryViewModelTest {
 
     private class FakeHistoryRepository(
         val device: MutableStateFlow<List<DeviceHistoryItem>> = MutableStateFlow(emptyList()),
-        private val accountResults: ArrayDeque<CollectionLoadResult<List<OnlineSong>>> = ArrayDeque(),
+        private val accountResults: ArrayDeque<CollectionLoadResult<ListeningHistoryPage>> = ArrayDeque(),
         private val deleteResult: Boolean = true,
     ) : ListeningHistoryRepository {
         var accountLoads = 0
+        val requestedCursors = mutableListOf<String?>()
 
-        override suspend fun loadAccountHistory(): CollectionLoadResult<List<OnlineSong>> {
+        override suspend fun loadAccountHistory(cursor: String?): CollectionLoadResult<ListeningHistoryPage> {
             accountLoads++
+            requestedCursors += cursor
             return accountResults.removeFirst()
         }
 
         override fun observeDeviceHistory(): Flow<List<DeviceHistoryItem>> = device
 
         override suspend fun recordDevicePlayback(record: DeviceHistoryRecord): Boolean = true
+
+        override suspend fun recordAccountPlayback(albumAudioId: String): Boolean = true
 
         override suspend fun deleteDeviceHistory(record: DeviceHistoryRecord): Boolean = deleteResult
 
@@ -181,6 +209,14 @@ class HistoryViewModelTest {
     }
 
     private companion object {
+        fun availablePage(
+            hash: String,
+            nextCursor: String? = null,
+            hasMore: Boolean = false,
+        ): CollectionLoadResult<ListeningHistoryPage> = CollectionLoadResult.Available(
+            ListeningHistoryPage(listOf(song(hash)), nextCursor, hasMore),
+        )
+
         fun song(hash: String) = OnlineSong(
             hash = hash,
             title = hash,

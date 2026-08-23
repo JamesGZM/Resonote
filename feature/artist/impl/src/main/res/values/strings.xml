@@ -10,6 +10,7 @@
     <string name="feature_artist_impl_artist_latest">最新</string>
     <string name="feature_artist_impl_artist_song_count">共 %1$d 首歌曲</string>
     <string name="feature_artist_impl_artist_album_count">共 %1$d 张专辑</string>
+    <string name="feature_artist_impl_artist_mv_count">共 %1$d 个 MV</string>
     <string name="feature_artist_impl_artist_play_all">播放全部</string>
     <string name="feature_artist_impl_artist_sort">切换排序</string>
     <string name="feature_artist_impl_artist_follow">关注</string>
