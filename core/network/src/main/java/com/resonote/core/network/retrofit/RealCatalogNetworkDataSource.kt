@@ -4,8 +4,11 @@ import com.resonote.core.network.ApiProtocolException
 import com.resonote.core.network.CatalogNetworkDataSource
 import com.resonote.core.network.api.MusicApi
 import com.resonote.core.network.api.model.AlbumSongsRequest
+import com.resonote.core.network.api.model.ArtistAlbumsRequest
 import com.resonote.core.network.api.model.ArtistAudiosRequest
 import com.resonote.core.network.api.model.ArtistDetailRequest
+import com.resonote.core.network.api.model.ArtistFollowListRequest
+import com.resonote.core.network.api.model.ArtistFollowMutationRequest
 import com.resonote.core.network.api.model.BannerRequest
 import com.resonote.core.network.api.model.PlaylistRecommendationsResponse
 import com.resonote.core.network.api.model.PlaylistTagsRequest
@@ -15,20 +18,28 @@ import com.resonote.core.network.api.model.TopAlbumsRequest
 import com.resonote.core.network.model.NetworkAlbum
 import com.resonote.core.network.model.NetworkAlbumRegion
 import com.resonote.core.network.model.NetworkAlbumSongPage
+import com.resonote.core.network.model.NetworkArtistAlbum
+import com.resonote.core.network.model.NetworkArtistAlbumPage
 import com.resonote.core.network.model.NetworkArtistInfo
 import com.resonote.core.network.model.NetworkArtistSongPage
+import com.resonote.core.network.model.NetworkArtistVideo
+import com.resonote.core.network.model.NetworkArtistVideoPage
 import com.resonote.core.network.model.NetworkBanner
 import com.resonote.core.network.model.NetworkPlaylistCategory
 import com.resonote.core.network.model.NetworkPlaylistSummary
 import com.resonote.core.network.model.NetworkSong
 import com.resonote.core.network.protocol.ApiEndpointOrigins
 import com.resonote.core.network.protocol.ApiProtocolConfig
+import com.resonote.core.network.protocol.ApiProtocolCrypto
 import com.resonote.core.network.protocol.ApiRequestSigner
 import com.resonote.core.network.protocol.DeviceRegistrationCoordinator
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.put
 import java.time.Clock
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -39,6 +50,7 @@ internal class RealCatalogNetworkDataSource @Inject constructor(
     private val registration: DeviceRegistrationCoordinator,
     private val signer: ApiRequestSigner,
     private val clock: Clock,
+    private val crypto: ApiProtocolCrypto,
     private val responses: ApiResponseVerifier,
     private val calls: ApiCallExecutor,
     private val origins: ApiEndpointOrigins,
@@ -240,6 +252,183 @@ internal class RealCatalogNetworkDataSource @Inject constructor(
         val songs = raw.mapNotNull(::decodeFlatContentSong)
         requireConsumableItems(raw, songs)
         return NetworkArtistSongPage(songs, raw.size >= pageSize)
+    }
+
+    override suspend fun artistAlbums(
+        artistId: String,
+        page: Int,
+        pageSize: Int,
+        newestFirst: Boolean,
+    ): NetworkArtistAlbumPage {
+        require(artistId.isNotBlank()) { "artistId must not be blank" }
+        validatePage(page, pageSize)
+        registration.ensureRegisteredSession()
+        val response = callApi {
+            musicApi.artistAlbums(
+                ArtistAlbumsRequest(
+                    artistId = artistId.trim(),
+                    pagesize = pageSize,
+                    page = page,
+                    sort = if (newestFirst) 1 else 3,
+                    category = 1,
+                    areaCode = "all",
+                ),
+            )
+        }
+        responses.requireSuccess(response)
+        val (raw, container) = response.data.artistCollection("albums")
+        val albums = raw.mapNotNull { element ->
+            val item = element.obj() ?: return@mapNotNull null
+            val id = (item.text("album_id") ?: item.text("albumid"))?.takeIf(String::isNotBlank)
+                ?: return@mapNotNull null
+            val name = (item.text("album_name") ?: item.text("albumname"))?.takeIf(String::isNotBlank)
+                ?: return@mapNotNull null
+            NetworkArtistAlbum(
+                id = id,
+                name = name,
+                artist = item.text("author_name") ?: item.text("singername"),
+                coverUrl = item.text("sizable_cover") ?: item.text("imgurl") ?: item.text("img"),
+                publishDate = (item.text("publish_date") ?: item.text("publishtime")).orEmpty().substringBefore(' '),
+                songCount = (item.int("audio_count") ?: item.int("song_count") ?: item.int("songcount") ?: 0)
+                    .coerceAtLeast(0),
+            )
+        }
+        requireConsumableItems(raw, albums)
+        val total = container?.int("total") ?: container?.int("total_count")
+        return NetworkArtistAlbumPage(albums, total, hasMore(page, pageSize, raw.size, total))
+    }
+
+    override suspend fun artistVideos(artistId: String, page: Int, pageSize: Int): NetworkArtistVideoPage {
+        require(artistId.isNotBlank()) { "artistId must not be blank" }
+        validatePage(page, pageSize)
+        registration.ensureRegisteredSession()
+        val response = callApi {
+            musicApi.artistVideos(
+                url = "${origins.openApiCdn}/kmr/v1/author/videos",
+                artistId = artistId.trim(),
+                pageSize = pageSize,
+                page = page,
+            )
+        }
+        responses.requireSuccess(response)
+        val (raw, container) = response.data.artistCollection("videos")
+        val videos = raw.mapNotNull { element ->
+            val item = element.obj() ?: return@mapNotNull null
+            val hash = (
+                item.text("mvhash") ?: item.text("MvHash") ?: item.text("hash")
+                    ?: item.text("mkv_sd_hash") ?: item.obj("h264")?.text("sd_hash")
+                )
+                ?.takeIf(String::isNotBlank) ?: return@mapNotNull null
+            val name = (
+                item.text("mvname") ?: item.text("MvName") ?: item.text("name")
+                    ?: item.text("video_name")
+                )
+                ?.takeIf(String::isNotBlank) ?: return@mapNotNull null
+            val duration = item.long("duration") ?: item.long("Duration") ?: item.long("timelength") ?: 0
+            NetworkArtistVideo(
+                hash = hash,
+                name = name,
+                singer = item.text("singername") ?: item.text("author_name"),
+                coverUrl = resolveArtistVideoCover(
+                    item.text("sizable_cover") ?: item.text("hdpic") ?: item.text("cover")
+                        ?: item.text("imgurl") ?: item.text("pic") ?: item.text("Pic"),
+                ),
+                durationMillis = if (duration > 1_000) duration else duration * 1_000,
+            )
+        }
+        requireConsumableItems(raw, videos)
+        val total = container?.int("total") ?: container?.int("total_count")
+            ?: response.total?.coerceIn(0, Int.MAX_VALUE.toLong())?.toInt()
+        return NetworkArtistVideoPage(videos, total, hasMore(page, pageSize, raw.size, total))
+    }
+
+    override suspend fun isArtistFollowed(artistId: String): Boolean {
+        require(artistId.isNotBlank()) { "artistId must not be blank" }
+        val session = registration.requireAuthenticatedSession()
+        val clientTime = clock.millis() / 1_000
+        val response = callApi {
+            musicApi.artistFollowList(
+                body = ArtistFollowListRequest(
+                    merge = 2,
+                    needIdentityType = 1,
+                    extendedParams = "k_pic,jumptype,singerid,score",
+                    userid = session.userId?.toLongOrNull() ?: throw missingField(),
+                    type = 0,
+                    idType = 0,
+                    p = crypto.rawLiteRsa(
+                        buildJsonObject {
+                            put("clienttime", clientTime)
+                            put("token", session.token ?: throw missingField())
+                        }.toString(),
+                    ).uppercase(),
+                ),
+            )
+        }
+        responses.requireSuccess(response)
+        val data = response.data.obj() ?: throw missingField()
+        val total = data.int("total") ?: 0
+        val raw = data.array("lists") ?: if (total == 0) JsonArray(emptyList()) else throw missingField()
+        return raw.any { element ->
+            val item = element.obj() ?: return@any false
+            item.text("source") == "7" && item.text("singerid") == artistId.trim()
+        }
+    }
+
+    override suspend fun setArtistFollowed(artistId: String, followed: Boolean) {
+        require(artistId.isNotBlank()) { "artistId must not be blank" }
+        val singerId = artistId.trim().toLongOrNull() ?: throw missingField()
+        val session = registration.requireAuthenticatedSession()
+        val token = session.token ?: throw missingField()
+        val clientTime = clock.millis() / 1_000
+        val encrypted = crypto.encryptTemporary(
+            buildJsonObject {
+                put("singerid", singerId)
+                put("token", token)
+            }.toString(),
+        )
+        val response = callApi {
+            musicApi.mutateArtistFollow(
+                url = "${origins.gateway}/followservice/v3/${if (followed) "follow_singer" else "unfollow_singer"}",
+                clientTime = clientTime,
+                body = ArtistFollowMutationRequest(
+                    plat = 0,
+                    userid = session.userId?.toLongOrNull() ?: throw missingField(),
+                    singerid = singerId,
+                    source = 7,
+                    p = crypto.pkcs1LiteRsa(
+                        buildJsonObject {
+                            put("clienttime", clientTime)
+                            put("key", encrypted.temporaryKey)
+                        }.toString(),
+                    ),
+                    params = encrypted.ciphertextHex,
+                ),
+            )
+        }
+        responses.requireWriteSuccess(response)
+    }
+
+    private fun JsonElement?.artistCollection(preferredKey: String): Pair<JsonArray, JsonObject?> {
+        val direct = this as? JsonArray
+        if (direct != null) return direct to null
+        val container = obj() ?: throw missingField()
+        val raw = container.array(preferredKey) ?: container.array("list") ?: container.array("items")
+            ?: container.array("data") ?: throw missingField()
+        return raw to container
+    }
+
+    private fun hasMore(page: Int, pageSize: Int, rawSize: Int, total: Int?): Boolean =
+        if (total != null && total > 0) page.toLong() * pageSize < total else rawSize >= pageSize
+
+    private fun resolveArtistVideoCover(raw: String?): String? {
+        val value = raw?.takeIf(String::isNotBlank) ?: return null
+        return when {
+            value.startsWith("http://") || value.startsWith("https://") -> value
+            value.matches(Regex("^\\d{8,}\\.[a-zA-Z0-9]+$")) ->
+                "https://imge.kugou.com/mvhdpic/480/${value.take(8)}/$value"
+            value.startsWith('/') -> "https://imge.kugou.com$value"
+            else -> value
+        }
     }
 
     private suspend fun <T> callApi(block: suspend () -> T): T = calls.execute(block = block)

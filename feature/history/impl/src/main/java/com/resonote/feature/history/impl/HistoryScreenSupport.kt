@@ -10,9 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.History
-import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -31,6 +29,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.resonote.core.designsystem.component.ResonoteButton
+import com.resonote.core.designsystem.component.ResonoteEmptyState
+import com.resonote.core.designsystem.component.ResonoteErrorState
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.ContentFailure
 
@@ -50,35 +50,33 @@ internal fun SignedOutState(onLoginRequest: () -> Unit) {
 }
 
 @Composable
-internal fun OnlineFailureState(failure: ContentFailure, onRetry: () -> Unit) {
-    MessageState(
-        icon = { Icon(Icons.Rounded.CloudOff, contentDescription = null, modifier = Modifier.size(42.dp)) },
+internal fun OnlineFailureState(failure: ContentFailure, onRetry: () -> Unit, modifier: Modifier = Modifier) {
+    ResonoteErrorState(
+        onRetry = onRetry,
+        modifier = modifier,
         title = stringResource(R.string.feature_history_impl_online_error_title),
-        body = failure.message(),
-        action = {
-            ResonoteButton(
-                label = stringResource(R.string.feature_history_impl_retry),
-                onClick = onRetry,
-            )
-        },
+        message = failure.message(),
+        retryLabel = stringResource(R.string.feature_history_impl_retry),
     )
 }
 
 @Composable
-internal fun DeviceFailureState() {
-    MessageState(
-        icon = { Icon(Icons.Rounded.LibraryMusic, contentDescription = null, modifier = Modifier.size(42.dp)) },
+internal fun DeviceFailureState(modifier: Modifier = Modifier) {
+    ResonoteErrorState(
+        onRetry = {},
+        modifier = modifier,
         title = stringResource(R.string.feature_history_impl_device_error_title),
-        body = stringResource(R.string.feature_history_impl_device_error_body),
+        message = stringResource(R.string.feature_history_impl_device_error_body),
+        action = {},
     )
 }
 
 @Composable
-internal fun EmptyState(title: String, body: String) {
-    MessageState(
-        icon = { Icon(Icons.Rounded.History, contentDescription = null, modifier = Modifier.size(42.dp)) },
+internal fun EmptyState(title: String, body: String, modifier: Modifier = Modifier) {
+    ResonoteEmptyState(
+        modifier = modifier,
         title = title,
-        body = body,
+        message = body,
     )
 }
 

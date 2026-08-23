@@ -184,6 +184,7 @@ internal fun ResonoteNavDisplay(
                                 avatarUrl = artist.avatarUrl,
                                 songCount = artist.songCount,
                                 albumCount = artist.albumCount,
+                                sessionId = System.nanoTime(),
                             ),
                         )
                     },
@@ -236,12 +237,42 @@ internal fun ResonoteNavDisplay(
             entry<ArtistNavKey> { key ->
                 ArtistRoute(
                     key = key,
+                    currentAccountId = (authState as? AuthState.Authenticated)?.userId,
                     playingMediaId = playbackState.currentMetadata?.mediaId,
                     bottomContentPadding = standaloneBottomContentPadding,
                     onBack = { backStack.removeLastOrNull() },
+                    onLoginRequest = {
+                        if (backStack.lastOrNull() !is LoginGateNavKey) {
+                            backStack.add(LoginGateNavKey(sessionExpired = false))
+                        }
+                    },
                     onPlayAll = playbackViewModel::playAll,
                     onSongClick = playbackViewModel::play,
                     onSongMoreClick = { onOpenSongActions(it, null) },
+                    onAlbumClick = { album ->
+                        backStack.add(
+                            AlbumNavKey(
+                                albumId = album.id,
+                                name = album.name,
+                                artist = album.artist,
+                                coverUrl = album.coverUrl,
+                                publishDate = album.publishDate,
+                                songCount = album.songCount,
+                            ),
+                        )
+                    },
+                    onVideoClick = { video ->
+                        playbackViewModel.pause()
+                        backStack.add(
+                            VideoNavKey(
+                                hash = video.hash,
+                                title = video.name,
+                                singer = video.singer,
+                                coverUrl = video.coverUrl,
+                                durationMillis = video.durationMillis,
+                            ),
+                        )
+                    },
                 )
             }
             entry<RankingNavKey> { key ->

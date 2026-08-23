@@ -48,13 +48,18 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.onlineContent(
             LoadingState(R.string.feature_history_impl_online_loading)
         }
         is OnlineHistoryUiState.Failed -> item(key = "online-failure") {
-            OnlineFailureState(section.failure, onRetry)
+            OnlineFailureState(
+                failure = section.failure,
+                onRetry = onRetry,
+                modifier = Modifier.fillParentMaxHeight(0.55f),
+            )
         }
         is OnlineHistoryUiState.Available -> if (section.songs.isEmpty()) {
             item(key = "online-empty") {
                 EmptyState(
                     title = stringResource(R.string.feature_history_impl_online_empty_title),
                     body = stringResource(R.string.feature_history_impl_online_empty_body),
+                    modifier = Modifier.fillParentMaxHeight(0.55f),
                 )
             }
         } else {
@@ -82,11 +87,14 @@ internal fun androidx.compose.foundation.lazy.LazyListScope.deviceContent(
         state.deviceLoading -> item(key = "device-loading") {
             LoadingState(R.string.feature_history_impl_device_loading)
         }
-        state.deviceLoadFailed -> item(key = "device-failure") { DeviceFailureState() }
+        state.deviceLoadFailed -> item(key = "device-failure") {
+            DeviceFailureState(modifier = Modifier.fillParentMaxHeight(0.55f))
+        }
         state.deviceItems.isEmpty() -> item(key = "device-empty") {
             EmptyState(
                 title = stringResource(R.string.feature_history_impl_device_empty_title),
                 body = stringResource(R.string.feature_history_impl_device_empty_body),
+                modifier = Modifier.fillParentMaxHeight(0.55f),
             )
         }
         else -> itemsIndexed(

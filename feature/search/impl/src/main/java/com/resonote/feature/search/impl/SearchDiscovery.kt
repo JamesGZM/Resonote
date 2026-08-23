@@ -18,14 +18,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -45,6 +43,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.resonote.core.designsystem.component.ResonoteEmptyState
+import com.resonote.core.designsystem.component.ResonoteErrorState
 import com.resonote.core.designsystem.component.ResonotePlainAction
 import com.resonote.core.designsystem.tokens.ResonoteTokens
 import com.resonote.core.model.ContentFailure
@@ -320,10 +320,9 @@ internal fun LoadingState(query: String) {
 }
 
 @Composable
-internal fun EmptyState() = MessageState(
-    icon = Icons.Rounded.Search,
+internal fun EmptyState() = ResonoteEmptyState(
     title = stringResource(R.string.feature_search_impl_search_empty_title),
-    body = stringResource(R.string.feature_search_impl_search_empty_body),
+    message = stringResource(R.string.feature_search_impl_search_empty_body),
 )
 
 @Composable
@@ -333,24 +332,10 @@ internal fun ErrorState(failure: ContentFailure, onRetry: () -> Unit) {
         ContentFailure.AuthenticationRequired -> stringResource(R.string.feature_search_impl_search_error_auth)
         else -> stringResource(R.string.feature_search_impl_search_error_generic)
     }
-    MessageState(
-        icon = Icons.Rounded.Search,
+    ResonoteErrorState(
+        onRetry = onRetry,
         title = stringResource(R.string.feature_search_impl_search_error_title),
-        body = body,
-        action = { Button(onClick = onRetry) { Text(stringResource(R.string.feature_search_impl_search_retry)) } },
+        message = body,
+        retryLabel = stringResource(R.string.feature_search_impl_search_retry),
     )
-}
-
-@Composable
-private fun MessageState(icon: ImageVector, title: String, body: String, action: (@Composable () -> Unit)? = null) {
-    Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Surface(shape = CircleShape, color = MaterialTheme.colorScheme.secondaryContainer) {
-                Icon(icon, contentDescription = null, modifier = Modifier.padding(20.dp).size(32.dp))
-            }
-            Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-            Text(body, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge)
-            action?.invoke()
-        }
-    }
 }

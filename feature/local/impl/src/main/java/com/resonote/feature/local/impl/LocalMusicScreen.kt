@@ -192,9 +192,18 @@ internal fun LocalMusicScreen(
 
             when {
                 state.isLoading -> item(key = "loading") { LoadingState() }
-                state.media.isEmpty() -> item(key = "empty") { EmptyState(onPickFiles, onPickDirectory) }
+                state.media.isEmpty() -> item(key = "empty") {
+                    EmptyState(
+                        onPickFiles = onPickFiles,
+                        onPickDirectory = onPickDirectory,
+                        modifier = Modifier.fillParentMaxHeight(0.55f),
+                    )
+                }
                 state.visibleMedia.isEmpty() -> item(key = "no-results") {
-                    NoResultsState(state.query)
+                    NoResultsState(
+                        query = state.query,
+                        modifier = Modifier.fillParentMaxHeight(0.55f),
+                    )
                 }
                 else -> items(state.visibleMedia, key = { it.id.value }) { media ->
                     LocalMediaRow(

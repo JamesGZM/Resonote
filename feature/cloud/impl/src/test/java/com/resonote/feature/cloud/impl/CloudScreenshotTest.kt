@@ -15,6 +15,7 @@ import com.resonote.core.designsystem.theme.ResonoteTheme
 import com.resonote.core.designsystem.theme.ResonoteThemeMode
 import com.resonote.core.model.CloudStorage
 import com.resonote.core.model.CloudTrack
+import com.resonote.core.model.ContentFailure
 import com.resonote.core.screenshottesting.DefaultRoborazziOptions
 import org.junit.Rule
 import org.junit.Test
@@ -29,6 +30,18 @@ import org.robolectric.annotation.GraphicsMode
 class CloudScreenshotTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Test
+    fun cloud_emptyUsesCommonState() {
+        setScreen(CloudUiState(initialLoading = false))
+        composeRule.onNodeWithTag("resonote-empty-state").assertExists()
+    }
+
+    @Test
+    fun cloud_errorUsesCommonState() {
+        setScreen(CloudUiState(initialLoading = false, failure = ContentFailure.Network))
+        composeRule.onNodeWithTag("resonote-error-state").assertExists()
+    }
 
     @Test
     fun cloud_listTop() {

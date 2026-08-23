@@ -1,11 +1,14 @@
 package com.resonote.core.data
 
 import com.resonote.core.model.Album
+import com.resonote.core.model.ArtistAlbumsPage
 import com.resonote.core.model.ArtistInfo
 import com.resonote.core.model.ArtistSongsPage
+import com.resonote.core.model.ArtistVideosPage
 import com.resonote.core.model.Banner
 import com.resonote.core.model.CatalogSongPage
 import com.resonote.core.model.CollectionLoadResult
+import com.resonote.core.model.ContentFailure
 import com.resonote.core.model.PlaylistCategory
 import com.resonote.core.model.PlaylistSummary
 import com.resonote.core.model.SongPage
@@ -32,4 +35,19 @@ interface ContentCatalogRepository {
         pageSize: Int = 30,
         newestFirst: Boolean = false,
     ): CollectionLoadResult<ArtistSongsPage>
+    suspend fun loadArtistAlbums(
+        artistId: String,
+        page: Int = 1,
+        pageSize: Int = 30,
+        newestFirst: Boolean = false,
+    ): CollectionLoadResult<ArtistAlbumsPage> = CollectionLoadResult.Failed(ContentFailure.Protocol)
+    suspend fun loadArtistVideos(
+        artistId: String,
+        page: Int = 1,
+        pageSize: Int = 30,
+    ): CollectionLoadResult<ArtistVideosPage> = CollectionLoadResult.Failed(ContentFailure.Protocol)
+    suspend fun loadArtistFollowed(artistId: String): CollectionLoadResult<Boolean> =
+        CollectionLoadResult.Failed(ContentFailure.Protocol)
+    suspend fun setArtistFollowed(artistId: String, followed: Boolean): CollectionLoadResult<Boolean> =
+        CollectionLoadResult.Failed(ContentFailure.Protocol)
 }

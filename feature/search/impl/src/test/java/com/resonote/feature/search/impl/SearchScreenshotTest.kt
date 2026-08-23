@@ -20,6 +20,7 @@ import com.resonote.core.designsystem.theme.ResonoteTheme
 import com.resonote.core.designsystem.theme.ResonoteThemeMode
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.ComplexSearchResult
+import com.resonote.core.model.ContentFailure
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.SearchAlbum
 import com.resonote.core.model.SearchArtist
@@ -40,6 +41,28 @@ import org.robolectric.annotation.GraphicsMode
 class SearchScreenshotTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Test
+    fun search_emptyUsesCommonState() {
+        setSearchContent(
+            SearchUiState(
+                query = "不存在",
+                result = SearchResultUiState.Empty("不存在", SearchCategory.ALL),
+            ),
+        )
+        composeRule.onNodeWithTag("resonote-empty-state").assertExists()
+    }
+
+    @Test
+    fun search_errorUsesCommonState() {
+        setSearchContent(
+            SearchUiState(
+                query = "不存在",
+                result = SearchResultUiState.Error("不存在", SearchCategory.ALL, ContentFailure.Network),
+            ),
+        )
+        composeRule.onNodeWithTag("resonote-error-state").assertExists()
+    }
 
     @Test
     fun search_compactDiscovery() {

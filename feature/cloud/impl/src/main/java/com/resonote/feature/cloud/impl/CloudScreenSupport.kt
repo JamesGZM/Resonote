@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Cloud
 import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -24,9 +23,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.resonote.core.designsystem.component.ResonoteButton
+import com.resonote.core.designsystem.component.ResonoteEmptyState
+import com.resonote.core.designsystem.component.ResonoteErrorState
 import com.resonote.core.model.ContentFailure
 
 @Composable
@@ -74,53 +73,18 @@ internal fun LoadingState() {
 }
 
 @Composable
-internal fun ErrorState(failure: ContentFailure, onRetry: () -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 52.dp, horizontal = 22.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Icon(Icons.Rounded.CloudOff, contentDescription = null, modifier = Modifier.size(42.dp))
-        Text(
-            stringResource(R.string.feature_cloud_impl_cloud_error_title),
-            modifier = Modifier.padding(top = 16.dp),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-        )
-        Text(
-            failure.message(),
-            modifier = Modifier.padding(top = 8.dp),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.bodyMedium,
-        )
-        ResonoteButton(
-            label = stringResource(R.string.feature_cloud_impl_cloud_retry),
-            onClick = onRetry,
-            modifier = Modifier.padding(top = 22.dp),
-        )
-    }
-}
+internal fun ErrorState(failure: ContentFailure, onRetry: () -> Unit, modifier: Modifier = Modifier) =
+    ResonoteErrorState(
+        onRetry = onRetry,
+        modifier = modifier,
+        title = stringResource(R.string.feature_cloud_impl_cloud_error_title),
+        message = failure.message(),
+        retryLabel = stringResource(R.string.feature_cloud_impl_cloud_retry),
+    )
 
 @Composable
-internal fun EmptyState(title: String, body: String) {
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 50.dp, horizontal = 24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Icon(Icons.Rounded.Cloud, contentDescription = null, modifier = Modifier.size(40.dp))
-        Text(
-            title,
-            modifier = Modifier.padding(top = 14.dp),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-        )
-        Text(
-            body,
-            modifier = Modifier.padding(top = 7.dp),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.bodyMedium,
-        )
-    }
-}
+internal fun EmptyState(title: String, body: String, modifier: Modifier = Modifier) =
+    ResonoteEmptyState(title = title, message = body, modifier = modifier)
 
 @Composable
 internal fun LoadingLine(label: String) {

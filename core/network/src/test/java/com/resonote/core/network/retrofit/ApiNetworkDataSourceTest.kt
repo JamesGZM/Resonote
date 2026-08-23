@@ -1574,6 +1574,79 @@ class ApiNetworkDataSourceTest {
     }
 
     @Test
+    fun artistAlbumsAndVideosUseSectionContractsAndDecodeCards() = runTest {
+        gatewayServer.enqueue(
+            jsonResponse(
+                """{"status":1,"data":{"albums":[{"album_id":"album-1","album_name":"潮汐记忆","author_name":"林澈","sizable_cover":"https://album/{size}","publish_date":"2026-08-23 00:00:00","audio_count":"12"}],"total":"1"}}""",
+            ),
+        )
+        openApiServer.enqueue(
+            jsonResponse(
+                """{"status":1,"total":1,"data":[{"mkv_sd_hash":"MVHASH","video_name":"潮汐 MV","author_name":"林澈","hdpic":"https://mv/{size}","timelength":245000}]}""",
+            ),
+        )
+
+        val albums = dataSource().artistAlbums("88", page = 1, pageSize = 30, newestFirst = true)
+        val videos = dataSource().artistVideos("88", page = 1, pageSize = 30)
+
+        assertThat(albums.albums.single().id).isEqualTo("album-1")
+        assertThat(albums.albums.single().songCount).isEqualTo(12)
+        assertThat(videos.videos.single().hash).isEqualTo("MVHASH")
+        assertThat(videos.videos.single().durationMillis).isEqualTo(245_000)
+        assertThat(videos.total).isEqualTo(1)
+
+        val albumRequest = gatewayServer.takeRequest()
+        val albumBody = json.parseToJsonElement(albumRequest.body.readUtf8()).jsonObject
+        assertThat(albumRequest.requestUrl?.encodedPath).isEqualTo("/kmr/v1/author/albums")
+        assertThat(albumRequest.getHeader("x-router")).isEqualTo("openapi.kugou.com")
+        assertThat(albumRequest.getHeader("kg-tid")).isEqualTo("36")
+        assertThat(albumBody["sort"]?.jsonPrimitive?.content).isEqualTo("1")
+        assertThat(albumBody["category"]?.jsonPrimitive?.content).isEqualTo("1")
+        assertThat(albumBody["area_code"]?.jsonPrimitive?.content).isEqualTo("all")
+
+        val videoRequest = openApiServer.takeRequest()
+        assertThat(videoRequest.requestUrl?.encodedPath).isEqualTo("/kmr/v1/author/videos")
+        assertThat(videoRequest.requestUrl?.queryParameter("author_id")).isEqualTo("88")
+        assertThat(videoRequest.requestUrl?.queryParameter("pagesize")).isEqualTo("30")
+    }
+
+    @Test
+    fun artistFollowReadsRelationListAndUsesEncryptedMutationContracts() = runTest {
+        gatewayServer.enqueue(
+            jsonResponse(
+                """{"status":1,"data":{"total":1,"lists":[{"source":7,"singerid":"88"}]}}""",
+            ),
+        )
+        gatewayServer.enqueue(jsonResponse("""{"status":1,"data":{}}"""))
+        gatewayServer.enqueue(jsonResponse("""{"status":1,"data":{}}"""))
+        val source = dataSource()
+
+        assertThat(source.isArtistFollowed("88")).isTrue()
+        source.setArtistFollowed("88", followed = true)
+        source.setArtistFollowed("88", followed = false)
+
+        val listRequest = gatewayServer.takeRequest()
+        val listBody = json.parseToJsonElement(listRequest.body.readUtf8()).jsonObject
+        assertThat(listRequest.requestUrl?.encodedPath).isEqualTo("/v4/follow_list")
+        assertThat(listRequest.requestUrl?.queryParameter("plat")).isEqualTo("1")
+        assertThat(listRequest.getHeader("x-router")).isEqualTo("relationuser.kugou.com")
+        assertThat(listBody["userid"]?.jsonPrimitive?.content).isEqualTo("99")
+        assertThat(listBody["p"]?.jsonPrimitive?.content).isNotEmpty()
+
+        val followRequest = gatewayServer.takeRequest()
+        val followBody = json.parseToJsonElement(followRequest.body.readUtf8()).jsonObject
+        assertThat(followRequest.requestUrl?.encodedPath).isEqualTo("/followservice/v3/follow_singer")
+        assertThat(followRequest.requestUrl?.queryParameter("clienttime")).isEqualTo("1700000000")
+        assertThat(followBody["singerid"]?.jsonPrimitive?.content).isEqualTo("88")
+        assertThat(followBody["source"]?.jsonPrimitive?.content).isEqualTo("7")
+        assertThat(followBody["params"]?.jsonPrimitive?.content).isNotEmpty()
+        assertThat(followBody["p"]?.jsonPrimitive?.content).isNotEmpty()
+
+        val unfollowRequest = gatewayServer.takeRequest()
+        assertThat(unfollowRequest.requestUrl?.encodedPath).isEqualTo("/followservice/v3/unfollow_singer")
+    }
+
+    @Test
     fun complexHotAndSuggestSearchMatchMobileConsumerShapes() = runTest {
         complexSearchServer.enqueue(
             jsonResponse(
@@ -1886,6 +1959,7 @@ class ApiNetworkDataSourceTest {
                 vip = vipServer.origin(),
                 cloud = cloudServer.origin(),
                 openApi = openApiServer.origin(),
+                openApiCdn = openApiServer.origin(),
                 complexSearch = complexSearchServer.origin(),
                 lyrics = lyricsServer.origin(),
                 qrLogin = qrLoginServer.origin(),
@@ -1923,6 +1997,7 @@ class ApiNetworkDataSourceTest {
             registration,
             signer,
             clock,
+            crypto,
             responses,
             calls,
             origins,

@@ -2,16 +2,11 @@
 
 package com.resonote.feature.local.impl
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -22,24 +17,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.resonote.core.designsystem.component.ResonoteEmptyState
 import com.resonote.core.model.LocalMedia
 import com.resonote.core.model.LocalMediaImportFailure
 import java.util.Locale
 
 @Composable
-internal fun NoResultsState(query: String) {
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 44.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Icon(Icons.Rounded.Search, contentDescription = null, modifier = Modifier.size(36.dp))
-        Text(
-            stringResource(R.string.feature_local_impl_no_results, query.trim()),
-            modifier = Modifier.padding(top = 12.dp),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
+internal fun NoResultsState(query: String, modifier: Modifier = Modifier) = ResonoteEmptyState(
+    modifier = modifier,
+    message = stringResource(R.string.feature_local_impl_no_results, query.trim()),
+)
 
 @Composable
 internal fun DeleteFailureCard(onDismiss: () -> Unit) {

@@ -238,7 +238,8 @@ class LiveApiSearchCanaryTest {
         val calls = ApiCallExecutor(sessions)
         val responses = ApiResponseVerifier(riskDetector, sessions)
         val home = RealHomeNetworkDataSource(musicApi, registration, signer, clock, responses, calls)
-        val catalog = RealCatalogNetworkDataSource(musicApi, registration, signer, clock, responses, calls, origins)
+        val catalog =
+            RealCatalogNetworkDataSource(musicApi, registration, signer, clock, crypto, responses, calls, origins)
         val ranking = RealRankingNetworkDataSource(musicApi, registration, responses, calls)
         val playlist = RealPlaylistNetworkDataSource(musicApi, registration, responses, calls)
         return LiveFixture(

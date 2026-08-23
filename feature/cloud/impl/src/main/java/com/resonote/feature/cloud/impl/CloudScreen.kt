@@ -133,7 +133,13 @@ internal fun CloudScreen(
 
             when {
                 state.initialLoading -> item(key = "loading") { LoadingState() }
-                state.failure != null -> item(key = "error") { ErrorState(state.failure, onRefresh) }
+                state.failure != null -> item(key = "error") {
+                    ErrorState(
+                        failure = state.failure,
+                        onRetry = onRefresh,
+                        modifier = Modifier.fillParentMaxHeight(0.55f),
+                    )
+                }
                 else -> cloudContent(
                     state = state,
                     playingMediaId = playingMediaId,
@@ -209,12 +215,14 @@ private fun LazyListScope.cloudContent(
             EmptyState(
                 title = stringResource(R.string.feature_cloud_impl_cloud_empty_title),
                 body = stringResource(R.string.feature_cloud_impl_cloud_empty_body),
+                modifier = Modifier.fillParentMaxHeight(0.55f),
             )
         }
         state.visibleTracks.isEmpty() && !state.isIndexing -> item(key = "no-results") {
             EmptyState(
                 title = stringResource(R.string.feature_cloud_impl_cloud_no_results_title),
                 body = stringResource(R.string.feature_cloud_impl_cloud_no_results_body, state.query.trim()),
+                modifier = Modifier.fillParentMaxHeight(0.55f),
             )
         }
         state.viewMode == CloudViewMode.List -> itemsIndexed(

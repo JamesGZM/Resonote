@@ -14,6 +14,7 @@ import com.github.takahirom.roborazzi.captureRoboImage
 import com.resonote.core.designsystem.theme.ResonoteTheme
 import com.resonote.core.designsystem.theme.ResonoteThemeMode
 import com.resonote.core.model.AudioQuality
+import com.resonote.core.model.ContentFailure
 import com.resonote.core.model.DeviceHistoryItem
 import com.resonote.core.model.DeviceHistoryRecord
 import com.resonote.core.model.DeviceHistorySource
@@ -33,6 +34,32 @@ import org.robolectric.annotation.GraphicsMode
 class HistoryScreenshotTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Test
+    fun history_emptyUsesCommonState() {
+        setScreen(
+            HistoryUiState(
+                selectedTab = HistoryTab.Online,
+                accountState = HistoryAccountState.Authenticated,
+                online = OnlineHistoryUiState.Available(emptyList()),
+                deviceLoading = false,
+            ),
+        )
+        composeRule.onNodeWithTag("resonote-empty-state").assertExists()
+    }
+
+    @Test
+    fun history_errorUsesCommonState() {
+        setScreen(
+            HistoryUiState(
+                selectedTab = HistoryTab.Online,
+                accountState = HistoryAccountState.Authenticated,
+                online = OnlineHistoryUiState.Failed(ContentFailure.Network),
+                deviceLoading = false,
+            ),
+        )
+        composeRule.onNodeWithTag("resonote-error-state").assertExists()
+    }
 
     @Test
     fun onlineArchive() {
@@ -88,7 +115,7 @@ class HistoryScreenshotTest {
                 ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
                     HistoryScreen(
                         state = state,
-                        playingMediaId = "cloud",
+                        playingMediaId = null,
                         bottomContentPadding = 32.dp,
                         onBack = {},
                         onLoginRequest = {},

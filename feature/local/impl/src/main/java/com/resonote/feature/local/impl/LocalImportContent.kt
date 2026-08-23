@@ -3,7 +3,6 @@
 package com.resonote.feature.local.impl
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,7 +23,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -38,6 +36,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.resonote.core.designsystem.component.ResonoteButton
+import com.resonote.core.designsystem.component.ResonoteEmptyState
 import com.resonote.core.designsystem.component.ResonoteOutlinedButton
 
 @Composable
@@ -169,46 +168,27 @@ internal fun LoadingState() {
 }
 
 @Composable
-internal fun EmptyState(onPickFiles: () -> Unit, onPickDirectory: () -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 40.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Surface(
-            modifier = Modifier.size(72.dp),
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.surfaceContainerHighest,
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(Icons.Rounded.FolderOpen, contentDescription = null, modifier = Modifier.size(34.dp))
+internal fun EmptyState(onPickFiles: () -> Unit, onPickDirectory: () -> Unit, modifier: Modifier = Modifier) =
+    ResonoteEmptyState(
+        modifier = modifier,
+        title = stringResource(R.string.feature_local_impl_empty_title),
+        message = stringResource(R.string.feature_local_impl_empty_body),
+        action = {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                ResonoteButton(
+                    label = stringResource(R.string.feature_local_impl_choose_files),
+                    onClick = onPickFiles,
+                    leadingIcon = { Icon(Icons.Rounded.Add, contentDescription = null) },
+                )
+                ResonoteOutlinedButton(
+                    label = stringResource(R.string.feature_local_impl_choose_directory),
+                    onClick = onPickDirectory,
+                    modifier = Modifier.padding(top = 10.dp),
+                    leadingIcon = { Icon(Icons.Rounded.FolderOpen, contentDescription = null) },
+                )
             }
-        }
-        Text(
-            stringResource(R.string.feature_local_impl_empty_title),
-            modifier = Modifier.padding(top = 20.dp),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-        )
-        Text(
-            stringResource(R.string.feature_local_impl_empty_body),
-            modifier = Modifier.padding(top = 8.dp),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.bodyMedium,
-        )
-        ResonoteButton(
-            label = stringResource(R.string.feature_local_impl_choose_files),
-            onClick = onPickFiles,
-            modifier = Modifier.padding(top = 22.dp),
-            leadingIcon = { Icon(Icons.Rounded.Add, contentDescription = null) },
-        )
-        ResonoteOutlinedButton(
-            label = stringResource(R.string.feature_local_impl_choose_directory),
-            onClick = onPickDirectory,
-            modifier = Modifier.padding(top = 10.dp),
-            leadingIcon = { Icon(Icons.Rounded.FolderOpen, contentDescription = null) },
-        )
-    }
-}
+        },
+    )
 
 @Composable
 internal fun DirectoryScanCard(onCancel: () -> Unit) {
