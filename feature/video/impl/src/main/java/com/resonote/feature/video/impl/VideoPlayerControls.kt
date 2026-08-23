@@ -1,11 +1,16 @@
 package com.resonote.feature.video.impl
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,7 +40,6 @@ import androidx.compose.material.icons.rounded.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -48,13 +52,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -80,6 +89,9 @@ internal fun VideoPlayerControls(
     var durationMillis by remember(player, key.durationMillis) {
         mutableLongStateOf(player.duration.playableDurationOr(key.durationMillis))
     }
+    var bufferedPositionMillis by remember(player) {
+        mutableLongStateOf(player.bufferedPosition.coerceAtLeast(0L))
+    }
     var pendingSeek by remember(player) { mutableStateOf<Float?>(null) }
 
     DisposableEffect(player) {
@@ -88,6 +100,7 @@ internal fun VideoPlayerControls(
                 isPlaying = player.isPlaying
                 durationMillis = player.duration.playableDurationOr(key.durationMillis)
                 positionMillis = player.currentPosition.coerceAtLeast(0L)
+                bufferedPositionMillis = player.bufferedPosition.coerceAtLeast(0L)
             }
         }
         player.addListener(listener)
@@ -96,6 +109,7 @@ internal fun VideoPlayerControls(
     LaunchedEffect(player, isPlaying) {
         while (true) {
             positionMillis = player.currentPosition.coerceAtLeast(0L)
+            bufferedPositionMillis = player.bufferedPosition.coerceAtLeast(0L)
             delay(PROGRESS_UPDATE_MILLIS)
         }
     }
@@ -157,6 +171,7 @@ internal fun VideoPlayerControls(
                 )
                 PlayerBottomBar(
                     positionMillis = pendingSeek?.toLong() ?: positionMillis,
+                    bufferedPositionMillis = bufferedPositionMillis,
                     durationMillis = durationMillis,
                     fullscreen = fullscreen,
                     onSeek = { pendingSeek = it },
@@ -287,6 +302,7 @@ private fun ControlIconButton(onClick: () -> Unit, label: String, icon: @Composa
 @Composable
 private fun PlayerBottomBar(
     positionMillis: Long,
+    bufferedPositionMillis: Long,
     durationMillis: Long,
     fullscreen: Boolean,
     onSeek: (Float) -> Unit,
@@ -301,12 +317,13 @@ private fun PlayerBottomBar(
             .windowInsetsPadding(WindowInsets.navigationBars)
             .padding(start = 16.dp, top = 28.dp, end = 8.dp, bottom = 6.dp),
     ) {
-        Slider(
-            value = positionMillis.coerceIn(0L, durationMillis.coerceAtLeast(0L)).toFloat(),
-            onValueChange = onSeek,
-            onValueChangeFinished = onSeekFinished,
-            valueRange = 0f..durationMillis.coerceAtLeast(1L).toFloat(),
-            modifier = Modifier.fillMaxWidth().height(32.dp).testTag("video-progress"),
+        VideoSeekBar(
+            positionMillis = positionMillis,
+            bufferedPositionMillis = bufferedPositionMillis,
+            durationMillis = durationMillis,
+            onSeek = onSeek,
+            onSeekFinished = onSeekFinished,
+            modifier = Modifier.fillMaxWidth().testTag("video-progress"),
         )
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
@@ -329,6 +346,111 @@ private fun PlayerBottomBar(
                 )
             }
         }
+    }
+}
+
+@Composable
+internal fun VideoSeekBar(
+    positionMillis: Long,
+    bufferedPositionMillis: Long,
+    durationMillis: Long,
+    onSeek: (Float) -> Unit,
+    onSeekFinished: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var isDragging by remember { mutableStateOf(false) }
+    val thumbDiameter by animateDpAsState(
+        targetValue = if (isDragging) 14.dp else 8.dp,
+        label = "video seek thumb",
+    )
+    val duration = durationMillis.coerceAtLeast(1L)
+    val clampedPositionMillis = positionMillis.coerceIn(0L, duration)
+    val positionFraction = clampedPositionMillis.toFloat() / duration
+    val bufferedFraction = bufferedPositionMillis.coerceIn(clampedPositionMillis, duration)
+        .toFloat() / duration
+    val playedColor = MaterialTheme.colorScheme.primary
+    val bufferedColor = Color.White.copy(alpha = 0.48f)
+    val remainingColor = Color.White.copy(alpha = 0.24f)
+
+    Canvas(
+        modifier = modifier
+            .height(48.dp)
+            .semantics {
+                progressBarRangeInfo = ProgressBarRangeInfo(
+                    current = clampedPositionMillis.toFloat(),
+                    range = 0f..duration.toFloat(),
+                )
+                setProgress { target ->
+                    onSeek(target.coerceIn(0f, duration.toFloat()))
+                    onSeekFinished()
+                    true
+                }
+            }
+            .pointerInput(duration) {
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    down.consume()
+                    isDragging = true
+
+                    fun seekTo(pointerX: Float) {
+                        val horizontalPadding = 7.dp.toPx()
+                        val trackWidth = (size.width - horizontalPadding * 2f).coerceAtLeast(1f)
+                        val fraction = ((pointerX - horizontalPadding) / trackWidth).coerceIn(0f, 1f)
+                        onSeek(fraction * duration)
+                    }
+
+                    try {
+                        seekTo(down.position.x)
+                        drag(down.id) { change ->
+                            change.consume()
+                            seekTo(change.position.x)
+                        }
+                    } finally {
+                        isDragging = false
+                        onSeekFinished()
+                    }
+                }
+            },
+    ) {
+        val horizontalPadding = 7.dp.toPx()
+        val trackStart = horizontalPadding
+        val trackEnd = size.width - horizontalPadding
+        val trackWidth = (trackEnd - trackStart).coerceAtLeast(0f)
+        val centerY = size.height / 2f
+        val trackStrokeWidth = 3.dp.toPx()
+        val playedEnd = trackStart + trackWidth * positionFraction
+        val bufferedEnd = trackStart + trackWidth * bufferedFraction
+
+        drawLine(
+            color = remainingColor,
+            start = Offset(trackStart, centerY),
+            end = Offset(trackEnd, centerY),
+            strokeWidth = trackStrokeWidth,
+            cap = StrokeCap.Round,
+        )
+        if (bufferedEnd > trackStart) {
+            drawLine(
+                color = bufferedColor,
+                start = Offset(trackStart, centerY),
+                end = Offset(bufferedEnd, centerY),
+                strokeWidth = trackStrokeWidth,
+                cap = StrokeCap.Round,
+            )
+        }
+        if (playedEnd > trackStart) {
+            drawLine(
+                color = playedColor,
+                start = Offset(trackStart, centerY),
+                end = Offset(playedEnd, centerY),
+                strokeWidth = trackStrokeWidth,
+                cap = StrokeCap.Round,
+            )
+        }
+        drawCircle(
+            color = playedColor,
+            radius = thumbDiameter.toPx() / 2f,
+            center = Offset(playedEnd, centerY),
+        )
     }
 }
 

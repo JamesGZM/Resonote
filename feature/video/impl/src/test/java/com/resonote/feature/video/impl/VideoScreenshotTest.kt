@@ -3,8 +3,12 @@ package com.resonote.feature.video.impl
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
 import androidx.compose.ui.test.assertCountEquals
@@ -92,9 +96,38 @@ class VideoScreenshotTest {
         composeRule.onNodeWithTag("video-play-pause").assertIsDisplayed()
         composeRule.onNodeWithTag("video-progress").assertIsDisplayed()
         composeRule.onNodeWithTag("video-fullscreen-action").assertIsDisplayed()
+        capture("controls")
+
         composeRule.onNodeWithTag("video-fullscreen-action").performClick()
         assertThat(fullscreenClicks).isEqualTo(1)
-        capture("controls")
+    }
+
+    @Test
+    fun video_seekBarLayers() {
+        composeRule.setContent {
+            DeviceConfigurationOverride(override = DeviceConfigurationOverride.ForcedSize(DpSize(390.dp, 96.dp))) {
+                ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                    Box(
+                        modifier = Modifier.fillMaxSize().background(Color.Black),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        VideoSeekBar(
+                            positionMillis = 88_000,
+                            bufferedPositionMillis = 156_000,
+                            durationMillis = 265_000,
+                            onSeek = {},
+                            onSeekFinished = {},
+                            modifier = Modifier.fillMaxWidth().padding(
+                                horizontal = 16.dp,
+                            ).testTag("video-progress-layers"),
+                        )
+                    }
+                }
+            }
+        }
+
+        composeRule.onNodeWithTag("video-progress-layers").assertIsDisplayed()
+        capture("seek_bar_layers")
     }
 
     private fun setScreen(state: VideoUiState, fullscreen: Boolean = false, size: DpSize = DpSize(390.dp, 844.dp)) {
