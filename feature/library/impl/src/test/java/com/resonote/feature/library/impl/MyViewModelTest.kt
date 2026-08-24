@@ -444,6 +444,7 @@ class MyViewModelTest {
         val state = MutableStateFlow(initial)
         override val authState = state
         override suspend fun acknowledgeAuthenticationGate() = Unit
+        override suspend fun logout() = Unit
         override suspend fun sendMobileCode(mobile: String): SendMobileCodeResult = unused()
         override suspend fun loginWithMobileCode(
             mobile: String,

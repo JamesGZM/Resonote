@@ -129,6 +129,8 @@ class LoginViewModelTest {
 
         override suspend fun acknowledgeAuthenticationGate() = Unit
 
+        override suspend fun logout() = Unit
+
         override suspend fun sendMobileCode(mobile: String): SendMobileCodeResult {
             sentCodeMobiles += mobile
             return sendCodeResult

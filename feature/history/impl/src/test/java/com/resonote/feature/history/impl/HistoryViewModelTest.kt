@@ -196,6 +196,7 @@ class HistoryViewModelTest {
         val state = MutableStateFlow(initial)
         override val authState: Flow<AuthState> = state
         override suspend fun acknowledgeAuthenticationGate() = Unit
+        override suspend fun logout() = Unit
         override suspend fun sendMobileCode(mobile: String): SendMobileCodeResult = error("unused")
         override suspend fun loginWithMobileCode(
             mobile: String,
