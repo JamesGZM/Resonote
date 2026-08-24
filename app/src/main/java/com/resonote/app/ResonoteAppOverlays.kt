@@ -81,12 +81,12 @@ internal fun BoxScope.ResonoteAppOverlays(
     snackbarHostState: SnackbarHostState,
     snackbarController: ResonoteSnackbarController,
     onOpenPlaylistPicker: (OnlineSong) -> Unit,
+    onSearch: (String) -> Unit,
     onOpenRiskVerification: (RiskChallengeHandle) -> Unit,
     dailyVipViewModel: DailyVipViewModel,
 ) {
     val queueNextMessage = stringResource(R.string.song_action_added_next)
     val queueAddedMessage = stringResource(R.string.song_action_added_queue)
-    val shareUnavailableMessage = stringResource(R.string.song_action_share_unavailable)
     val snackbarHostSurface = state.snackbarHostSurface
 
     if (state.queueOpen) {
@@ -132,10 +132,6 @@ internal fun BoxScope.ResonoteAppOverlays(
                 state.songActionRequest = null
                 state.infoSong = request.song
             },
-            onShareUnavailable = {
-                state.songActionRequest = null
-                snackbarController.show(shareUnavailableMessage)
-            },
             snackbarHost = {
                 if (snackbarHostSurface == SnackbarHostSurface.SongActions) {
                     ModalSnackbarHost(snackbarHostState)
@@ -164,7 +160,26 @@ internal fun BoxScope.ResonoteAppOverlays(
     }
 
     state.infoSong?.let { song ->
-        OnlineSongInfoDialog(song = song, onDismiss = { state.infoSong = null })
+        OnlineSongInfoSheet(
+            song = song,
+            onDismiss = { state.infoSong = null },
+            onSearchSong = {
+                state.infoSong = null
+                onSearch(song.title)
+            },
+            onSearchArtist = song.artist?.takeIf(String::isNotBlank)?.let { artist ->
+                {
+                    state.infoSong = null
+                    onSearch(artist)
+                }
+            },
+            onSearchAlbum = song.albumTitle?.takeIf(String::isNotBlank)?.let { album ->
+                {
+                    state.infoSong = null
+                    onSearch(album)
+                }
+            },
+        )
     }
 
     DailyVipDialogRoute(

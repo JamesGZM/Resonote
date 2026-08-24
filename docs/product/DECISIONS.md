@@ -99,3 +99,7 @@
 | 2026-08-17 | P-090 | 主 App Secondary Palette 从 Catalog 身份用 Harmonic Violet 改为由 Pulse Rose 同色相派生的低彩度 Echo Rose；Catalog 与已验收首页排行榜入口继续独立使用 Violet，但不再让其控制主 App Tonal Button、选中容器与状态卡片 | 用户指出大量淡紫容器与主 App 主题不协调并明确要求直接修改主题色，同时现行首页视觉不得回归 | Foundation、Theme、Home、Buttons、Chips、Status Surfaces 和 Roborazzi | 已确认；现行合同 |
 | 2026-08-24 | P-091 | 设置页使用单页扁平分组行，不使用大卡片；选择项固定为左侧标题、右侧当前值与箭头，音质和倍速使用底部单选弹窗；歌词暂不实现但保留入口，页面末尾内容留白必须兼容全局 Mini Player | 用户明确设置页优化方向并补充歌词、弹窗与 Mini Player 约束 | Settings、Playback、Lyrics、Mini Player 和 Roborazzi | 已确认；现行合同 |
 | 2026-08-24 | P-092 | 关于页打开时通过 GitHub 公开 Latest Release 接口检查版本；已是最新、发现新版和失败均提供明确状态，发现新版只打开对应 Release 页面，不静默下载或安装 | 用户明确要求关于页直接使用 GitHub 发布版本检测更新；修订 P-050 的更新承接方式 | Settings、About、GitHub Releases、Network 和 Distribution | 已确认；现行合同 |
+| 2026-08-24 | P-093 | 当前版本移除歌曲、Full Player、MV、歌单及其他内容的所有对外分享入口、占位提示与回调；文件管理器将音频分享给 Resonote 仍作为本地导入能力保留 | 用户明确要求去除目前所有分享功能；取代 P-027、P-035 中的分享入口约定 | Player、Song Actions、Content Details、Feedback 和 Documentation | 已确认；现行合同 |
+| 2026-08-24 | P-094 | Full Player 右上角 Sheet 直接提供下一首、队尾、添加到歌单、歌曲信息与歌词设置；歌曲信息改为 Material 3 Bottom Sheet，歌曲名和艺人可进入自动搜索并在返回时恢复原 Player | 用户明确要求移除二级歌曲操作并美化信息弹窗、增加搜索跳转 | Player、Song Actions、Search、Navigation、Overlay 和 Roborazzi | 已确认；现行合同 |
+| 2026-08-24 | P-095 | 歌词辅助文本中的翻译与音译改为两个独立持久化开关并默认同时开启；两者存在时翻译在前、音译在后，均保持低于主歌词的视觉层级 | 用户明确指出单选不适合辅助文本能力 | Lyrics、Settings、DataStore、Player 和 Roborazzi | 已确认；现行合同 |
+| 2026-08-24 | P-096 | 歌曲信息 Sheet 不显示独立 Header 或搜索操作卡片；歌曲名、艺人和专辑仅以蓝色下划线文本表达可搜索性，点击后进入对应关键词搜索 | 用户认为 Header 与搜索卡片视觉过重，并补充专辑搜索 | Player、Song Info、Search、Overlay 和 Roborazzi | 已确认；现行合同 |

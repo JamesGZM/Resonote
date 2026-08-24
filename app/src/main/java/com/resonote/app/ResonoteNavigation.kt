@@ -1,6 +1,13 @@
 package com.resonote.app
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
@@ -76,6 +83,7 @@ internal fun ResonoteNavDisplay(
     onFinishExternalTask: () -> Unit,
     onOpenSongActions: (OnlineSong, (() -> Unit)?) -> Unit,
     onOpenPlaylistPicker: (OnlineSong) -> Unit,
+    onOpenSongInfo: (OnlineSong) -> Unit,
     onOpenDailyVip: () -> Unit,
     onTabBarInsetChanged: (Dp) -> Unit,
     onVideoFullscreenChange: (Boolean) -> Unit,
@@ -254,10 +262,33 @@ internal fun ResonoteNavDisplay(
                     },
                 )
             }
-            entry<PlayerNavKey> {
+            entry<PlayerNavKey>(
+                metadata = NavDisplay.popTransitionSpec {
+                    fadeIn(animationSpec = tween(420)) togetherWith
+                        (
+                            scaleOut(
+                                targetScale = 0.18f,
+                                transformOrigin = TransformOrigin(0.5f, 0.94f),
+                                animationSpec = tween(460, easing = FastOutSlowInEasing),
+                            ) + fadeOut(animationSpec = tween(360, delayMillis = 100))
+                            )
+                } + NavDisplay.predictivePopTransitionSpec { _ ->
+                    fadeIn(animationSpec = tween(420)) togetherWith
+                        (
+                            scaleOut(
+                                targetScale = 0.18f,
+                                transformOrigin = TransformOrigin(0.5f, 0.94f),
+                                animationSpec = tween(460, easing = FastOutSlowInEasing),
+                            ) + fadeOut(animationSpec = tween(360, delayMillis = 100))
+                            )
+                },
+            ) {
                 PlayerRoute(
                     onBack = { backStack.removeLastOrNull() },
-                    onSongMoreClick = { onOpenSongActions(it, null) },
+                    onPlayNextClick = { playbackViewModel.playNextOnline(it) },
+                    onAppendToQueueClick = playbackViewModel::appendOnline,
+                    onAddToPlaylistClick = onOpenPlaylistPicker,
+                    onSongInfoClick = onOpenSongInfo,
                     onLoginRequest = {
                         if (backStack.lastOrNull() !is LoginGateNavKey) {
                             backStack.add(LoginGateNavKey(sessionExpired = false))

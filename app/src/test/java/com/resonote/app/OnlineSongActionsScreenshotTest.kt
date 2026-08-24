@@ -51,13 +51,13 @@ class OnlineSongActionsScreenshotTest {
                         onAppendToQueue = {},
                         onAddToPlaylist = { addClicks += 1 },
                         onShowInfo = {},
-                        onShareUnavailable = {},
                     )
                 }
             }
         }
 
         composeRule.onNodeWithText("添加到歌单").assertExists()
+        composeRule.onNodeWithText("分享").assertDoesNotExist()
         composeRule.onNodeWithText("下一首播放").performClick()
         assertThat(playNextClicks).isEqualTo(1)
         composeRule.onNodeWithText("从当前歌单移除").assertExists()
@@ -88,7 +88,6 @@ class OnlineSongActionsScreenshotTest {
                     onAppendToQueue = {},
                     onAddToPlaylist = {},
                     onShowInfo = {},
-                    onShareUnavailable = {},
                     snackbarHost = { ModalSnackbarHost(snackbarHostState) },
                 )
             }
@@ -96,6 +95,39 @@ class OnlineSongActionsScreenshotTest {
 
         composeRule.onNodeWithText("已添加到播放队列").assertIsDisplayed()
         composeRule.onNodeWithText("晚风信号").assertIsDisplayed()
+    }
+
+    @Test
+    fun songInfoExposesSubtleSongArtistAndAlbumSearchTargets() {
+        var songSearches = 0
+        var artistSearches = 0
+        var albumSearches = 0
+        composeRule.setContent {
+            ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                OnlineSongInfoSheet(
+                    song = song(),
+                    onDismiss = {},
+                    onSearchSong = { songSearches++ },
+                    onSearchArtist = { artistSearches++ },
+                    onSearchAlbum = { albumSearches++ },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("晚风信号").assertIsDisplayed()
+        composeRule.onNodeWithText("林澈 · 潮汐记忆").assertIsDisplayed()
+        composeRule.onNodeWithText("潮汐记忆").assertIsDisplayed()
+        composeRule.onRoot().captureRoboImage(
+            filePath = "src/test/screenshots/SongActions/SongInfoCompact.png",
+            roborazziOptions = DefaultRoborazziOptions,
+        )
+        composeRule.onNodeWithText("晚风信号").performClick()
+        composeRule.onNodeWithText("林澈 · 潮汐记忆").performClick()
+        composeRule.onNodeWithText("潮汐记忆").performClick()
+
+        assertThat(songSearches).isEqualTo(1)
+        assertThat(artistSearches).isEqualTo(1)
+        assertThat(albumSearches).isEqualTo(1)
     }
 
     private fun song() = OnlineSong(

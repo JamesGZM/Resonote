@@ -15,15 +15,13 @@
     <string name="song_action_append_queue">Add to queue</string>
     <string name="song_action_add_playlist">Add to playlist</string>
     <string name="song_action_info">Song information</string>
-    <string name="song_action_share">Share</string>
-    <string name="song_action_unavailable">Not available yet</string>
     <string name="song_action_remove_playlist">Remove from this playlist</string>
     <string name="song_action_added_queue">Added to queue</string>
     <string name="song_action_added_next">Playing next</string>
-    <string name="song_action_share_unavailable">Sharing is not available yet</string>
     <string name="song_action_login_required">Sign in to add this song to one of your playlists</string>
     <string name="song_action_add_success">Added “%1$s” to “%2$s”</string>
-    <string name="song_info_title">Song information</string>
+    <string name="song_info_details">Playback details</string>
+    <string name="song_info_artwork">Artwork for %1$s</string>
     <string name="song_info_name">Song</string>
     <string name="song_info_artist">Artist</string>
     <string name="song_info_album">Album</string>
@@ -33,5 +31,4 @@
     <string name="song_info_quality_hq">High quality</string>
     <string name="song_info_quality_hi_res">Hi-Res</string>
     <string name="song_info_quality_lossless">Lossless</string>
-    <string name="song_info_close">Close</string>
 </resources>

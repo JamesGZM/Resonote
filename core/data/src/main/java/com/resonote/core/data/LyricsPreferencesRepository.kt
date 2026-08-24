@@ -6,7 +6,6 @@ import com.resonote.core.model.LyricsDisplayMode
 import com.resonote.core.model.LyricsFontSize
 import com.resonote.core.model.LyricsHighlightMode
 import com.resonote.core.model.LyricsPreferences
-import com.resonote.core.model.LyricsSupplementalText
 import com.resonote.core.model.LyricsTextAlignment
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -25,7 +24,8 @@ internal class DefaultLyricsPreferencesRepository @Inject constructor(private va
     LyricsPreferencesRepository {
     override val preferences = storage.values.map { stored ->
         LyricsPreferences(
-            supplementalText = stored.enumOrDefault(LyricsSupplementalText.Translation) { supplementalText },
+            translationEnabled = if (stored.supplementalTextFlagsSet) stored.translationEnabled else true,
+            transliterationEnabled = if (stored.supplementalTextFlagsSet) stored.transliterationEnabled else true,
             displayMode = stored.enumOrDefault(LyricsDisplayMode.Scrolling) { displayMode },
             highlightMode = stored.enumOrDefault(LyricsHighlightMode.Word) { highlightMode },
             textAlignment = stored.enumOrDefault(LyricsTextAlignment.Center) { textAlignment },
@@ -36,12 +36,14 @@ internal class DefaultLyricsPreferencesRepository @Inject constructor(private va
 
     override suspend fun setPreferences(value: LyricsPreferences) = storage.update(
         StoredLyricsPreferences(
-            value.supplementalText.name,
-            value.displayMode.name,
-            value.highlightMode.name,
-            value.textAlignment.name,
-            value.fontSize.name,
-            value.backgroundMode.name,
+            displayMode = value.displayMode.name,
+            highlightMode = value.highlightMode.name,
+            textAlignment = value.textAlignment.name,
+            fontSize = value.fontSize.name,
+            backgroundMode = value.backgroundMode.name,
+            translationEnabled = value.translationEnabled,
+            transliterationEnabled = value.transliterationEnabled,
+            supplementalTextFlagsSet = true,
         ),
     )
 

@@ -66,6 +66,8 @@ class PlayerScreenScreenshotTest {
         composeRule.onNodeWithContentDescription("Pause").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Queue").assertIsDisplayed()
         composeRule.onNodeWithText("SQ").assertIsDisplayed()
+        composeRule.onNodeWithText("The tide brings the memories ashore").assertIsDisplayed()
+        composeRule.onNodeWithText("cháo xībǎ jì yìtuī huí àn biān").assertIsDisplayed()
 
         captureScreenRoboImage(
             filePath = "src/test/screenshots/Player/PlayerCompact_lyrics.png",
@@ -143,14 +145,50 @@ class PlayerScreenScreenshotTest {
     }
 
     @Test
-    fun onlineSongActionsRemainReachableFromOverflow() {
-        var songActionCount = 0
-        setPlayerContent(onSongMoreClick = { songActionCount++ })
+    fun onlineSongActionsDispatchDirectlyFromOverflow() {
+        var playNextCount = 0
+        var appendCount = 0
+        var addToPlaylistCount = 0
+        var infoCount = 0
+        setPlayerContent(
+            onPlayNextClick = { playNextCount++ },
+            onAppendToQueueClick = { appendCount++ },
+            onAddToPlaylistClick = { addToPlaylistCount++ },
+            onSongInfoClick = { infoCount++ },
+        )
 
         composeRule.onNodeWithContentDescription("More options").performClick()
-        composeRule.onNodeWithText("Song actions").performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText("Play next").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.mainClock.advanceTimeByFrame()
+        composeRule.waitForIdle()
+        captureScreenRoboImage(
+            filePath = "src/test/screenshots/Player/PlayerCompact_actions.png",
+            roborazziOptions = DefaultRoborazziOptions,
+        )
+        composeRule.onNodeWithText("Play next").performClick()
+        composeRule.onNodeWithContentDescription("More options").performClick()
+        composeRule.onNodeWithText("Add to queue").performClick()
+        composeRule.onNodeWithContentDescription("More options").performClick()
+        composeRule.onNodeWithText("Add to playlist").performClick()
+        composeRule.onNodeWithContentDescription("More options").performClick()
+        composeRule.onNodeWithText("Song information").performClick()
 
-        assertEquals(1, songActionCount)
+        assertEquals(1, playNextCount)
+        assertEquals(1, appendCount)
+        assertEquals(1, addToPlaylistCount)
+        assertEquals(1, infoCount)
+    }
+
+    @Test
+    fun playerActionsDoNotExposeShare() {
+        setPlayerContent()
+
+        composeRule.onNodeWithContentDescription("More options").performClick()
+
+        composeRule.onNodeWithText("Lyrics settings").assertIsDisplayed()
+        composeRule.onNodeWithText("Share").assertDoesNotExist()
     }
 
     private fun setPlayerContent(
@@ -158,7 +196,10 @@ class PlayerScreenScreenshotTest {
         onNext: () -> Unit = {},
         onPlaybackSpeedChange: (PlaybackSpeed) -> Unit = {},
         onOnlineQualityChange: (OnlinePlaybackQuality) -> Unit = {},
-        onSongMoreClick: (() -> Unit)? = null,
+        onPlayNextClick: (() -> Unit)? = null,
+        onAppendToQueueClick: (() -> Unit)? = null,
+        onAddToPlaylistClick: (() -> Unit)? = null,
+        onSongInfoClick: (() -> Unit)? = null,
         initialPage: Int = 0,
     ) {
         composeRule.setContent {
@@ -181,7 +222,10 @@ class PlayerScreenScreenshotTest {
                         onRemoveQueueItem = {},
                         onClearQueue = {},
                         initialPage = initialPage,
-                        onSongMoreClick = onSongMoreClick,
+                        onPlayNextClick = onPlayNextClick,
+                        onAppendToQueueClick = onAppendToQueueClick,
+                        onAddToPlaylistClick = onAddToPlaylistClick,
+                        onSongInfoClick = onSongInfoClick,
                         paletteSeed = PlayerPaletteSeed(
                             mediaId = "current",
                             artworkUri = "test-artwork",

@@ -9,9 +9,12 @@
     <string name="feature_player_impl_collapse">Collapse player</string>
     <string name="feature_player_impl_more">More options</string>
     <string name="feature_player_impl_previous">Previous</string>
-    <string name="feature_player_impl_share">Share</string>
-    <string name="feature_player_impl_share_unavailable">Sharing is not available yet</string>
-    <string name="feature_player_impl_song_actions">Song actions</string>
+    <string name="feature_player_impl_play_next">Play next</string>
+    <string name="feature_player_impl_append_queue">Add to queue</string>
+    <string name="feature_player_impl_add_playlist">Add to playlist</string>
+    <string name="feature_player_impl_song_info">Song information</string>
+    <string name="feature_player_impl_added_next">Playing next</string>
+    <string name="feature_player_impl_added_queue">Added to queue</string>
     <string name="feature_player_impl_lyrics_settings">Lyrics settings</string>
     <string name="feature_player_impl_like">Like</string>
     <string name="feature_player_impl_like_failed">Could not update “My Likes”</string>

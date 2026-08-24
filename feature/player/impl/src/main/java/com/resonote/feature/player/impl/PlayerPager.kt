@@ -67,7 +67,6 @@ import com.resonote.core.model.LyricsDisplayMode
 import com.resonote.core.model.LyricsFontSize
 import com.resonote.core.model.LyricsHighlightMode
 import com.resonote.core.model.LyricsPreferences
-import com.resonote.core.model.LyricsSupplementalText
 import com.resonote.core.model.LyricsTextAlignment
 import com.resonote.core.playback.PlaybackMetadata
 import kotlinx.coroutines.delay
@@ -103,7 +102,7 @@ internal fun PlayerPager(
 @Composable
 internal fun PlayerPageIndicator(currentPage: Int, palette: PlayerPalette) {
     Row(
-        Modifier.padding(top = 5.dp, bottom = 3.dp),
+        Modifier.padding(vertical = 10.dp),
         horizontalArrangement = Arrangement.spacedBy(7.dp),
     ) {
         repeat(2) { index ->
@@ -142,10 +141,10 @@ private fun CoverPage(song: PlaybackMetadata, palette: PlayerPalette) {
                 song.artworkUri,
                 null,
                 artworkSize.clip(shape).graphicsLayer {
-                    scaleX = 1.08f
-                    scaleY = 1.08f
-                    alpha = 0.34f
-                }.blur(32.dp, BlurredEdgeTreatment.Unbounded),
+                    scaleX = 1.06f
+                    scaleY = 1.06f
+                    alpha = 0.52f
+                }.blur(28.dp, BlurredEdgeTreatment.Unbounded),
                 contentScale = ContentScale.Crop,
             )
         }
@@ -155,11 +154,11 @@ private fun CoverPage(song: PlaybackMetadata, palette: PlayerPalette) {
             modifier = artworkSize
                 .testTag("player-cover-artwork")
                 .shadow(
-                    elevation = 20.dp,
+                    elevation = 28.dp,
                     shape = shape,
                     clip = false,
-                    ambientColor = Color.Black.copy(alpha = 0.58f),
-                    spotColor = Color.Black.copy(alpha = 0.72f),
+                    ambientColor = Color.Black.copy(alpha = 0.72f),
+                    spotColor = Color.Black.copy(alpha = 0.86f),
                 )
                 .resonoteHeroElement(ResonotePlayerHeroKeys.artwork(song.mediaId)),
             shape = shape,
@@ -180,7 +179,10 @@ private fun LyricsPage(
     onSeek: (Long) -> Unit,
     onRetry: () -> Unit,
 ) {
-    Box(Modifier.fillMaxSize().padding(horizontal = 28.dp), contentAlignment = Alignment.Center) {
+    Box(
+        Modifier.fillMaxSize().padding(horizontal = 28.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center,
+    ) {
         when (lyrics) {
             LyricsUiState.Idle, LyricsUiState.Loading -> CircularProgressIndicator(
                 Modifier.size(32.dp),
@@ -228,15 +230,20 @@ private fun SyncedLyrics(
     LaunchedEffect(activeIndex, follow) {
         if (follow) {
             withFrameNanos {}
+            if (listState.layoutInfo.visibleItemsInfo.none { it.index == activeIndex }) {
+                listState.scrollToItem(activeIndex)
+                withFrameNanos {}
+            }
             val viewportHeight = listState.layoutInfo.viewportSize.height
             if (viewportHeight > 0) {
                 val targetHeight = listState.layoutInfo.visibleItemsInfo
                     .firstOrNull { it.index == activeIndex }
                     ?.size
                     ?: with(density) { 72.dp.roundToPx() }
+                val upwardBias = with(density) { 8.dp.roundToPx() }
                 listState.animateScrollToItem(
                     activeIndex,
-                    -((viewportHeight - targetHeight).coerceAtLeast(0) / 2),
+                    -((viewportHeight - targetHeight).coerceAtLeast(0) / 2) + upwardBias,
                 )
             }
         }
@@ -252,8 +259,8 @@ private fun SyncedLyrics(
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize().testTag("player-lyrics"),
-        contentPadding = PaddingValues(vertical = 120.dp),
-        verticalArrangement = Arrangement.spacedBy(22.dp),
+        contentPadding = PaddingValues(vertical = 96.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         itemsIndexed(lines, key = { index, line -> "${line.timeMillis}-$index" }) { index, line ->
             LyricLineContent(line, index == activeIndex, preferences, positionMillis, palette, onSeek)
@@ -338,14 +345,18 @@ private fun LyricLineContent(
             lineHeight = activeSize * 1.35f,
             fontWeight = FontWeight.Bold,
         )
-        line.supplemental(preferences)?.let {
+        line.supplemental(preferences).forEachIndexed { index, supplemental ->
             Text(
-                it,
-                Modifier.fillMaxWidth().padding(top = 5.dp),
-                color = lerp(palette.contentMuted, palette.contentSecondary, emphasis),
+                supplemental.text,
+                Modifier.fillMaxWidth().padding(top = if (index == 0) 5.dp else 2.dp),
+                color = lerp(
+                    palette.contentMuted,
+                    palette.contentSecondary,
+                    emphasis * if (supplemental.isTransliteration) 0.72f else 1f,
+                ),
                 textAlign = alignment,
-                fontSize = activeSize * 0.68f,
-                lineHeight = activeSize * 0.9f,
+                fontSize = activeSize * if (supplemental.isTransliteration) 0.60f else 0.68f,
+                lineHeight = activeSize * if (supplemental.isTransliteration) 0.82f else 0.9f,
             )
         }
     }
@@ -360,18 +371,26 @@ private fun String.codePointStrings(): List<String> = buildList {
     }
 }
 
-private fun LyricLine.supplemental(preferences: LyricsPreferences): String? = when (preferences.supplementalText) {
-    LyricsSupplementalText.Translation -> translation ?: transliteration
-    LyricsSupplementalText.Transliteration -> transliteration ?: translation
+private data class SupplementalLyric(val text: String, val isTransliteration: Boolean)
+
+private fun LyricLine.supplemental(preferences: LyricsPreferences): List<SupplementalLyric> = buildList {
+    if (preferences.translationEnabled) {
+        translation?.takeIf(String::isNotBlank)?.let { add(SupplementalLyric(it, false)) }
+    }
+    if (preferences.transliterationEnabled) {
+        transliteration?.takeIf(String::isNotBlank)?.let { value ->
+            if (none { it.text == value }) add(SupplementalLyric(value, true))
+        }
+    }
 }
 
 private fun LyricsFontSize.activeSize(): TextUnit = when (this) {
-    LyricsFontSize.Small -> 24.sp
-    LyricsFontSize.Medium -> 28.sp
-    LyricsFontSize.Large -> 32.sp
+    LyricsFontSize.Small -> 21.sp
+    LyricsFontSize.Medium -> 24.sp
+    LyricsFontSize.Large -> 28.sp
 }
 private fun LyricsFontSize.inactiveSize(): TextUnit = when (this) {
-    LyricsFontSize.Small -> 17.sp
-    LyricsFontSize.Medium -> 19.sp
-    LyricsFontSize.Large -> 22.sp
+    LyricsFontSize.Small -> 15.sp
+    LyricsFontSize.Medium -> 17.sp
+    LyricsFontSize.Large -> 20.sp
 }

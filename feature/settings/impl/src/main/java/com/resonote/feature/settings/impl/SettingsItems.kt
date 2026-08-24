@@ -232,6 +232,7 @@ internal fun SettingsSwitchRow(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     supportingText: String? = null,
+    switchTestTag: String? = null,
 ) {
     Row(
         modifier = modifier.fillMaxWidth().heightIn(min = 64.dp).padding(horizontal = 16.dp, vertical = 8.dp),
@@ -249,7 +250,12 @@ internal fun SettingsSwitchRow(
             }
         }
         Spacer(Modifier.width(12.dp))
-        Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            modifier = if (switchTestTag == null) Modifier else Modifier.testTag(switchTestTag),
+            enabled = enabled,
+        )
     }
 }
 

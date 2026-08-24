@@ -12,6 +12,9 @@ data class LyricsPreferences(
     val textAlignment: String = "",
     val fontSize: String = "",
     val backgroundMode: String = "",
+    val translationEnabled: Boolean = false,
+    val transliterationEnabled: Boolean = false,
+    val supplementalTextFlagsSet: Boolean = false,
 ) {
     fun writeTo(output: OutputStream) {
         CodedOutputStream.newInstance(output).apply {
@@ -21,6 +24,9 @@ data class LyricsPreferences(
             if (textAlignment.isNotEmpty()) writeString(4, textAlignment)
             if (fontSize.isNotEmpty()) writeString(5, fontSize)
             if (backgroundMode.isNotEmpty()) writeString(6, backgroundMode)
+            if (translationEnabled) writeBool(7, true)
+            if (transliterationEnabled) writeBool(8, true)
+            if (supplementalTextFlagsSet) writeBool(9, true)
             flush()
         }
     }
@@ -36,6 +42,9 @@ data class LyricsPreferences(
             var textAlignment = ""
             var fontSize = ""
             var backgroundMode = ""
+            var translationEnabled = false
+            var transliterationEnabled = false
+            var supplementalTextFlagsSet = false
             while (!coded.isAtEnd) {
                 when (val tag = coded.readTag()) {
                     0 -> break
@@ -45,16 +54,22 @@ data class LyricsPreferences(
                     34 -> textAlignment = coded.readStringRequireUtf8()
                     42 -> fontSize = coded.readStringRequireUtf8()
                     50 -> backgroundMode = coded.readStringRequireUtf8()
+                    56 -> translationEnabled = coded.readBool()
+                    64 -> transliterationEnabled = coded.readBool()
+                    72 -> supplementalTextFlagsSet = coded.readBool()
                     else -> coded.skipField(tag)
                 }
             }
             return LyricsPreferences(
-                supplementalText,
-                displayMode,
-                highlightMode,
-                textAlignment,
-                fontSize,
-                backgroundMode,
+                supplementalText = supplementalText,
+                displayMode = displayMode,
+                highlightMode = highlightMode,
+                textAlignment = textAlignment,
+                fontSize = fontSize,
+                backgroundMode = backgroundMode,
+                translationEnabled = translationEnabled,
+                transliterationEnabled = transliterationEnabled,
+                supplementalTextFlagsSet = supplementalTextFlagsSet,
             )
         }
     }
