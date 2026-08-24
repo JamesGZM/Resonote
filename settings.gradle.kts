@@ -79,6 +79,6 @@ include(":feature:vip:impl")
 include(":feature:video:api")
 include(":feature:video:impl")
 
-check(JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
-    "Resonote requires JDK 17 or newer. Current JDK: ${JavaVersion.current()}"
+check(JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_21)) {
+    "Resonote requires JDK 21 or newer. Current JDK: ${JavaVersion.current()}"
 }

@@ -352,6 +352,13 @@ class DefaultHomeRepositoryTest {
         assertThat(resolved.source.cacheKey).isEqualTo("online:hash:HighResolution:preview")
         assertThat(requestedQuality).isEqualTo("high")
 
+        val overridden = repository.resolveSource(
+            song,
+            OnlinePlaybackQuality.Lossless,
+        ) as ResolveSongSourceResult.Resolved
+        assertThat(overridden.source.cacheKey).isEqualTo("online:hash:Lossless:preview")
+        assertThat(requestedQuality).isEqualTo("flac")
+
         network.source =
             { _, _, _, _ -> throw ApiPlaybackUnavailableException(ApiPlaybackUnavailableException.Reason.Vip) }
         val unavailable = repository.resolveSource(song) as ResolveSongSourceResult.Unavailable

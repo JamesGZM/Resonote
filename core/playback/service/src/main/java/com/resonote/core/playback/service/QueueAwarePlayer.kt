@@ -36,15 +36,11 @@ internal class QueueAwarePlayer(player: Player, private val commandRouter: Playb
         }
 
     private companion object {
-        val QUEUE_COMMANDS = setOf(
-            Player.COMMAND_SEEK_TO_NEXT,
-            Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM,
-            Player.COMMAND_SEEK_TO_PREVIOUS,
-            Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM,
-        )
-
         fun withQueueCommands(commands: Player.Commands): Player.Commands = commands.buildUpon()
-            .addAll(*QUEUE_COMMANDS.toIntArray())
+            .add(Player.COMMAND_SEEK_TO_NEXT)
+            .add(Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
+            .add(Player.COMMAND_SEEK_TO_PREVIOUS)
+            .add(Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
             .build()
     }
 }

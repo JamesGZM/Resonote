@@ -14,6 +14,7 @@ import com.resonote.core.model.LocalMediaDuplicateAction
 import com.resonote.core.model.LocalMediaId
 import com.resonote.core.model.LocalMediaImportResult
 import com.resonote.core.model.LocalMediaPlaybackSource
+import com.resonote.core.model.OnlinePlaybackQuality
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.ResolveSongSourceResult
 import com.resonote.core.model.ResolvedSongSource
@@ -52,6 +53,20 @@ class PlaybackSourceResolverTest {
     }
 
     @Test
+    fun onlineItemPassesItsPerSongQualityOverride() = runTest {
+        val songRepository = FakeSongRepository()
+        val resolver = PlaybackSourceResolver(songRepository, FakeCloudRepository(), FakeLocalRepository())
+
+        resolver.resolve(
+            PlaybackItem(song("lossless")).copy(
+                onlineQualityOverride = OnlinePlaybackQuality.Lossless,
+            ),
+        )
+
+        assertThat(songRepository.qualityOverrides).containsExactly(OnlinePlaybackQuality.Lossless)
+    }
+
+    @Test
     fun localItemUsesPersistentPrivateSourceWithoutNetworkResolution() = runTest {
         val songRepository = FakeSongRepository()
         val cloudRepository = FakeCloudRepository()
@@ -70,9 +85,14 @@ class PlaybackSourceResolverTest {
 
     private class FakeSongRepository : SongPlaybackRepository {
         val resolvedHashes = mutableListOf<String>()
+        val qualityOverrides = mutableListOf<OnlinePlaybackQuality?>()
 
-        override suspend fun resolveSource(song: OnlineSong): ResolveSongSourceResult {
+        override suspend fun resolveSource(
+            song: OnlineSong,
+            qualityOverride: OnlinePlaybackQuality?,
+        ): ResolveSongSourceResult {
             resolvedHashes += song.hash
+            qualityOverrides += qualityOverride
             return resolved(song.hash)
         }
     }

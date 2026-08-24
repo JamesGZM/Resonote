@@ -1,21 +1,26 @@
 package com.resonote.feature.player.impl
 
-import androidx.compose.foundation.Canvas
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -23,8 +28,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -32,23 +35,40 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.BlurredEdgeTreatment
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.resonote.core.designsystem.component.ResonoteArtwork
 import com.resonote.core.designsystem.component.ResonoteArtworkState
-import com.resonote.core.designsystem.tokens.ResonoteTokens
+import com.resonote.core.designsystem.component.resonoteHeroElement
 import com.resonote.core.model.LyricLine
+import com.resonote.core.model.LyricsDisplayMode
+import com.resonote.core.model.LyricsFontSize
+import com.resonote.core.model.LyricsHighlightMode
+import com.resonote.core.model.LyricsPreferences
+import com.resonote.core.model.LyricsSupplementalText
+import com.resonote.core.model.LyricsTextAlignment
 import com.resonote.core.playback.PlaybackMetadata
 import kotlinx.coroutines.delay
 
@@ -56,205 +76,302 @@ import kotlinx.coroutines.delay
 internal fun PlayerPager(
     song: PlaybackMetadata,
     lyrics: LyricsUiState,
+    preferences: LyricsPreferences,
     positionMillis: Long,
+    palette: PlayerPalette,
     onSeek: (Long) -> Unit,
     onRetryLyrics: () -> Unit,
     initialPage: Int,
+    onPageChanged: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val pagerState = rememberPagerState(initialPage = initialPage.coerceIn(0, 1), pageCount = { 2 })
-    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.weight(1f).fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) { page ->
-            when (page) {
-                0 -> CoverPage(song)
-                else -> LyricsPage(lyrics, positionMillis, onSeek, onRetryLyrics)
-            }
-        }
-        Row(
-            modifier = Modifier.padding(top = 10.dp, bottom = 2.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            repeat(2) { index ->
-                Box(
-                    Modifier
-                        .width(if (pagerState.currentPage == index) 22.dp else 6.dp)
-                        .height(6.dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (pagerState.currentPage == index) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.22f)
-                            },
-                        ),
-                )
-            }
+    LaunchedEffect(pagerState.currentPage) { onPageChanged(pagerState.currentPage) }
+    HorizontalPager(
+        state = pagerState,
+        modifier = modifier.fillMaxWidth().clipToBounds(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) { page ->
+        if (page == 0) {
+            CoverPage(song, palette)
+        } else {
+            LyricsPage(lyrics, preferences, positionMillis, palette, onSeek, onRetryLyrics)
         }
     }
 }
 
 @Composable
-private fun CoverPage(song: PlaybackMetadata) {
+internal fun PlayerPageIndicator(currentPage: Int, palette: PlayerPalette) {
+    Row(
+        Modifier.padding(top = 5.dp, bottom = 3.dp),
+        horizontalArrangement = Arrangement.spacedBy(7.dp),
+    ) {
+        repeat(2) { index ->
+            Box(
+                Modifier
+                    .width(if (currentPage == index) 24.dp else 7.dp)
+                    .height(7.dp)
+                    .clip(CircleShape)
+                    .background(if (currentPage == index) palette.accent else palette.contentMuted),
+            )
+        }
+    }
+}
+
+@Composable
+private fun CoverPage(song: PlaybackMetadata, palette: PlayerPalette) {
+    val shape = RoundedCornerShape(22.dp)
+    val artworkSize = Modifier.fillMaxWidth().widthIn(max = 380.dp).aspectRatio(1f)
     Box(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 36.dp, vertical = 14.dp),
+        Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Box(
-            Modifier
-                .fillMaxWidth(0.92f)
-                .aspectRatio(1f)
-                .background(
-                    Brush.radialGradient(
-                        listOf(MaterialTheme.colorScheme.primary.copy(alpha = 0.24f), Color.Transparent),
-                    ),
-                    CircleShape,
-                ),
-        )
+        if (song.artworkUri.isNullOrBlank()) {
+            Box(
+                artworkSize
+                    .background(palette.accent.copy(alpha = 0.28f), shape)
+                    .graphicsLayer {
+                        scaleX = 1.06f
+                        scaleY = 1.06f
+                        alpha = 0.30f
+                    }
+                    .blur(30.dp, BlurredEdgeTreatment.Unbounded),
+            )
+        } else {
+            AsyncImage(
+                song.artworkUri,
+                null,
+                artworkSize.clip(shape).graphicsLayer {
+                    scaleX = 1.08f
+                    scaleY = 1.08f
+                    alpha = 0.34f
+                }.blur(32.dp, BlurredEdgeTreatment.Unbounded),
+                contentScale = ContentScale.Crop,
+            )
+        }
         ResonoteArtwork(
-            state = ResonoteArtworkState.LOADED,
+            state = if (song.artworkUri.isNullOrBlank()) ResonoteArtworkState.MISSING else ResonoteArtworkState.LOADED,
             contentDescription = stringResource(R.string.feature_player_impl_artwork, song.title),
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1f)
-                .shadow(ResonoteTokens.elevation.level3.maximumShadow, RoundedCornerShape(28.dp)),
-        ) {
-            SignalArtwork(song.mediaId)
-            if (!song.artworkUri.isNullOrBlank()) {
-                AsyncImage(
-                    model = song.artworkUri,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
+            modifier = artworkSize
+                .testTag("player-cover-artwork")
+                .shadow(
+                    elevation = 20.dp,
+                    shape = shape,
+                    clip = false,
+                    ambientColor = Color.Black.copy(alpha = 0.58f),
+                    spotColor = Color.Black.copy(alpha = 0.72f),
                 )
+                .resonoteHeroElement(ResonotePlayerHeroKeys.artwork(song.mediaId)),
+            shape = shape,
+        ) {
+            if (!song.artworkUri.isNullOrBlank()) {
+                AsyncImage(song.artworkUri, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
             }
         }
     }
 }
 
 @Composable
-private fun SignalArtwork(seed: String) {
-    val primary = MaterialTheme.colorScheme.primary
-    val secondary = MaterialTheme.colorScheme.secondary
-    val surface = MaterialTheme.colorScheme.surface
-    val onPrimary = MaterialTheme.colorScheme.onPrimary
-    val phase = (seed.hashCode().ushr(1) % 90).toFloat()
-    Canvas(
-        Modifier
-            .fillMaxSize()
-            .background(Brush.linearGradient(listOf(surface, primary.copy(alpha = 0.72f), secondary))),
-    ) {
-        val center = center.copy(x = center.x * 1.08f, y = center.y * 0.92f)
-        val step = size.minDimension / 13f
-        repeat(7) { ring ->
-            drawCircle(
-                color = onPrimary.copy(alpha = 0.08f + ring * 0.018f),
-                radius = step * (ring + 1),
-                center = center,
-                style = Stroke(width = 1.2.dp.toPx()),
-            )
-        }
-        repeat(5) { arc ->
-            drawArc(
-                color = onPrimary.copy(alpha = 0.18f + arc * 0.07f),
-                startAngle = phase + arc * 21f,
-                sweepAngle = 72f + arc * 12f,
-                useCenter = false,
-                topLeft = androidx.compose.ui.geometry.Offset(center.x - step * (arc + 2), center.y - step * (arc + 2)),
-                size = androidx.compose.ui.geometry.Size(step * (arc + 2) * 2, step * (arc + 2) * 2),
-                style = Stroke(width = (1.5f + arc * 0.7f).dp.toPx()),
-            )
-        }
-        drawCircle(onPrimary.copy(alpha = 0.92f), radius = step * 0.36f, center = center)
-        drawCircle(primary, radius = step * 0.15f, center = center)
-    }
-}
-
-@Composable
-private fun LyricsPage(lyrics: LyricsUiState, positionMillis: Long, onSeek: (Long) -> Unit, onRetry: () -> Unit) {
-    Box(Modifier.fillMaxSize().padding(horizontal = 24.dp), contentAlignment = Alignment.Center) {
+private fun LyricsPage(
+    lyrics: LyricsUiState,
+    preferences: LyricsPreferences,
+    positionMillis: Long,
+    palette: PlayerPalette,
+    onSeek: (Long) -> Unit,
+    onRetry: () -> Unit,
+) {
+    Box(Modifier.fillMaxSize().padding(horizontal = 28.dp), contentAlignment = Alignment.Center) {
         when (lyrics) {
-            LyricsUiState.Idle,
-            LyricsUiState.Loading,
-            -> CircularProgressIndicator(Modifier.size(32.dp), strokeWidth = 3.dp)
-            LyricsUiState.Empty, LyricsUiState.Unavailable ->
-                LyricsMessage(stringResource(R.string.feature_player_impl_lyrics_empty))
+            LyricsUiState.Idle, LyricsUiState.Loading -> CircularProgressIndicator(
+                Modifier.size(32.dp),
+                color = palette.accent,
+                strokeWidth = 3.dp,
+            )
+            LyricsUiState.Empty, LyricsUiState.Unavailable -> LyricsMessage(
+                stringResource(R.string.feature_player_impl_lyrics_empty),
+                palette,
+            )
             is LyricsUiState.Error -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                LyricsMessage(lyrics.failure.lyricsMessage())
+                LyricsMessage(lyrics.failure.lyricsMessage(), palette)
                 Button(onClick = onRetry, modifier = Modifier.padding(top = 16.dp)) {
                     Text(stringResource(R.string.feature_player_impl_retry))
                 }
             }
-            is LyricsUiState.Content -> SyncedLyrics(lyrics.lines, positionMillis, onSeek)
+            is LyricsUiState.Content -> SyncedLyrics(
+                lyrics.document.lines,
+                preferences,
+                positionMillis,
+                palette,
+                onSeek,
+            )
         }
     }
 }
 
 @Composable
-private fun SyncedLyrics(lines: List<LyricLine>, positionMillis: Long, onSeek: (Long) -> Unit) {
-    val activeIndex = lines.indexOfLast { it.timeMillis <= positionMillis }
+private fun SyncedLyrics(
+    lines: List<LyricLine>,
+    preferences: LyricsPreferences,
+    positionMillis: Long,
+    palette: PlayerPalette,
+    onSeek: (Long) -> Unit,
+) {
+    val activeIndex = lines.indexOfLast { it.timeMillis <= positionMillis }.coerceAtLeast(0)
+    if (preferences.displayMode == LyricsDisplayMode.SingleLine) {
+        LyricLineContent(lines[activeIndex], true, preferences, positionMillis, palette, onSeek)
+        return
+    }
     val listState = rememberLazyListState()
-    val isDragged by listState.interactionSource.collectIsDraggedAsState()
-    var followEnabled by remember { mutableStateOf(true) }
-
-    LaunchedEffect(activeIndex, followEnabled) {
-        if (followEnabled && activeIndex >= 0) listState.animateScrollToItem(activeIndex, scrollOffset = -180)
-    }
-    LaunchedEffect(isDragged) {
-        if (isDragged) {
-            followEnabled = false
-        } else if (!followEnabled) {
-            delay(3_500)
-            followEnabled = true
-        }
-    }
-
-    LazyColumn(
-        state = listState,
-        modifier = Modifier.fillMaxSize().testTag("player-lyrics"),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 160.dp),
-        verticalArrangement = Arrangement.spacedBy(22.dp),
-    ) {
-        items(lines.size, key = { "${lines[it].timeMillis}-$it" }) { index ->
-            val line = lines[index]
-            val active = index == activeIndex
-            Surface(
-                onClick = { onSeek(line.timeMillis) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = ResonoteTokens.touchTargets.minimum),
-                shape = MaterialTheme.shapes.medium,
-                color = if (active) {
-                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.52f)
-                } else {
-                    Color.Transparent
-                },
-                contentColor = if (active) {
-                    MaterialTheme.colorScheme.onPrimaryContainer
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.72f)
-                },
-            ) {
-                Text(
-                    text = line.text,
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                    style = if (active) {
-                        MaterialTheme.typography.headlineSmall
-                    } else {
-                        MaterialTheme.typography.titleMedium
-                    },
-                    fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
-                    lineHeight =
-                    if (active) {
-                        MaterialTheme.typography.headlineSmall.lineHeight
-                    } else {
-                        MaterialTheme.typography.titleMedium.lineHeight
-                    },
+    val density = LocalDensity.current
+    val dragged by listState.interactionSource.collectIsDraggedAsState()
+    var follow by remember { mutableStateOf(true) }
+    LaunchedEffect(activeIndex, follow) {
+        if (follow) {
+            withFrameNanos {}
+            val viewportHeight = listState.layoutInfo.viewportSize.height
+            if (viewportHeight > 0) {
+                val targetHeight = listState.layoutInfo.visibleItemsInfo
+                    .firstOrNull { it.index == activeIndex }
+                    ?.size
+                    ?: with(density) { 72.dp.roundToPx() }
+                listState.animateScrollToItem(
+                    activeIndex,
+                    -((viewportHeight - targetHeight).coerceAtLeast(0) / 2),
                 )
             }
         }
     }
+    LaunchedEffect(dragged) {
+        if (dragged) {
+            follow = false
+        } else if (!follow) {
+            delay(3_500)
+            follow = true
+        }
+    }
+    LazyColumn(
+        state = listState,
+        modifier = Modifier.fillMaxSize().testTag("player-lyrics"),
+        contentPadding = PaddingValues(vertical = 120.dp),
+        verticalArrangement = Arrangement.spacedBy(22.dp),
+    ) {
+        itemsIndexed(lines, key = { index, line -> "${line.timeMillis}-$index" }) { index, line ->
+            LyricLineContent(line, index == activeIndex, preferences, positionMillis, palette, onSeek)
+        }
+    }
+}
+
+@Composable
+private fun LyricLineContent(
+    line: LyricLine,
+    active: Boolean,
+    preferences: LyricsPreferences,
+    positionMillis: Long,
+    palette: PlayerPalette,
+    onSeek: (Long) -> Unit,
+) {
+    val alignment = if (preferences.textAlignment == LyricsTextAlignment.Center) TextAlign.Center else TextAlign.Start
+    val activeSize = preferences.fontSize.activeSize()
+    val inactiveSize = preferences.fontSize.inactiveSize()
+    val emphasis by animateFloatAsState(
+        targetValue = if (active) 1f else 0f,
+        animationSpec = tween(durationMillis = 300),
+        label = "lyric line emphasis",
+    )
+    val baseColor = lerp(palette.contentMuted, palette.contentPrimary, emphasis)
+    val lineScale = inactiveSize.value / activeSize.value +
+        (1f - inactiveSize.value / activeSize.value) * emphasis
+    val syllableProgress = line.syllables.map { syllable ->
+        val target = when {
+            !active -> 0f
+            preferences.highlightMode == LyricsHighlightMode.Line -> 1f
+            positionMillis <= syllable.startTimeMillis -> 0f
+            positionMillis >= syllable.endTimeMillis -> 1f
+            else -> (positionMillis - syllable.startTimeMillis).toFloat() /
+                (syllable.endTimeMillis - syllable.startTimeMillis).coerceAtLeast(1L)
+        }
+        animateFloatAsState(
+            targetValue = target.coerceIn(0f, 1f),
+            animationSpec = tween(durationMillis = 520, easing = LinearEasing),
+            label = "lyric syllable progress",
+        ).value
+    }
+    val annotated = buildAnnotatedString {
+        line.syllables.forEachIndexed { index, syllable ->
+            val characters = syllable.text.codePointStrings()
+            characters.forEachIndexed { characterIndex, character ->
+                val characterProgress = (
+                    syllableProgress[index] * characters.size.coerceAtLeast(1) - characterIndex
+                    ).coerceIn(0f, 1f)
+                pushStyle(SpanStyle(color = lerp(baseColor, palette.accent, characterProgress)))
+                append(character)
+                pop()
+            }
+        }
+    }
+    Column(
+        Modifier.fillMaxWidth()
+            .graphicsLayer {
+                scaleX = lineScale
+                scaleY = lineScale
+                transformOrigin = if (preferences.textAlignment == LyricsTextAlignment.Center) {
+                    TransformOrigin.Center
+                } else {
+                    TransformOrigin(0f, 0.5f)
+                }
+            }
+            .clickable { onSeek(line.timeMillis) }
+            .padding(vertical = 6.dp),
+        horizontalAlignment = if (preferences.textAlignment ==
+            LyricsTextAlignment.Center
+        ) {
+            Alignment.CenterHorizontally
+        } else {
+            Alignment.Start
+        },
+    ) {
+        Text(
+            annotated,
+            Modifier.fillMaxWidth(),
+            textAlign = alignment,
+            fontSize = activeSize,
+            lineHeight = activeSize * 1.35f,
+            fontWeight = FontWeight.Bold,
+        )
+        line.supplemental(preferences)?.let {
+            Text(
+                it,
+                Modifier.fillMaxWidth().padding(top = 5.dp),
+                color = lerp(palette.contentMuted, palette.contentSecondary, emphasis),
+                textAlign = alignment,
+                fontSize = activeSize * 0.68f,
+                lineHeight = activeSize * 0.9f,
+            )
+        }
+    }
+}
+
+private fun String.codePointStrings(): List<String> = buildList {
+    var offset = 0
+    while (offset < length) {
+        val next = offset + Character.charCount(Character.codePointAt(this@codePointStrings, offset))
+        add(substring(offset, next))
+        offset = next
+    }
+}
+
+private fun LyricLine.supplemental(preferences: LyricsPreferences): String? = when (preferences.supplementalText) {
+    LyricsSupplementalText.Translation -> translation ?: transliteration
+    LyricsSupplementalText.Transliteration -> transliteration ?: translation
+}
+
+private fun LyricsFontSize.activeSize(): TextUnit = when (this) {
+    LyricsFontSize.Small -> 24.sp
+    LyricsFontSize.Medium -> 28.sp
+    LyricsFontSize.Large -> 32.sp
+}
+private fun LyricsFontSize.inactiveSize(): TextUnit = when (this) {
+    LyricsFontSize.Small -> 17.sp
+    LyricsFontSize.Medium -> 19.sp
+    LyricsFontSize.Large -> 22.sp
 }

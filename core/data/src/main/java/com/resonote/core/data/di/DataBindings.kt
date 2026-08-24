@@ -10,8 +10,10 @@ import com.resonote.core.data.DefaultCloudRepository
 import com.resonote.core.data.DefaultContentCatalogRepository
 import com.resonote.core.data.DefaultHomeRepository
 import com.resonote.core.data.DefaultLibraryRepository
+import com.resonote.core.data.DefaultLikedSongsRepository
 import com.resonote.core.data.DefaultListeningHistoryRepository
 import com.resonote.core.data.DefaultLocalMediaRepository
+import com.resonote.core.data.DefaultLyricsPreferencesRepository
 import com.resonote.core.data.DefaultLyricsRepository
 import com.resonote.core.data.DefaultPlaybackPreferencesRepository
 import com.resonote.core.data.DefaultPlaybackSessionRepository
@@ -30,8 +32,10 @@ import com.resonote.core.data.EncryptedApiSessionStore
 import com.resonote.core.data.HomeRecommendationSampler
 import com.resonote.core.data.HomeRepository
 import com.resonote.core.data.LibraryRepository
+import com.resonote.core.data.LikedSongsRepository
 import com.resonote.core.data.ListeningHistoryRepository
 import com.resonote.core.data.LocalMediaRepository
+import com.resonote.core.data.LyricsPreferencesRepository
 import com.resonote.core.data.LyricsRepository
 import com.resonote.core.data.PlaybackPreferencesRepository
 import com.resonote.core.data.PlaybackSessionRepository
@@ -80,6 +84,11 @@ internal abstract class DataBindings {
     ): PlaybackPreferencesRepository
 
     @Binds
+    abstract fun bindLyricsPreferencesRepository(
+        implementation: DefaultLyricsPreferencesRepository,
+    ): LyricsPreferencesRepository
+
+    @Binds
     abstract fun bindPlaybackSessionRepository(
         implementation: DefaultPlaybackSessionRepository,
     ): PlaybackSessionRepository
@@ -97,6 +106,9 @@ internal abstract class DataBindings {
 
     @Binds
     abstract fun bindLibraryRepository(implementation: DefaultLibraryRepository): LibraryRepository
+
+    @Binds
+    abstract fun bindLikedSongsRepository(implementation: DefaultLikedSongsRepository): LikedSongsRepository
 
     @Binds
     abstract fun bindLocalMediaRepository(implementation: DefaultLocalMediaRepository): LocalMediaRepository

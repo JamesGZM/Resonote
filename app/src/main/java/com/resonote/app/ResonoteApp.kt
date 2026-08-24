@@ -1,5 +1,9 @@
 package com.resonote.app
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -21,6 +25,7 @@ import com.resonote.core.designsystem.component.LocalResonoteSnackbarController
 import com.resonote.core.designsystem.component.ResonoteHeroTransitionLayout
 import com.resonote.core.designsystem.component.ResonoteSnackbarController
 import com.resonote.core.designsystem.component.rememberResonoteSnackbarController
+import com.resonote.core.designsystem.tokens.ResonoteTokens
 import com.resonote.core.model.AuthState
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.RiskChallengeHandle
@@ -33,13 +38,17 @@ import com.resonote.feature.library.impl.MyViewModel
 import com.resonote.feature.library.impl.PlaylistAdditionUiState
 import com.resonote.feature.local.api.LocalMusicNavKey
 import com.resonote.feature.player.api.PlayerNavKey
+import com.resonote.feature.player.impl.PlayerPalette
+import com.resonote.feature.player.impl.PlayerPaletteViewModel
 import com.resonote.feature.video.api.VideoNavKey
 import com.resonote.feature.vip.impl.DailyVipViewModel
+import kotlinx.coroutines.delay
 
 @Composable
 internal fun ResonoteApp(
     viewModel: MainActivityViewModel = hiltViewModel(),
     playbackViewModel: PlaybackViewModel = hiltViewModel(),
+    playerPaletteViewModel: PlayerPaletteViewModel = hiltViewModel(),
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     snackbarController: ResonoteSnackbarController = rememberResonoteSnackbarController(snackbarHostState),
     onFinishExternalTask: () -> Unit = {},
@@ -49,6 +58,7 @@ internal fun ResonoteApp(
     val overlayState = rememberResonoteOverlayState()
     val hasTabBar = backStack.lastOrNull().hasPrimaryNavigation()
     val playbackState by playbackViewModel.state.collectAsStateWithLifecycle()
+    val playerPaletteSeed by playerPaletteViewModel.prepared.collectAsStateWithLifecycle()
     val standaloneBottomContentPadding = if (playbackState.currentMetadata == null) 32.dp else 120.dp
     val authState by viewModel.authState.collectAsStateWithLifecycle()
     val externalImportRequests by viewModel.externalImportRequests.collectAsStateWithLifecycle()
@@ -64,14 +74,48 @@ internal fun ResonoteApp(
         stringResource(R.string.song_action_add_success, it.songTitle, it.playlistName)
     }
     val playbackIssueMessage = playbackState.issue?.let { stringResource(it.messageRes()) }
+    val miniPlayerVisible = backStack.lastOrNull().showsMiniPlayer() && playbackState.currentMetadata != null
+    val fullPlayerVisible = backStack.lastOrNull() is PlayerNavKey
+    val currentMediaId = playbackState.currentMetadata?.mediaId
+    var fullPlayerEntryMediaId by remember { mutableStateOf<String?>(null) }
+    var retainedFullPlayerPalette by remember { mutableStateOf<PlayerPalette?>(null) }
+    LaunchedEffect(fullPlayerVisible, currentMediaId, playerPaletteSeed) {
+        if (!fullPlayerVisible) {
+            fullPlayerEntryMediaId = null
+            retainedFullPlayerPalette = null
+            return@LaunchedEffect
+        }
+        if (fullPlayerEntryMediaId == null) {
+            fullPlayerEntryMediaId = currentMediaId
+            retainedFullPlayerPalette = playerPaletteSeed
+                ?.takeIf { it.mediaId == currentMediaId }
+                ?.let(PlayerPalette::fromSeed)
+            return@LaunchedEffect
+        }
+        if (currentMediaId == fullPlayerEntryMediaId) return@LaunchedEffect
+        val prepared = playerPaletteSeed?.takeIf { it.mediaId == currentMediaId }
+        if (prepared != null) {
+            retainedFullPlayerPalette = PlayerPalette.fromSeed(prepared)
+        } else {
+            delay(1_000)
+            retainedFullPlayerPalette = null
+        }
+    }
+    val navigationBarTarget = retainedFullPlayerPalette?.background ?: if (hasTabBar) {
+        MaterialTheme.colorScheme.surfaceContainer
+    } else {
+        MaterialTheme.colorScheme.background
+    }
+    val navigationBarColor by animateColorAsState(
+        navigationBarTarget,
+        ResonoteTokens.motion.effectsSlow(),
+        label = "system navigation bar",
+    )
 
     SyncSystemBars(
-        navigationBarColor = if (hasTabBar) {
-            MaterialTheme.colorScheme.surfaceContainer
-        } else {
-            MaterialTheme.colorScheme.background
-        },
-        forceDarkStatusBar = backStack.lastOrNull() is VideoNavKey,
+        navigationBarColor = navigationBarColor,
+        statusBarColor = androidx.compose.ui.graphics.Color.Transparent,
+        forceDarkStatusBar = backStack.lastOrNull() is VideoNavKey || backStack.lastOrNull() is PlayerNavKey,
     )
 
     fun openSongActions(song: OnlineSong, onRemoveRequest: (() -> Unit)? = null) {
@@ -112,6 +156,12 @@ internal fun ResonoteApp(
         playbackIssueMessage?.let(snackbarController::show)
     }
 
+    LaunchedEffect(miniPlayerVisible, hasTabBar, tabBarInset) {
+        if (!miniPlayerVisible) {
+            overlayState.playbackChromeInset = if (hasTabBar) tabBarInset else 0.dp
+        }
+    }
+
     LaunchedEffect(externalImportRequest?.id) {
         val request = externalImportRequest ?: return@LaunchedEffect
         if (backStack.lastOrNull() !is LocalMusicNavKey) {
@@ -126,6 +176,7 @@ internal fun ResonoteApp(
                     backStack = backStack,
                     tabsShellState = tabsShellState,
                     playbackState = playbackState,
+                    playerPaletteSeed = playerPaletteSeed,
                     standaloneBottomContentPadding = standaloneBottomContentPadding,
                     authState = authState,
                     externalImportRequest = externalImportRequest,
@@ -146,20 +197,30 @@ internal fun ResonoteApp(
                         overlayState.dailyVipDialogOpen = true
                     },
                 )
+                AnimatedVisibility(
+                    visible = miniPlayerVisible,
+                    modifier = Modifier.fillMaxSize(),
+                    enter = fadeIn(animationSpec = ResonoteTokens.motion.effectsSlow()),
+                    exit = fadeOut(animationSpec = ResonoteTokens.motion.effectsSlow()),
+                ) {
+                    Box(Modifier.fillMaxSize()) {
+                        GlobalMiniPlayer(
+                            playbackState = playbackState,
+                            hasTabBar = hasTabBar,
+                            tabBarInset = tabBarInset,
+                            visible = true,
+                            onOpenPlayer = {
+                                if (backStack.lastOrNull() !is PlayerNavKey) backStack.add(PlayerNavKey)
+                            },
+                            onTogglePlay = playbackViewModel::togglePlayPause,
+                            onOpenQueue = { overlayState.queueOpen = true },
+                            onAnchorInsetChanged = { overlayState.playbackChromeInset = it },
+                            animatedVisibilityScope = this@AnimatedVisibility,
+                        )
+                    }
+                }
             }
         }
-        GlobalMiniPlayer(
-            playbackState = playbackState,
-            hasTabBar = hasTabBar,
-            tabBarInset = tabBarInset,
-            visible = backStack.lastOrNull().showsMiniPlayer(),
-            onOpenPlayer = {
-                if (backStack.lastOrNull() !is PlayerNavKey) backStack.add(PlayerNavKey)
-            },
-            onTogglePlay = playbackViewModel::togglePlayPause,
-            onOpenQueue = { overlayState.queueOpen = true },
-            onAnchorInsetChanged = { overlayState.playbackChromeInset = it },
-        )
         ResonoteAppOverlays(
             state = overlayState,
             myState = myState,

@@ -8,6 +8,7 @@ import com.resonote.core.model.DeviceHistoryRecord
 import com.resonote.core.model.DeviceHistorySource
 import com.resonote.core.model.LocalMedia
 import com.resonote.core.model.LocalMediaId
+import com.resonote.core.model.OnlinePlaybackQuality
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.PlaybackMode
 import com.resonote.core.model.PlaybackSpeed
@@ -202,6 +203,8 @@ class PlaybackViewModelTest {
         override fun setMode(mode: PlaybackMode) = Unit
 
         override fun setPlaybackSpeed(speed: PlaybackSpeed) = Unit
+
+        override fun setCurrentOnlineQuality(quality: OnlinePlaybackQuality) = Unit
 
         override fun refreshCurrentOnlineSource(force: Boolean) {
             sourceRefreshForces += force

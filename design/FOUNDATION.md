@@ -601,7 +601,7 @@ Album Artwork 规范图片容器与媒体处理，不规定 Album Tile、Song Ro
 
 - UI 容器始终先占据 `1:1` 比例，图片加载不得引发布局跳动。
 - 正方形源图等比填充；横图与竖图使用 `Crop`，从中心或可信焦点向外裁切，不使用非等比缩放。
-- 不以模糊放大、镜像延展或自动生成内容补齐边缘；这些处理会篡改封面作品。
+- 标准 Artwork 容器不以模糊放大、镜像延展或自动生成内容补齐封面边缘；这些处理会篡改封面作品。Full Player 可以在封面容器之外使用同一封面的模糊副本作为装饰背景，但原封面本身仍按本节规则显示，装饰层也不得成为取色输入。
 - 默认不使用 Letterbox。只有数据源明确要求完整展示且业务同时提供专用容器时，才允许改用 `Fit`；该变体不得伪装成标准 Album Artwork。
 - 圆角由外层容器统一裁切；图片、占位与状态层必须共享同一 Shape，禁止出现方形加载层或双重圆角。
 
@@ -630,7 +630,7 @@ Album Artwork 规范图片容器与媒体处理，不规定 Album Tile、Song Ro
 
 - 标准封面不内嵌标题、歌手名、播放按钮或品牌水印；文字信息放在组件的独立文本区域。
 - 必须叠加 Badge 或状态时，使用独立容器、`artworkOverlayInset` 和可验证对比度；不得假设封面任意区域都能承载可读文字。
-- Artwork 颜色不反向修改 Foundation Semantic Color。基于封面的动态主题属于 Product/Player 层，不在当前 Foundation 中启用。
+- Artwork 颜色不反向修改全局 Foundation Semantic Color。Full Player 可以在 Product/Player 层从当前封面派生页面作用域 `PlayerPalette`；该色板只影响当前 Player、必须经过对比校正，并在缺少有效结果时回退到 Resonote 主题提供的默认 Player 语义色板。
 - 不改变封面饱和度、色相或明暗来“匹配主题”；Dark 与 AMOLED 主题继续显示同一媒体内容。
 
 可访问性与语义：

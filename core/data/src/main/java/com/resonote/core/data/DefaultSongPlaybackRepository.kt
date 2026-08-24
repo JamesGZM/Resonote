@@ -19,8 +19,11 @@ internal class DefaultSongPlaybackRepository @Inject constructor(
     private val riskChallenges: RiskChallengeRegistry,
     private val playbackPreferences: PlaybackPreferencesRepository,
 ) : SongPlaybackRepository {
-    override suspend fun resolveSource(song: OnlineSong): ResolveSongSourceResult = try {
-        val quality = playbackPreferences.onlinePlaybackQuality
+    override suspend fun resolveSource(
+        song: OnlineSong,
+        qualityOverride: OnlinePlaybackQuality?,
+    ): ResolveSongSourceResult = try {
+        val quality = qualityOverride ?: playbackPreferences.onlinePlaybackQuality
             .catch { emit(OnlinePlaybackQuality.Standard) }
             .first()
         val source = network.resolveSongSource(song.hash, song.albumId, song.albumAudioId, quality.wireValue())

@@ -42,6 +42,12 @@ import com.resonote.core.designsystem.component.LocalResonoteSnackbarController
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
 import com.resonote.core.model.AudioFocusPolicy
 import com.resonote.core.model.CrossfadeDuration
+import com.resonote.core.model.LyricsBackgroundMode
+import com.resonote.core.model.LyricsDisplayMode
+import com.resonote.core.model.LyricsFontSize
+import com.resonote.core.model.LyricsHighlightMode
+import com.resonote.core.model.LyricsSupplementalText
+import com.resonote.core.model.LyricsTextAlignment
 import com.resonote.core.model.OnlinePlaybackQuality
 import com.resonote.core.model.PlaybackMode
 import com.resonote.core.model.PlaybackSpeed
@@ -244,8 +250,16 @@ internal fun PlaybackSettingsScreen(
     }
 }
 
+private enum class LyricsSettingsSheet { Supplemental, Display, Highlight, Alignment, FontSize, Background }
+
 @Composable
-fun LyricsSettingsRoute(onBack: () -> Unit, bottomContentPadding: Dp = 32.dp) {
+fun LyricsSettingsRoute(
+    onBack: () -> Unit,
+    bottomContentPadding: Dp = 32.dp,
+    viewModel: LyricsSettingsViewModel = hiltViewModel(),
+) {
+    val preferences by viewModel.preferences.collectAsStateWithLifecycle()
+    var openSheet by remember { mutableStateOf<LyricsSettingsSheet?>(null) }
     SettingsPageScaffold(
         title = stringResource(R.string.feature_settings_impl_lyrics_section),
         onBack = onBack,
@@ -255,16 +269,235 @@ fun LyricsSettingsRoute(onBack: () -> Unit, bottomContentPadding: Dp = 32.dp) {
             contentPadding = PaddingValues(bottom = bottomContentPadding),
         ) {
             item {
-                SettingsActionRow(
-                    title = stringResource(R.string.feature_settings_impl_lyrics_settings),
-                    supportingText = stringResource(R.string.feature_settings_impl_lyrics_unavailable),
-                    value = stringResource(R.string.feature_settings_impl_coming_soon),
-                    onClick = {},
+                SettingsValueRow(
+                    stringResource(R.string.feature_settings_impl_lyrics_supplemental),
+                    preferences.supplementalText.label(),
+                    { openSheet = LyricsSettingsSheet.Supplemental },
+                )
+            }
+            item { SettingsDivider() }
+            item {
+                SettingsValueRow(
+                    stringResource(
+                        R.string.feature_settings_impl_lyrics_display,
+                    ),
+                    preferences.displayMode.label(),
+                    {
+                        openSheet =
+                            LyricsSettingsSheet.Display
+                    },
+                )
+            }
+            item { SettingsDivider() }
+            item {
+                SettingsValueRow(
+                    stringResource(
+                        R.string.feature_settings_impl_lyrics_highlight,
+                    ),
+                    preferences.highlightMode.label(),
+                    {
+                        openSheet =
+                            LyricsSettingsSheet.Highlight
+                    },
+                )
+            }
+            item { SettingsDivider() }
+            item {
+                SettingsValueRow(
+                    stringResource(
+                        R.string.feature_settings_impl_lyrics_alignment,
+                    ),
+                    preferences.textAlignment.label(),
+                    {
+                        openSheet =
+                            LyricsSettingsSheet.Alignment
+                    },
+                )
+            }
+            item { SettingsDivider() }
+            item {
+                SettingsValueRow(
+                    stringResource(
+                        R.string.feature_settings_impl_lyrics_font_size,
+                    ),
+                    preferences.fontSize.label(),
+                    {
+                        openSheet =
+                            LyricsSettingsSheet.FontSize
+                    },
+                )
+            }
+            item { SettingsDivider() }
+            item {
+                SettingsValueRow(
+                    stringResource(
+                        R.string.feature_settings_impl_lyrics_background,
+                    ),
+                    preferences.backgroundMode.label(),
+                    {
+                        openSheet =
+                            LyricsSettingsSheet.Background
+                    },
                 )
             }
         }
     }
+    when (openSheet) {
+        LyricsSettingsSheet.Supplemental -> choiceSheet(
+            stringResource(
+                R.string.feature_settings_impl_lyrics_supplemental,
+            ),
+            preferences.supplementalText,
+            LyricsSupplementalText.entries,
+            {
+                it.label()
+            },
+            {
+                openSheet =
+                    null
+                viewModel.update(preferences.copy(supplementalText = it))
+            },
+            { openSheet = null },
+        )
+        LyricsSettingsSheet.Display -> choiceSheet(
+            stringResource(
+                R.string.feature_settings_impl_lyrics_display,
+            ),
+            preferences.displayMode,
+            LyricsDisplayMode.entries,
+            {
+                it.label()
+            },
+            {
+                openSheet =
+                    null
+                viewModel.update(preferences.copy(displayMode = it))
+            },
+            { openSheet = null },
+        )
+        LyricsSettingsSheet.Highlight -> choiceSheet(
+            stringResource(
+                R.string.feature_settings_impl_lyrics_highlight,
+            ),
+            preferences.highlightMode,
+            LyricsHighlightMode.entries,
+            {
+                it.label()
+            },
+            {
+                openSheet =
+                    null
+                viewModel.update(preferences.copy(highlightMode = it))
+            },
+            { openSheet = null },
+        )
+        LyricsSettingsSheet.Alignment -> choiceSheet(
+            stringResource(
+                R.string.feature_settings_impl_lyrics_alignment,
+            ),
+            preferences.textAlignment,
+            LyricsTextAlignment.entries,
+            {
+                it.label()
+            },
+            {
+                openSheet =
+                    null
+                viewModel.update(preferences.copy(textAlignment = it))
+            },
+            { openSheet = null },
+        )
+        LyricsSettingsSheet.FontSize -> choiceSheet(
+            stringResource(
+                R.string.feature_settings_impl_lyrics_font_size,
+            ),
+            preferences.fontSize,
+            LyricsFontSize.entries,
+            {
+                it.label()
+            },
+            {
+                openSheet =
+                    null
+                viewModel.update(preferences.copy(fontSize = it))
+            },
+            { openSheet = null },
+        )
+        LyricsSettingsSheet.Background -> choiceSheet(
+            stringResource(
+                R.string.feature_settings_impl_lyrics_background,
+            ),
+            preferences.backgroundMode,
+            LyricsBackgroundMode.entries,
+            {
+                it.label()
+            },
+            {
+                openSheet =
+                    null
+                viewModel.update(preferences.copy(backgroundMode = it))
+            },
+            { openSheet = null },
+        )
+        null -> Unit
+    }
 }
+
+@Composable private fun LyricsSupplementalText.label() = stringResource(
+    if (this ==
+        LyricsSupplementalText.Translation
+    ) {
+        R.string.feature_settings_impl_lyrics_translation
+    } else {
+        R.string.feature_settings_impl_lyrics_transliteration
+    },
+)
+
+@Composable private fun LyricsDisplayMode.label() = stringResource(
+    if (this ==
+        LyricsDisplayMode.Scrolling
+    ) {
+        R.string.feature_settings_impl_lyrics_scrolling
+    } else {
+        R.string.feature_settings_impl_lyrics_single_line
+    },
+)
+
+@Composable private fun LyricsHighlightMode.label() = stringResource(
+    if (this ==
+        LyricsHighlightMode.Word
+    ) {
+        R.string.feature_settings_impl_lyrics_word
+    } else {
+        R.string.feature_settings_impl_lyrics_line
+    },
+)
+
+@Composable private fun LyricsTextAlignment.label() = stringResource(
+    if (this ==
+        LyricsTextAlignment.Center
+    ) {
+        R.string.feature_settings_impl_lyrics_center
+    } else {
+        R.string.feature_settings_impl_lyrics_start
+    },
+)
+
+@Composable private fun LyricsFontSize.label() = stringResource(
+    when (this) {
+        LyricsFontSize.Small -> R.string.feature_settings_impl_small
+        LyricsFontSize.Medium -> R.string.feature_settings_impl_medium
+        LyricsFontSize.Large -> R.string.feature_settings_impl_large
+    },
+)
+
+@Composable private fun LyricsBackgroundMode.label() = stringResource(
+    when (this) {
+        LyricsBackgroundMode.Palette -> R.string.feature_settings_impl_lyrics_palette
+        LyricsBackgroundMode.Artwork -> R.string.feature_settings_impl_lyrics_artwork
+        LyricsBackgroundMode.Off -> R.string.feature_settings_impl_off
+    },
+)
 
 @Composable
 fun PermissionsSettingsRoute(onBack: () -> Unit, bottomContentPadding: Dp = 32.dp) {

@@ -6,22 +6,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.boundsInRoot
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -79,9 +74,6 @@ internal fun TabsShell(
     val selectedTab = tabsShellState.selectedTab
     val rootStateHolder = rememberSaveableStateHolder()
     var requestedDiscoverSection by remember { mutableStateOf<DiscoverSection?>(null) }
-    var shellBottomPx by remember { mutableStateOf(0f) }
-    var contentBottomPx by remember { mutableStateOf(0f) }
-    val density = LocalDensity.current
 
     fun openDiscover(section: DiscoverSection) {
         requestedDiscoverSection = section
@@ -93,19 +85,6 @@ internal fun TabsShell(
     }
 
     val currentMedia = playbackState.currentMetadata
-    val bottomBarInset = if (shellBottomPx == 0f || contentBottomPx == 0f) {
-        0.dp
-    } else {
-        with(density) {
-            val safeDrawingBottomPx = WindowInsets.safeDrawing.getBottom(this)
-            (shellBottomPx - contentBottomPx - safeDrawingBottomPx)
-                .coerceAtLeast(0f)
-                .toDp()
-        }
-    }
-    LaunchedEffect(bottomBarInset) {
-        onBottomBarInsetChanged(bottomBarInset)
-    }
     ResonoteNavigationSuiteScaffold(
         navigationSuiteItems = {
             ResonoteTab.entries.forEach { tab ->
@@ -118,9 +97,8 @@ internal fun TabsShell(
                 )
             }
         },
-        modifier = Modifier
-            .fillMaxSize()
-            .onGloballyPositioned { shellBottomPx = it.boundsInRoot().bottom },
+        modifier = Modifier.fillMaxSize(),
+        onBottomBarInsetChanged = onBottomBarInsetChanged,
     ) {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
@@ -130,8 +108,7 @@ internal fun TabsShell(
             Box(
                 Modifier
                     .fillMaxSize()
-                    .padding(outerPadding)
-                    .onGloballyPositioned { contentBottomPx = it.boundsInRoot().bottom },
+                    .padding(outerPadding),
             ) {
                 rootStateHolder.SaveableStateProvider(selectedTab.name) {
                     when (selectedTab) {

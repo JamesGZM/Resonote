@@ -8,6 +8,8 @@ import com.resonote.core.model.ContentFailure
 import com.resonote.core.model.LocalMedia
 import com.resonote.core.model.LocalMediaId
 import com.resonote.core.model.LyricLine
+import com.resonote.core.model.LyricsDocument
+import com.resonote.core.model.OnlinePlaybackQuality
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.PlaybackMode
 import com.resonote.core.model.PlaybackSpeed
@@ -41,7 +43,9 @@ class PlayerViewModelTest {
     fun currentSongLoadsSortedLyricsFromRealRepositoryBoundary() = runTest(dispatcher) {
         val controller = FakePlaybackController(song("first"))
         val repository = FakeLyricsRepository(
-            CollectionLoadResult.Available(listOf(LyricLine(2_000, "second"), LyricLine(1_000, "first"))),
+            CollectionLoadResult.Available(
+                LyricsDocument(listOf(LyricLine(2_000, "second"), LyricLine(1_000, "first"))),
+            ),
         )
         val viewModel = PlayerViewModel(controller, repository)
         val collection = backgroundScope.launch { viewModel.uiState.collect {} }
@@ -49,7 +53,7 @@ class PlayerViewModelTest {
         advanceUntilIdle()
 
         assertThat(repository.requests).containsExactly("first" to "audio-first")
-        assertThat((viewModel.uiState.value.lyrics as LyricsUiState.Content).lines.map { it.text })
+        assertThat((viewModel.uiState.value.lyrics as LyricsUiState.Content).document.lines.map { it.text })
             .containsExactly("first", "second").inOrder()
         collection.cancel()
     }
@@ -77,25 +81,31 @@ class PlayerViewModelTest {
     @Test
     fun lyricSeekAndVisibleQueueCommandsDelegateToSharedController() {
         val controller = FakePlaybackController(song("first"))
-        val viewModel = PlayerViewModel(controller, FakeLyricsRepository(CollectionLoadResult.Available(emptyList())))
+        val viewModel =
+            PlayerViewModel(
+                controller,
+                FakeLyricsRepository(CollectionLoadResult.Available(LyricsDocument(emptyList()))),
+            )
 
         viewModel.seekTo(42_000)
         viewModel.selectQueueItem(2)
         viewModel.removeQueueItem(1)
         viewModel.setMode(PlaybackMode.Shuffle)
         viewModel.setPlaybackSpeed(PlaybackSpeed.OneAndHalf)
+        viewModel.setCurrentOnlineQuality(OnlinePlaybackQuality.HighResolution)
 
         assertThat(controller.seekPosition).isEqualTo(42_000)
         assertThat(controller.selectedIndex).isEqualTo(2)
         assertThat(controller.removedIndex).isEqualTo(1)
         assertThat(controller.selectedMode).isEqualTo(PlaybackMode.Shuffle)
         assertThat(controller.selectedSpeed).isEqualTo(PlaybackSpeed.OneAndHalf)
+        assertThat(controller.selectedQuality).isEqualTo(OnlinePlaybackQuality.HighResolution)
     }
 
     @Test
     fun localMediaDoesNotRequestOnlineLyrics() = runTest(dispatcher) {
         val controller = FakePlaybackController(PlaybackItem(localMedia()))
-        val repository = FakeLyricsRepository(CollectionLoadResult.Available(emptyList()))
+        val repository = FakeLyricsRepository(CollectionLoadResult.Available(LyricsDocument(emptyList())))
         val viewModel = PlayerViewModel(controller, repository)
         val collection = backgroundScope.launch { viewModel.uiState.collect {} }
 
@@ -106,10 +116,10 @@ class PlayerViewModelTest {
         collection.cancel()
     }
 
-    private class FakeLyricsRepository(private val result: CollectionLoadResult<List<LyricLine>>) : LyricsRepository {
+    private class FakeLyricsRepository(private val result: CollectionLoadResult<LyricsDocument>) : LyricsRepository {
         val requests = mutableListOf<Pair<String, String?>>()
 
-        override suspend fun loadLyrics(hash: String, albumAudioId: String?): CollectionLoadResult<List<LyricLine>> {
+        override suspend fun loadLyrics(hash: String, albumAudioId: String?): CollectionLoadResult<LyricsDocument> {
             requests += hash to albumAudioId
             return result
         }
@@ -124,6 +134,7 @@ class PlayerViewModelTest {
         var removedIndex = -1
         var selectedMode: PlaybackMode? = null
         var selectedSpeed: PlaybackSpeed? = null
+        var selectedQuality: OnlinePlaybackQuality? = null
 
         fun setSong(song: OnlineSong) {
             state.value = PlaybackState(queue = listOf(PlaybackItem(song)), currentIndex = 0)
@@ -152,6 +163,9 @@ class PlayerViewModelTest {
         }
         override fun setPlaybackSpeed(speed: PlaybackSpeed) {
             selectedSpeed = speed
+        }
+        override fun setCurrentOnlineQuality(quality: OnlinePlaybackQuality) {
+            selectedQuality = quality
         }
         override fun refreshCurrentOnlineSource(force: Boolean) = Unit
         override fun clear() = Unit

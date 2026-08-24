@@ -31,6 +31,7 @@ import com.resonote.feature.library.impl.MyViewModel
 import com.resonote.feature.local.api.LocalMusicNavKey
 import com.resonote.feature.local.impl.LocalMusicRoute
 import com.resonote.feature.player.api.PlayerNavKey
+import com.resonote.feature.player.impl.PlayerPaletteSeed
 import com.resonote.feature.player.impl.PlayerRoute
 import com.resonote.feature.playlist.api.PlaylistNavKey
 import com.resonote.feature.playlist.impl.PlaylistRoute
@@ -65,6 +66,7 @@ internal fun ResonoteNavDisplay(
     backStack: NavBackStack<NavKey>,
     tabsShellState: TabsShellState,
     playbackState: PlaybackState,
+    playerPaletteSeed: PlayerPaletteSeed?,
     standaloneBottomContentPadding: Dp,
     authState: AuthState,
     externalImportRequest: ExternalLocalImportRequest?,
@@ -256,6 +258,13 @@ internal fun ResonoteNavDisplay(
                 PlayerRoute(
                     onBack = { backStack.removeLastOrNull() },
                     onSongMoreClick = { onOpenSongActions(it, null) },
+                    onLoginRequest = {
+                        if (backStack.lastOrNull() !is LoginGateNavKey) {
+                            backStack.add(LoginGateNavKey(sessionExpired = false))
+                        }
+                    },
+                    onLyricsSettingsClick = { backStack.add(LyricsSettingsNavKey) },
+                    paletteSeed = playerPaletteSeed,
                 )
             }
             entry<SettingsNavKey> {

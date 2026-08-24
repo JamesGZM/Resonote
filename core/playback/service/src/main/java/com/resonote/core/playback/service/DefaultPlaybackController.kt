@@ -11,6 +11,7 @@ import androidx.media3.session.SessionToken
 import com.resonote.core.data.ListeningHistoryRepository
 import com.resonote.core.data.PlaybackPreferencesRepository
 import com.resonote.core.data.PlaybackSessionRepository
+import com.resonote.core.model.OnlinePlaybackQuality
 import com.resonote.core.model.PlaybackMode
 import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.model.ResolveSongSourceResult
@@ -18,6 +19,7 @@ import com.resonote.core.model.ResolvedSongSource
 import com.resonote.core.playback.PlaybackController
 import com.resonote.core.playback.PlaybackIssue
 import com.resonote.core.playback.PlaybackItem
+import com.resonote.core.playback.PlaybackOrigin
 import com.resonote.core.playback.PlaybackState
 import com.resonote.core.playback.PlaybackStatus
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -340,6 +342,37 @@ internal class DefaultPlaybackController internal constructor(
         mutableState.value = mutableState.value.copy(playbackSpeed = speed)
         runWithController { it.setPlaybackSpeed(speed.factor) }
         scope.launch { preferencesRepository.setPlaybackSpeed(speed) }
+    }
+
+    override fun setCurrentOnlineQuality(quality: OnlinePlaybackQuality) {
+        val item = queue.currentItem ?: return
+        if (item.origin !is PlaybackOrigin.Online || item.onlineQualityOverride == quality) {
+            return
+        }
+        val player = controller
+        if (isResolving || currentSourceRefreshJob?.isActive == true) return
+        val startPositionMillis = item.sourceRefreshPositionMillis(
+            loadedPlayerPositionMillis = player?.takeIf { it.mediaItemCount > 0 }?.currentPosition,
+            restoredPositionMillis = mutableState.value.positionMillis,
+        )
+        val playWhenReady = player?.isPlaying == true
+        preloadCoordinator.invalidate()
+        isRefreshingCurrentSource = true
+        currentSourceRefreshJob = scope.launch {
+            try {
+                resolveAndLoad(
+                    item = item.copy(
+                        resolvedSource = null,
+                        onlineQualityOverride = quality,
+                    ),
+                    failureBehavior = FailureBehavior.RejectWithoutQueueMutation,
+                    startPositionMillis = startPositionMillis,
+                    playWhenReady = playWhenReady,
+                )
+            } finally {
+                isRefreshingCurrentSource = false
+            }
+        }
     }
 
     override fun refreshCurrentOnlineSource(force: Boolean) {

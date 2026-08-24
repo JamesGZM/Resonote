@@ -7,6 +7,7 @@ import com.resonote.core.model.DeviceHistoryRecord
 import com.resonote.core.model.DeviceHistorySource
 import com.resonote.core.model.LocalMedia
 import com.resonote.core.model.LocalMediaId
+import com.resonote.core.model.OnlinePlaybackQuality
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.PlaybackMode
 import com.resonote.core.model.PlaybackSpeed
@@ -57,6 +58,7 @@ data class PlaybackItem(
     val metadata: PlaybackMetadata,
     val origin: PlaybackOrigin,
     val resolvedSource: ResolvedSongSource? = null,
+    val onlineQualityOverride: OnlinePlaybackQuality? = null,
 ) {
     constructor(
         song: OnlineSong,
@@ -181,6 +183,8 @@ interface PlaybackController {
     fun setMode(mode: PlaybackMode)
 
     fun setPlaybackSpeed(speed: PlaybackSpeed)
+
+    fun setCurrentOnlineQuality(quality: OnlinePlaybackQuality)
 
     fun refreshCurrentOnlineSource(force: Boolean = false)
 

@@ -3,6 +3,7 @@ package com.resonote.feature.settings.impl
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.resonote.core.data.AuthRepository
+import com.resonote.core.data.LyricsPreferencesRepository
 import com.resonote.core.data.PlaybackPreferencesRepository
 import com.resonote.core.data.ThemePreferencesRepository
 import com.resonote.core.model.AudioFocusPolicy
@@ -67,6 +68,7 @@ class SettingsViewModel @Inject constructor(
     private val themePreferencesRepository: ThemePreferencesRepository,
     private val playbackCacheController: PlaybackCacheController,
     private val authRepository: AuthRepository,
+    private val lyricsPreferencesRepository: LyricsPreferencesRepository? = null,
 ) : ViewModel() {
     private val mutableUiState = MutableStateFlow<SettingsUiState>(SettingsUiState.Loading)
     val uiState: StateFlow<SettingsUiState> = mutableUiState.asStateFlow()
@@ -104,6 +106,7 @@ class SettingsViewModel @Inject constructor(
     fun resetSettings() = save(SettingsSaveKey.Reset) {
         playbackPreferencesRepository.reset()
         themePreferencesRepository.reset()
+        lyricsPreferencesRepository?.reset()
     }
     fun logout() = save(SettingsSaveKey.Logout) { authRepository.logout() }
 

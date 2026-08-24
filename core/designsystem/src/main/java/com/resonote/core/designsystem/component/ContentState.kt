@@ -76,7 +76,7 @@ fun ResonoteEmptyState(
     ResonoteMessageState(
         visual = illustration ?: {
             ResonoteStateIllustration(
-                drawableRes = R.drawable.resonote_empty_illustration,
+                drawableRes = R.drawable.core_designsystem_resonote_empty_illustration,
                 icon = icon,
             )
         },
@@ -101,7 +101,7 @@ fun ResonoteErrorState(
     ResonoteMessageState(
         visual = illustration ?: {
             ResonoteStateIllustration(
-                drawableRes = R.drawable.resonote_error_illustration,
+                drawableRes = R.drawable.core_designsystem_resonote_error_illustration,
                 icon = icon,
             )
         },

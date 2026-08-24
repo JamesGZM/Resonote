@@ -1,3 +1,5 @@
+@file:androidx.media3.common.util.UnstableApi
+
 package com.resonote.core.playback.service
 
 import androidx.core.net.toUri

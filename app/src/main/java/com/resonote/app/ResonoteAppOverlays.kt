@@ -1,5 +1,6 @@
 package com.resonote.app
 
+import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.BoxScope
@@ -243,6 +244,7 @@ internal fun BoxScope.GlobalMiniPlayer(
     onAnchorInsetChanged: (Dp) -> Unit = {},
     animationSpec: FiniteAnimationSpec<Dp> = ResonoteTokens.motion.spatialDefault(),
     modifier: Modifier = Modifier,
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
 ) {
     val density = LocalDensity.current
     val song = playbackState.currentMetadata
@@ -279,6 +281,7 @@ internal fun BoxScope.GlobalMiniPlayer(
         onOpenPlayer = onOpenPlayer,
         onTogglePlay = onTogglePlay,
         onOpenQueue = onOpenQueue,
+        animatedVisibilityScope = animatedVisibilityScope,
         modifier = modifier
             .align(Alignment.BottomCenter)
             .windowInsetsPadding(WindowInsets.safeDrawing)

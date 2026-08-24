@@ -1,167 +1,80 @@
-# Recognition results design QA
+# Full Player Design QA
 
-- Source: `/Users/gongziming/.tmp/codex-clipboard-e45c34b9-3108-4afe-bad2-55e901f14ec3.jpg`
-- Implementation: `/Users/gongziming/Android/projects/Resonote/feature/recognition/impl/src/test/screenshots/Recognition/RecognitionCompact_matches.png`
-- Side-by-side evidence: `/Users/gongziming/Android/projects/Resonote/build/design-qa/recognition-results-comparison.png`
-- Viewport: 390 x 844 dp, light theme
+## Comparison target
 
-## Findings
+- Source visual truth:
+  - `design/approved/player/player-cover-page.png`
+  - `design/approved/player/player-lyrics-page.png`
+- Rendered implementation:
+  - `feature/player/impl/src/test/screenshots/Player/PlayerCompact_cover.png`
+  - `feature/player/impl/src/test/screenshots/Player/PlayerCompact_lyrics.png`
+- Full-view comparison evidence:
+  - `build/design-qa/player-cover-comparison-final.png`
+  - `build/design-qa/player-lyrics-comparison-final.png`
+- Focused control-region evidence:
+  - `build/design-qa/player-controls-comparison-final.png`
+  - `build/design-qa/player-lyrics-controls-comparison-final-2.png`
+- Viewport: Android phone portrait, `390 x 844 dp`, Roborazzi density `420 dpi`.
+- Source pixels: cover `853 x 1844`, lyrics `852 x 1846`.
+- Implementation pixels: `511 x 1107` for both states.
+- Normalization: sources were aspect-fit to `511 x 1107`; implementation captures remained at native Roborazzi pixels. Side-by-side comparisons are `1022 x 1107`.
+- State: playing at `1:42 / 4:08`, lossless online song, cover page and translated word-highlight lyrics page.
 
-No actionable P0, P1, or P2 differences remain.
-
-- Layout: the result uses a fixed-height horizontal pager with a 56 dp viewport inset, 12 dp page spacing, and a visible adjacent card. The indicator now sits 8 dp below the card instead of being pushed toward the bottom edge.
-- Immersive shell: the result reuses the accepted recognition gradient, title block, and 40 dp translucent back control. The PCM-responsive acoustic rings and center orb remain exclusive to the listening state. There is no separate white result background or conventional app-bar strip.
-- Card: real recognition artwork fills the image region; confidence remains an image overlay. Title, artist, duration, quality, VIP, filled play action, add-to-playlist action, and search action use Resonote components and Material theme roles.
-- Motion and interaction: cards swipe horizontally, adjacent cards scale and fade slightly, the active page is represented by the existing Resonote pill indicator pattern, and tests verify navigation between results.
-- Retry: the bottom action follows the reference's low-emphasis sentence plus text action and returns to the ready-to-recognize state.
-- Localization decisions: the previously rejected result introduction header remains removed. The reference's add button is wired to Resonote's existing authenticated playlist-picker flow, and search is wired to Resonote's search destination. The reference's pale page background and toolbar-title placement are intentionally replaced by the already accepted immersive recognition shell.
-- Screenshot fixture: artwork is null by design, so the established Resonote artwork fallback appears in test evidence. Production cards use each returned song's real `coverUrl` through `ResonoteRemoteArtwork`.
-
-## Verification
-
-- `:feature:recognition:impl:recordRoborazziDebug`: passed
-- `:app:compileDebugKotlin`: passed
-- `:feature:recognition:impl:spotlessCheck`: passed
-- `git diff --check`: passed
-
-final result: passed
-
----
-
-# Login Screen Design QA
-
-- Source visual truth: `/Users/gongziming/.codex/generated_images/01a03186-52b1-7262-b676-3d9c6c2da37d/exec-787a58f7-62b2-422b-8cf4-1bdb0dd3ac25.png`
-- Implementation screenshot: `/Users/gongziming/Android/projects/Resonote/feature/auth/impl/src/test/screenshots/Login/LoginCompact_mobile.png`
-- Full-view comparison: `/Users/gongziming/Android/projects/Resonote/build/design-qa/login-reference-vs-implementation.png`
-- Viewport: 390 x 844 dp, mobile-code initial state, light theme, `zh-CN`
-- Source pixels: 853 x 1844
-- Implementation pixels: 510 x 1105 at 420 dpi
-- Density normalization: the source was scaled to 510 x 1105 and placed beside the implementation without changing the implementation capture
+The source includes iOS status/home chrome and a concrete artwork asset. The Roborazzi fixture captures Android app content only and deliberately has no artwork URL. Status chrome and artwork subject are therefore excluded from pixel-level findings; production uses the live square-cropped artwork and an Android down-arrow collapse affordance as required by the locked product decisions.
 
 ## Findings
 
-No actionable P0, P1, or P2 differences remain.
+No actionable P0/P1/P2 visual differences remain.
 
-- Fonts and typography: the hero title, supporting copy, tab labels, input copy, button label, and security note retain the selected source hierarchy. The app bar intentionally uses the shared `ResonoteTopAppBar` typography requested during product review.
-- Spacing and layout rhythm: the hero, tabs, two 56 dp inputs, 44 dp button, and security note retain the selected composition. Product review intentionally increased the input gap from 8 dp to 12 dp and replaced the mock-specific header with the shared project toolbar.
-- Colors and visual tokens: the implementation retains Resonote semantic background, surface-container, primary, and on-surface roles. Disabled actions intentionally use Material disabled-state colors instead of the source mock's enabled presentation.
-- Image quality and asset fidelity: the screen contains no raster content. Material icons remain sharp at native Compose density and use the closest project-available icon shapes.
-- Copy and content: the header now uses `登录账号`; the hero, tabs, placeholders, action labels, and security note match the selected Chinese design.
-
-## Focused comparison evidence
-
-A separate crop was not required because every important text and control detail is fully readable in the 1020 x 1105 combined image. The password-state Golden was also inspected to confirm the longer unselected tab label remains unclipped.
+- Fonts and typography: title, artist, active lyric, adjacent lyrics, translation, timestamps and tool labels preserve the intended hierarchy. The active lyric is intentionally larger than the source because the locked requirement makes the main lyric dominant.
+- Spacing and layout rhythm: the centered top identity, cover/lyrics Pager, indicator, progress, primary controls and tool row maintain stable anchors on both pages. Persistent controls fit the compact portrait viewport without clipping.
+- Colors and visual tokens: the deterministic QA palette preserves the dark teal background, orange accent and readable primary/secondary contrast. Production substitutes the frozen per-cover palette.
+- Image quality and asset fidelity: production uses Coil artwork with square crop, rounded mask and blurred background copy; the fixture's missing-artwork surface is a test-state limitation, not a production substitute.
+- Copy and content: dynamic song/lyric content is realistic; English Roborazzi labels correspond to localized Chinese runtime strings. Format displays the real `Lossless` value rather than a switch.
+- Icons and interaction affordances: Material icons consistently cover collapse, overflow, like, transport, mode, format, speed and Queue; primary tap targets remain at least 48 dp.
 
 ## Comparison history
 
-1. The previous implementation was blocked by P1 typography drift and P2 vertical-spacing drift: the hero used 32 sp instead of the source-scale 24 sp, body/input copy used 16 sp instead of 14 sp, the input gap was 16 dp instead of 8 dp, and the header started too high.
-2. The first correction restored the source typography and header position, then reduced the field and section gaps. Its button and security note still sat approximately 8-12 px above the normalized source.
-3. The final correction moved the form down 2 dp, restored 28 dp before the button, and restored 24 dp before the security note. The second normalized comparison aligns all major vertical anchors.
-4. Product review then requested the project-standard toolbar and slightly more separation between paired inputs. The implementation now reuses `ResonoteTopAppBar` and uses a 12 dp input gap; these supersede the corresponding mock details.
+### Iteration 1 — blocked
+
+- P1: the lyrics Pager painted outside its bounds, obscuring the fixed song information, progress and controls.
+- P1: the thin seek bar had no width constraint, leaving only the thumb visible.
+- P2: the page indicator appeared before song information instead of below it.
+
+Fixes: constrained and clipped the Pager, reserved compact-height Pager space, supplied full-width seek geometry, and moved the indicator below song information.
+
+### Iteration 2 — passed
+
+- Post-fix evidence shows both Cover and Lyrics states retaining the complete identity, three-layer seek bar, transport controls and tool row.
+- The control-region comparison confirms the same anchors and interaction density as the source.
+- No actionable P0/P1/P2 findings remain.
 
 ## Follow-up polish
 
-The source mock shows enabled red actions while the captured implementation correctly shows disabled actions for empty input. The shared toolbar and 12 dp input gap are also intentional user-directed product adaptations.
+- P3: add a deterministic licensed artwork fixture later so screenshot QA can also compare artwork crop and blur subject fidelity, rather than only production behavior.
+- Predictive Back timing still needs an Android 13+ device. The available `ELE-AL00` runs Android 10 and therefore cannot expose that platform behavior.
 
-final result: passed
+## Real-device verification
 
----
+- Device: Huawei `ELE-AL00`, Android 10 (API 29), portrait `1080 x 2340 px`.
+- Evidence:
+  - `build/design-qa/device-resonote-launch-fixed.png`
+  - `build/design-qa/device-full-player-cover.png`
+  - `build/design-qa/device-full-player-lyrics.png`
+  - `build/design-qa/device-after-hero-gestures.png`
+  - `build/design-qa/device-miniplayer-position-fixed.png`
+  - `build/design-qa/device-full-player-refined.png`
+  - `build/design-qa/device-format-bottom-sheet.png`
+  - `build/design-qa/device-speed-bottom-sheet.png`
+  - `build/design-qa/device-lyrics-full-controls.png`
+- Passed: cold launch, live-cover palette extraction, MiniPlayer expansion, down-arrow collapse, Cover/Lyrics Pager, persistent controls on Lyrics, and system Back from Lyrics directly to MiniPlayer.
+- Follow-up verification fixed the MiniPlayer animation host so its bottom alignment is applied by a full-screen `Box`; the MiniPlayer now remains directly above the 64 dp tab bar instead of defaulting to the top of the screen.
+- Full Player draws its palette background behind the transparent status bar while reserving status/navigation insets from the Pager budget. The centered title, tool labels and complete control shell remain visible on the Android 10 compact-height device.
+- Current format and playback speed both open as bottom sheets. The format sheet remains read-only and reports the actual playback format.
+- Word highlighting now interpolates through Unicode code points over the playback position sampling interval, retaining translation/transliteration, alignment preferences and the 3.5 second manual-scroll follow pause.
+- A cold-launch crash found during this pass was fixed by converting Coil hardware bitmaps to software bitmaps before AndroidX Palette pixel access; palette conversion/generation failures now safely fall back instead of escaping the background task.
+- Recording artifact unavailable: this Huawei build does not provide the Android `screenrecord` binary. Motion was exercised on-device and the endpoint states were captured, but no video file could be exported from this device.
 
-# Home recommendation cards design QA
-
-- Source visual truth: `/Users/gongziming/.tmp/codex-clipboard-67460c30-1cc2-46f1-bccd-014af5617b3c.png`
-- Implementation screenshot: `feature/home/impl/src/test/screenshots/Home/HomeCompact_top_zh.png`
-- Combined comparison: `/Users/gongziming/.codex/visualizations/2026/08/15/01a0031f-983c-71b2-8791-68197e71a45c/home-audit/reference-vs-corrected-golden.png`
-- Viewport: Compact `390 × 844dp`, Light theme, `zh-CN` locale matching the source visual
-- Source pixels: `1774 × 887`; component-only concept image with no device density contract
-- Implementation pixels: `510 × 1105`; Roborazzi `390 × 844dp`, `420dpi`
-- Density normalization: both recommendation-card regions were cropped and normalized to the same comparison height; surrounding app chrome was excluded from fidelity judgments
-- State: populated home, first scroll position, radio result present in state but intentionally not rendered
-
-## Full-view comparison evidence
-
-The implementation keeps the approved page order and replaces the former large radio card plus two shortcuts with one equal three-card row. The shorter recommendation region moves Daily recommendations upward without changing the order or hierarchy of later home sections. The recorded top, middle, and bottom scroll states remain reachable; only the top and middle Goldens changed.
-
-## Focused region comparison evidence
-
-The combined comparison verifies the recommendation-card region at readable scale. All three cards use the same strict `1:1` ratio, radius, spacing, typography hierarchy, and color emphasis. The radio card contains fixed product copy plus a Compact Overlay Filled Icon Button with a `48dp` target, `28dp` visible container, and `16dp` glyph; the visible container is inset `8dp` from the card's right and bottom edges. No radio song title, artist, or artwork is rendered. The waveform, five-column ranking, and concentric-disc artwork are automatically traced from the approved source visual into retained SVG sources and Android VectorDrawables, then tinted through the active semantic content color.
-
-## Required fidelity surfaces
-
-- Fonts and typography: Android system sans through `MaterialTheme.typography`; bold `titleSmall` and regular-weight `labelSmall` preserve the hierarchy at the reduced sizes requested during visual review. Chinese strings preserve the approved exact copy.
-- Spacing and layout rhythm: 16dp page margin, 8dp card gaps, 12dp top/horizontal and 8dp bottom card padding, strict `1:1` card ratio, equal row sizing, 16dp card radius, and no static shadow.
-- Colors and visual tokens: the three cards remain based on `primary/onPrimary`, `secondary/onSecondary`, and `tertiary/onTertiary`; each background adds only a subtle light-to-dark gradient derived from its semantic container color so Light, Dark, AMOLED, and Dynamic Color retain their role mapping.
-- Image quality and asset fidelity: source-traced SVG/VectorDrawable assets preserve the approved line shapes instead of approximating them with unrelated stock icons. Their Compose slots use the visually reviewed proportions: `54 × 48dp`, `64 × 43dp`, and `47 × 50dp`.
-- Copy and content: radio uses fixed functional copy and never exposes dynamic song or artist metadata. Ranking and playlist copy matches the approved Chinese concept through localized resources.
-
-## Findings
-
-No actionable P0, P1, or P2 differences remain.
-
-Accepted implementation adaptation:
-
-- The source's fixed raster colors are represented by gradients derived from active theme semantic colors instead of hard-coded RGB values.
-
-## Comparison history
-
-1. Initial verification compared the previous Golden against the new implementation and correctly reported the approved structural change in the top recommendation region.
-2. User true-device review identified three P1 fidelity issues: non-square cards, block-like decorative icons, and an oversized visible radio play circle.
-3. A second source-to-Golden review found that the first correction still used undersized, semantically different stock icons. That review was incorrectly marked passed and was reopened.
-4. The cards keep the strict `1:1` ratio and the artwork uses the approved source shapes at measured per-card proportions.
-5. User review requested smaller title/supporting copy and a standards-based playback control. Typography moved to bold `titleSmall` plus regular `labelSmall`.
-6. The first standards-based button pass used the regular `48/40/24dp` Icon Button stack; user review found its visible container about one-third too large for this cover overlay.
-7. A dedicated Compact Overlay variant now preserves the `48dp` target while using a `28dp` visible container, `16dp` glyph, and `8dp` right/bottom inset.
-8. User review identified slight stair-stepping on the source-extracted PNG artwork; all three assets are now automatically traced SVG sources with Android VectorDrawable runtime assets, eliminating bitmap scaling edges without manually redrawing the forms.
-9. User review found the ranking and playlist artwork slightly too large; their slots were reduced by roughly 10% while the radio artwork and all card geometry remained unchanged.
-10. The corrected Chinese top and English scroll-state screenshots were inspected and recorded. Later sections retained their content order and layout; no unrelated bottom-state change was recorded.
-11. `:feature:home:impl:verifyRoborazziDebug` passed against the corrected baseline.
-
-## Residual verification gaps
-
-- Real-device TalkBack focus order, pressed feedback, Dark/AMOLED appearance, Dynamic Color, and 200% font scaling were not captured in this pass.
-
-final result: passed
-
----
-
-# My Profile Header Design QA
-
-- Source visual truth: `/Users/gongziming/.codex/generated_images/01a02f2e-5add-7a63-828c-012da25be585/exec-39c01a84-3db2-4cb3-ac8a-505de9c37ce9.png`
-- Implementation screenshot: `/Users/gongziming/Android/projects/Resonote/feature/library/impl/src/test/screenshots/My/MyCompact_profile.png`
-- Full-view comparison: `/Users/gongziming/Android/projects/Resonote/build/design-qa/my-profile-comparison.png`
-- Focused header comparison: `/Users/gongziming/Android/projects/Resonote/build/design-qa/my-profile-header-comparison.png`
-- Viewport: 390 x 844 dp, authenticated profile, light theme
-- Source pixels: 852 x 1846
-- Implementation pixels: 510 x 1105
-- Normalization: both inputs were Lanczos-scaled to 390 x 844 and placed side by side at 1:1 comparison size
-
-## Findings
-
-No actionable P0, P1, or P2 differences remain.
-
-- Fonts and typography: the implementation uses Resonote Material typography and optical weights. The nickname uses a 20 sp `titleLarge` treatment matching the selected visual; ID, signature, statistic values, labels, and truncation behavior preserve the product type hierarchy.
-- Spacing and layout rhythm: the normalized comparison aligns the 96 dp avatar, nickname/ID/signature baselines, four full-width statistic columns, four quick-entry columns, playlist header, filters, and artwork rows. The compact check-in control opts out of Material's default 48 dp layout minimum so its invisible touch sizing no longer stretches the three-line identity block.
-- Colors and visual tokens: the implementation uses existing semantic primary, primary-container, surface-container, and on-surface colors. The avatar ring and statistic separators match the source emphasis without introducing a new palette.
-- Image quality and asset fidelity: production avatars continue to use `AsyncImage` with a circular crop. The screenshot fixture intentionally uses the initial fallback. Existing Material icons and playlist artwork are retained at native quality.
-- Copy and content: nickname, VIP status, ID, check-in, signature, follows, fans, listening time, music age, quick actions, playlist filters, and playlist metadata match the selected state. Music age is backed by the real `rtime` registration timestamp instead of fixture-only text.
-
-## Interaction Evidence
-
-- Daily VIP check-in remains clickable beside the user ID.
-- Settings remains available and is vertically aligned with the avatar region at the right edge.
-- Four profile statistics and four quick entries occupy measured full-page columns.
-- Playlist group switching and primary content alignment remain covered by Compose tests.
-
-## Comparison History
-
-1. Initial implementation: blocked by a P1 settings-button placement error and a P2 overly compact vertical rhythm.
-2. First fix: placed settings at the top right through a reliable parent row, but the review was incorrectly marked passed while the identity block and statistics were still visibly misaligned.
-3. User review reopened QA. Measurement found nickname at 52 dp versus 68 dp in the source, the compact check-in surface reserving a 48 dp minimum, outer statistic columns inset by roughly 15 dp, and downstream sections carrying accumulated vertical error.
-4. The identity block now uses explicit line spacing, the avatar and settings control use measured vertical offsets, and the statistic and quick-entry rows use full-page four-column geometry.
-5. The final pass aligns quick-entry labels, playlist artwork offset and aspect ratio, and the nickname width. The normalized full and focused comparisons show no remaining P0/P1/P2 mismatch.
-
-## Follow-up Polish
-
-No blocking follow-up. Real-device review may confirm the status-bar inset and real avatar crop with live account data.
+## Final result
 
 final result: passed
