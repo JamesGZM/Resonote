@@ -9,7 +9,14 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import com.resonote.core.data.PlaybackPreferencesRepository
+import com.resonote.core.model.AudioFocusPolicy
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -20,7 +27,11 @@ class ResonotePlaybackService : MediaSessionService() {
     @Inject
     internal lateinit var queueCommandRouter: PlaybackQueueCommandRouter
 
+    @Inject
+    internal lateinit var playbackPreferencesRepository: PlaybackPreferencesRepository
+
     private var mediaSession: MediaSession? = null
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     override fun onCreate() {
         super.onCreate()
@@ -49,11 +60,20 @@ class ResonotePlaybackService : MediaSessionService() {
             }
         val player = QueueAwarePlayer(exoPlayer, queueCommandRouter)
         mediaSession = MediaSession.Builder(this, player).build()
+        serviceScope.launch {
+            playbackPreferencesRepository.preferences.collect { preferences ->
+                exoPlayer.setAudioAttributes(
+                    audioAttributes,
+                    preferences.audioFocusPolicy != AudioFocusPolicy.AllowAll,
+                )
+            }
+        }
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = mediaSession
 
     override fun onDestroy() {
+        serviceScope.cancel()
         clearListener()
         mediaSession?.run {
             player.release()

@@ -37,7 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.resonote.core.designsystem.component.ResonoteIconButton
 import com.resonote.core.designsystem.component.ResonoteMusicItem
-import com.resonote.core.playback.PlaybackMode
+import com.resonote.core.model.PlaybackMode
 import com.resonote.core.playback.PlaybackState
 
 @OptIn(ExperimentalMaterial3Api::class)

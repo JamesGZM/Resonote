@@ -5,8 +5,8 @@ import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.LocalMedia
 import com.resonote.core.model.LocalMediaId
 import com.resonote.core.model.OnlineSong
+import com.resonote.core.model.PlaybackMode
 import com.resonote.core.playback.PlaybackItem
-import com.resonote.core.playback.PlaybackMode
 import com.resonote.core.playback.PlaybackStatus
 import org.junit.Test
 import org.junit.runner.RunWith

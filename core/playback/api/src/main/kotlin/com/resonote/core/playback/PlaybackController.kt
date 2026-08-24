@@ -8,6 +8,7 @@ import com.resonote.core.model.DeviceHistorySource
 import com.resonote.core.model.LocalMedia
 import com.resonote.core.model.LocalMediaId
 import com.resonote.core.model.OnlineSong
+import com.resonote.core.model.PlaybackMode
 import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.model.PlaybackUnavailableReason
 import com.resonote.core.model.ResolvedSongSource
@@ -112,13 +113,6 @@ enum class PlaybackStatus {
     Paused,
     Ended,
     Failed,
-}
-
-enum class PlaybackMode {
-    ListLoop,
-    Shuffle,
-    SingleLoop,
-    Sequential,
 }
 
 sealed interface PlaybackIssue {

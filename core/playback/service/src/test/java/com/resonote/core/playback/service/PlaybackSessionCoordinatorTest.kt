@@ -5,9 +5,9 @@ import com.resonote.core.data.PlaybackSessionRepository
 import com.resonote.core.data.PlaybackSessionSnapshot
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.OnlineSong
+import com.resonote.core.model.PlaybackMode
 import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.playback.PlaybackItem
-import com.resonote.core.playback.PlaybackMode
 import com.resonote.core.playback.PlaybackState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runCurrent

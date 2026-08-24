@@ -3,9 +3,9 @@ package com.resonote.core.playback.service
 import com.google.common.truth.Truth.assertThat
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.OnlineSong
+import com.resonote.core.model.PlaybackMode
 import com.resonote.core.model.ResolvedSongSource
 import com.resonote.core.playback.PlaybackItem
-import com.resonote.core.playback.PlaybackMode
 import com.resonote.core.playback.PlaybackStatus
 import org.junit.Test
 

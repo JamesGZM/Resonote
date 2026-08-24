@@ -4,10 +4,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.resonote.core.data.PlaybackPreferencesRepository
 import com.resonote.core.data.ThemePreferencesRepository
+import com.resonote.core.model.AudioFocusPolicy
+import com.resonote.core.model.CrossfadeDuration
 import com.resonote.core.model.OnlinePlaybackQuality
+import com.resonote.core.model.PlaybackMode
 import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.model.ThemeMode
 import com.resonote.core.model.ThemePreferences
+import com.resonote.core.playback.PlaybackCacheController
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -18,6 +22,19 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+enum class SettingsSaveKey {
+    Theme,
+    DynamicColor,
+    Quality,
+    PlaybackMode,
+    Gapless,
+    Crossfade,
+    Speed,
+    Loudness,
+    AudioFocus,
+    Reset,
+}
+
 sealed interface SettingsUiState {
     data object Loading : SettingsUiState
     data object LoadFailed : SettingsUiState
@@ -26,100 +43,110 @@ sealed interface SettingsUiState {
         val playbackSpeed: PlaybackSpeed,
         val onlinePlaybackQuality: OnlinePlaybackQuality = OnlinePlaybackQuality.Standard,
         val themePreferences: ThemePreferences = ThemePreferences(),
-        val isSaving: Boolean = false,
+        val playbackMode: PlaybackMode = PlaybackMode.ListLoop,
+        val gaplessEnabled: Boolean = true,
+        val crossfadeDuration: CrossfadeDuration = CrossfadeDuration.Off,
+        val loudnessNormalizationEnabled: Boolean = false,
+        val audioFocusPolicy: AudioFocusPolicy = AudioFocusPolicy.Disallow,
+        val cacheBytes: Long? = null,
+        val savingKey: SettingsSaveKey? = null,
+        val isClearingCache: Boolean = false,
         val saveFailed: Boolean = false,
-    ) : SettingsUiState
+    ) : SettingsUiState {
+        val isSaving: Boolean get() = savingKey != null
+    }
 }
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val playbackPreferencesRepository: PlaybackPreferencesRepository,
     private val themePreferencesRepository: ThemePreferencesRepository,
+    private val playbackCacheController: PlaybackCacheController,
 ) : ViewModel() {
     private val mutableUiState = MutableStateFlow<SettingsUiState>(SettingsUiState.Loading)
     val uiState: StateFlow<SettingsUiState> = mutableUiState.asStateFlow()
-
     private var observationJob: Job? = null
+    private var latestCacheBytes: Long? = null
 
     init {
         observePreferences()
+        refreshCacheSize()
     }
 
-    fun retry() = observePreferences()
+    fun retry() {
+        observePreferences(force = true)
+        refreshCacheSize()
+    }
 
-    fun setPlaybackSpeed(speed: PlaybackSpeed) {
+    fun setPlaybackSpeed(value: PlaybackSpeed) = save(SettingsSaveKey.Speed) {
+        playbackPreferencesRepository.setPlaybackSpeed(value)
+    }
+    fun setOnlinePlaybackQuality(value: OnlinePlaybackQuality) =
+        save(SettingsSaveKey.Quality) { playbackPreferencesRepository.setOnlinePlaybackQuality(value) }
+    fun setPlaybackMode(value: PlaybackMode) =
+        save(SettingsSaveKey.PlaybackMode) { playbackPreferencesRepository.setPlaybackMode(value) }
+    fun setGaplessEnabled(value: Boolean) =
+        save(SettingsSaveKey.Gapless) { playbackPreferencesRepository.setGaplessEnabled(value) }
+    fun setCrossfadeDuration(value: CrossfadeDuration) =
+        save(SettingsSaveKey.Crossfade) { playbackPreferencesRepository.setCrossfadeDuration(value) }
+    fun setLoudnessNormalizationEnabled(value: Boolean) =
+        save(SettingsSaveKey.Loudness) { playbackPreferencesRepository.setLoudnessNormalizationEnabled(value) }
+    fun setAudioFocusPolicy(value: AudioFocusPolicy) =
+        save(SettingsSaveKey.AudioFocus) { playbackPreferencesRepository.setAudioFocusPolicy(value) }
+    fun setThemeMode(value: ThemeMode) = save(SettingsSaveKey.Theme) { themePreferencesRepository.setThemeMode(value) }
+    fun setDynamicColorEnabled(value: Boolean) =
+        save(SettingsSaveKey.DynamicColor) { themePreferencesRepository.setDynamicColorEnabled(value) }
+    fun resetSettings() = save(SettingsSaveKey.Reset) {
+        playbackPreferencesRepository.reset()
+        themePreferencesRepository.reset()
+    }
+
+    fun clearCache() {
         val state = mutableUiState.value as? SettingsUiState.Ready ?: return
-        if (state.isSaving || state.playbackSpeed == speed) return
-
-        mutableUiState.value = state.copy(isSaving = true, saveFailed = false)
+        if (state.isClearingCache) return
+        mutableUiState.value = state.copy(isClearingCache = true, saveFailed = false)
         viewModelScope.launch {
             try {
-                playbackPreferencesRepository.setPlaybackSpeed(speed)
-                mutableUiState.value = state.copy(playbackSpeed = speed, isSaving = false)
+                val remaining = playbackCacheController.clear()
+                updateReady { it.copy(cacheBytes = remaining, isClearingCache = false) }
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
-                val current = mutableUiState.value as? SettingsUiState.Ready ?: state
-                mutableUiState.value = current.copy(isSaving = false, saveFailed = true)
+                updateReady { it.copy(isClearingCache = false, saveFailed = true) }
             }
         }
     }
 
-    fun setOnlinePlaybackQuality(quality: OnlinePlaybackQuality) {
-        val state = mutableUiState.value as? SettingsUiState.Ready ?: return
-        if (state.isSaving || state.onlinePlaybackQuality == quality) return
+    fun acknowledgeSaveFailure() = updateReady { it.copy(saveFailed = false) }
 
-        mutableUiState.value = state.copy(isSaving = true, saveFailed = false)
-        viewModelScope.launch {
-            try {
-                playbackPreferencesRepository.setOnlinePlaybackQuality(quality)
-                mutableUiState.value = state.copy(onlinePlaybackQuality = quality, isSaving = false)
-            } catch (cancelled: CancellationException) {
-                throw cancelled
-            } catch (_: Exception) {
-                val current = mutableUiState.value as? SettingsUiState.Ready ?: state
-                mutableUiState.value = current.copy(isSaving = false, saveFailed = true)
-            }
-        }
-    }
-
-    fun setThemeMode(themeMode: ThemeMode) {
-        val state = mutableUiState.value as? SettingsUiState.Ready ?: return
-        if (state.isSaving || state.themePreferences.themeMode == themeMode) return
-        savePreference { themePreferencesRepository.setThemeMode(themeMode) }
-    }
-
-    fun setDynamicColorEnabled(enabled: Boolean) {
-        val state = mutableUiState.value as? SettingsUiState.Ready ?: return
-        if (state.isSaving || state.themePreferences.dynamicColorEnabled == enabled) return
-        savePreference { themePreferencesRepository.setDynamicColorEnabled(enabled) }
-    }
-
-    fun acknowledgeSaveFailure() {
-        val state = mutableUiState.value as? SettingsUiState.Ready ?: return
-        mutableUiState.value = state.copy(saveFailed = false)
-    }
-
-    private fun observePreferences() {
-        if (observationJob?.isActive == true) return
+    private fun observePreferences(force: Boolean = false) {
+        if (!force && observationJob?.isActive == true) return
+        observationJob?.cancel()
         observationJob = viewModelScope.launch {
             mutableUiState.value = SettingsUiState.Loading
             try {
-                combine(
-                    playbackPreferencesRepository.playbackSpeed,
-                    playbackPreferencesRepository.onlinePlaybackQuality,
-                    themePreferencesRepository.themePreferences,
-                ) { speed, quality, themePreferences -> Triple(speed, quality, themePreferences) }
-                    .collect { (speed, quality, themePreferences) ->
-                        val current = mutableUiState.value as? SettingsUiState.Ready
-                        mutableUiState.value = SettingsUiState.Ready(
-                            playbackSpeed = speed,
-                            onlinePlaybackQuality = quality,
-                            themePreferences = themePreferences,
-                            isSaving = current?.isSaving == true,
-                            saveFailed = current?.saveFailed == true,
-                        )
-                    }
+                combine(playbackPreferencesRepository.preferences, themePreferencesRepository.themePreferences) {
+                        playback,
+                        theme,
+                    ->
+                    playback to theme
+                }.collect { (playback, theme) ->
+                    val current = mutableUiState.value as? SettingsUiState.Ready
+                    mutableUiState.value = SettingsUiState.Ready(
+                        playbackSpeed = playback.playbackSpeed,
+                        onlinePlaybackQuality = playback.onlinePlaybackQuality,
+                        themePreferences = theme,
+                        playbackMode = playback.playbackMode,
+                        gaplessEnabled = playback.gaplessEnabled,
+                        crossfadeDuration = playback.crossfadeDuration,
+                        loudnessNormalizationEnabled = playback.loudnessNormalizationEnabled,
+                        audioFocusPolicy = playback.audioFocusPolicy,
+                        cacheBytes = current?.cacheBytes ?: latestCacheBytes,
+                        savingKey = current?.savingKey,
+                        isClearingCache = current?.isClearingCache == true,
+                        saveFailed = current?.saveFailed == true,
+                    )
+                }
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
@@ -128,21 +155,32 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    private fun savePreference(save: suspend () -> Unit) {
-        val state = mutableUiState.value as? SettingsUiState.Ready ?: return
-        if (state.isSaving) return
+    private fun refreshCacheSize() {
         viewModelScope.launch {
-            mutableUiState.value = state.copy(isSaving = true, saveFailed = false)
+            val bytes = runCatching { playbackCacheController.sizeBytes() }.getOrNull() ?: return@launch
+            latestCacheBytes = bytes
+            updateReady { it.copy(cacheBytes = bytes) }
+        }
+    }
+
+    private fun save(key: SettingsSaveKey, block: suspend () -> Unit) {
+        val state = mutableUiState.value as? SettingsUiState.Ready ?: return
+        if (state.savingKey != null) return
+        mutableUiState.value = state.copy(savingKey = key, saveFailed = false)
+        viewModelScope.launch {
             try {
-                save()
-                val current = mutableUiState.value as? SettingsUiState.Ready ?: state
-                mutableUiState.value = current.copy(isSaving = false, saveFailed = false)
+                block()
+                updateReady { it.copy(savingKey = null) }
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
-                val current = mutableUiState.value as? SettingsUiState.Ready ?: state
-                mutableUiState.value = current.copy(isSaving = false, saveFailed = true)
+                updateReady { it.copy(savingKey = null, saveFailed = true) }
             }
         }
+    }
+
+    private inline fun updateReady(transform: (SettingsUiState.Ready) -> SettingsUiState.Ready) {
+        val current = mutableUiState.value as? SettingsUiState.Ready ?: return
+        mutableUiState.value = transform(current)
     }
 }

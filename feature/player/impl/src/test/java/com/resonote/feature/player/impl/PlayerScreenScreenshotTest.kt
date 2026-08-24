@@ -16,9 +16,9 @@ import com.resonote.core.designsystem.theme.ResonoteThemeMode
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.LyricLine
 import com.resonote.core.model.OnlineSong
+import com.resonote.core.model.PlaybackMode
 import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.playback.PlaybackItem
-import com.resonote.core.playback.PlaybackMode
 import com.resonote.core.playback.PlaybackState
 import com.resonote.core.playback.PlaybackStatus
 import com.resonote.core.screenshottesting.DefaultRoborazziOptions

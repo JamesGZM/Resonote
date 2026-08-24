@@ -23,6 +23,13 @@ internal class ProtoPlaybackPreferencesStorage @Inject constructor(private val s
     PlaybackPreferencesStorage {
     override val playbackSpeedPercent: Flow<Int> = store.data.map { it.playbackSpeedPercent }
     override val onlinePlaybackQuality: Flow<String> = store.data.map { it.onlinePlaybackQuality }
+    override val playbackMode: Flow<String> = store.data.map { it.playbackMode }
+    override val gaplessEnabled: Flow<Boolean> = store.data.map {
+        if (it.gaplessConfigured) it.gaplessEnabled else true
+    }
+    override val crossfadeDuration: Flow<String> = store.data.map { it.crossfadeDuration }
+    override val loudnessNormalizationEnabled: Flow<Boolean> = store.data.map { it.loudnessNormalizationEnabled }
+    override val audioFocusPolicy: Flow<String> = store.data.map { it.audioFocusPolicy }
 
     override suspend fun setPlaybackSpeedPercent(percent: Int) {
         require(percent > 0) { "playback speed percent must be positive" }
@@ -32,5 +39,32 @@ internal class ProtoPlaybackPreferencesStorage @Inject constructor(private val s
     override suspend fun setOnlinePlaybackQuality(quality: String) {
         require(quality.isNotBlank()) { "online playback quality must not be blank" }
         store.updateData { it.copy(onlinePlaybackQuality = quality) }
+    }
+
+    override suspend fun setPlaybackMode(mode: String) {
+        require(mode.isNotBlank()) { "playback mode must not be blank" }
+        store.updateData { it.copy(playbackMode = mode) }
+    }
+
+    override suspend fun setGaplessEnabled(enabled: Boolean) {
+        store.updateData { it.copy(gaplessEnabled = enabled, gaplessConfigured = true) }
+    }
+
+    override suspend fun setCrossfadeDuration(duration: String) {
+        require(duration.isNotBlank()) { "crossfade duration must not be blank" }
+        store.updateData { it.copy(crossfadeDuration = duration) }
+    }
+
+    override suspend fun setLoudnessNormalizationEnabled(enabled: Boolean) {
+        store.updateData { it.copy(loudnessNormalizationEnabled = enabled) }
+    }
+
+    override suspend fun setAudioFocusPolicy(policy: String) {
+        require(policy.isNotBlank()) { "audio focus policy must not be blank" }
+        store.updateData { it.copy(audioFocusPolicy = policy) }
+    }
+
+    override suspend fun reset() {
+        store.updateData { com.resonote.core.datastore.proto.PlaybackPreferences.getDefaultInstance() }
     }
 }

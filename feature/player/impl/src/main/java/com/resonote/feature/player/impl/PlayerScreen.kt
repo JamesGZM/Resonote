@@ -19,8 +19,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.resonote.core.designsystem.component.LocalResonoteSnackbarController
 import com.resonote.core.model.OnlineSong
+import com.resonote.core.model.PlaybackMode
 import com.resonote.core.model.PlaybackSpeed
-import com.resonote.core.playback.PlaybackMode
 import com.resonote.core.playback.PlaybackOrigin
 
 @Composable

@@ -7,6 +7,7 @@ import com.resonote.core.model.OnlinePlaybackQuality
 import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.model.ThemeMode
 import com.resonote.core.model.ThemePreferences
+import com.resonote.core.playback.PlaybackCacheController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -34,37 +35,37 @@ class SettingsViewModelTest {
     @Test
     fun repositoryPreferenceIsTheDisplayedFactSource() = runTest(dispatcher) {
         val repository = FakePlaybackPreferencesRepository(PlaybackSpeed.ThreeQuarters)
-        val viewModel = SettingsViewModel(repository, FakeThemePreferencesRepository())
+        val viewModel = SettingsViewModel(repository, FakeThemePreferencesRepository(), FakePlaybackCacheController())
 
         advanceUntilIdle()
 
         assertThat(viewModel.uiState.value).isEqualTo(
-            SettingsUiState.Ready(PlaybackSpeed.ThreeQuarters),
+            SettingsUiState.Ready(PlaybackSpeed.ThreeQuarters, cacheBytes = 0),
         )
 
         repository.speed.value = PlaybackSpeed.Double
         advanceUntilIdle()
 
-        assertThat(viewModel.uiState.value).isEqualTo(SettingsUiState.Ready(PlaybackSpeed.Double))
+        assertThat(viewModel.uiState.value).isEqualTo(SettingsUiState.Ready(PlaybackSpeed.Double, cacheBytes = 0))
     }
 
     @Test
     fun selectingSpeedPersistsThroughTheSharedRepository() = runTest(dispatcher) {
         val repository = FakePlaybackPreferencesRepository(PlaybackSpeed.Normal)
-        val viewModel = SettingsViewModel(repository, FakeThemePreferencesRepository())
+        val viewModel = SettingsViewModel(repository, FakeThemePreferencesRepository(), FakePlaybackCacheController())
         advanceUntilIdle()
 
         viewModel.setPlaybackSpeed(PlaybackSpeed.OneAndHalf)
         advanceUntilIdle()
 
         assertThat(repository.writes).containsExactly(PlaybackSpeed.OneAndHalf)
-        assertThat(viewModel.uiState.value).isEqualTo(SettingsUiState.Ready(PlaybackSpeed.OneAndHalf))
+        assertThat(viewModel.uiState.value).isEqualTo(SettingsUiState.Ready(PlaybackSpeed.OneAndHalf, cacheBytes = 0))
     }
 
     @Test
     fun selectingOnlineQualityPersistsThroughTheSharedRepository() = runTest(dispatcher) {
         val repository = FakePlaybackPreferencesRepository(PlaybackSpeed.Normal)
-        val viewModel = SettingsViewModel(repository, FakeThemePreferencesRepository())
+        val viewModel = SettingsViewModel(repository, FakeThemePreferencesRepository(), FakePlaybackCacheController())
         advanceUntilIdle()
 
         viewModel.setOnlinePlaybackQuality(OnlinePlaybackQuality.Lossless)
@@ -81,6 +82,7 @@ class SettingsViewModelTest {
         val viewModel = SettingsViewModel(
             FakePlaybackPreferencesRepository(PlaybackSpeed.Normal),
             themeRepository,
+            FakePlaybackCacheController(),
         )
         advanceUntilIdle()
 
@@ -101,12 +103,14 @@ class SettingsViewModelTest {
             override suspend fun setPlaybackSpeed(speed: PlaybackSpeed) = Unit
             override suspend fun setOnlinePlaybackQuality(quality: OnlinePlaybackQuality) = Unit
         }
-        val loadingViewModel = SettingsViewModel(failedLoad, FakeThemePreferencesRepository())
+        val loadingViewModel =
+            SettingsViewModel(failedLoad, FakeThemePreferencesRepository(), FakePlaybackCacheController())
         advanceUntilIdle()
         assertThat(loadingViewModel.uiState.value).isEqualTo(SettingsUiState.LoadFailed)
 
         val failedSave = FakePlaybackPreferencesRepository(PlaybackSpeed.Normal, failWrites = true)
-        val savingViewModel = SettingsViewModel(failedSave, FakeThemePreferencesRepository())
+        val savingViewModel =
+            SettingsViewModel(failedSave, FakeThemePreferencesRepository(), FakePlaybackCacheController())
         advanceUntilIdle()
         savingViewModel.setPlaybackSpeed(PlaybackSpeed.Double)
         advanceUntilIdle()
@@ -161,5 +165,11 @@ class SettingsViewModelTest {
                 dynamicColorEnabled = enabled,
             )
         }
+    }
+
+    private class FakePlaybackCacheController : PlaybackCacheController {
+        override suspend fun sizeBytes(): Long = 0
+
+        override suspend fun clear(): Long = 0
     }
 }

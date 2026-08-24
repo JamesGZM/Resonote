@@ -34,6 +34,14 @@ internal class PlaybackMediaCache @Inject constructor(@ApplicationContext contex
         cacheDataSourceFactory,
     )
 
+    fun sizeBytes(): Long = cache.cacheSpace
+
+    fun clear() {
+        cache.keys.toList().forEach { key ->
+            runCatching { cache.removeResource(key) }
+        }
+    }
+
     private companion object {
         const val CACHE_DIRECTORY_NAME = "playback_media"
         const val MAX_CACHE_BYTES = 512L * 1024L * 1024L

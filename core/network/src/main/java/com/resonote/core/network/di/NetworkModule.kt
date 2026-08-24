@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import coil3.ImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
+import com.resonote.core.network.AppUpdateNetworkDataSource
 import com.resonote.core.network.AuthNetworkDataSource
 import com.resonote.core.network.CatalogNetworkDataSource
 import com.resonote.core.network.CloudNetworkDataSource
@@ -19,6 +20,7 @@ import com.resonote.core.network.SearchNetworkDataSource
 import com.resonote.core.network.UserProfileNetworkDataSource
 import com.resonote.core.network.VideoNetworkDataSource
 import com.resonote.core.network.VipNetworkDataSource
+import com.resonote.core.network.api.GitHubReleaseApi
 import com.resonote.core.network.api.MusicApi
 import com.resonote.core.network.connection.NetworkConnectionRecovery
 import com.resonote.core.network.protocol.AndroidDeviceRegistrationProfileProvider
@@ -32,6 +34,7 @@ import com.resonote.core.network.protocol.ProductionApiOriginPolicy
 import com.resonote.core.network.protocol.ProtocolRandom
 import com.resonote.core.network.protocol.RedactedNetworkLoggingInterceptor
 import com.resonote.core.network.protocol.UserListenProtocolClient
+import com.resonote.core.network.retrofit.RealAppUpdateNetworkDataSource
 import com.resonote.core.network.retrofit.RealAuthNetworkDataSource
 import com.resonote.core.network.retrofit.RealCatalogNetworkDataSource
 import com.resonote.core.network.retrofit.RealCloudNetworkDataSource
@@ -157,6 +160,10 @@ internal object NetworkModule {
     @Singleton
     fun provideMusicApi(retrofit: Retrofit): MusicApi = retrofit.create(MusicApi::class.java)
 
+    @Provides
+    @Singleton
+    fun provideGitHubReleaseApi(retrofit: Retrofit): GitHubReleaseApi = retrofit.create(GitHubReleaseApi::class.java)
+
     private fun String.ensureTrailingSlash(): String = if (endsWith('/')) this else "$this/"
 
     private const val IMAGE_LOG_TAG = "ResonoteImage"
@@ -168,6 +175,11 @@ internal fun apiHttpClientBuilder(): OkHttpClient.Builder = OkHttpClient.Builder
 @Module
 @InstallIn(SingletonComponent::class)
 internal abstract class NetworkBindings {
+    @Binds
+    abstract fun bindAppUpdateNetworkDataSource(
+        implementation: RealAppUpdateNetworkDataSource,
+    ): AppUpdateNetworkDataSource
+
     @Binds abstract fun bindHomeNetworkDataSource(implementation: RealHomeNetworkDataSource): HomeNetworkDataSource
 
     @Binds

@@ -37,7 +37,9 @@ import com.resonote.feature.recognition.api.RecognitionNavKey
 import com.resonote.feature.recognition.impl.RecognitionRoute
 import com.resonote.feature.search.api.SearchNavKey
 import com.resonote.feature.search.impl.SearchRoute
+import com.resonote.feature.settings.api.AboutSettingsNavKey
 import com.resonote.feature.settings.api.SettingsNavKey
+import com.resonote.feature.settings.impl.AboutSettingsRoute
 import com.resonote.feature.settings.impl.SettingsRoute
 import com.resonote.feature.video.api.VideoNavKey
 import com.resonote.feature.video.impl.VideoRoute
@@ -215,7 +217,17 @@ internal fun ResonoteNavDisplay(
                 )
             }
             entry<SettingsNavKey> {
-                SettingsRoute(onBack = { backStack.removeLastOrNull() })
+                SettingsRoute(
+                    onBack = { backStack.removeLastOrNull() },
+                    onAboutClick = { backStack.add(AboutSettingsNavKey) },
+                    bottomContentPadding = standaloneBottomContentPadding,
+                )
+            }
+            entry<AboutSettingsNavKey> {
+                AboutSettingsRoute(
+                    onBack = { backStack.removeLastOrNull() },
+                    bottomContentPadding = standaloneBottomContentPadding,
+                )
             }
             entry<PlaylistNavKey> { key ->
                 PlaylistRoute(

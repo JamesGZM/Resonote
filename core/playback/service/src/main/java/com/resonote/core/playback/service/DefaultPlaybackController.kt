@@ -11,13 +11,13 @@ import androidx.media3.session.SessionToken
 import com.resonote.core.data.ListeningHistoryRepository
 import com.resonote.core.data.PlaybackPreferencesRepository
 import com.resonote.core.data.PlaybackSessionRepository
+import com.resonote.core.model.PlaybackMode
 import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.model.ResolveSongSourceResult
 import com.resonote.core.model.ResolvedSongSource
 import com.resonote.core.playback.PlaybackController
 import com.resonote.core.playback.PlaybackIssue
 import com.resonote.core.playback.PlaybackItem
-import com.resonote.core.playback.PlaybackMode
 import com.resonote.core.playback.PlaybackState
 import com.resonote.core.playback.PlaybackStatus
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -129,11 +129,16 @@ internal class DefaultPlaybackController internal constructor(
             ContextCompat.getMainExecutor(context),
         )
         scope.launch {
-            preferencesRepository.playbackSpeed.collect { speed ->
-                if (mutableState.value.playbackSpeed != speed) {
-                    mutableState.value = mutableState.value.copy(playbackSpeed = speed)
+            preferencesRepository.preferences.collect { preferences ->
+                val state = mutableState.value
+                if (state.playbackSpeed != preferences.playbackSpeed || state.mode != preferences.playbackMode) {
+                    mutableState.value = state.copy(
+                        playbackSpeed = preferences.playbackSpeed,
+                        mode = preferences.playbackMode,
+                    )
+                    if (queue.currentItem != null) requestPersistSession()
                 }
-                runWithController { it.setPlaybackSpeed(speed.factor) }
+                runWithController { it.setPlaybackSpeed(preferences.playbackSpeed.factor) }
             }
         }
     }
@@ -327,6 +332,7 @@ internal class DefaultPlaybackController internal constructor(
         preloadCoordinator.invalidate()
         mutableState.value = mutableState.value.copy(mode = mode)
         requestPersistSession()
+        scope.launch { preferencesRepository.setPlaybackMode(mode) }
     }
 
     override fun setPlaybackSpeed(speed: PlaybackSpeed) {

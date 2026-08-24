@@ -1,8 +1,10 @@
 package com.resonote.core.data.di
 
+import com.resonote.core.data.AppUpdateRepository
 import com.resonote.core.data.AuthRepository
 import com.resonote.core.data.CloudRepository
 import com.resonote.core.data.ContentCatalogRepository
+import com.resonote.core.data.DefaultAppUpdateRepository
 import com.resonote.core.data.DefaultAuthRepository
 import com.resonote.core.data.DefaultCloudRepository
 import com.resonote.core.data.DefaultContentCatalogRepository
@@ -54,6 +56,9 @@ import dagger.hilt.components.SingletonComponent
 @Module
 @InstallIn(SingletonComponent::class)
 internal abstract class DataBindings {
+    @Binds
+    abstract fun bindAppUpdateRepository(implementation: DefaultAppUpdateRepository): AppUpdateRepository
+
     @Binds
     abstract fun bindApiSessionStore(implementation: EncryptedApiSessionStore): ApiSessionStore
 

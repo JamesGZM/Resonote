@@ -15,6 +15,8 @@ import com.github.takahirom.roborazzi.captureRoboImage
 import com.google.common.truth.Truth.assertThat
 import com.resonote.core.designsystem.theme.ResonoteTheme
 import com.resonote.core.designsystem.theme.ResonoteThemeMode
+import com.resonote.core.model.AppRelease
+import com.resonote.core.model.OnlinePlaybackQuality
 import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.screenshottesting.DefaultRoborazziOptions
 import org.junit.Rule
@@ -51,6 +53,17 @@ class SettingsScreenScreenshotTest {
     }
 
     @Test
+    fun onlineQualitySheetDispatchesSelection() {
+        var selected: OnlinePlaybackQuality? = null
+        setScreen(onOnlinePlaybackQualityChange = { selected = it })
+
+        composeRule.onNodeWithText("Online audio quality").performClick()
+        composeRule.onNodeWithText("Lossless · FLAC").performClick()
+
+        assertThat(selected).isEqualTo(OnlinePlaybackQuality.Lossless)
+    }
+
+    @Test
     fun backActionRemainsReachable() {
         var backClicks = 0
         setScreen(onBack = { backClicks++ })
@@ -67,9 +80,34 @@ class SettingsScreenScreenshotTest {
         composeRule.onNodeWithTag("settings-dynamic-color").assertDoesNotExist()
     }
 
+    @Test
+    fun availableUpdateRowOpensRelease() {
+        var updateClicks = 0
+        composeRule.setContent {
+            ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                AboutSettingsScreen(
+                    version = "0.1.2",
+                    updateState = AboutUpdateState.Available(
+                        AppRelease("v0.2.0", "https://github.com/release"),
+                    ),
+                    onBack = {},
+                    onProjectClick = {},
+                    onUpdateClick = { updateClicks++ },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("New version v0.2.0").assertIsDisplayed()
+        capture("about-update")
+        composeRule.onNodeWithText("Check for updates").performClick()
+
+        assertThat(updateClicks).isEqualTo(1)
+    }
+
     private fun setScreen(
         onBack: () -> Unit = {},
         onPlaybackSpeedChange: (PlaybackSpeed) -> Unit = {},
+        onOnlinePlaybackQualityChange: (OnlinePlaybackQuality) -> Unit = {},
         supportsDynamicColor: Boolean = true,
     ) {
         composeRule.setContent {
@@ -82,6 +120,7 @@ class SettingsScreenScreenshotTest {
                         onBack = onBack,
                         onRetry = {},
                         onPlaybackSpeedChange = onPlaybackSpeedChange,
+                        onOnlinePlaybackQualityChange = onOnlinePlaybackQualityChange,
                         supportsDynamicColor = supportsDynamicColor,
                     )
                 }

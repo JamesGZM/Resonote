@@ -47,9 +47,9 @@ import com.resonote.core.designsystem.component.ResonoteQualityBadge
 import com.resonote.core.designsystem.component.ResonoteVipBadge
 import com.resonote.core.designsystem.tokens.ResonoteTokens
 import com.resonote.core.model.ContentFailure
+import com.resonote.core.model.PlaybackMode
 import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.playback.PlaybackMetadata
-import com.resonote.core.playback.PlaybackMode
 import com.resonote.core.playback.PlaybackStatus
 
 @Composable

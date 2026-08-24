@@ -6,10 +6,10 @@ import com.resonote.core.data.LyricsRepository
 import com.resonote.core.model.CollectionLoadResult
 import com.resonote.core.model.ContentFailure
 import com.resonote.core.model.LyricLine
+import com.resonote.core.model.PlaybackMode
 import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.playback.PlaybackController
 import com.resonote.core.playback.PlaybackItem
-import com.resonote.core.playback.PlaybackMode
 import com.resonote.core.playback.PlaybackOrigin
 import com.resonote.core.playback.PlaybackState
 import dagger.hilt.android.lifecycle.HiltViewModel

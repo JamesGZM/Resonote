@@ -6,4 +6,10 @@ option java_multiple_files = true;
 message PlaybackPreferences {
   uint32 playback_speed_percent = 1;
   string online_playback_quality = 2;
+  string playback_mode = 3;
+  bool gapless_enabled = 4;
+  string crossfade_duration = 5;
+  bool loudness_normalization_enabled = 6;
+  string audio_focus_policy = 7;
+  bool gapless_configured = 8;
 }

@@ -31,6 +31,11 @@ class ProtoPlaybackPreferencesStorageTest {
             ProtoPlaybackPreferencesStorage(firstStore).apply {
                 setPlaybackSpeedPercent(150)
                 setOnlinePlaybackQuality("HighResolution")
+                setPlaybackMode("Shuffle")
+                setGaplessEnabled(false)
+                setCrossfadeDuration("FiveSeconds")
+                setLoudnessNormalizationEnabled(true)
+                setAudioFocusPolicy("AllowMedia")
             }
         } finally {
             firstScope.cancel()
@@ -46,6 +51,11 @@ class ProtoPlaybackPreferencesStorageTest {
             val storage = ProtoPlaybackPreferencesStorage(secondStore)
             assertThat(storage.playbackSpeedPercent.first()).isEqualTo(150)
             assertThat(storage.onlinePlaybackQuality.first()).isEqualTo("HighResolution")
+            assertThat(storage.playbackMode.first()).isEqualTo("Shuffle")
+            assertThat(storage.gaplessEnabled.first()).isFalse()
+            assertThat(storage.crossfadeDuration.first()).isEqualTo("FiveSeconds")
+            assertThat(storage.loudnessNormalizationEnabled.first()).isTrue()
+            assertThat(storage.audioFocusPolicy.first()).isEqualTo("AllowMedia")
         } finally {
             secondScope.cancel()
         }
