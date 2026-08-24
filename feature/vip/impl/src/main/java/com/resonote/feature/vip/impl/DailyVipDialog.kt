@@ -44,6 +44,7 @@ fun DailyVipDialogRoute(
     visible: Boolean,
     onDismiss: () -> Unit,
     onRewardApplied: () -> Unit,
+    onRiskVerificationRequired: (com.resonote.core.model.RiskChallengeHandle) -> Unit,
     viewModel: DailyVipViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -52,6 +53,12 @@ fun DailyVipDialogRoute(
     }
     LaunchedEffect(visible) {
         if (visible) viewModel.reset()
+    }
+    LaunchedEffect(state) {
+        (state as? DailyVipUiState.RiskVerificationRequired)?.let {
+            onDismiss()
+            onRiskVerificationRequired(it.challenge)
+        }
     }
     if (visible) {
         DailyVipDialog(
@@ -219,6 +226,7 @@ private fun DialogActions(
             is DailyVipUiState.ClaimComplete,
             is DailyVipUiState.UpgradeComplete,
             is DailyVipUiState.RiskBlocked,
+            is DailyVipUiState.RiskVerificationRequired,
             -> CloseAction(onDismiss, R.string.feature_vip_impl_daily_vip_done)
         }
     }
@@ -287,6 +295,12 @@ private fun DailyVipUiState.presentation(): DialogPresentation = when (this) {
         },
     )
     is DailyVipUiState.RiskBlocked -> DialogPresentation(
+        Icons.Rounded.Lock,
+        R.string.feature_vip_impl_daily_vip_risk_title,
+        R.string.feature_vip_impl_daily_vip_risk_body,
+        isError = true,
+    )
+    is DailyVipUiState.RiskVerificationRequired -> DialogPresentation(
         Icons.Rounded.Lock,
         R.string.feature_vip_impl_daily_vip_risk_title,
         R.string.feature_vip_impl_daily_vip_risk_body,

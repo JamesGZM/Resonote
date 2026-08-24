@@ -12,6 +12,8 @@ import androidx.navigation3.ui.defaultPopTransitionSpec
 import com.resonote.core.model.AuthState
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.navigation.LoginGateNavKey
+import com.resonote.core.navigation.RiskVerificationContinuation
+import com.resonote.core.navigation.RiskVerificationNavKey
 import com.resonote.core.navigation.TabsShellNavKey
 import com.resonote.core.playback.PlaybackState
 import com.resonote.feature.album.api.AlbumNavKey
@@ -36,6 +38,7 @@ import com.resonote.feature.ranking.api.RankingNavKey
 import com.resonote.feature.ranking.impl.RankingRoute
 import com.resonote.feature.recognition.api.RecognitionNavKey
 import com.resonote.feature.recognition.impl.RecognitionRoute
+import com.resonote.feature.risk.impl.RiskVerificationRoute
 import com.resonote.feature.search.api.SearchNavKey
 import com.resonote.feature.search.impl.SearchRoute
 import com.resonote.feature.settings.api.AboutSettingsNavKey
@@ -74,6 +77,10 @@ internal fun ResonoteNavDisplay(
     onOpenDailyVip: () -> Unit,
     onTabBarInsetChanged: (Dp) -> Unit,
     onVideoFullscreenChange: (Boolean) -> Unit,
+    completedLoginRiskHandle: String?,
+    onLoginRiskHandled: () -> Unit,
+    onLoginRiskVerified: (String) -> Unit,
+    onDailyVipRiskVerified: (String) -> Unit,
 ) {
     NavDisplay(
         backStack = backStack,
@@ -451,9 +458,33 @@ internal fun ResonoteNavDisplay(
             entry<LoginGateNavKey> { key ->
                 LoginRoute(
                     sessionExpired = key.sessionExpired,
+                    completedRiskHandle = completedLoginRiskHandle,
+                    onRiskHandleConsumed = onLoginRiskHandled,
+                    onRiskVerificationRequired = { challenge ->
+                        backStack.add(
+                            RiskVerificationNavKey(
+                                challengeHandle = challenge.value,
+                                continuation = RiskVerificationContinuation.Login,
+                            ),
+                        )
+                    },
                     onBack = {
                         if (backStack.lastOrNull() is LoginGateNavKey) backStack.removeLastOrNull()
                         viewModel.acknowledgeAuthenticationGate()
+                    },
+                )
+            }
+            entry<RiskVerificationNavKey> { key ->
+                RiskVerificationRoute(
+                    key = key,
+                    onBack = { backStack.removeLastOrNull() },
+                    onVerified = {
+                        backStack.removeLastOrNull()
+                        if (key.continuation == RiskVerificationContinuation.Login) {
+                            onLoginRiskVerified(key.challengeHandle)
+                        } else if (key.continuation == RiskVerificationContinuation.DailyVip) {
+                            onDailyVipRiskVerified(key.challengeHandle)
+                        }
                     },
                 )
             }

@@ -35,4 +35,10 @@
     <string name="feature_auth_impl_auth_message_protocol">服务响应暂时无法解析，请稍后重试。</string>
     <string name="feature_auth_impl_auth_message_storage">登录成功，但安全保存会话失败，请检查设备后重试。</string>
     <string name="feature_auth_impl_auth_message_password_multiple">这个账号关联了多个用户，请改用手机号验证码选择要登录的账号。</string>
+    <string name="feature_auth_impl_security_sms_title">短信安全验证</string>
+    <string name="feature_auth_impl_security_sms_body">验证通过后将继续本次登录</string>
+    <string name="feature_auth_impl_security_sms_submit">完成验证</string>
+    <string name="feature_auth_impl_security_sms_submitting">正在验证…</string>
+    <string name="feature_auth_impl_security_sms_error">验证码验证失败，请重新输入。</string>
+    <string name="feature_auth_impl_security_sms_close">关闭短信安全验证</string>
 </resources>

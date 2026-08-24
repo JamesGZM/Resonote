@@ -20,6 +20,7 @@ import com.github.takahirom.roborazzi.captureRoboImage
 import com.resonote.core.designsystem.theme.ResonoteTheme
 import com.resonote.core.designsystem.theme.ResonoteThemeMode
 import com.resonote.core.model.AuthAccountOption
+import com.resonote.core.model.RiskChallengeHandle
 import com.resonote.core.screenshottesting.DefaultRoborazziOptions
 import org.junit.Rule
 import org.junit.Test
@@ -30,7 +31,7 @@ import org.robolectric.annotation.GraphicsMode
 
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(sdk = [35], qualifiers = "w390dp-h844dp-420dpi")
+@Config(sdk = [35], qualifiers = "zh-rCN-w390dp-h844dp-420dpi")
 class LoginScreenshotTest {
     @get:Rule
     val composeRule = createComposeRule()
@@ -75,6 +76,22 @@ class LoginScreenshotTest {
         composeRule.onNodeWithText("登录已过期").assertExists()
         composeRule.onNodeWithTag("login-scroll").performScrollToNode(hasTestTag("account-picker"))
         capture("accounts")
+    }
+
+    @Test
+    fun login_passwordSmsVerification() {
+        setScreen(
+            LoginUiState(
+                method = LoginMethod.Password,
+                securitySms = LoginSecuritySms(RiskChallengeHandle("fixture-risk")),
+            ),
+            sessionExpired = false,
+        )
+
+        composeRule.onNodeWithTag("login-security-sms-sheet").assertExists()
+        composeRule.onNodeWithText("短信安全验证").assertExists()
+        composeRule.onNodeWithText("验证通过后将继续本次登录").assertExists()
+        capture("password_sms_verification")
     }
 
     private fun setScreen(state: LoginUiState, sessionExpired: Boolean) {

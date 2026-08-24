@@ -32,6 +32,7 @@ import com.resonote.core.designsystem.component.ResonoteSnackbarHost
 import com.resonote.core.designsystem.tokens.ResonoteTokens
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.PlaybackUnavailableReason
+import com.resonote.core.model.RiskChallengeHandle
 import com.resonote.core.navigation.TabsShellNavKey
 import com.resonote.core.playback.PlaybackIssue
 import com.resonote.core.playback.PlaybackState
@@ -46,6 +47,7 @@ import com.resonote.feature.player.impl.badgeLabel
 import com.resonote.feature.recognition.api.RecognitionNavKey
 import com.resonote.feature.video.api.VideoNavKey
 import com.resonote.feature.vip.impl.DailyVipDialogRoute
+import com.resonote.feature.vip.impl.DailyVipViewModel
 
 @Stable
 internal class ResonoteOverlayState {
@@ -78,6 +80,8 @@ internal fun BoxScope.ResonoteAppOverlays(
     snackbarHostState: SnackbarHostState,
     snackbarController: ResonoteSnackbarController,
     onOpenPlaylistPicker: (OnlineSong) -> Unit,
+    onOpenRiskVerification: (RiskChallengeHandle) -> Unit,
+    dailyVipViewModel: DailyVipViewModel,
 ) {
     val queueNextMessage = stringResource(R.string.song_action_added_next)
     val queueAddedMessage = stringResource(R.string.song_action_added_queue)
@@ -169,6 +173,8 @@ internal fun BoxScope.ResonoteAppOverlays(
             myViewModel.refresh()
             playbackViewModel.refreshCurrentOnlineSource(force = true)
         },
+        onRiskVerificationRequired = onOpenRiskVerification,
+        viewModel = dailyVipViewModel,
     )
 
     if (snackbarHostSurface == null) {

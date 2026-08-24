@@ -11,35 +11,61 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imeNestedScroll
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.Shield
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.resonote.core.designsystem.component.ResonoteBottomSheet
+import com.resonote.core.designsystem.component.ResonoteBottomSheetHeader
 import com.resonote.core.designsystem.component.ResonoteButton
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
 
 @Composable
-fun LoginRoute(sessionExpired: Boolean, onBack: () -> Unit, viewModel: LoginViewModel = hiltViewModel()) {
+fun LoginRoute(
+    sessionExpired: Boolean,
+    completedRiskHandle: String?,
+    onRiskHandleConsumed: () -> Unit,
+    onRiskVerificationRequired: (com.resonote.core.model.RiskChallengeHandle) -> Unit,
+    onBack: () -> Unit,
+    viewModel: LoginViewModel = hiltViewModel(),
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    androidx.compose.runtime.LaunchedEffect(viewModel) {
+        viewModel.externalRiskChallenges.collect(onRiskVerificationRequired)
+    }
+    androidx.compose.runtime.LaunchedEffect(completedRiskHandle) {
+        completedRiskHandle?.let {
+            viewModel.resumeAfterExternalRisk(com.resonote.core.model.RiskChallengeHandle(it))
+            onRiskHandleConsumed()
+        }
+    }
     LoginScreen(
         state = state,
         sessionExpired = sessionExpired,
@@ -53,6 +79,9 @@ fun LoginRoute(sessionExpired: Boolean, onBack: () -> Unit, viewModel: LoginView
         onSendCode = viewModel::sendCode,
         onLogin = viewModel::login,
         onAccountSelected = viewModel::selectAccount,
+        onSecuritySmsCodeChanged = viewModel::updateSecuritySmsCode,
+        onSubmitSecuritySms = viewModel::submitSecuritySms,
+        onDismissSecuritySms = viewModel::dismissSecuritySms,
     )
 }
 
@@ -71,6 +100,9 @@ internal fun LoginScreen(
     onSendCode: () -> Unit,
     onLogin: () -> Unit,
     onAccountSelected: (String) -> Unit,
+    onSecuritySmsCodeChanged: (String) -> Unit = {},
+    onSubmitSecuritySms: () -> Unit = {},
+    onDismissSecuritySms: () -> Unit = {},
 ) {
     BackHandler(onBack = onBack)
     Scaffold(
@@ -178,6 +210,77 @@ internal fun LoginScreen(
                     modifier = Modifier.padding(start = 6.dp),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall,
+                )
+            }
+        }
+    }
+    state.securitySms?.let { sms ->
+        LoginSecuritySmsSheet(
+            state = sms,
+            onCodeChanged = onSecuritySmsCodeChanged,
+            onSubmit = onSubmitSecuritySms,
+            onDismiss = onDismissSecuritySms,
+        )
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun LoginSecuritySmsSheet(
+    state: LoginSecuritySms,
+    onCodeChanged: (String) -> Unit,
+    onSubmit: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val submitting by rememberUpdatedState(state.submitting)
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true,
+        confirmValueChange = { target -> target != SheetValue.Hidden || !submitting },
+    )
+    ResonoteBottomSheet(
+        onDismissRequest = { if (!state.submitting) onDismiss() },
+        sheetState = sheetState,
+        modifier = Modifier.testTag("login-security-sms-sheet"),
+    ) {
+        Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(bottom = 20.dp)) {
+            ResonoteBottomSheetHeader(
+                title = stringResource(R.string.feature_auth_impl_security_sms_title),
+                subtitle = stringResource(R.string.feature_auth_impl_security_sms_body),
+                actions = {
+                    IconButton(onClick = onDismiss, enabled = !state.submitting) {
+                        Icon(
+                            Icons.Rounded.Close,
+                            contentDescription = stringResource(R.string.feature_auth_impl_security_sms_close),
+                        )
+                    }
+                },
+            )
+            Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp)) {
+                LoginInputField(
+                    value = state.code,
+                    onValueChange = onCodeChanged,
+                    label = stringResource(R.string.feature_auth_impl_auth_code),
+                    placeholder = stringResource(R.string.feature_auth_impl_auth_code_placeholder),
+                    leadingIcon = Icons.Rounded.Shield,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                    enabled = !state.submitting,
+                    modifier = Modifier.fillMaxWidth().testTag("login-security-sms-input"),
+                )
+                if (state.failed) {
+                    Text(
+                        stringResource(R.string.feature_auth_impl_security_sms_error),
+                        modifier = Modifier.padding(top = 12.dp),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                ResonoteButton(
+                    label = stringResource(R.string.feature_auth_impl_security_sms_submit),
+                    loadingLabel = stringResource(R.string.feature_auth_impl_security_sms_submitting),
+                    onClick = onSubmit,
+                    enabled = state.code.isNotBlank(),
+                    loading = state.submitting,
+                    modifier = Modifier.fillMaxWidth().padding(top = 24.dp).height(44.dp),
                 )
             }
         }

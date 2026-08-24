@@ -23,7 +23,10 @@ import com.resonote.core.designsystem.component.ResonoteSnackbarController
 import com.resonote.core.designsystem.component.rememberResonoteSnackbarController
 import com.resonote.core.model.AuthState
 import com.resonote.core.model.OnlineSong
+import com.resonote.core.model.RiskChallengeHandle
 import com.resonote.core.navigation.LoginGateNavKey
+import com.resonote.core.navigation.RiskVerificationContinuation
+import com.resonote.core.navigation.RiskVerificationNavKey
 import com.resonote.core.navigation.TabsShellNavKey
 import com.resonote.feature.library.impl.MyUiState
 import com.resonote.feature.library.impl.MyViewModel
@@ -31,6 +34,7 @@ import com.resonote.feature.library.impl.PlaylistAdditionUiState
 import com.resonote.feature.local.api.LocalMusicNavKey
 import com.resonote.feature.player.api.PlayerNavKey
 import com.resonote.feature.video.api.VideoNavKey
+import com.resonote.feature.vip.impl.DailyVipViewModel
 
 @Composable
 internal fun ResonoteApp(
@@ -50,9 +54,11 @@ internal fun ResonoteApp(
     val externalImportRequests by viewModel.externalImportRequests.collectAsStateWithLifecycle()
     val externalImportRequest = externalImportRequests.firstOrNull()
     val myViewModel: MyViewModel = hiltViewModel()
+    val dailyVipViewModel: DailyVipViewModel = hiltViewModel()
     val myState by myViewModel.uiState.collectAsStateWithLifecycle()
     val setVideoFullscreen = rememberVideoFullscreenController()
     var tabBarInset by remember { mutableStateOf(0.dp) }
+    var completedLoginRiskHandle by remember { mutableStateOf<String?>(null) }
     val addResult = (myState as? MyUiState.Authenticated)?.playlistAddition
     val addSuccessMessage = (addResult as? PlaylistAdditionUiState.Added)?.let {
         stringResource(R.string.song_action_add_success, it.songTitle, it.playlistName)
@@ -132,6 +138,13 @@ internal fun ResonoteApp(
                     onOpenDailyVip = { overlayState.dailyVipDialogOpen = true },
                     onTabBarInsetChanged = { tabBarInset = it },
                     onVideoFullscreenChange = setVideoFullscreen,
+                    completedLoginRiskHandle = completedLoginRiskHandle,
+                    onLoginRiskHandled = { completedLoginRiskHandle = null },
+                    onLoginRiskVerified = { completedLoginRiskHandle = it },
+                    onDailyVipRiskVerified = { handle ->
+                        dailyVipViewModel.resumeAfterRisk(RiskChallengeHandle(handle))
+                        overlayState.dailyVipDialogOpen = true
+                    },
                 )
             }
         }
@@ -156,6 +169,16 @@ internal fun ResonoteApp(
             snackbarHostState = snackbarHostState,
             snackbarController = snackbarController,
             onOpenPlaylistPicker = ::openPlaylistPicker,
+            dailyVipViewModel = dailyVipViewModel,
+            onOpenRiskVerification = { challenge ->
+                overlayState.dailyVipDialogOpen = false
+                backStack.add(
+                    RiskVerificationNavKey(
+                        challengeHandle = challenge.value,
+                        continuation = RiskVerificationContinuation.DailyVip,
+                    ),
+                )
+            },
         )
     }
 }

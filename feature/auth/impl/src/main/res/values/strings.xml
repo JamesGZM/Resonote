@@ -35,4 +35,10 @@
     <string name="feature_auth_impl_auth_message_protocol">The service response could not be read. Try again later.</string>
     <string name="feature_auth_impl_auth_message_storage">Signed in, but the session could not be stored securely. Check your device and try again.</string>
     <string name="feature_auth_impl_auth_message_password_multiple">This account is linked to multiple users. Use an SMS code to choose which account to sign in to.</string>
+    <string name="feature_auth_impl_security_sms_title">SMS security verification</string>
+    <string name="feature_auth_impl_security_sms_body">Sign-in will continue after verification</string>
+    <string name="feature_auth_impl_security_sms_submit">Complete verification</string>
+    <string name="feature_auth_impl_security_sms_submitting">Verifying…</string>
+    <string name="feature_auth_impl_security_sms_error">The code could not be verified. Enter it again.</string>
+    <string name="feature_auth_impl_security_sms_close">Close SMS security verification</string>
 </resources>

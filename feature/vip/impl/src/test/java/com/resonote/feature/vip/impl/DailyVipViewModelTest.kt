@@ -4,6 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import com.resonote.core.data.VipRewardRepository
 import com.resonote.core.model.CollectionLoadResult
 import com.resonote.core.model.ContentFailure
+import com.resonote.core.model.RiskChallengeHandle
 import com.resonote.core.model.VipReward
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -161,6 +162,45 @@ class DailyVipViewModelTest {
 
         assertThat(viewModel.uiState.value).isEqualTo(DailyVipUiState.RiskBlocked("2026-08-13"))
         assertThat(repository.upgradeCalls).isEqualTo(0)
+    }
+
+    @Test
+    fun riskVerificationChallengeIsPreservedForStandalonePage() = runTest(dispatcher) {
+        val challenge = RiskChallengeHandle("fixture-risk")
+        val repository = FakeVipRewardRepository(
+            claimResults = listOf(
+                CollectionLoadResult.Failed(ContentFailure.RiskVerificationRequired(challenge)),
+            ),
+        )
+        val viewModel = DailyVipViewModel(repository, clock)
+
+        viewModel.claim()
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value).isEqualTo(
+            DailyVipUiState.RiskVerificationRequired("2026-08-13", challenge, DailyVipOperation.Claim),
+        )
+        assertThat(repository.upgradeCalls).isEqualTo(0)
+    }
+
+    @Test
+    fun completedRiskVerificationRetriesOriginalClaimOnce() = runTest(dispatcher) {
+        val challenge = RiskChallengeHandle("fixture-risk")
+        val repository = FakeVipRewardRepository(
+            claimResults = listOf(
+                CollectionLoadResult.Failed(ContentFailure.RiskVerificationRequired(challenge)),
+                available(alreadyDone = false, canUpgrade = false),
+            ),
+        )
+        val viewModel = DailyVipViewModel(repository, clock)
+
+        viewModel.claim()
+        advanceUntilIdle()
+        viewModel.resumeAfterRisk(challenge)
+        advanceUntilIdle()
+
+        assertThat(repository.claimDays).hasSize(2)
+        assertThat(viewModel.uiState.value).isEqualTo(DailyVipUiState.ClaimComplete("2026-08-13", false))
     }
 
     private class FakeVipRewardRepository(

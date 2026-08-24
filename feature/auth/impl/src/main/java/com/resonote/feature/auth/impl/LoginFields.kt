@@ -231,7 +231,7 @@ internal fun PasswordFields(
 }
 
 @Composable
-private fun LoginInputField(
+internal fun LoginInputField(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
