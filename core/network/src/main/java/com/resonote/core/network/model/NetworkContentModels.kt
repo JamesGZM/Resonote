@@ -28,6 +28,8 @@ data class NetworkArtistInfo(
     val fansCount: Long,
 )
 
+data class NetworkFollowedArtist(val id: String, val name: String, val avatarUrl: String?)
+
 data class NetworkArtistSongPage(val songs: List<NetworkSong>, val hasMore: Boolean)
 
 data class NetworkArtistAlbum(

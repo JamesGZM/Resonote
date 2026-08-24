@@ -13,6 +13,7 @@ import com.resonote.core.network.model.NetworkAlbumSongPage
 import com.resonote.core.network.model.NetworkArtistInfo
 import com.resonote.core.network.model.NetworkArtistSongPage
 import com.resonote.core.network.model.NetworkComplexSearch
+import com.resonote.core.network.model.NetworkFollowedArtist
 import com.resonote.core.network.model.NetworkLyricCandidate
 import com.resonote.core.network.model.NetworkPlaylistSummary
 import com.resonote.core.network.model.NetworkRecommendationMode
@@ -26,6 +27,15 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 class MobileBusinessVariantsRepositoryTest {
+    @Test
+    fun followedArtistsMapArtworkSize() = runTest {
+        val repository = DefaultContentCatalogRepository(FakeCatalog(), FakeHome(), RiskChallengeRegistry())
+
+        val result = repository.loadFollowedArtists() as CollectionLoadResult.Available
+
+        assertThat(result.value.single().avatarUrl).isEqualTo("https://artist/240")
+    }
+
     @Test
     fun categoryPlaylistsForwardsCategoryPagingAndMapsDomain() = runTest {
         val remote = FakeCatalog()
@@ -131,6 +141,7 @@ class MobileBusinessVariantsRepositoryTest {
             pageSize: Int,
             newestFirst: Boolean,
         ): NetworkArtistSongPage = error("unused")
+        override suspend fun followedArtists() = listOf(NetworkFollowedArtist("88", "歌手", "https://artist/{size}"))
     }
 
     private class FakeHome : HomeNetworkDataSource {

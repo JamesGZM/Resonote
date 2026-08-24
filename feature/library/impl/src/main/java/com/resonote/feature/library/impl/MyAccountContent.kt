@@ -2,6 +2,7 @@ package com.resonote.feature.library.impl
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -45,7 +46,12 @@ import com.resonote.core.designsystem.tokens.ResonoteTokens
 import com.resonote.core.model.UserProfile
 
 @Composable
-internal fun AccountCard(profile: UserProfile, onDailyVipClick: () -> Unit, onSettingsClick: () -> Unit) {
+internal fun AccountCard(
+    profile: UserProfile,
+    onDailyVipClick: () -> Unit,
+    onFollowingClick: () -> Unit,
+    onSettingsClick: () -> Unit,
+) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(top = 34.dp).testTag("my-profile"),
         verticalArrangement = Arrangement.spacedBy(37.dp),
@@ -113,6 +119,7 @@ internal fun AccountCard(profile: UserProfile, onDailyVipClick: () -> Unit, onSe
                 stringResource(R.string.feature_library_impl_my_follows),
                 profile.follows.compactNumber(),
                 Modifier.weight(1f).testTag("my-stat-follows"),
+                onClick = onFollowingClick,
             )
             ProfileStatDivider()
             ProfileStat(
@@ -279,8 +286,9 @@ private fun Avatar(profile: UserProfile, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun ProfileStat(label: String, value: String, modifier: Modifier = Modifier) {
-    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+private fun ProfileStat(label: String, value: String, modifier: Modifier = Modifier, onClick: (() -> Unit)? = null) {
+    val actionModifier = if (onClick == null) modifier else modifier.clickable(onClick = onClick)
+    Column(actionModifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Text(value, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
         Text(
             label,

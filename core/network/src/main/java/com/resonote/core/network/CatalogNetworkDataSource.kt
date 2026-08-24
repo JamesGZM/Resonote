@@ -7,6 +7,7 @@ import com.resonote.core.network.model.NetworkArtistInfo
 import com.resonote.core.network.model.NetworkArtistSongPage
 import com.resonote.core.network.model.NetworkArtistVideoPage
 import com.resonote.core.network.model.NetworkBanner
+import com.resonote.core.network.model.NetworkFollowedArtist
 import com.resonote.core.network.model.NetworkPlaylistCategory
 import com.resonote.core.network.model.NetworkPlaylistSummary
 
@@ -32,6 +33,7 @@ interface CatalogNetworkDataSource {
     ): NetworkArtistAlbumPage = error("artistAlbums is not implemented")
     suspend fun artistVideos(artistId: String, page: Int = 1, pageSize: Int = 30): NetworkArtistVideoPage =
         error("artistVideos is not implemented")
+    suspend fun followedArtists(): List<NetworkFollowedArtist> = error("followedArtists is not implemented")
     suspend fun isArtistFollowed(artistId: String): Boolean = error("isArtistFollowed is not implemented")
     suspend fun setArtistFollowed(artistId: String, followed: Boolean): Unit =
         error("setArtistFollowed is not implemented")

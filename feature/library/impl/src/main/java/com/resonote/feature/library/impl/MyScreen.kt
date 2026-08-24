@@ -35,6 +35,7 @@ fun MyRoute(
     bottomContentPadding: Dp,
     onLoginClick: () -> Unit,
     onDailyVipClick: () -> Unit,
+    onFollowingClick: () -> Unit = {},
     onHistoryClick: () -> Unit,
     onCloudClick: () -> Unit,
     onLocalMusicClick: () -> Unit,
@@ -53,6 +54,7 @@ fun MyRoute(
         bottomContentPadding = bottomContentPadding,
         onLoginClick = onLoginClick,
         onDailyVipClick = onDailyVipClick,
+        onFollowingClick = onFollowingClick,
         onHistoryClick = onHistoryClick,
         onCloudClick = onCloudClick,
         onLocalMusicClick = onLocalMusicClick,
@@ -73,6 +75,7 @@ internal fun MyScreen(
     bottomContentPadding: Dp,
     onLoginClick: () -> Unit,
     onDailyVipClick: () -> Unit,
+    onFollowingClick: () -> Unit = {},
     onHistoryClick: () -> Unit,
     onCloudClick: () -> Unit,
     onLocalMusicClick: () -> Unit,
@@ -145,6 +148,7 @@ internal fun MyScreen(
                     onRetryProfile = onRetryProfile,
                     onRetryPlaylists = onRetryPlaylists,
                     onDailyVipClick = onDailyVipClick,
+                    onFollowingClick = onFollowingClick,
                     onHistoryClick = onHistoryClick,
                     onCloudClick = onCloudClick,
                     onLocalMusicClick = onLocalMusicClick,
@@ -215,6 +219,7 @@ private fun LazyListScope.authenticatedContent(
     onRetryProfile: () -> Unit,
     onRetryPlaylists: () -> Unit,
     onDailyVipClick: () -> Unit,
+    onFollowingClick: () -> Unit,
     onHistoryClick: () -> Unit,
     onCloudClick: () -> Unit,
     onLocalMusicClick: () -> Unit,
@@ -228,6 +233,7 @@ private fun LazyListScope.authenticatedContent(
             is MySectionState.Available -> AccountCard(
                 profile.value,
                 onDailyVipClick,
+                onFollowingClick,
                 onSettingsClick,
             )
             is MySectionState.Failed -> SectionFailure(

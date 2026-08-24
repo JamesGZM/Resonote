@@ -24,6 +24,7 @@ import com.resonote.core.network.UserProfileNetworkDataSource
 import com.resonote.core.network.VideoNetworkDataSource
 import com.resonote.core.network.VipNetworkDataSource
 import com.resonote.core.network.api.MusicApi
+import com.resonote.core.network.model.NetworkFollowedArtist
 import com.resonote.core.network.model.NetworkMobileCodeLoginResult
 import com.resonote.core.network.model.NetworkPasswordLoginResult
 import com.resonote.core.network.model.NetworkPlaylistTrackInput
@@ -1658,15 +1659,21 @@ class ApiNetworkDataSourceTest {
 
     @Test
     fun artistFollowReadsRelationListAndUsesEncryptedMutationContracts() = runTest {
+        val listResponse = jsonResponse(
+            """{"status":1,"data":{"total":3,"lists":[{"source":7,"singerid":"88","singername":"Fixture Artist","k_pic":"https://artist/{size}"},{"source":7,"singerid":"88","singername":"Fixture Artist"},{"source":1,"userid":"9","nickname":"Fixture User"}]}}""",
+        )
+        gatewayServer.enqueue(listResponse)
         gatewayServer.enqueue(
-            jsonResponse(
-                """{"status":1,"data":{"total":1,"lists":[{"source":7,"singerid":"88"}]}}""",
-            ),
+            jsonResponse("""{"status":1,"data":{"total":1,"lists":[{"source":7,"singerid":"88"}]}}"""),
         )
         gatewayServer.enqueue(jsonResponse("""{"status":1,"data":{}}"""))
         gatewayServer.enqueue(jsonResponse("""{"status":1,"data":{}}"""))
         val source = dataSource()
 
+        val followedArtists = source.followedArtists()
+        assertThat(followedArtists).containsExactly(
+            NetworkFollowedArtist("88", "Fixture Artist", "https://artist/{size}"),
+        )
         assertThat(source.isArtistFollowed("88")).isTrue()
         source.setArtistFollowed("88", followed = true)
         source.setArtistFollowed("88", followed = false)
@@ -1678,6 +1685,9 @@ class ApiNetworkDataSourceTest {
         assertThat(listRequest.getHeader("x-router")).isEqualTo("relationuser.kugou.com")
         assertThat(listBody["userid"]?.jsonPrimitive?.content).isEqualTo("99")
         assertThat(listBody["p"]?.jsonPrimitive?.content).isNotEmpty()
+
+        val followedCheckRequest = gatewayServer.takeRequest()
+        assertThat(followedCheckRequest.requestUrl?.encodedPath).isEqualTo("/v4/follow_list")
 
         val followRequest = gatewayServer.takeRequest()
         val followBody = json.parseToJsonElement(followRequest.body.readUtf8()).jsonObject

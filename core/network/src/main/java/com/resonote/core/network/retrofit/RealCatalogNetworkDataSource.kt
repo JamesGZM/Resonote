@@ -25,6 +25,7 @@ import com.resonote.core.network.model.NetworkArtistSongPage
 import com.resonote.core.network.model.NetworkArtistVideo
 import com.resonote.core.network.model.NetworkArtistVideoPage
 import com.resonote.core.network.model.NetworkBanner
+import com.resonote.core.network.model.NetworkFollowedArtist
 import com.resonote.core.network.model.NetworkPlaylistCategory
 import com.resonote.core.network.model.NetworkPlaylistSummary
 import com.resonote.core.network.model.NetworkSong
@@ -342,8 +343,37 @@ internal class RealCatalogNetworkDataSource @Inject constructor(
         return NetworkArtistVideoPage(videos, total, hasMore(page, pageSize, raw.size, total))
     }
 
+    override suspend fun followedArtists(): List<NetworkFollowedArtist> {
+        val raw = artistFollowItems()
+        val artistItems = raw.filter { it.obj()?.text("source") == "7" }
+        val artists = artistItems.mapNotNull { element ->
+            val item = element.obj() ?: return@mapNotNull null
+            val id = (item.text("singerid") ?: item.text("singer_id"))?.takeIf(String::isNotBlank)
+                ?: return@mapNotNull null
+            val name = (
+                item.text("singername") ?: item.text("singer_name") ?: item.text("author_name")
+                    ?: item.text("name") ?: item.text("nickname")
+                )?.takeIf(String::isNotBlank) ?: return@mapNotNull null
+            NetworkFollowedArtist(
+                id = id,
+                name = name,
+                avatarUrl = item.text("k_pic") ?: item.text("sizable_avatar") ?: item.text("pic"),
+            )
+        }
+        requireConsumableItems(artistItems, artists)
+        return artists.distinctBy(NetworkFollowedArtist::id)
+    }
+
     override suspend fun isArtistFollowed(artistId: String): Boolean {
         require(artistId.isNotBlank()) { "artistId must not be blank" }
+        return artistFollowItems().any { element ->
+            val item = element.obj() ?: return@any false
+            item.text("source") == "7" &&
+                (item.text("singerid") ?: item.text("singer_id")) == artistId.trim()
+        }
+    }
+
+    private suspend fun artistFollowItems(): JsonArray {
         val session = registration.requireAuthenticatedSession()
         val clientTime = clock.millis() / 1_000
         val response = callApi {
@@ -367,11 +397,7 @@ internal class RealCatalogNetworkDataSource @Inject constructor(
         responses.requireSuccess(response)
         val data = response.data.obj() ?: throw missingField()
         val total = data.int("total") ?: 0
-        val raw = data.array("lists") ?: if (total == 0) JsonArray(emptyList()) else throw missingField()
-        return raw.any { element ->
-            val item = element.obj() ?: return@any false
-            item.text("source") == "7" && item.text("singerid") == artistId.trim()
-        }
+        return data.array("lists") ?: if (total == 0) JsonArray(emptyList()) else throw missingField()
     }
 
     override suspend fun setArtistFollowed(artistId: String, followed: Boolean) {

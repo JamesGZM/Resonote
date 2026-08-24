@@ -24,6 +24,7 @@ import com.resonote.feature.cloud.impl.CloudRoute
 import com.resonote.feature.history.api.HistoryNavKey
 import com.resonote.feature.history.api.HistoryTab
 import com.resonote.feature.history.impl.HistoryRoute
+import com.resonote.feature.library.impl.FollowingRoute
 import com.resonote.feature.library.impl.MyViewModel
 import com.resonote.feature.local.api.LocalMusicNavKey
 import com.resonote.feature.local.impl.LocalMusicRoute
@@ -105,6 +106,13 @@ internal fun ResonoteNavDisplay(
                     onDailyVipClick = {
                         if (authState is AuthState.Authenticated) {
                             onOpenDailyVip()
+                        } else if (backStack.lastOrNull() !is LoginGateNavKey) {
+                            backStack.add(LoginGateNavKey(sessionExpired = false))
+                        }
+                    },
+                    onFollowingClick = {
+                        if (authState is AuthState.Authenticated) {
+                            backStack.add(FollowingNavKey)
                         } else if (backStack.lastOrNull() !is LoginGateNavKey) {
                             backStack.add(LoginGateNavKey(sessionExpired = false))
                         }
@@ -217,6 +225,21 @@ internal fun ResonoteNavDisplay(
                                 singer = mv.singer,
                                 coverUrl = mv.coverUrl,
                                 durationMillis = mv.durationMillis,
+                            ),
+                        )
+                    },
+                )
+            }
+            entry<FollowingNavKey> {
+                FollowingRoute(
+                    bottomContentPadding = standaloneBottomContentPadding,
+                    onBack = { backStack.removeLastOrNull() },
+                    onArtistClick = { artist ->
+                        backStack.add(
+                            ArtistNavKey(
+                                artistId = artist.id,
+                                name = artist.name,
+                                avatarUrl = artist.avatarUrl,
                             ),
                         )
                     },

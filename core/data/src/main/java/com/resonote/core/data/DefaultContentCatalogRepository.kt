@@ -10,6 +10,7 @@ import com.resonote.core.model.ArtistVideo
 import com.resonote.core.model.ArtistVideosPage
 import com.resonote.core.model.Banner
 import com.resonote.core.model.CatalogSongPage
+import com.resonote.core.model.FollowedArtist
 import com.resonote.core.model.PlaylistCategory
 import com.resonote.core.model.PlaylistSummary
 import com.resonote.core.model.SongPage
@@ -134,6 +135,16 @@ internal class DefaultContentCatalogRepository @Inject constructor(
             total = result.total,
             hasMore = result.hasMore,
         )
+    }
+
+    override suspend fun loadFollowedArtists() = loadCollection(riskChallenges) {
+        network.followedArtists().map {
+            FollowedArtist(
+                id = it.id,
+                name = it.name,
+                avatarUrl = it.avatarUrl?.replace("{size}", "240"),
+            )
+        }
     }
 
     override suspend fun loadArtistFollowed(artistId: String) = loadCollection(riskChallenges) {

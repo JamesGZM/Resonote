@@ -9,6 +9,7 @@ import com.resonote.core.model.Banner
 import com.resonote.core.model.CatalogSongPage
 import com.resonote.core.model.CollectionLoadResult
 import com.resonote.core.model.ContentFailure
+import com.resonote.core.model.FollowedArtist
 import com.resonote.core.model.PlaylistCategory
 import com.resonote.core.model.PlaylistSummary
 import com.resonote.core.model.SongPage
@@ -46,6 +47,8 @@ interface ContentCatalogRepository {
         page: Int = 1,
         pageSize: Int = 30,
     ): CollectionLoadResult<ArtistVideosPage> = CollectionLoadResult.Failed(ContentFailure.Protocol)
+    suspend fun loadFollowedArtists(): CollectionLoadResult<List<FollowedArtist>> =
+        CollectionLoadResult.Failed(ContentFailure.Protocol)
     suspend fun loadArtistFollowed(artistId: String): CollectionLoadResult<Boolean> =
         CollectionLoadResult.Failed(ContentFailure.Protocol)
     suspend fun setArtistFollowed(artistId: String, followed: Boolean): CollectionLoadResult<Boolean> =

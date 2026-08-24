@@ -111,6 +111,16 @@ class MyScreenshotTest {
     }
 
     @Test
+    fun followingStatIsClickable() {
+        var followingClicks = 0
+        setScreen(authenticatedState(), onFollowingClick = { followingClicks++ })
+
+        composeRule.onNodeWithTag("my-stat-follows").performClick()
+
+        assertThat(followingClicks).isEqualTo(1)
+    }
+
+    @Test
     fun settingsEntryIsAvailableWithoutAccount() {
         var settingsClicks = 0
         setScreen(MyUiState.Anonymous, onSettingsClick = { settingsClicks++ })
@@ -216,6 +226,7 @@ class MyScreenshotTest {
         state: MyUiState,
         onLoginClick: () -> Unit = {},
         onDailyVipClick: () -> Unit = {},
+        onFollowingClick: () -> Unit = {},
         onSettingsClick: () -> Unit = {},
         fontScale: Float = 1f,
     ) {
@@ -230,6 +241,7 @@ class MyScreenshotTest {
                         bottomContentPadding = 24.dp,
                         onLoginClick = onLoginClick,
                         onDailyVipClick = onDailyVipClick,
+                        onFollowingClick = onFollowingClick,
                         onHistoryClick = {},
                         onCloudClick = {},
                         onLocalMusicClick = {},
