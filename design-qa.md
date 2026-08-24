@@ -28,6 +28,45 @@ final result: passed
 
 ---
 
+# Login Screen Design QA
+
+- Source visual truth: `/Users/gongziming/.codex/generated_images/01a03186-52b1-7262-b676-3d9c6c2da37d/exec-787a58f7-62b2-422b-8cf4-1bdb0dd3ac25.png`
+- Implementation screenshot: `/Users/gongziming/Android/projects/Resonote/feature/auth/impl/src/test/screenshots/Login/LoginCompact_mobile.png`
+- Full-view comparison: `/Users/gongziming/Android/projects/Resonote/build/design-qa/login-reference-vs-implementation.png`
+- Viewport: 390 x 844 dp, mobile-code initial state, light theme, `zh-CN`
+- Source pixels: 853 x 1844
+- Implementation pixels: 510 x 1105 at 420 dpi
+- Density normalization: the source was scaled to 510 x 1105 and placed beside the implementation without changing the implementation capture
+
+## Findings
+
+No actionable P0, P1, or P2 differences remain.
+
+- Fonts and typography: the hero title, supporting copy, tab labels, input copy, button label, and security note retain the selected source hierarchy. The app bar intentionally uses the shared `ResonoteTopAppBar` typography requested during product review.
+- Spacing and layout rhythm: the hero, tabs, two 56 dp inputs, 44 dp button, and security note retain the selected composition. Product review intentionally increased the input gap from 8 dp to 12 dp and replaced the mock-specific header with the shared project toolbar.
+- Colors and visual tokens: the implementation retains Resonote semantic background, surface-container, primary, and on-surface roles. Disabled actions intentionally use Material disabled-state colors instead of the source mock's enabled presentation.
+- Image quality and asset fidelity: the screen contains no raster content. Material icons remain sharp at native Compose density and use the closest project-available icon shapes.
+- Copy and content: the header now uses `登录账号`; the hero, tabs, placeholders, action labels, and security note match the selected Chinese design.
+
+## Focused comparison evidence
+
+A separate crop was not required because every important text and control detail is fully readable in the 1020 x 1105 combined image. The password-state Golden was also inspected to confirm the longer unselected tab label remains unclipped.
+
+## Comparison history
+
+1. The previous implementation was blocked by P1 typography drift and P2 vertical-spacing drift: the hero used 32 sp instead of the source-scale 24 sp, body/input copy used 16 sp instead of 14 sp, the input gap was 16 dp instead of 8 dp, and the header started too high.
+2. The first correction restored the source typography and header position, then reduced the field and section gaps. Its button and security note still sat approximately 8-12 px above the normalized source.
+3. The final correction moved the form down 2 dp, restored 28 dp before the button, and restored 24 dp before the security note. The second normalized comparison aligns all major vertical anchors.
+4. Product review then requested the project-standard toolbar and slightly more separation between paired inputs. The implementation now reuses `ResonoteTopAppBar` and uses a 12 dp input gap; these supersede the corresponding mock details.
+
+## Follow-up polish
+
+The source mock shows enabled red actions while the captured implementation correctly shows disabled actions for empty input. The shared toolbar and 12 dp input gap are also intentional user-directed product adaptations.
+
+final result: passed
+
+---
+
 # Home recommendation cards design QA
 
 - Source visual truth: `/Users/gongziming/.tmp/codex-clipboard-67460c30-1cc2-46f1-bccd-014af5617b3c.png`

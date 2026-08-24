@@ -3,26 +3,26 @@ package com.resonote.feature.auth.impl
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imeNestedScroll
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.resonote.core.designsystem.component.ResonoteButton
+import com.resonote.core.designsystem.component.ResonoteTopAppBar
 
 @Composable
 fun LoginRoute(sessionExpired: Boolean, onBack: () -> Unit, viewModel: LoginViewModel = hiltViewModel()) {
@@ -55,6 +56,7 @@ fun LoginRoute(sessionExpired: Boolean, onBack: () -> Unit, viewModel: LoginView
     )
 }
 
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 internal fun LoginScreen(
     state: LoginUiState,
@@ -71,29 +73,33 @@ internal fun LoginScreen(
     onAccountSelected: (String) -> Unit,
 ) {
     BackHandler(onBack = onBack)
-    Surface(color = MaterialTheme.colorScheme.surface) {
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            ResonoteTopAppBar(
+                title = { Text(stringResource(R.string.feature_auth_impl_auth_login_title)) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            Icons.AutoMirrored.Rounded.ArrowBack,
+                            contentDescription = stringResource(R.string.feature_auth_impl_auth_back),
+                        )
+                    }
+                },
+            )
+        },
+    ) { contentPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.safeDrawing)
+                .padding(contentPadding)
                 .imePadding()
+                .imeNestedScroll()
                 .verticalScroll(rememberScrollState())
                 .testTag("login-scroll")
                 .padding(horizontal = 24.dp),
         ) {
-            IconButton(onClick = onBack, modifier = Modifier.padding(top = 4.dp)) {
-                Icon(
-                    Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = stringResource(R.string.feature_auth_impl_auth_back),
-                )
-            }
-            Spacer(Modifier.height(24.dp))
-            Text(
-                text = stringResource(R.string.feature_auth_impl_auth_brand),
-                color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-            )
+            Spacer(Modifier.height(40.dp))
             Text(
                 text =
                 stringResource(
@@ -104,7 +110,7 @@ internal fun LoginScreen(
                     },
                 ),
                 modifier = Modifier.padding(top = 8.dp),
-                style = MaterialTheme.typography.displaySmall,
+                style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.SemiBold,
             )
             Text(
@@ -118,11 +124,11 @@ internal fun LoginScreen(
                 ),
                 modifier = Modifier.padding(top = 8.dp),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.bodyMedium,
             )
-            Spacer(Modifier.height(28.dp))
+            Spacer(Modifier.height(24.dp))
             LoginMethodSelector(state.method, onMethodSelected)
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(16.dp))
             when (state.method) {
                 LoginMethod.MobileCode -> MobileFields(state, onMobileChanged, onCodeChanged, onSendCode)
                 LoginMethod.Password -> PasswordFields(
@@ -133,7 +139,7 @@ internal fun LoginScreen(
                 )
             }
             state.message?.let { message ->
-                MessageBanner(message, modifier = Modifier.padding(top = 14.dp))
+                MessageBanner(message, modifier = Modifier.padding(top = 16.dp))
             }
             if (state.accounts.isNotEmpty()) {
                 AccountPicker(
@@ -149,11 +155,15 @@ internal fun LoginScreen(
                     onClick = onLogin,
                     enabled = state.canLogin,
                     loading = state.isLoggingIn,
-                    modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 28.dp)
+                        .height(44.dp)
+                        .testTag("login-submit"),
                 )
             }
             Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = 24.dp, bottom = 32.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
