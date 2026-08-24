@@ -34,7 +34,7 @@ import org.robolectric.annotation.GraphicsMode
 
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(sdk = [35], qualifiers = "w390dp-h844dp-420dpi")
+@Config(sdk = [35], qualifiers = "zh-rCN-w390dp-h844dp-420dpi")
 class PlaylistScreenshotTest {
     @get:Rule
     val composeRule = createComposeRule()
@@ -46,14 +46,14 @@ class PlaylistScreenshotTest {
         composeRule.onAllNodesWithText("深夜独白：安静的陪伴").assertCountEquals(1)
         composeRule.onNodeWithText("播放全部").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("歌单“深夜独白：安静的陪伴”的封面").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("More actions for 静默轨道").assertExists()
+        composeRule.onNodeWithContentDescription("静默轨道 的更多操作").assertExists()
         capture("top")
 
         composeRule.onNodeWithTag("playlist-list").performScrollToIndex(7)
         composeRule.waitForIdle()
         capture("songs")
 
-        composeRule.onNodeWithContentDescription("More actions for 城市醒来之前").performClick()
+        composeRule.onNodeWithContentDescription("城市醒来之前 的更多操作").performClick()
         composeRule.onNodeWithText("从歌单中移除？").assertExists()
         composeRule.onNodeWithText("“城市醒来之前”将从这个歌单中移除，不会删除歌曲本身。").assertExists()
     }

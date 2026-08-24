@@ -2,7 +2,6 @@
 
 package com.resonote.feature.artist.impl
 
-import android.icu.text.CompactDecimalFormat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -287,11 +286,19 @@ internal fun rememberArtistCollapseProgress(listState: LazyListState): State<Flo
 }
 
 internal fun Long.compactCount(): String = when {
-    this >= 10_000 ->
-        CompactDecimalFormat
-            .getInstance(Locale.getDefault(), CompactDecimalFormat.CompactStyle.SHORT)
-            .format(this)
+    this >= 100_000_000 && Locale.getDefault().language == Locale.CHINESE.language ->
+        compactLabel(this / 100_000_000.0, "亿")
+    this >= 10_000 && Locale.getDefault().language == Locale.CHINESE.language ->
+        compactLabel(this / 10_000.0, "万")
+    this >= 1_000_000_000 -> compactLabel(this / 1_000_000_000.0, "B")
+    this >= 1_000_000 -> compactLabel(this / 1_000_000.0, "M")
+    this >= 1_000 -> compactLabel(this / 1_000.0, "K")
     else -> toString()
+}
+
+private fun compactLabel(value: Double, suffix: String): String {
+    val formatted = if (value % 1.0 == 0.0) "%.0f" else "%.1f"
+    return formatted.format(Locale.ROOT, value) + suffix
 }
 
 internal fun Long.durationLabel(): String {
