@@ -465,6 +465,52 @@ class ApiNetworkDataSourceTest {
     }
 
     @Test
+    fun copyrightRestrictedViperMasterFallsBackToLowerQuality() = runTest {
+        gatewayServer.enqueue(
+            jsonResponse(
+                """{"status":1,"data":[{"hash":"TAPE_HASH","quality":"viper_tape","level":1}]}""",
+            ),
+        )
+        gatewayServer.enqueue(jsonResponse("""{"status":3,"url":[],"extName":"flac"}"""))
+        repeat(5) { gatewayServer.enqueue(jsonResponse("""{"status":0,"error_code":31863}""")) }
+        gatewayServer.enqueue(
+            jsonResponse("""{"status":1,"url":["https://cdn.example/song.mp3"],"extName":"mp3"}"""),
+        )
+
+        val source = dataSource().resolveSongSource("ORIGINAL", requestedQuality = "viper_tape")
+
+        assertThat(source.uri).isEqualTo("https://cdn.example/song.mp3")
+        gatewayServer.takeRequest()
+        val sourceRequests = List(7) { gatewayServer.takeRequest() }
+        assertThat(sourceRequests.map { it.requestUrl?.queryParameter("quality") })
+            .containsExactly("viper_tape", "viper_clear", "viper_atmos", "high", "flac", "320", "128")
+            .inOrder()
+        assertThat(sourceRequests.first().requestUrl?.queryParameter("hash")).isEqualTo("tape_hash")
+        assertThat(sourceRequests.drop(1).map { it.requestUrl?.queryParameter("hash") }.distinct())
+            .containsExactly("original")
+    }
+
+    @Test
+    fun malformedViperMasterUrlFallsBackToLowerQuality() = runTest {
+        gatewayServer.enqueue(
+            jsonResponse(
+                """{"status":1,"data":[{"hash":"TAPE_HASH","quality":"viper_tape","level":1}]}""",
+            ),
+        )
+        gatewayServer.enqueue(jsonResponse("""{"status":1,"url":["not-a-url"],"extName":"flac"}"""))
+        gatewayServer.enqueue(
+            jsonResponse("""{"status":1,"url":["https://cdn.example/song.flac"],"extName":"flac"}"""),
+        )
+
+        val source = dataSource().resolveSongSource("ORIGINAL", requestedQuality = "viper_tape")
+
+        assertThat(source.uri).isEqualTo("https://cdn.example/song.flac")
+        gatewayServer.takeRequest()
+        assertThat(gatewayServer.takeRequest().requestUrl?.queryParameter("quality")).isEqualTo("viper_tape")
+        assertThat(gatewayServer.takeRequest().requestUrl?.queryParameter("quality")).isEqualTo("viper_clear")
+    }
+
+    @Test
     fun emptyAuthenticatedCandidatesAreProtocolFailureRatherThanVipFailure() = runTest {
         gatewayServer.enqueue(
             jsonResponse(

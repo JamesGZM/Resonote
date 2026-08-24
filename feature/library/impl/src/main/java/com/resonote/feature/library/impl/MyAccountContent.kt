@@ -313,7 +313,15 @@ private fun Avatar(profile: UserProfile, modifier: Modifier = Modifier) {
 
 @Composable
 private fun ProfileStat(label: String, value: String, modifier: Modifier = Modifier, onClick: (() -> Unit)? = null) {
-    val actionModifier = if (onClick == null) modifier else modifier.clickable(onClick = onClick)
+    val actionModifier = if (onClick == null) {
+        modifier
+    } else {
+        modifier.clickable(
+            interactionSource = remember { MutableInteractionSource() },
+            indication = null,
+            onClick = onClick,
+        )
+    }
     Column(actionModifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Text(value, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
         Text(

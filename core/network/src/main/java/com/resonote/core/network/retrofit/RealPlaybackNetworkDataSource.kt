@@ -58,6 +58,7 @@ internal class RealPlaybackNetworkDataSource @Inject constructor(
         var lastFailureCode: String? = null
         var lastFailure: ApiException? = null
         var sawVipRequired = false
+        var sawCopyrightRestricted = false
         for (candidate in candidates) {
             val response = try {
                 calls.execute(detectHttpAuthenticationFailure = false) {
@@ -94,7 +95,18 @@ internal class RealPlaybackNetworkDataSource @Inject constructor(
                     lastFailure = ApiProtocolException(ApiProtocolException.Reason.MalformedResponse)
                     continue
                 }
-                return decodeSongSource(response, isPreview = !session.isAuthenticated)
+                try {
+                    return decodeSongSource(response, isPreview = !session.isAuthenticated)
+                } catch (unavailable: ApiPlaybackUnavailableException) {
+                    if (unavailable.reason == ApiPlaybackUnavailableException.Reason.Copyright) {
+                        sawCopyrightRestricted = true
+                        continue
+                    }
+                    throw unavailable
+                } catch (failure: ApiException) {
+                    lastFailure = failure
+                    continue
+                }
             }
             if (failureCode == SONG_SOURCE_VIP_REQUIRED_CODE) {
                 sawVipRequired = true
@@ -104,6 +116,9 @@ internal class RealPlaybackNetworkDataSource @Inject constructor(
         }
         lastFailureCode?.let { throw ApiServiceException(it) }
         if (sawVipRequired) throw ApiPlaybackUnavailableException(ApiPlaybackUnavailableException.Reason.Vip)
+        if (sawCopyrightRestricted) {
+            throw ApiPlaybackUnavailableException(ApiPlaybackUnavailableException.Reason.Copyright)
+        }
         lastFailure?.let { throw it }
         throw ApiProtocolException(ApiProtocolException.Reason.MalformedResponse)
     }
@@ -180,8 +195,9 @@ internal class RealPlaybackNetworkDataSource @Inject constructor(
             }
             .distinctBy(PlaybackCandidate::quality)
             .associateBy(PlaybackCandidate::quality)
-        return fallbackQualities.mapNotNull(candidatesByQuality::get)
-            .ifEmpty { fallbackQualities.map { PlaybackCandidate(hash, it) } }
+        return fallbackQualities.map { quality ->
+            candidatesByQuality[quality] ?: PlaybackCandidate(hash, quality)
+        }
     }
 
     private fun fallbackQualities(requestedQuality: String): List<String> = QUALITY_LEVELS.take(
