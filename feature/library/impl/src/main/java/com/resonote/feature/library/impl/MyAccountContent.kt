@@ -3,6 +3,7 @@ package com.resonote.feature.library.impl
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -147,59 +149,83 @@ internal fun AccountCard(
 
 @Composable
 internal fun AnonymousAccountCard(onLoginClick: () -> Unit, onSettingsClick: () -> Unit) {
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+    Box(Modifier.fillMaxWidth().padding(top = 34.dp).testTag("my-anonymous")) {
+        Row(
+            modifier = Modifier.fillMaxWidth().height(102.dp).padding(end = 32.dp),
+            verticalAlignment = Alignment.Top,
+        ) {
             Surface(
-                onClick = onLoginClick,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = onLoginClick,
+                    ),
                 shape = MaterialTheme.shapes.large,
                 color = Color.Transparent,
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(verticalAlignment = Alignment.Top) {
                     Surface(
-                        modifier = Modifier.size(64.dp),
+                        modifier = Modifier
+                            .offset(y = 6.dp)
+                            .size(96.dp)
+                            .border(
+                                1.dp,
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
+                                CircleShape,
+                            )
+                            .padding(3.dp),
                         shape = CircleShape,
                         color = MaterialTheme.colorScheme.primaryContainer,
                         contentColor = MaterialTheme.colorScheme.primary,
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            Icon(Icons.Rounded.Person, null, Modifier.size(30.dp))
+                            Icon(Icons.Rounded.Person, null, Modifier.size(40.dp))
                         }
                     }
-                    Column(Modifier.weight(1f).padding(start = 16.dp)) {
+                    Column(Modifier.weight(1f).padding(start = 14.dp, top = 16.dp)) {
                         Text(
                             stringResource(R.string.feature_library_impl_my_anonymous_title),
-                            style = MaterialTheme.typography.headlineSmall,
+                            style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp),
                             fontWeight = FontWeight.SemiBold,
                         )
                         Text(
                             stringResource(R.string.feature_library_impl_my_anonymous_body),
-                            Modifier.padding(top = 5.dp),
+                            Modifier.padding(top = 7.dp),
                             MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodyMedium,
-                            maxLines = 2,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
+                        Row(
+                            modifier = Modifier.padding(top = 7.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                Icons.Rounded.CardGiftcard,
+                                null,
+                                Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                            Text(
+                                stringResource(R.string.feature_library_impl_my_anonymous_vip_note),
+                                Modifier.padding(start = 6.dp),
+                                MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.labelSmall,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                     }
                 }
             }
-            SettingsButton(onSettingsClick)
         }
-        Row(
-            modifier = Modifier.padding(start = 80.dp),
-            verticalAlignment = Alignment.CenterVertically,
+        Box(
+            modifier = Modifier.fillMaxWidth().height(96.dp),
+            contentAlignment = Alignment.CenterEnd,
         ) {
-            Icon(
-                Icons.Rounded.CardGiftcard,
-                null,
-                Modifier.size(17.dp),
-                tint = MaterialTheme.colorScheme.primary,
-            )
-            Text(
-                stringResource(R.string.feature_library_impl_my_anonymous_vip_note),
-                Modifier.padding(start = 7.dp),
-                MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.labelSmall,
-            )
+            SettingsButton(onSettingsClick, Modifier.offset(y = 9.dp))
         }
     }
 }

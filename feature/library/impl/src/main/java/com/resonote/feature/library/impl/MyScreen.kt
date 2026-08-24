@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -27,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.resonote.core.designsystem.component.LocalResonoteSnackbarController
+import com.resonote.core.designsystem.component.ResonoteEmptyState
 import com.resonote.core.designsystem.component.ResonotePullToRefreshBox
 import com.resonote.core.model.UserPlaylist
 
@@ -202,12 +201,11 @@ private fun LazyListScope.anonymousContent(
             onLocalMusicClick = onLocalMusicClick,
         )
     }
-    item(key = "anonymous-note") {
-        Text(
-            text = stringResource(R.string.feature_library_impl_my_anonymous_local_note),
-            modifier = Modifier.padding(horizontal = 6.dp).testTag("my-anonymous"),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.bodySmall,
+    item(key = "anonymous-empty") {
+        ResonoteEmptyState(
+            title = stringResource(R.string.feature_library_impl_my_anonymous_empty_title),
+            message = stringResource(R.string.feature_library_impl_my_anonymous_empty_body),
+            modifier = Modifier.fillParentMaxHeight(0.55f),
         )
     }
 }

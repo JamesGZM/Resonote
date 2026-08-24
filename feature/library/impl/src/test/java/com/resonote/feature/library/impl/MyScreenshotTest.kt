@@ -43,6 +43,10 @@ class MyScreenshotTest {
         setScreen(MyUiState.Anonymous, onLoginClick = { loginClicks++ })
 
         composeRule.onNodeWithTag("my-anonymous").assertIsDisplayed()
+        composeRule.onNodeWithTag("resonote-empty-state").assertIsDisplayed()
+        composeRule.onNodeWithText("登录后发现更多内容").assertIsDisplayed()
+        composeRule.onNodeWithText("本地音乐属于此设备，不会因为登录或换号而被清除。")
+            .assertDoesNotExist()
         composeRule.onNodeWithText("登录你的账号").performClick()
         assertThat(loginClicks).isEqualTo(1)
         capture("anonymous")
