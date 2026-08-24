@@ -2,6 +2,7 @@
 
 package com.resonote.feature.artist.impl
 
+import android.icu.text.CompactDecimalFormat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -62,6 +63,7 @@ import com.resonote.core.designsystem.component.ResonoteRemoteArtwork
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
 import com.resonote.core.designsystem.component.resonoteHeroElement
 import com.resonote.core.model.AudioQuality
+import java.util.Locale
 
 @Composable
 internal fun ArtistHeader(
@@ -285,8 +287,10 @@ internal fun rememberArtistCollapseProgress(listState: LazyListState): State<Flo
 }
 
 internal fun Long.compactCount(): String = when {
-    this >= 10_000 && this % 10_000 == 0L -> "${this / 10_000}万"
-    this >= 10_000 -> "%.1f万".format(this / 10_000.0)
+    this >= 10_000 ->
+        CompactDecimalFormat
+            .getInstance(Locale.getDefault(), CompactDecimalFormat.CompactStyle.SHORT)
+            .format(this)
     else -> toString()
 }
 

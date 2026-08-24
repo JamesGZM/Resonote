@@ -104,6 +104,21 @@ class ApiSessionManagerTest {
     }
 
     @Test
+    fun explicitAuthenticationClearPublishesAnonymousStateWithoutAGate() = runTest {
+        val store = TestStore(authenticatedSession())
+        val manager = ApiSessionManager(Optional.of(store), ApiDeviceIdentityFactory())
+        manager.current()
+
+        manager.clearAuthentication()
+
+        val state = manager.authenticationState.first()
+        assertThat(state.session?.isAuthenticated).isFalse()
+        assertThat(state.gateReason).isNull()
+        assertThat(store.clearCount).isEqualTo(1)
+        assertThat(state.session?.dfid).isEqualTo("fixture-dfid")
+    }
+
+    @Test
     fun authenticationStateReflectsStoreChangesOutsideTheManager() = runTest {
         val store = TestStore(authenticatedSession())
         val manager = ApiSessionManager(Optional.of(store), ApiDeviceIdentityFactory())

@@ -9,6 +9,19 @@ import com.resonote.core.model.PlaybackMode
 import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.model.ThemeMode
 
+internal enum class AppLanguage(val languageTag: String) {
+    English("en"),
+    SimplifiedChinese("zh-CN"),
+}
+
+@Composable
+internal fun AppLanguage.label(): String = stringResource(
+    when (this) {
+        AppLanguage.English -> R.string.feature_settings_impl_language_english
+        AppLanguage.SimplifiedChinese -> R.string.feature_settings_impl_language_simplified_chinese
+    },
+)
+
 @Composable
 internal fun ThemeMode.label(): String = stringResource(
     when (this) {

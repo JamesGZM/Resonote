@@ -25,7 +25,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -33,9 +32,9 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.resonote.core.designsystem.component.ResonoteBottomSheet
+import com.resonote.core.designsystem.component.ResonoteBottomSheetHeader
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.OnlineSong
 import java.util.Locale
@@ -54,32 +53,16 @@ internal fun OnlineSongActionsSheet(
     onShareUnavailable: () -> Unit,
     snackbarHost: @Composable () -> Unit = {},
 ) {
-    ModalBottomSheet(
+    ResonoteBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
     ) {
         Column(Modifier.fillMaxWidth().padding(bottom = 20.dp)) {
-            Column(
-                modifier = Modifier.padding(horizontal = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Text(
-                    request.song.title,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                request.song.artist?.takeIf(String::isNotBlank)?.let {
-                    Text(
-                        it,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            }
+            ResonoteBottomSheetHeader(
+                title = request.song.title,
+                subtitle = request.song.artist?.takeIf(String::isNotBlank),
+                titleMaxLines = 2,
+            )
             Spacer(Modifier.height(12.dp))
             SongActionRow(Icons.Rounded.PlayArrow, R.string.song_action_play, onPlay)
             SongActionRow(Icons.Rounded.SkipNext, R.string.song_action_play_next, onPlayNext)

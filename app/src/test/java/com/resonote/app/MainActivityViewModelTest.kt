@@ -220,6 +220,8 @@ class MainActivityViewModelTest {
             state.value = AuthState.Anonymous
         }
 
+        override suspend fun logout() = Unit
+
         override suspend fun sendMobileCode(mobile: String): SendMobileCodeResult = error("unused")
         override suspend fun loginWithMobileCode(
             mobile: String,

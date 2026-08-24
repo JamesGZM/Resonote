@@ -1,5 +1,6 @@
 package com.resonote.feature.library.impl
 
+import android.icu.text.CompactDecimalFormat
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,6 +42,7 @@ import com.resonote.core.designsystem.component.rememberResonoteShimmer
 import com.resonote.core.designsystem.component.resonoteShimmer
 import com.resonote.core.designsystem.tokens.ResonoteTokens
 import com.resonote.core.model.ContentFailure
+import java.util.Locale
 
 @Composable
 internal fun MyScreenSkeleton(bottomContentPadding: Dp) {
@@ -223,13 +225,16 @@ internal fun ContentFailure.message() = stringResource(
 )
 
 internal fun Long.compactNumber() = when {
-    this >= 100_000_000 -> "%.1f亿".format(this / 100_000_000.0)
-    this >= 10_000 -> "%.1f万".format(this / 10_000.0)
+    this >= 10_000 ->
+        CompactDecimalFormat
+            .getInstance(Locale.getDefault(), CompactDecimalFormat.CompactStyle.SHORT)
+            .format(this)
     else -> toString()
 }
 
+@Composable
 internal fun Long.listenTime() = when {
-    this >= 60 -> "${this / 60}小时"
-    this > 0 -> "${this}分钟"
+    this >= 60 -> stringResource(R.string.feature_library_impl_my_listen_time_hours, this / 60)
+    this > 0 -> stringResource(R.string.feature_library_impl_my_listen_time_minutes, this)
     else -> "—"
 }

@@ -34,8 +34,49 @@ class SettingsScreenScreenshotTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun settings_compactPlaybackPreference() {
+    fun settings_compactHome() {
         setScreen()
+
+        composeRule.onNodeWithTag("settings-playback").assertIsDisplayed()
+        capture("home")
+    }
+
+    @Test
+    fun appearanceSheetMatchesSettingsHierarchy() {
+        setScreen()
+
+        composeRule.onNodeWithTag("settings-appearance").performClick()
+        composeRule.onNodeWithText("Choose how Resonote looks on this device").assertIsDisplayed()
+        capture("appearance")
+    }
+
+    @Test
+    fun languageSheetDispatchesSelection() {
+        var selected: AppLanguage? = null
+        setScreen(onLanguageChange = { selected = it })
+
+        composeRule.onNodeWithTag("settings-language").performClick()
+        composeRule.onNodeWithText("Simplified Chinese").performClick()
+
+        assertThat(selected).isEqualTo(AppLanguage.SimplifiedChinese)
+    }
+
+    @Test
+    fun authenticatedSettingsShowsLogoutAndConfirmsAction() {
+        var logoutClicks = 0
+        setScreen(isAuthenticated = true, onLogout = { logoutClicks++ })
+
+        composeRule.onNodeWithTag("settings-logout").assertIsDisplayed()
+        capture("home-authenticated")
+        composeRule.onNodeWithTag("settings-logout").performClick()
+        composeRule.onNodeWithTag("settings-logout-confirm").performClick()
+
+        assertThat(logoutClicks).isEqualTo(1)
+    }
+
+    @Test
+    fun playbackSettingsCompact() {
+        setPlaybackScreen()
 
         composeRule.onNodeWithTag("settings-playback-speed").assertIsDisplayed()
         capture("playback")
@@ -44,7 +85,7 @@ class SettingsScreenScreenshotTest {
     @Test
     fun playbackSpeedDialogDispatchesSelection() {
         var selected: PlaybackSpeed? = null
-        setScreen(onPlaybackSpeedChange = { selected = it })
+        setPlaybackScreen(onPlaybackSpeedChange = { selected = it })
 
         composeRule.onNodeWithText("Playback speed").performClick()
         composeRule.onNodeWithText("1.5×").performClick()
@@ -55,7 +96,7 @@ class SettingsScreenScreenshotTest {
     @Test
     fun onlineQualitySheetDispatchesSelection() {
         var selected: OnlinePlaybackQuality? = null
-        setScreen(onOnlinePlaybackQualityChange = { selected = it })
+        setPlaybackScreen(onOnlinePlaybackQualityChange = { selected = it })
 
         composeRule.onNodeWithText("Online audio quality").performClick()
         composeRule.onNodeWithText("Lossless · FLAC").performClick()
@@ -77,7 +118,8 @@ class SettingsScreenScreenshotTest {
     fun dynamicColorOnlyAppearsWhenPlatformSupportsIt() {
         setScreen(supportsDynamicColor = false)
 
-        composeRule.onNodeWithTag("settings-dynamic-color").assertDoesNotExist()
+        composeRule.onNodeWithTag("settings-appearance").performClick()
+        composeRule.onNodeWithText("Dynamic color").assertDoesNotExist()
     }
 
     @Test
@@ -97,18 +139,78 @@ class SettingsScreenScreenshotTest {
             }
         }
 
-        composeRule.onNodeWithText("New version v0.2.0").assertIsDisplayed()
+        composeRule.onNodeWithTag("about-update-dot", useUnmergedTree = true).assertIsDisplayed()
         capture("about-update")
-        composeRule.onNodeWithText("Check for updates").performClick()
+        composeRule.onNodeWithText("Version").performClick()
 
         assertThat(updateClicks).isEqualTo(1)
     }
 
+    @Test
+    fun checkingUpdateUsesRefreshLoadingIndicator() {
+        composeRule.setContent {
+            ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                AboutSettingsScreen(
+                    version = "0.1.2",
+                    updateState = AboutUpdateState.Checking,
+                    onBack = {},
+                    onProjectClick = {},
+                    onUpdateClick = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Version").assertIsDisplayed()
+        capture("about-loading")
+    }
+
+    @Test
+    fun aboutRowsDispatchDetailNavigation() {
+        var privacyClicks = 0
+        var licenseClicks = 0
+        var libraryClicks = 0
+        composeRule.setContent {
+            ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                AboutSettingsScreen(
+                    version = "0.1.2",
+                    updateState = AboutUpdateState.Latest("0.1.2"),
+                    onBack = {},
+                    onProjectClick = {},
+                    onUpdateClick = {},
+                    onPrivacyClick = { privacyClicks++ },
+                    onLicenseClick = { licenseClicks++ },
+                    onLibrariesClick = { libraryClicks++ },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Privacy").performClick()
+        composeRule.onNodeWithText("Open-source license").performClick()
+        composeRule.onNodeWithText("Open-source libraries").performClick()
+
+        assertThat(privacyClicks).isEqualTo(1)
+        assertThat(licenseClicks).isEqualTo(1)
+        assertThat(libraryClicks).isEqualTo(1)
+    }
+
+    @Test
+    fun openSourceLibrariesCompact() {
+        composeRule.setContent {
+            ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                OpenSourceLibrariesRoute(onBack = {})
+            }
+        }
+
+        composeRule.onNodeWithText("AndroidX & Jetpack Compose").assertIsDisplayed()
+        capture("about-libraries")
+    }
+
     private fun setScreen(
         onBack: () -> Unit = {},
-        onPlaybackSpeedChange: (PlaybackSpeed) -> Unit = {},
-        onOnlinePlaybackQualityChange: (OnlinePlaybackQuality) -> Unit = {},
         supportsDynamicColor: Boolean = true,
+        isAuthenticated: Boolean = false,
+        onLanguageChange: (AppLanguage) -> Unit = {},
+        onLogout: () -> Unit = {},
     ) {
         composeRule.setContent {
             DeviceConfigurationOverride(
@@ -116,12 +218,36 @@ class SettingsScreenScreenshotTest {
             ) {
                 ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
                     SettingsScreen(
-                        state = SettingsUiState.Ready(PlaybackSpeed.Normal),
+                        state = SettingsUiState.Ready(
+                            playbackSpeed = PlaybackSpeed.Normal,
+                            isAuthenticated = isAuthenticated,
+                        ),
                         onBack = onBack,
+                        onRetry = {},
+                        onLanguageChange = onLanguageChange,
+                        onLogout = onLogout,
+                        supportsDynamicColor = supportsDynamicColor,
+                    )
+                }
+            }
+        }
+    }
+
+    private fun setPlaybackScreen(
+        onPlaybackSpeedChange: (PlaybackSpeed) -> Unit = {},
+        onOnlinePlaybackQualityChange: (OnlinePlaybackQuality) -> Unit = {},
+    ) {
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                override = DeviceConfigurationOverride.ForcedSize(DpSize(390.dp, 844.dp)),
+            ) {
+                ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                    PlaybackSettingsScreen(
+                        state = SettingsUiState.Ready(PlaybackSpeed.Normal),
+                        onBack = {},
                         onRetry = {},
                         onPlaybackSpeedChange = onPlaybackSpeedChange,
                         onOnlinePlaybackQualityChange = onOnlinePlaybackQualityChange,
-                        supportsDynamicColor = supportsDynamicColor,
                     )
                 }
             }

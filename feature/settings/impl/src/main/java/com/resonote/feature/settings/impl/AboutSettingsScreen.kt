@@ -4,7 +4,6 @@ package com.resonote.feature.settings.impl
 
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,7 +20,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -35,8 +36,12 @@ import com.resonote.core.designsystem.component.ResonoteTopAppBar
 @Composable
 fun AboutSettingsRoute(
     onBack: () -> Unit,
+    onPrivacyClick: () -> Unit = {},
+    onLicenseClick: () -> Unit = {},
+    onLibrariesClick: () -> Unit = {},
     bottomContentPadding: Dp = 32.dp,
     viewModel: AboutSettingsViewModel = hiltViewModel(),
+    settingsViewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
     val version = remember(context) {
@@ -45,12 +50,16 @@ fun AboutSettingsRoute(
             .orEmpty()
     }
     val updateState by viewModel.updateState.collectAsStateWithLifecycle()
+    val settingsState by settingsViewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(version) { viewModel.checkForUpdates(version) }
 
     AboutSettingsScreen(
         version = version,
         updateState = updateState,
         onBack = onBack,
+        onPrivacyClick = onPrivacyClick,
+        onLicenseClick = onLicenseClick,
+        onLibrariesClick = onLibrariesClick,
         bottomContentPadding = bottomContentPadding,
         onProjectClick = { context.openUrl(PROJECT_URL) },
         onUpdateClick = {
@@ -61,6 +70,8 @@ fun AboutSettingsRoute(
                 viewModel.checkForUpdates(version, force = true)
             }
         },
+        resetting = (settingsState as? SettingsUiState.Ready)?.savingKey == SettingsSaveKey.Reset,
+        onReset = settingsViewModel::resetSettings,
     )
 }
 
@@ -71,13 +82,19 @@ internal fun AboutSettingsScreen(
     onBack: () -> Unit,
     onProjectClick: () -> Unit,
     onUpdateClick: () -> Unit,
+    onPrivacyClick: () -> Unit = {},
+    onLicenseClick: () -> Unit = {},
+    onLibrariesClick: () -> Unit = {},
     bottomContentPadding: Dp = 32.dp,
+    resetting: Boolean = false,
+    onReset: () -> Unit = {},
 ) {
+    var confirmReset by remember { mutableStateOf(false) }
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             ResonoteTopAppBar(
-                title = { Text(stringResource(R.string.feature_settings_impl_about)) },
+                title = { Text(stringResource(R.string.feature_settings_impl_about_section)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -92,69 +109,69 @@ internal fun AboutSettingsScreen(
         Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.TopCenter) {
             LazyColumn(
                 modifier = Modifier.widthIn(max = 720.dp),
-                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = bottomContentPadding),
-                verticalArrangement = Arrangement.spacedBy(18.dp),
+                contentPadding = PaddingValues(bottom = bottomContentPadding),
             ) {
                 item {
-                    Text("Resonote", style = MaterialTheme.typography.headlineMedium)
-                    Text(
-                        stringResource(R.string.feature_settings_impl_version, version),
-                        modifier = Modifier.padding(top = 4.dp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                item {
-                    SettingsActionRow(
-                        title = stringResource(R.string.feature_settings_impl_check_updates),
-                        value = when (updateState) {
-                            AboutUpdateState.Checking -> null
-                            is AboutUpdateState.Latest -> stringResource(
-                                R.string.feature_settings_impl_update_latest,
-                            )
-                            is AboutUpdateState.Available -> stringResource(
-                                R.string.feature_settings_impl_update_available,
-                                updateState.release.version,
-                            )
-                            AboutUpdateState.Failed -> stringResource(
-                                R.string.feature_settings_impl_update_failed,
-                            )
-                        },
+                    SettingsVersionRow(
+                        title = stringResource(R.string.feature_settings_impl_version_title),
+                        version = version,
                         loading = updateState == AboutUpdateState.Checking,
+                        updateAvailable = updateState is AboutUpdateState.Available,
                         onClick = onUpdateClick,
                     )
                 }
+                item { SettingsDivider() }
                 item {
                     SettingsActionRow(
                         title = stringResource(R.string.feature_settings_impl_project_link),
                         onClick = onProjectClick,
                     )
                 }
+                item { SettingsDivider() }
                 item {
-                    Text(
-                        stringResource(R.string.feature_settings_impl_privacy),
-                        style = MaterialTheme.typography.titleMedium,
-                    )
-                    Text(
-                        stringResource(R.string.feature_settings_impl_privacy_body),
-                        modifier = Modifier.padding(top = 8.dp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodyMedium,
+                    SettingsActionRow(
+                        title = stringResource(R.string.feature_settings_impl_privacy),
+                        onClick = onPrivacyClick,
                     )
                 }
+                item { SettingsDivider() }
                 item {
-                    Text(
-                        stringResource(R.string.feature_settings_impl_license),
-                        style = MaterialTheme.typography.titleMedium,
+                    SettingsActionRow(
+                        title = stringResource(R.string.feature_settings_impl_license),
+                        onClick = onLicenseClick,
                     )
-                    Text(
-                        stringResource(R.string.feature_settings_impl_license_body),
-                        modifier = Modifier.padding(top = 8.dp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodySmall,
+                }
+                item { SettingsDivider() }
+                item {
+                    SettingsActionRow(
+                        title = stringResource(R.string.feature_settings_impl_open_source_libraries),
+                        onClick = onLibrariesClick,
+                    )
+                }
+                item { SettingsDivider() }
+                item {
+                    SettingsActionRow(
+                        title = stringResource(R.string.feature_settings_impl_reset),
+                        supportingText = stringResource(R.string.feature_settings_impl_reset_summary),
+                        onClick = { confirmReset = true },
+                        destructive = true,
+                        loading = resetting,
                     )
                 }
             }
         }
+    }
+    if (confirmReset) {
+        ConfirmationDialog(
+            title = stringResource(R.string.feature_settings_impl_reset),
+            body = stringResource(R.string.feature_settings_impl_reset_confirm),
+            confirm = stringResource(R.string.feature_settings_impl_reset_action),
+            onConfirm = {
+                confirmReset = false
+                onReset()
+            },
+            onDismiss = { confirmReset = false },
+        )
     }
 }
 

@@ -49,6 +49,8 @@ internal class DefaultAuthRepository @Inject constructor(
 
     override suspend fun acknowledgeAuthenticationGate() = sessionManager.acknowledgeAuthenticationGate()
 
+    override suspend fun logout() = sessionManager.clearAuthentication()
+
     override suspend fun sendMobileCode(mobile: String): SendMobileCodeResult {
         if (!MOBILE_PATTERN.matches(mobile)) return SendMobileCodeResult.Failed(AuthFailure.InvalidInput)
         return try {

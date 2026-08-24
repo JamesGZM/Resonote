@@ -1,5 +1,6 @@
 package com.resonote.feature.home.impl
 
+import android.icu.text.CompactDecimalFormat
 import androidx.compose.runtime.Immutable
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.HomeContent
@@ -7,6 +8,7 @@ import com.resonote.core.model.HomeIssue
 import com.resonote.core.model.HomeSection
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.PlaylistSummary
+import java.util.Locale
 
 @Immutable
 data class HomeSongUiModel(
@@ -100,7 +102,9 @@ private fun Long.toDurationLabel(): String {
 
 private fun Long?.toPlayCountLabel(): String = when {
     this == null -> ""
-    this >= 100_000_000 -> "%.1f亿".format(this / 100_000_000.0)
-    this >= 10_000 -> "%.1f万".format(this / 10_000.0)
+    this >= 10_000 ->
+        CompactDecimalFormat
+            .getInstance(Locale.getDefault(), CompactDecimalFormat.CompactStyle.SHORT)
+            .format(this)
     else -> toString()
 }

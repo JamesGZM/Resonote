@@ -2,24 +2,33 @@
 
 package com.resonote.feature.settings.impl
 
-import android.Manifest
-import android.content.Intent
-import android.net.Uri
 import android.os.Build
-import android.provider.Settings
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Language
+import androidx.compose.material.icons.rounded.Lyrics
+import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.PlayCircle
+import androidx.compose.material.icons.rounded.Security
+import androidx.compose.material.icons.rounded.Storage
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -28,34 +37,27 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat
+import androidx.core.os.LocaleListCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.resonote.core.designsystem.component.LocalResonoteSnackbarController
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
-import com.resonote.core.model.AudioFocusPolicy
-import com.resonote.core.model.CrossfadeDuration
-import com.resonote.core.model.OnlinePlaybackQuality
-import com.resonote.core.model.PlaybackMode
-import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.model.ThemeMode
-import kotlinx.coroutines.launch
+import java.util.Locale
 
 @Composable
 fun SettingsRoute(
     onBack: () -> Unit,
+    onPlaybackClick: () -> Unit = {},
+    onLyricsClick: () -> Unit = {},
+    onPermissionsClick: () -> Unit = {},
     onAboutClick: () -> Unit = {},
     bottomContentPadding: Dp = 32.dp,
     viewModel: SettingsViewModel = hiltViewModel(),
@@ -63,18 +65,11 @@ fun SettingsRoute(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarController = LocalResonoteSnackbarController.current
     val saveFailureMessage = stringResource(R.string.feature_settings_impl_save_error)
-    val lyricsUnavailableMessage = stringResource(R.string.feature_settings_impl_lyrics_unavailable)
-    val scope = rememberCoroutineScope()
-    val context = LocalContext.current
-    var permissionRevision by remember { mutableStateOf(0) }
-
-    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { permissionRevision++ }
-    val notificationsEnabled = remember(permissionRevision) {
-        NotificationManagerCompat.from(context).areNotificationsEnabled()
-    }
-    val microphoneGranted = remember(permissionRevision) {
-        ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) ==
-            android.content.pm.PackageManager.PERMISSION_GRANTED
+    val applicationLocales = AppCompatDelegate.getApplicationLocales()
+    val language = if ((applicationLocales[0]?.language ?: Locale.getDefault().language) == "zh") {
+        AppLanguage.SimplifiedChinese
+    } else {
+        AppLanguage.English
     }
 
     LaunchedEffect((state as? SettingsUiState.Ready)?.saveFailed) {
@@ -87,68 +82,46 @@ fun SettingsRoute(
     SettingsScreen(
         state = state,
         bottomContentPadding = bottomContentPadding,
-        notificationsEnabled = notificationsEnabled,
-        microphoneGranted = microphoneGranted,
         onBack = onBack,
         onRetry = viewModel::retry,
-        onPlaybackSpeedChange = viewModel::setPlaybackSpeed,
-        onOnlinePlaybackQualityChange = viewModel::setOnlinePlaybackQuality,
-        onPlaybackModeChange = viewModel::setPlaybackMode,
-        onGaplessChange = viewModel::setGaplessEnabled,
-        onCrossfadeChange = viewModel::setCrossfadeDuration,
-        onLoudnessChange = viewModel::setLoudnessNormalizationEnabled,
-        onAudioFocusChange = viewModel::setAudioFocusPolicy,
+        onPlaybackClick = onPlaybackClick,
+        onLyricsClick = onLyricsClick,
+        onPermissionsClick = onPermissionsClick,
+        onAboutClick = onAboutClick,
         onThemeModeChange = viewModel::setThemeMode,
         onDynamicColorChange = viewModel::setDynamicColorEnabled,
-        onLyricsClick = { scope.launch { snackbarController?.show(lyricsUnavailableMessage) } },
         onClearCache = viewModel::clearCache,
-        onReset = viewModel::resetSettings,
-        onNotificationsClick = {
-            context.startActivity(
-                Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                    .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName),
-            )
+        language = language,
+        onLanguageChange = { selected ->
+            AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(selected.languageTag))
         },
-        onMicrophoneClick = {
-            context.startActivity(
-                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}")),
-            )
-        },
-        onAboutClick = onAboutClick,
+        onLogout = viewModel::logout,
     )
 }
-
-private enum class SettingsSheet { Theme, Quality, Mode, Crossfade, Speed, AudioFocus }
 
 @Composable
 internal fun SettingsScreen(
     state: SettingsUiState,
     onBack: () -> Unit,
     onRetry: () -> Unit,
-    onPlaybackSpeedChange: (PlaybackSpeed) -> Unit,
     modifier: Modifier = Modifier,
     bottomContentPadding: Dp = 32.dp,
-    notificationsEnabled: Boolean = true,
-    microphoneGranted: Boolean = false,
-    onOnlinePlaybackQualityChange: (OnlinePlaybackQuality) -> Unit = {},
-    onPlaybackModeChange: (PlaybackMode) -> Unit = {},
-    onGaplessChange: (Boolean) -> Unit = {},
-    onCrossfadeChange: (CrossfadeDuration) -> Unit = {},
-    onLoudnessChange: (Boolean) -> Unit = {},
-    onAudioFocusChange: (AudioFocusPolicy) -> Unit = {},
+    onPlaybackClick: () -> Unit = {},
+    onLyricsClick: () -> Unit = {},
+    onPermissionsClick: () -> Unit = {},
+    onAboutClick: () -> Unit = {},
     onThemeModeChange: (ThemeMode) -> Unit = {},
     onDynamicColorChange: (Boolean) -> Unit = {},
-    onLyricsClick: () -> Unit = {},
     onClearCache: () -> Unit = {},
-    onReset: () -> Unit = {},
-    onNotificationsClick: () -> Unit = {},
-    onMicrophoneClick: () -> Unit = {},
-    onAboutClick: () -> Unit = {},
+    language: AppLanguage = AppLanguage.English,
+    onLanguageChange: (AppLanguage) -> Unit = {},
+    onLogout: () -> Unit = {},
     supportsDynamicColor: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
 ) {
-    var openSheet by remember { mutableStateOf<SettingsSheet?>(null) }
+    var showAppearance by remember { mutableStateOf(false) }
+    var showLanguage by remember { mutableStateOf(false) }
     var confirmClearCache by remember { mutableStateOf(false) }
-    var confirmReset by remember { mutableStateOf(false) }
+    var confirmLogout by remember { mutableStateOf(false) }
     val ready = state as? SettingsUiState.Ready
 
     Scaffold(
@@ -183,249 +156,124 @@ internal fun SettingsScreen(
                 )
                 is SettingsUiState.Ready -> LazyColumn(
                     modifier = Modifier.fillMaxHeight().widthIn(max = 720.dp).testTag("settings-list"),
-                    contentPadding = PaddingValues(bottom = bottomContentPadding),
+                    contentPadding = PaddingValues(top = 8.dp, bottom = bottomContentPadding),
                 ) {
-                    item { SettingsSectionLabel(stringResource(R.string.feature_settings_impl_appearance_section)) }
                     item {
-                        SettingsValueRow(
-                            stringResource(R.string.feature_settings_impl_theme_mode),
-                            state.themePreferences.themeMode.label(),
-                            { openSheet = SettingsSheet.Theme },
-                            Modifier.testTag("settings-theme-mode"),
-                            enabled = state.savingKey == null,
-                        )
-                    }
-                    if (supportsDynamicColor) {
-                        item { SettingsDivider() }
-                        item {
-                            SettingsSwitchRow(
-                                stringResource(R.string.feature_settings_impl_dynamic_color),
-                                state.themePreferences.dynamicColorEnabled,
-                                onDynamicColorChange,
-                                Modifier.testTag("settings-dynamic-color"),
-                                enabled = state.savingKey == null,
-                            )
-                        }
-                    }
-
-                    item { SettingsSectionLabel(stringResource(R.string.feature_settings_impl_playback_section)) }
-                    item {
-                        SettingsValueRow(
-                            stringResource(R.string.feature_settings_impl_online_quality),
-                            state.onlinePlaybackQuality.label(),
-                            { openSheet = SettingsSheet.Quality },
-                            Modifier.testTag("settings-online-quality"),
-                            enabled = state.savingKey == null,
+                        SettingsNavigationRow(
+                            title = stringResource(R.string.feature_settings_impl_appearance_section),
+                            supportingText = stringResource(R.string.feature_settings_impl_appearance_summary),
+                            icon = Icons.Rounded.Palette,
+                            onClick = { showAppearance = true },
+                            modifier = Modifier.testTag("settings-appearance"),
                         )
                     }
                     item { SettingsDivider() }
                     item {
-                        SettingsValueRow(
-                            stringResource(R.string.feature_settings_impl_playback_mode),
-                            state.playbackMode.label(),
-                            { openSheet = SettingsSheet.Mode },
-                            enabled = state.savingKey == null,
+                        SettingsNavigationRow(
+                            title = stringResource(R.string.feature_settings_impl_language),
+                            supportingText = stringResource(R.string.feature_settings_impl_language_summary),
+                            value = language.label(),
+                            icon = Icons.Rounded.Language,
+                            onClick = { showLanguage = true },
+                            modifier = Modifier.testTag("settings-language"),
                         )
                     }
                     item { SettingsDivider() }
                     item {
-                        SettingsSwitchRow(
-                            stringResource(R.string.feature_settings_impl_gapless),
-                            state.gaplessEnabled,
-                            onGaplessChange,
-                            enabled = state.savingKey == null,
+                        SettingsNavigationRow(
+                            title = stringResource(R.string.feature_settings_impl_playback_section),
+                            supportingText = stringResource(R.string.feature_settings_impl_playback_summary),
+                            icon = Icons.Rounded.PlayCircle,
+                            onClick = onPlaybackClick,
+                            modifier = Modifier.testTag("settings-playback"),
                         )
                     }
                     item { SettingsDivider() }
                     item {
-                        SettingsValueRow(
-                            stringResource(R.string.feature_settings_impl_crossfade),
-                            state.crossfadeDuration.label(),
-                            { openSheet = SettingsSheet.Crossfade },
-                            enabled = state.savingKey == null,
+                        SettingsNavigationRow(
+                            title = stringResource(R.string.feature_settings_impl_lyrics_section),
+                            supportingText = stringResource(R.string.feature_settings_impl_lyrics_summary),
+                            icon = Icons.Rounded.Lyrics,
+                            onClick = onLyricsClick,
                         )
                     }
                     item { SettingsDivider() }
                     item {
-                        SettingsValueRow(
-                            stringResource(R.string.feature_settings_impl_playback_speed),
-                            state.playbackSpeed.label(),
-                            { openSheet = SettingsSheet.Speed },
-                            Modifier.testTag("settings-playback-speed"),
-                            enabled = state.savingKey == null,
-                        )
-                    }
-                    item { SettingsDivider() }
-                    item {
-                        SettingsSwitchRow(
-                            stringResource(R.string.feature_settings_impl_loudness),
-                            state.loudnessNormalizationEnabled,
-                            onLoudnessChange,
-                            enabled = state.savingKey == null,
-                        )
-                    }
-                    item { SettingsDivider() }
-                    item {
-                        SettingsValueRow(
-                            stringResource(R.string.feature_settings_impl_audio_focus),
-                            state.audioFocusPolicy.label(),
-                            { openSheet = SettingsSheet.AudioFocus },
-                            enabled = state.savingKey == null,
-                        )
-                    }
-
-                    item { SettingsSectionLabel(stringResource(R.string.feature_settings_impl_lyrics_section)) }
-                    item {
-                        SettingsActionRow(
-                            stringResource(R.string.feature_settings_impl_lyrics_settings),
-                            onLyricsClick,
-                            value = stringResource(R.string.feature_settings_impl_coming_soon),
-                        )
-                    }
-
-                    item { SettingsSectionLabel(stringResource(R.string.feature_settings_impl_cache_section)) }
-                    item {
-                        SettingsActionRow(
-                            stringResource(R.string.feature_settings_impl_playback_cache),
-                            { confirmClearCache = true },
-                            value =
-                            state.cacheBytes?.let(::formatBytes)
-                                ?: stringResource(R.string.feature_settings_impl_calculating),
+                        SettingsNavigationRow(
+                            title = stringResource(R.string.feature_settings_impl_cache_title),
                             supportingText = stringResource(R.string.feature_settings_impl_cache_body),
+                            value = state.cacheBytes?.let(::formatBytes)
+                                ?: stringResource(R.string.feature_settings_impl_calculating),
+                            icon = Icons.Rounded.Storage,
+                            onClick = { confirmClearCache = true },
                             loading = state.isClearingCache,
                         )
                     }
-
-                    item { SettingsSectionLabel(stringResource(R.string.feature_settings_impl_permissions_section)) }
+                    item { SettingsDivider() }
                     item {
-                        SettingsValueRow(
-                            stringResource(R.string.feature_settings_impl_notifications),
-                            permissionLabel(notificationsEnabled),
-                            onNotificationsClick,
+                        SettingsNavigationRow(
+                            title = stringResource(R.string.feature_settings_impl_permissions_section),
+                            supportingText = stringResource(R.string.feature_settings_impl_permissions_summary),
+                            icon = Icons.Rounded.Security,
+                            onClick = onPermissionsClick,
                         )
                     }
                     item { SettingsDivider() }
                     item {
-                        SettingsValueRow(
-                            stringResource(R.string.feature_settings_impl_microphone),
-                            permissionLabel(microphoneGranted),
-                            onMicrophoneClick,
+                        SettingsNavigationRow(
+                            title = stringResource(R.string.feature_settings_impl_about_section),
+                            supportingText = stringResource(R.string.feature_settings_impl_about_summary),
+                            icon = Icons.Rounded.Info,
+                            onClick = onAboutClick,
                         )
                     }
-
-                    item { SettingsSectionLabel(stringResource(R.string.feature_settings_impl_general_section)) }
-                    item {
-                        SettingsActionRow(
-                            stringResource(R.string.feature_settings_impl_reset),
-                            { confirmReset = true },
-                            destructive = true,
-                            loading = state.savingKey == SettingsSaveKey.Reset,
-                        )
+                    if (state.isAuthenticated) {
+                        item { Spacer(Modifier.height(24.dp)) }
+                        item {
+                            OutlinedButton(
+                                onClick = { confirmLogout = true },
+                                enabled = state.savingKey != SettingsSaveKey.Logout,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp)
+                                    .testTag("settings-logout"),
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.55f)),
+                            ) {
+                                Text(
+                                    stringResource(R.string.feature_settings_impl_logout),
+                                    color = MaterialTheme.colorScheme.error,
+                                )
+                            }
+                        }
                     }
-
-                    item { SettingsSectionLabel(stringResource(R.string.feature_settings_impl_about_section)) }
-                    item { SettingsActionRow(stringResource(R.string.feature_settings_impl_about), onAboutClick) }
                 }
             }
         }
     }
 
-    ready?.let { current ->
-        when (openSheet) {
-            SettingsSheet.Theme -> choiceSheet(
-                stringResource(
-                    R.string.feature_settings_impl_theme_mode,
-                ),
-                current.themePreferences.themeMode,
-                ThemeMode.entries,
-                {
-                    it.label()
-                },
-                {
-                    openSheet =
-                        null
-                    onThemeModeChange(it)
-                },
-            ) { openSheet = null }
-            SettingsSheet.Quality -> choiceSheet(
-                stringResource(
-                    R.string.feature_settings_impl_online_quality,
-                ),
-                current.onlinePlaybackQuality,
-                OnlinePlaybackQuality.entries,
-                {
-                    it.label()
-                },
-                {
-                    openSheet =
-                        null
-                    onOnlinePlaybackQualityChange(it)
-                },
-            ) { openSheet = null }
-            SettingsSheet.Mode -> choiceSheet(
-                stringResource(
-                    R.string.feature_settings_impl_playback_mode,
-                ),
-                current.playbackMode,
-                PlaybackMode.entries,
-                {
-                    it.label()
-                },
-                {
-                    openSheet =
-                        null
-                    onPlaybackModeChange(it)
-                },
-            ) { openSheet = null }
-            SettingsSheet.Crossfade -> choiceSheet(
-                stringResource(
-                    R.string.feature_settings_impl_crossfade,
-                ),
-                current.crossfadeDuration,
-                CrossfadeDuration.entries,
-                {
-                    it.label()
-                },
-                {
-                    openSheet =
-                        null
-                    onCrossfadeChange(it)
-                },
-            ) { openSheet = null }
-            SettingsSheet.Speed -> choiceSheet(
-                stringResource(
-                    R.string.feature_settings_impl_playback_speed,
-                ),
-                current.playbackSpeed,
-                PlaybackSpeed.entries,
-                {
-                    it.label()
-                },
-                {
-                    openSheet =
-                        null
-                    onPlaybackSpeedChange(it)
-                },
-            ) { openSheet = null }
-            SettingsSheet.AudioFocus -> choiceSheet(
-                stringResource(
-                    R.string.feature_settings_impl_audio_focus,
-                ),
-                current.audioFocusPolicy,
-                AudioFocusPolicy.entries,
-                {
-                    it.label()
-                },
-                {
-                    openSheet =
-                        null
-                    onAudioFocusChange(it)
-                },
-            ) { openSheet = null }
-            null -> Unit
-        }
+    if (showAppearance && ready != null) {
+        AppearanceSettingsSheet(
+            themeMode = ready.themePreferences.themeMode,
+            dynamicColorEnabled = ready.themePreferences.dynamicColorEnabled,
+            supportsDynamicColor = supportsDynamicColor,
+            enabled = ready.savingKey == null,
+            onThemeModeChange = onThemeModeChange,
+            onDynamicColorChange = onDynamicColorChange,
+            onDismiss = { showAppearance = false },
+        )
     }
-
+    if (showLanguage) {
+        SettingsSingleChoiceSheet(
+            title = stringResource(R.string.feature_settings_impl_language),
+            selected = language,
+            options = AppLanguage.entries.map { it to it.label() },
+            onSelect = { selected ->
+                showLanguage = false
+                onLanguageChange(selected)
+            },
+            onDismiss = { showLanguage = false },
+        )
+    }
     if (confirmClearCache) {
         ConfirmationDialog(
             title = stringResource(R.string.feature_settings_impl_clear_cache),
@@ -438,59 +286,49 @@ internal fun SettingsScreen(
             onDismiss = { confirmClearCache = false },
         )
     }
-    if (confirmReset) {
+    if (confirmLogout) {
         ConfirmationDialog(
-            title = stringResource(R.string.feature_settings_impl_reset),
-            body = stringResource(R.string.feature_settings_impl_reset_confirm),
-            confirm = stringResource(R.string.feature_settings_impl_reset_action),
+            title = stringResource(R.string.feature_settings_impl_logout),
+            body = stringResource(R.string.feature_settings_impl_logout_confirm),
+            confirm = stringResource(R.string.feature_settings_impl_logout),
+            confirmTestTag = "settings-logout-confirm",
             onConfirm = {
-                confirmReset = false
-                onReset()
+                confirmLogout = false
+                onLogout()
             },
-            onDismiss = { confirmReset = false },
+            onDismiss = { confirmLogout = false },
         )
     }
 }
 
 @Composable
-private fun <T> choiceSheet(
-    title: String,
-    selected: T,
-    values: List<T>,
-    label: @Composable (T) -> String,
-    onSelect: (T) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    val options = mutableListOf<Pair<T, String>>()
-    for (value in values) options += value to label(value)
-    SettingsSingleChoiceSheet(title, selected, options, onSelect, onDismiss)
-}
-
-@Composable
-private fun ConfirmationDialog(
+internal fun ConfirmationDialog(
     title: String,
     body: String,
     confirm: String,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
+    confirmTestTag: String? = null,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = { Text(body) },
-        confirmButton = { TextButton(onClick = onConfirm) { Text(confirm) } },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm,
+                modifier = confirmTestTag?.let { Modifier.testTag(it) } ?: Modifier,
+            ) {
+                Text(confirm)
+            }
+        },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.feature_settings_impl_cancel)) }
         },
     )
 }
 
-@Composable
-private fun permissionLabel(granted: Boolean): String = stringResource(
-    if (granted) R.string.feature_settings_impl_allowed else R.string.feature_settings_impl_not_allowed,
-)
-
-private fun formatBytes(bytes: Long): String = when {
+internal fun formatBytes(bytes: Long): String = when {
     bytes >= 1024L * 1024L * 1024L -> "%.1f GB".format(bytes / (1024.0 * 1024.0 * 1024.0))
     bytes >= 1024L * 1024L -> "%.1f MB".format(bytes / (1024.0 * 1024.0))
     bytes >= 1024L -> "%.1f KB".format(bytes / 1024.0)

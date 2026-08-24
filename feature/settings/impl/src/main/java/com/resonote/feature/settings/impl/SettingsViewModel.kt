@@ -2,9 +2,11 @@ package com.resonote.feature.settings.impl
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.resonote.core.data.AuthRepository
 import com.resonote.core.data.PlaybackPreferencesRepository
 import com.resonote.core.data.ThemePreferencesRepository
 import com.resonote.core.model.AudioFocusPolicy
+import com.resonote.core.model.AuthState
 import com.resonote.core.model.CrossfadeDuration
 import com.resonote.core.model.OnlinePlaybackQuality
 import com.resonote.core.model.PlaybackMode
@@ -33,6 +35,7 @@ enum class SettingsSaveKey {
     Loudness,
     AudioFocus,
     Reset,
+    Logout,
 }
 
 sealed interface SettingsUiState {
@@ -49,6 +52,7 @@ sealed interface SettingsUiState {
         val loudnessNormalizationEnabled: Boolean = false,
         val audioFocusPolicy: AudioFocusPolicy = AudioFocusPolicy.Disallow,
         val cacheBytes: Long? = null,
+        val isAuthenticated: Boolean = false,
         val savingKey: SettingsSaveKey? = null,
         val isClearingCache: Boolean = false,
         val saveFailed: Boolean = false,
@@ -62,6 +66,7 @@ class SettingsViewModel @Inject constructor(
     private val playbackPreferencesRepository: PlaybackPreferencesRepository,
     private val themePreferencesRepository: ThemePreferencesRepository,
     private val playbackCacheController: PlaybackCacheController,
+    private val authRepository: AuthRepository,
 ) : ViewModel() {
     private val mutableUiState = MutableStateFlow<SettingsUiState>(SettingsUiState.Loading)
     val uiState: StateFlow<SettingsUiState> = mutableUiState.asStateFlow()
@@ -100,6 +105,7 @@ class SettingsViewModel @Inject constructor(
         playbackPreferencesRepository.reset()
         themePreferencesRepository.reset()
     }
+    fun logout() = save(SettingsSaveKey.Logout) { authRepository.logout() }
 
     fun clearCache() {
         val state = mutableUiState.value as? SettingsUiState.Ready ?: return
@@ -125,12 +131,13 @@ class SettingsViewModel @Inject constructor(
         observationJob = viewModelScope.launch {
             mutableUiState.value = SettingsUiState.Loading
             try {
-                combine(playbackPreferencesRepository.preferences, themePreferencesRepository.themePreferences) {
-                        playback,
-                        theme,
-                    ->
-                    playback to theme
-                }.collect { (playback, theme) ->
+                combine(
+                    playbackPreferencesRepository.preferences,
+                    themePreferencesRepository.themePreferences,
+                    authRepository.authState,
+                ) { playback, theme, authState ->
+                    Triple(playback, theme, authState)
+                }.collect { (playback, theme, authState) ->
                     val current = mutableUiState.value as? SettingsUiState.Ready
                     mutableUiState.value = SettingsUiState.Ready(
                         playbackSpeed = playback.playbackSpeed,
@@ -142,6 +149,7 @@ class SettingsViewModel @Inject constructor(
                         loudnessNormalizationEnabled = playback.loudnessNormalizationEnabled,
                         audioFocusPolicy = playback.audioFocusPolicy,
                         cacheBytes = current?.cacheBytes ?: latestCacheBytes,
+                        isAuthenticated = authState is AuthState.Authenticated,
                         savingKey = current?.savingKey,
                         isClearingCache = current?.isClearingCache == true,
                         saveFailed = current?.saveFailed == true,

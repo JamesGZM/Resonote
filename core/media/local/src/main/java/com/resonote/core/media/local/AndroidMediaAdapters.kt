@@ -1,6 +1,5 @@
 package com.resonote.core.media.local
 
-import android.content.ContentResolver
 import android.content.Context
 import android.media.AudioFormat
 import android.media.MediaCodecList
@@ -21,10 +20,13 @@ internal interface LocalMediaSourceGateway {
     fun open(uri: Uri): InputStream
 }
 
-internal class ContentResolverSourceGateway(private val resolver: ContentResolver) : LocalMediaSourceGateway {
+internal class ContentResolverSourceGateway(context: Context) : LocalMediaSourceGateway {
+    private val resolver = context.contentResolver
+    private val defaultDisplayName = context.getString(R.string.core_media_local_default_display_name)
+
     override fun describe(uri: Uri): SourceDescription {
         var displayName = uri.lastPathSegment?.substringAfterLast('/')?.takeIf(String::isNotBlank)
-            ?: DEFAULT_DISPLAY_NAME
+            ?: defaultDisplayName
         var sizeBytes: Long? = null
         resolver.query(
             uri,
@@ -56,10 +58,6 @@ internal class ContentResolverSourceGateway(private val resolver: ContentResolve
 
     override fun open(uri: Uri): InputStream = resolver.openInputStream(uri)
         ?: throw FileNotFoundException("Content provider returned no stream")
-
-    private companion object {
-        const val DEFAULT_DISPLAY_NAME = "导入的音乐"
-    }
 }
 
 internal data class MediaProbeResult(val metadata: LocalMediaMetadata, val artwork: ByteArray?)

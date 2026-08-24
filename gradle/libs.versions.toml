@@ -2,6 +2,7 @@
 androidGradlePlugin = "9.0.0"
 androidDesugarJdkLibs = "2.1.5"
 androidxActivity = "1.12.3"
+androidxAppCompat = "1.7.1"
 androidxComposeBom = "2025.12.00"
 androidxComposeMaterial3 = "1.4.0"
 androidxComposeMaterial3Adaptive = "1.2.0"
@@ -36,6 +37,7 @@ turbine = "1.2.0"
 [libraries]
 android-desugarJdkLibs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "androidDesugarJdkLibs" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivity" }
+androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "androidxAppCompat" }
 androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "androidxComposeBom" }
 androidx-compose-foundation = { module = "androidx.compose.foundation:foundation" }
 androidx-compose-animation = { module = "androidx.compose.animation:animation" }

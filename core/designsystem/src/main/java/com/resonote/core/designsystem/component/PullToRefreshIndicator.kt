@@ -4,7 +4,6 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowDownward
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -55,12 +54,7 @@ fun ResonotePullToRefreshIndicator(state: PullToRefreshState, isRefreshing: Bool
             label = "pull-to-refresh-state",
         ) { refreshing ->
             if (refreshing) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
-                    color = MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.primaryContainer,
-                    strokeWidth = 2.5.dp,
-                )
+                ResonoteCircularLoadingIndicator()
             } else {
                 Icon(
                     imageVector = Icons.Rounded.ArrowDownward,

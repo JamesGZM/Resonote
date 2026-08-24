@@ -2,6 +2,7 @@
 
 package com.resonote.feature.discover.impl
 
+import android.icu.text.CompactDecimalFormat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -47,6 +48,7 @@ import com.resonote.core.model.AlbumRegion
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.ContentFailure
 import com.resonote.core.model.Ranking
+import java.util.Locale
 
 @Composable
 internal fun RankingCard(ranking: Ranking, onClick: () -> Unit) {
@@ -280,8 +282,10 @@ internal fun PaddingValues.plusBottom(extra: Dp) = PaddingValues(
 )
 
 internal fun Long.compactCount(): String = when {
-    this >= 100_000_000 -> "%.1f亿".format(this / 100_000_000.0)
-    this >= 10_000 -> "%.1f万".format(this / 10_000.0)
+    this >= 10_000 ->
+        CompactDecimalFormat
+            .getInstance(Locale.getDefault(), CompactDecimalFormat.CompactStyle.SHORT)
+            .format(this)
     else -> toString()
 }
 

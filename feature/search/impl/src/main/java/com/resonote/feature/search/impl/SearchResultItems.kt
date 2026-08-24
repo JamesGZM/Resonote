@@ -1,5 +1,6 @@
 package com.resonote.feature.search.impl
 
+import android.icu.text.CompactDecimalFormat
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -26,6 +27,7 @@ import com.resonote.core.model.SearchAlbum
 import com.resonote.core.model.SearchArtist
 import com.resonote.core.model.SearchMv
 import com.resonote.core.model.SearchPlaylist
+import java.util.Locale
 
 @Composable
 internal fun SearchResultSectionHeader(title: String, total: Int? = null, onClick: () -> Unit) {
@@ -166,18 +168,11 @@ internal fun SearchMvItem(mv: SearchMv, modifier: Modifier, onClick: (() -> Unit
 }
 
 internal fun Long.compactCount(): String = when {
-    this >= 100_000_000 -> compactUnit(100_000_000, "亿")
-    this >= 10_000 -> compactUnit(10_000, "万")
+    this >= 10_000 ->
+        CompactDecimalFormat
+            .getInstance(Locale.getDefault(), CompactDecimalFormat.CompactStyle.SHORT)
+            .format(this)
     else -> toString()
-}
-
-internal fun Long.compactUnit(divisor: Long, suffix: String): String {
-    val number = if (this % divisor == 0L) {
-        "%.0f".format(this / divisor.toDouble())
-    } else {
-        "%.1f".format(this / divisor.toDouble())
-    }
-    return "$number$suffix"
 }
 
 internal fun Long.durationLabel(): String {

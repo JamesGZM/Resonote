@@ -7,4 +7,22 @@ import kotlinx.serialization.Serializable
 data object SettingsNavKey : NavKey
 
 @Serializable
+data object PlaybackSettingsNavKey : NavKey
+
+@Serializable
+data object LyricsSettingsNavKey : NavKey
+
+@Serializable
+data object PermissionsSettingsNavKey : NavKey
+
+@Serializable
 data object AboutSettingsNavKey : NavKey
+
+@Serializable
+data object PrivacySettingsNavKey : NavKey
+
+@Serializable
+data object LicenseSettingsNavKey : NavKey
+
+@Serializable
+data object OpenSourceLibrariesNavKey : NavKey

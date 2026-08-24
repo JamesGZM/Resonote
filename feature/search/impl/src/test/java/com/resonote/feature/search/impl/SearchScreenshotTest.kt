@@ -2,6 +2,7 @@ package com.resonote.feature.search.impl
 
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
+import androidx.compose.ui.test.Locales
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -12,6 +13,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.text.intl.LocaleList
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -98,6 +101,17 @@ class SearchScreenshotTest {
         composeRule.onNodeWithText("最近搜索").assertDoesNotExist()
         composeRule.onNodeWithText("热门搜索").assertExists()
         capture("discovery_without_history")
+    }
+
+    @Test
+    fun search_englishUsesLocalizedHistoryTitleAndHint() {
+        setSearchContent(
+            state = SearchUiState(history = listOf("Jazz")),
+            languageTag = "en",
+        )
+
+        composeRule.onNodeWithText("Recent searches").assertExists()
+        composeRule.onNodeWithText("Songs, artists, albums").assertExists()
     }
 
     @Test
@@ -195,7 +209,7 @@ class SearchScreenshotTest {
 
         composeRule.onAllNodesWithText("歌手").assertCountEquals(2)
         composeRule.onNodeWithText("潮汐信号").assertExists()
-        composeRule.onNodeWithContentDescription("Playing").assertExists()
+        composeRule.onNodeWithContentDescription("正在播放").assertExists()
         capture("aggregate")
         composeRule.onNodeWithTag("search-aggregate").performScrollToIndex(5)
         capture("aggregate_media_grids")
@@ -325,31 +339,36 @@ class SearchScreenshotTest {
         onClearHistory: () -> Unit = {},
         onMvClick: ((SearchMv) -> Unit)? = {},
         themeMode: ResonoteThemeMode = ResonoteThemeMode.LIGHT,
+        languageTag: String = "zh-CN",
     ) {
         composeRule.setContent {
             DeviceConfigurationOverride(
-                override = DeviceConfigurationOverride.ForcedSize(DpSize(390.dp, 844.dp)),
+                override = DeviceConfigurationOverride.Locales(LocaleList(Locale(languageTag))),
             ) {
-                ResonoteTheme(themeMode = themeMode) {
-                    SearchScreen(
-                        state = state,
-                        playingMediaId = playingMediaId,
-                        onQueryChange = onQueryChange,
-                        onSubmit = {},
-                        onRetry = {},
-                        onSelectCategory = {},
-                        onLoadMore = {},
-                        onRemoveHistory = onRemoveHistory,
-                        onClearHistory = onClearHistory,
-                        onBack = {},
-                        onRecognitionClick = {},
-                        onSongClick = {},
-                        onSongMoreClick = null,
-                        onPlaylistClick = {},
-                        onAlbumClick = {},
-                        onArtistClick = {},
-                        onMvClick = onMvClick,
-                    )
+                DeviceConfigurationOverride(
+                    override = DeviceConfigurationOverride.ForcedSize(DpSize(390.dp, 844.dp)),
+                ) {
+                    ResonoteTheme(themeMode = themeMode) {
+                        SearchScreen(
+                            state = state,
+                            playingMediaId = playingMediaId,
+                            onQueryChange = onQueryChange,
+                            onSubmit = {},
+                            onRetry = {},
+                            onSelectCategory = {},
+                            onLoadMore = {},
+                            onRemoveHistory = onRemoveHistory,
+                            onClearHistory = onClearHistory,
+                            onBack = {},
+                            onRecognitionClick = {},
+                            onSongClick = {},
+                            onSongMoreClick = null,
+                            onPlaylistClick = {},
+                            onAlbumClick = {},
+                            onArtistClick = {},
+                            onMvClick = onMvClick,
+                        )
+                    }
                 }
             }
         }
