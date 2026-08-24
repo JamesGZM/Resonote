@@ -12,7 +12,7 @@ internal sealed interface RecognitionCaptureResult {
 internal interface RecognitionRecorder {
     suspend fun capture(
         maxDurationMillis: Long = RECOGNITION_MAX_DURATION_MILLIS,
-        onProgress: (elapsedMillis: Long) -> Unit,
+        onProgress: (elapsedMillis: Long, amplitude: Float, waveform: List<Float>) -> Unit,
     ): RecognitionCaptureResult
 
     fun stop()

@@ -12,8 +12,11 @@ import com.resonote.core.model.PlaylistPage
 import com.resonote.core.model.PlaylistTrackInput
 import com.resonote.core.model.UserPlaylist
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -125,6 +128,68 @@ class PlaylistViewModelTest {
     }
 
     @Test
+    fun refreshReplacesFirstPageAndPreservesWriteContext() = runTest(dispatcher) {
+        val repository = FakePlaylistRepository(
+            refreshedFirstPage = PlaylistPage(
+                details = PlaylistDetails("playlist", "更新后的歌单", "新的简介", null, 1),
+                songs = listOf(song("song-refreshed")),
+                page = 1,
+                hasMore = false,
+            ),
+        )
+        val viewModel = PlaylistViewModel(repository, FakeLibraryRepository())
+        viewModel.load("playlist", writableListId = "list-7", accountId = "account-a")
+        advanceUntilIdle()
+
+        viewModel.refresh()
+        assertThat((viewModel.uiState.value as PlaylistUiState.Content).isRefreshing).isTrue()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value as PlaylistUiState.Content
+        assertThat(state.details?.title).isEqualTo("更新后的歌单")
+        assertThat(state.songs.map { it.hash }).containsExactly("song-refreshed")
+        assertThat(state.writableListId).isEqualTo("list-7")
+        assertThat(state.hasMore).isFalse()
+        assertThat(state.isRefreshing).isFalse()
+    }
+
+    @Test
+    fun refreshFailureKeepsContentUntilAcknowledged() = runTest(dispatcher) {
+        val viewModel = PlaylistViewModel(
+            FakePlaylistRepository(failRefresh = true),
+            FakeLibraryRepository(),
+        )
+        viewModel.load("playlist")
+        advanceUntilIdle()
+
+        viewModel.refresh()
+        advanceUntilIdle()
+
+        val failed = viewModel.uiState.value as PlaylistUiState.Content
+        assertThat(failed.songs.map { it.hash }).containsExactly("song-1", "song-2").inOrder()
+        assertThat(failed.refreshFailure).isEqualTo(ContentFailure.Network)
+        assertThat(failed.isRefreshing).isFalse()
+
+        viewModel.acknowledgeRefreshFailure()
+
+        assertThat((viewModel.uiState.value as PlaylistUiState.Content).refreshFailure).isNull()
+    }
+
+    @Test
+    fun loadMoreIsIgnoredWhileRefreshing() = runTest(dispatcher) {
+        val repository = FakePlaylistRepository()
+        val viewModel = PlaylistViewModel(repository, FakeLibraryRepository())
+        viewModel.load("playlist")
+        advanceUntilIdle()
+
+        viewModel.refresh()
+        viewModel.loadMore()
+        advanceUntilIdle()
+
+        assertThat(repository.requests).containsExactly("playlist" to 1, "playlist" to 1).inOrder()
+    }
+
+    @Test
     fun successfulRemovalUsesPlaylistFileIdAndUpdatesLoadedContent() = runTest(dispatcher) {
         val library = FakeLibraryRepository()
         val viewModel = PlaylistViewModel(FakePlaylistRepository(), library)
@@ -221,11 +286,68 @@ class PlaylistViewModelTest {
         assertThat((viewModel.uiState.value as PlaylistUiState.Content).songs).hasSize(2)
     }
 
+    @Test
+    fun unauthenticatedFavoriteRequestsLogin() = runTest(dispatcher) {
+        val viewModel = PlaylistViewModel(FakePlaylistRepository(), FakeLibraryRepository())
+        viewModel.load("playlist")
+        advanceUntilIdle()
+        val loginRequest = backgroundScope.async(start = CoroutineStart.UNDISPATCHED) {
+            viewModel.loginRequests.first()
+        }
+
+        viewModel.toggleFavorite()
+
+        assertThat(loginRequest.await()).isEqualTo(Unit)
+    }
+
+    @Test
+    fun collectedPlaylistLoadsAsFavoritedAndCanBeRemoved() = runTest(dispatcher) {
+        val library = FakeLibraryRepository(
+            playlistsResult = CollectionLoadResult.Available(
+                listOf(UserPlaylist("collected-list", "playlist", "深夜歌单", null, 3, false, false)),
+            ),
+        )
+        val viewModel = PlaylistViewModel(FakePlaylistRepository(), library)
+        viewModel.load("playlist", accountId = "account-a")
+        advanceUntilIdle()
+
+        val loaded = (viewModel.uiState.value as PlaylistUiState.Content).favorite
+            as PlaylistFavoriteUiState.Available
+        assertThat(loaded.isFavorited).isTrue()
+
+        viewModel.toggleFavorite()
+        advanceUntilIdle()
+
+        assertThat(library.deleteRequests).containsExactly("collected-list")
+        val updated = (viewModel.uiState.value as PlaylistUiState.Content).favorite
+            as PlaylistFavoriteUiState.Available
+        assertThat(updated.isFavorited).isFalse()
+    }
+
+    @Test
+    fun uncollectedPlaylistCanBeFavorited() = runTest(dispatcher) {
+        val library = FakeLibraryRepository(playlistsResult = CollectionLoadResult.Available(emptyList()))
+        val viewModel = PlaylistViewModel(FakePlaylistRepository(), library)
+        viewModel.load("playlist", accountId = "account-a")
+        advanceUntilIdle()
+
+        viewModel.toggleFavorite()
+        advanceUntilIdle()
+
+        assertThat(library.favoriteRequests).containsExactly("深夜歌单" to "playlist")
+        val updated = (viewModel.uiState.value as PlaylistUiState.Content).favorite
+            as PlaylistFavoriteUiState.Available
+        assertThat(updated.isFavorited).isTrue()
+        assertThat(updated.collectedListId).isEqualTo("new-collected-list")
+    }
+
     private class FakePlaylistRepository(
         var failFirstRequest: Boolean = false,
         private val failSecondPage: Boolean = false,
+        private val failRefresh: Boolean = false,
         private val emptyFirstPage: Boolean = false,
         private val duplicateFirstPageSong: Boolean = false,
+        private val refreshedFirstPage: PlaylistPage? = null,
     ) : PlaylistRepository {
         val requests = mutableListOf<Pair<String, Int>>()
 
@@ -238,6 +360,9 @@ class PlaylistViewModelTest {
             if (page == 1 && failFirstRequest) {
                 return CollectionLoadResult.Failed(ContentFailure.AuthenticationRequired)
             }
+            val isRefresh = page == 1 && requests.count { it.second == 1 } > 1
+            if (isRefresh && failRefresh) return CollectionLoadResult.Failed(ContentFailure.Network)
+            if (isRefresh && refreshedFirstPage != null) return CollectionLoadResult.Available(refreshedFirstPage)
             if (page == 2 && failSecondPage) return CollectionLoadResult.Failed(ContentFailure.Network)
             if (emptyFirstPage) return CollectionLoadResult.Available(PlaylistPage(null, emptyList(), 1, false))
             return CollectionLoadResult.Available(
@@ -267,14 +392,28 @@ class PlaylistViewModelTest {
     private class FakeLibraryRepository(
         private val removeResult: CollectionLoadResult<Unit> = CollectionLoadResult.Available(Unit),
         private val removeGate: CompletableDeferred<CollectionLoadResult<Unit>>? = null,
+        private val playlistsResult: CollectionLoadResult<List<UserPlaylist>> =
+            CollectionLoadResult.Failed(ContentFailure.Protocol),
     ) : LibraryRepository {
         val removeRequests = mutableListOf<Pair<String, List<String>>>()
+        val favoriteRequests = mutableListOf<Pair<String, String>>()
+        val deleteRequests = mutableListOf<String>()
 
         override suspend fun loadPlaylists(page: Int, pageSize: Int): CollectionLoadResult<List<UserPlaylist>> =
-            CollectionLoadResult.Failed(ContentFailure.Protocol)
+            playlistsResult
 
         override suspend fun createPlaylist(name: String): CollectionLoadResult<String> =
             CollectionLoadResult.Failed(ContentFailure.Protocol)
+
+        override suspend fun favoritePlaylist(name: String, globalCollectionId: String): CollectionLoadResult<String> {
+            favoriteRequests += name to globalCollectionId
+            return CollectionLoadResult.Available("new-collected-list")
+        }
+
+        override suspend fun deletePlaylist(listId: String): CollectionLoadResult<Unit> {
+            deleteRequests += listId
+            return CollectionLoadResult.Available(Unit)
+        }
 
         override suspend fun addTracks(listId: String, tracks: List<PlaylistTrackInput>): CollectionLoadResult<Unit> =
             CollectionLoadResult.Failed(ContentFailure.Protocol)

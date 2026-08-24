@@ -2,19 +2,25 @@ package com.resonote.feature.auth.impl
 
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
+import androidx.compose.ui.test.Locales
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertWidthIsEqualTo
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.then
+import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.text.intl.LocaleList
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.resonote.core.designsystem.theme.ResonoteTheme
 import com.resonote.core.designsystem.theme.ResonoteThemeMode
 import com.resonote.core.model.AuthAccountOption
+import com.resonote.core.model.RiskChallengeHandle
 import com.resonote.core.screenshottesting.DefaultRoborazziOptions
 import org.junit.Rule
 import org.junit.Test
@@ -25,7 +31,7 @@ import org.robolectric.annotation.GraphicsMode
 
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(sdk = [35], qualifiers = "w390dp-h844dp-420dpi")
+@Config(sdk = [35], qualifiers = "zh-rCN-w390dp-h844dp-420dpi")
 class LoginScreenshotTest {
     @get:Rule
     val composeRule = createComposeRule()
@@ -34,9 +40,22 @@ class LoginScreenshotTest {
     fun login_mobileInitial() {
         setScreen(LoginUiState(), sessionExpired = false)
 
-        composeRule.onNodeWithText("登录，继续你的声音旅程").assertExists()
-        composeRule.onNodeWithText("登录").assertIsNotEnabled()
+        composeRule.onNodeWithText("继续你的声音旅程").assertExists()
+        composeRule.onNodeWithTag("login-method-indicator-MobileCode", useUnmergedTree = true)
+            .assertWidthIsEqualTo(24.dp)
+        composeRule.onNodeWithTag("login-mobile-input").assertExists()
+        composeRule.onNodeWithTag("login-code-input").assertExists()
+        composeRule.onNodeWithTag("login-submit").assertIsNotEnabled()
         capture("mobile")
+    }
+
+    @Test
+    fun login_passwordInitial() {
+        setScreen(LoginUiState(method = LoginMethod.Password), sessionExpired = false)
+
+        composeRule.onNodeWithTag("login-username-input").assertExists()
+        composeRule.onNodeWithTag("login-password-input").assertExists()
+        capture("password")
     }
 
     @Test
@@ -59,10 +78,27 @@ class LoginScreenshotTest {
         capture("accounts")
     }
 
+    @Test
+    fun login_passwordSmsVerification() {
+        setScreen(
+            LoginUiState(
+                method = LoginMethod.Password,
+                securitySms = LoginSecuritySms(RiskChallengeHandle("fixture-risk")),
+            ),
+            sessionExpired = false,
+        )
+
+        composeRule.onNodeWithTag("login-security-sms-sheet").assertExists()
+        composeRule.onNodeWithText("短信安全验证").assertExists()
+        composeRule.onNodeWithText("验证通过后将继续本次登录").assertExists()
+        capture("password_sms_verification")
+    }
+
     private fun setScreen(state: LoginUiState, sessionExpired: Boolean) {
         composeRule.setContent {
             DeviceConfigurationOverride(
-                override = DeviceConfigurationOverride.ForcedSize(DpSize(390.dp, 844.dp)),
+                override = DeviceConfigurationOverride.Locales(LocaleList(Locale("zh-CN"))) then
+                    DeviceConfigurationOverride.ForcedSize(DpSize(390.dp, 844.dp)),
             ) {
                 ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
                     LoginScreen(

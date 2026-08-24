@@ -21,23 +21,19 @@ import androidx.compose.material.icons.rounded.RepeatOne
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.RippleConfiguration
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.resonote.core.designsystem.component.ResonoteBottomSheet
+import com.resonote.core.designsystem.component.ResonoteBottomSheetHeader
 import com.resonote.core.designsystem.component.ResonoteIconButton
 import com.resonote.core.designsystem.component.ResonoteMusicItem
-import com.resonote.core.playback.PlaybackMode
+import com.resonote.core.model.PlaybackMode
 import com.resonote.core.playback.PlaybackState
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,20 +47,15 @@ fun PlaybackQueueSheet(
     onModeChange: (PlaybackMode) -> Unit,
     snackbarHost: @Composable () -> Unit = {},
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
-    CompositionLocalProvider(LocalRippleConfiguration provides null) {
-        ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
-            CompositionLocalProvider(LocalRippleConfiguration provides RippleConfiguration()) {
-                QueueSheetContent(
-                    playback = playback,
-                    onSelect = onSelect,
-                    onRemove = onRemove,
-                    onClear = onClear,
-                    onModeChange = onModeChange,
-                )
-                snackbarHost()
-            }
-        }
+    ResonoteBottomSheet(onDismissRequest = onDismiss) {
+        QueueSheetContent(
+            playback = playback,
+            onSelect = onSelect,
+            onRemove = onRemove,
+            onClear = onClear,
+            onModeChange = onModeChange,
+        )
+        snackbarHost()
     }
 }
 
@@ -85,26 +76,14 @@ private fun QueueSheetContent(
         }
     }
     Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 12.dp, bottom = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
+        ResonoteBottomSheetHeader(
+            title = stringResource(R.string.feature_player_impl_queue_title),
+            subtitle = stringResource(
+                R.string.feature_player_impl_queue_subtitle,
+                modeLabel,
+                playback.queue.size,
+            ),
         ) {
-            Column(Modifier.weight(1f)) {
-                Text(
-                    stringResource(R.string.feature_player_impl_queue_title),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    stringResource(
-                        R.string.feature_player_impl_queue_subtitle,
-                        modeLabel,
-                        playback.queue.size,
-                    ),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
             Row(horizontalArrangement = Arrangement.spacedBy((-8).dp)) {
                 Box(modifier = Modifier.width(statusSlotWidth), contentAlignment = Alignment.Center) {
                     ResonoteIconButton(

@@ -1,0 +1,12 @@
+<resources>
+    <string name="feature_risk_impl_title">安全验证</string>
+    <string name="feature_risk_impl_back">返回</string>
+    <string name="feature_risk_impl_context">此操作需要完成安全验证</string>
+    <string name="feature_risk_impl_sms_hint">输入短信验证码</string>
+    <string name="feature_risk_impl_submit">完成验证</string>
+    <string name="feature_risk_impl_submitting">正在验证…</string>
+    <string name="feature_risk_impl_loading">正在准备安全验证…</string>
+    <string name="feature_risk_impl_error">安全验证加载失败。</string>
+    <string name="feature_risk_impl_unsupported">暂不支持当前验证方式。</string>
+    <string name="feature_risk_impl_retry">重试</string>
+</resources>

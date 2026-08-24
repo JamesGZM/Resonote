@@ -12,6 +12,8 @@ android {
 }
 
 dependencies {
+    implementation(libs.coil.core)
+    implementation(libs.coil.network.okhttp)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
     implementation(platform(libs.okhttp.bom))

@@ -17,12 +17,33 @@ sealed interface PlaylistUiState {
         val writableListId: String? = null,
         val isLoadingMore: Boolean = false,
         val loadMoreFailure: ContentFailure? = null,
+        val isRefreshing: Boolean = false,
+        val refreshFailure: ContentFailure? = null,
         val removal: PlaylistRemovalUiState = PlaylistRemovalUiState.Idle,
+        val favorite: PlaylistFavoriteUiState = PlaylistFavoriteUiState.Loading,
     ) : PlaylistUiState
 
     data object Empty : PlaylistUiState
 
     data class Error(val failure: ContentFailure) : PlaylistUiState
+}
+
+@Immutable
+sealed interface PlaylistFavoriteUiState {
+    data object Loading : PlaylistFavoriteUiState
+
+    data object AuthenticationRequired : PlaylistFavoriteUiState
+
+    data object Hidden : PlaylistFavoriteUiState
+
+    data class Error(val failure: ContentFailure) : PlaylistFavoriteUiState
+
+    data class Available(
+        val isFavorited: Boolean,
+        val collectedListId: String? = null,
+        val isUpdating: Boolean = false,
+        val updateFailure: ContentFailure? = null,
+    ) : PlaylistFavoriteUiState
 }
 
 @Immutable

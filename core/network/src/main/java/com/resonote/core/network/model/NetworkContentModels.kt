@@ -28,4 +28,27 @@ data class NetworkArtistInfo(
     val fansCount: Long,
 )
 
+data class NetworkFollowedArtist(val id: String, val name: String, val avatarUrl: String?)
+
 data class NetworkArtistSongPage(val songs: List<NetworkSong>, val hasMore: Boolean)
+
+data class NetworkArtistAlbum(
+    val id: String,
+    val name: String,
+    val artist: String?,
+    val coverUrl: String?,
+    val publishDate: String,
+    val songCount: Int,
+)
+
+data class NetworkArtistAlbumPage(val albums: List<NetworkArtistAlbum>, val total: Int?, val hasMore: Boolean)
+
+data class NetworkArtistVideo(
+    val hash: String,
+    val name: String,
+    val singer: String?,
+    val coverUrl: String?,
+    val durationMillis: Long,
+)
+
+data class NetworkArtistVideoPage(val videos: List<NetworkArtistVideo>, val total: Int?, val hasMore: Boolean)

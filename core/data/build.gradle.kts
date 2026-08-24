@@ -16,6 +16,7 @@ dependencies {
     implementation(projects.core.datastore)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.lyrics.core)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

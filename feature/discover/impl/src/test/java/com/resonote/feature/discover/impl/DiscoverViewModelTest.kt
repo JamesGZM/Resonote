@@ -17,8 +17,11 @@ import com.resonote.core.model.PlaylistCategory
 import com.resonote.core.model.PlaylistSummary
 import com.resonote.core.model.Ranking
 import com.resonote.core.model.SongPage
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -86,6 +89,40 @@ class DiscoverViewModelTest {
     }
 
     @Test
+    fun rapidParentAndChildSelectionOnlyLoadsFinalCategory() = runTest(dispatcher) {
+        val catalog = FakeCatalogRepository()
+        val viewModel = DiscoverViewModel(catalog, FakeRankingRepository())
+        advanceUntilIdle()
+
+        viewModel.selectPlaylistParent(10)
+        viewModel.selectPlaylistCategory(12)
+        advanceUntilIdle()
+
+        assertThat(catalog.playlistRequests).containsExactly(
+            Triple(0, 1, 30),
+            Triple(12, 1, 30),
+        ).inOrder()
+    }
+
+    @Test
+    fun repeatedSelectedFiltersDoNotReloadPlaylists() = runTest(dispatcher) {
+        val catalog = FakeCatalogRepository()
+        val viewModel = DiscoverViewModel(catalog, FakeRankingRepository())
+        advanceUntilIdle()
+
+        viewModel.selectPlaylistParent(10)
+        advanceUntilIdle()
+        viewModel.selectPlaylistParent(10)
+        viewModel.selectPlaylistCategory(11)
+        advanceUntilIdle()
+
+        assertThat(catalog.playlistRequests).containsExactly(
+            Triple(0, 1, 30),
+            Triple(11, 1, 30),
+        ).inOrder()
+    }
+
+    @Test
     fun secondarySectionsLoadLazilyAndRemainCached() = runTest(dispatcher) {
         val catalog = FakeCatalogRepository()
         val rankings = FakeRankingRepository()
@@ -143,6 +180,30 @@ class DiscoverViewModelTest {
     }
 
     @Test
+    fun playlistPaginationFailureStopsUntilExplicitRetry() = runTest(dispatcher) {
+        val catalog = FakeCatalogRepository(paginatePlaylists = true)
+        val viewModel = DiscoverViewModel(catalog, FakeRankingRepository())
+        advanceUntilIdle()
+        catalog.failingPlaylistPages += 2
+
+        viewModel.loadMore()
+        advanceUntilIdle()
+
+        val failed = viewModel.uiState.value.playlists as DiscoverPageState.Content
+        assertThat(failed.loadMoreFailure).isEqualTo(ContentFailure.Network)
+        assertThat(catalog.playlistRequests).hasSize(2)
+
+        catalog.failingPlaylistPages.clear()
+        viewModel.loadMore()
+        advanceUntilIdle()
+
+        val recovered = viewModel.uiState.value.playlists as DiscoverPageState.Content
+        assertThat(recovered.loadMoreFailure).isNull()
+        assertThat(recovered.page).isEqualTo(2)
+        assertThat(catalog.playlistRequests).hasSize(3)
+    }
+
+    @Test
     fun albumRegionSelectionDoesNotReloadAlbums() = runTest(dispatcher) {
         val catalog = FakeCatalogRepository()
         val viewModel = DiscoverViewModel(catalog, FakeRankingRepository())
@@ -157,10 +218,53 @@ class DiscoverViewModelTest {
         assertThat(catalog.albumRequests).isEqualTo(1)
     }
 
+    @Test
+    fun refreshingCurrentPlaylistKeepsFiltersAndReplacesFirstPage() = runTest(dispatcher) {
+        val catalog = FakeCatalogRepository()
+        val viewModel = DiscoverViewModel(catalog, FakeRankingRepository())
+        advanceUntilIdle()
+        viewModel.selectPlaylistParent(10)
+        advanceUntilIdle()
+
+        viewModel.refreshCurrent()
+        assertThat(viewModel.uiState.value.refreshingSection).isEqualTo(DiscoverSection.PLAYLISTS)
+        assertThat(viewModel.uiState.value.playlists).isInstanceOf(DiscoverPageState.Content::class.java)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertThat(state.refreshingSection).isNull()
+        assertThat(state.selectedParentCategoryId).isEqualTo(10)
+        assertThat(state.selectedPlaylistCategoryId).isEqualTo(11)
+        assertThat(catalog.playlistRequests).containsExactly(
+            Triple(0, 1, 30),
+            Triple(11, 1, 30),
+            Triple(11, 1, 30),
+        ).inOrder()
+    }
+
+    @Test
+    fun refreshFailureKeepsContentAndEmitsFailure() = runTest(dispatcher) {
+        val catalog = FakeCatalogRepository()
+        val viewModel = DiscoverViewModel(catalog, FakeRankingRepository())
+        advanceUntilIdle()
+        val original = viewModel.uiState.value.playlists
+        val event = async(start = CoroutineStart.UNDISPATCHED) { viewModel.refreshFailures.first() }
+        catalog.failPlaylists = true
+
+        viewModel.refreshCurrent()
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.playlists).isEqualTo(original)
+        assertThat(viewModel.uiState.value.refreshingSection).isNull()
+        assertThat(event.await()).isEqualTo(ContentFailure.Network)
+    }
+
     private class FakeCatalogRepository(
         private val failCategories: Boolean = false,
         private val paginatePlaylists: Boolean = false,
     ) : ContentCatalogRepository {
+        var failPlaylists = false
+        val failingPlaylistPages = mutableSetOf<Int>()
         val playlistRequests = mutableListOf<Triple<Int, Int, Int>>()
         var albumRequests = 0
         val songRequests = mutableListOf<Int>()
@@ -178,6 +282,9 @@ class DiscoverViewModelTest {
             pageSize: Int,
         ): CollectionLoadResult<List<PlaylistSummary>> {
             playlistRequests += Triple(categoryId, page, pageSize)
+            if (failPlaylists || page in failingPlaylistPages) {
+                return CollectionLoadResult.Failed(ContentFailure.Network)
+            }
             return CollectionLoadResult.Available(
                 if (!paginatePlaylists) {
                     listOf(PlaylistSummary("playlist-$categoryId", "歌单 $categoryId", null, 12_000))

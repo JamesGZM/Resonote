@@ -8,13 +8,14 @@ import com.resonote.core.model.DeviceHistoryRecord
 import com.resonote.core.model.DeviceHistorySource
 import com.resonote.core.model.LocalMedia
 import com.resonote.core.model.LocalMediaId
+import com.resonote.core.model.OnlinePlaybackQuality
 import com.resonote.core.model.OnlineSong
+import com.resonote.core.model.PlaybackMode
 import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.model.ResolvedSongSource
 import com.resonote.core.playback.PlaybackController
 import com.resonote.core.playback.PlaybackFormat
 import com.resonote.core.playback.PlaybackItem
-import com.resonote.core.playback.PlaybackMode
 import com.resonote.core.playback.PlaybackOrigin
 import com.resonote.core.playback.PlaybackState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -72,6 +73,17 @@ class PlaybackViewModelTest {
         val item = controller.appendedItems.single()
         assertThat(item.queueKey).isEqualTo("online:queue-song")
         assertThat((item.origin as PlaybackOrigin.Online).song.hash).isEqualTo("queue-song")
+    }
+
+    @Test
+    fun entitlementRefreshDelegatesPreviewAndForcedRefreshes() {
+        val controller = FakePlaybackController()
+        val viewModel = PlaybackViewModel(controller)
+
+        viewModel.refreshCurrentOnlineSource()
+        viewModel.refreshCurrentOnlineSource(force = true)
+
+        assertThat(controller.sourceRefreshForces).containsExactly(false, true).inOrder()
     }
 
     @Test
@@ -150,6 +162,7 @@ class PlaybackViewModelTest {
         var appendedItems = emptyList<PlaybackItem>()
         var nextItems = emptyList<PlaybackItem>()
         var pauseCalls = 0
+        val sourceRefreshForces = mutableListOf<Boolean>()
 
         override fun play(item: PlaybackItem) {
             playedItems = listOf(item)
@@ -190,6 +203,12 @@ class PlaybackViewModelTest {
         override fun setMode(mode: PlaybackMode) = Unit
 
         override fun setPlaybackSpeed(speed: PlaybackSpeed) = Unit
+
+        override fun setCurrentOnlineQuality(quality: OnlinePlaybackQuality) = Unit
+
+        override fun refreshCurrentOnlineSource(force: Boolean) {
+            sourceRefreshForces += force
+        }
 
         override fun clear() = Unit
     }

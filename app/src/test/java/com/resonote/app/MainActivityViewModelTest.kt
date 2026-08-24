@@ -28,7 +28,6 @@ import com.resonote.core.navigation.LoginGateNavKey
 import com.resonote.core.navigation.TabsShellNavKey
 import com.resonote.feature.cloud.api.CloudNavKey
 import com.resonote.feature.local.api.LocalMusicNavKey
-import com.resonote.feature.vip.api.DailyVipNavKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -92,22 +91,6 @@ class MainActivityViewModelTest {
         backStack.synchronizeAuthenticationGate(AuthState.AuthenticationRequired(AuthGateReason.Required))
         backStack.synchronizeAuthenticationGate(AuthState.Authenticated("42"))
         assertThat(backStack.filterIsInstance<LoginGateNavKey>()).isEmpty()
-    }
-
-    @Test
-    fun dailyVipNavigationRequiresLoginAndDoesNotReplayAfterAuthentication() {
-        val backStack = mutableListOf<NavKey>(TabsShellNavKey)
-
-        backStack.navigateToDailyVip(AuthState.Anonymous)
-        assertThat(backStack.last()).isEqualTo(LoginGateNavKey(false))
-
-        backStack.synchronizeAuthenticationGate(AuthState.Authenticated("42"))
-        assertThat(backStack).containsExactly(TabsShellNavKey)
-
-        backStack.navigateToDailyVip(AuthState.Authenticated("42"))
-        backStack.navigateToDailyVip(AuthState.Authenticated("42"))
-        assertThat(backStack.filterIsInstance<DailyVipNavKey>()).hasSize(1)
-        assertThat(backStack.last()).isEqualTo(DailyVipNavKey)
     }
 
     @Test
@@ -237,6 +220,8 @@ class MainActivityViewModelTest {
             state.value = AuthState.Anonymous
         }
 
+        override suspend fun logout() = Unit
+
         override suspend fun sendMobileCode(mobile: String): SendMobileCodeResult = error("unused")
         override suspend fun loginWithMobileCode(
             mobile: String,
@@ -258,6 +243,8 @@ class MainActivityViewModelTest {
         }
 
         override fun observeAll() = flowOf(emptyList<LocalMedia>())
+
+        override suspend fun scanDirectory(treeUri: String) = error("unused")
 
         override suspend fun importFromUri(
             sourceUri: String,

@@ -118,10 +118,71 @@ class AlbumViewModelTest {
         assertThat(state.isLoadingMore).isFalse()
     }
 
+    @Test
+    fun refreshReplacesSongsAndMetadata() = runTest(dispatcher) {
+        val repository = FakeCatalogRepository(
+            refreshedFirstPage = CatalogSongPage(
+                songs = listOf(song("song-refreshed").copy(albumTitle = "刷新后的专辑")),
+                page = 1,
+                total = 1,
+                hasMore = false,
+            ),
+        )
+        val viewModel = AlbumViewModel(repository)
+        viewModel.load(AlbumNavKey("album"))
+        advanceUntilIdle()
+
+        viewModel.refresh()
+        assertThat((viewModel.uiState.value as AlbumUiState.Content).isRefreshing).isTrue()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value as AlbumUiState.Content
+        assertThat(state.metadata.title).isEqualTo("刷新后的专辑")
+        assertThat(state.metadata.songCount).isEqualTo(1)
+        assertThat(state.songs.map { it.hash }).containsExactly("song-refreshed")
+        assertThat(state.hasMore).isFalse()
+        assertThat(state.isRefreshing).isFalse()
+    }
+
+    @Test
+    fun refreshFailureKeepsSongsUntilAcknowledged() = runTest(dispatcher) {
+        val viewModel = AlbumViewModel(FakeCatalogRepository(failRefresh = true))
+        viewModel.load(key())
+        advanceUntilIdle()
+
+        viewModel.refresh()
+        advanceUntilIdle()
+
+        val failed = viewModel.uiState.value as AlbumUiState.Content
+        assertThat(failed.songs.map { it.hash }).containsExactly("song-1", "song-2").inOrder()
+        assertThat(failed.refreshFailure).isEqualTo(ContentFailure.Network)
+        assertThat(failed.isRefreshing).isFalse()
+
+        viewModel.acknowledgeRefreshFailure()
+
+        assertThat((viewModel.uiState.value as AlbumUiState.Content).refreshFailure).isNull()
+    }
+
+    @Test
+    fun loadMoreIsIgnoredWhileRefreshing() = runTest(dispatcher) {
+        val repository = FakeCatalogRepository()
+        val viewModel = AlbumViewModel(repository)
+        viewModel.load(key())
+        advanceUntilIdle()
+
+        viewModel.refresh()
+        viewModel.loadMore()
+        advanceUntilIdle()
+
+        assertThat(repository.requests).containsExactly("album" to 1, "album" to 1).inOrder()
+    }
+
     private class FakeCatalogRepository(
         private val emptyFirstPage: Boolean = false,
         private val failFirstPage: Boolean = false,
         private val failSecondPage: Boolean = false,
+        private val failRefresh: Boolean = false,
+        private val refreshedFirstPage: CatalogSongPage? = null,
     ) : ContentCatalogRepository {
         val requests = mutableListOf<Pair<String, Int>>()
 
@@ -132,6 +193,9 @@ class AlbumViewModelTest {
         ): CollectionLoadResult<CatalogSongPage> {
             requests += albumId to page
             if (page == 1 && failFirstPage) return CollectionLoadResult.Failed(ContentFailure.Network)
+            val isRefresh = page == 1 && requests.count { it.second == 1 } > 1
+            if (isRefresh && failRefresh) return CollectionLoadResult.Failed(ContentFailure.Network)
+            if (isRefresh && refreshedFirstPage != null) return CollectionLoadResult.Available(refreshedFirstPage)
             if (page == 2 && failSecondPage) return CollectionLoadResult.Failed(ContentFailure.Network)
             if (emptyFirstPage) {
                 return CollectionLoadResult.Available(CatalogSongPage(emptyList(), 1, 0, false))

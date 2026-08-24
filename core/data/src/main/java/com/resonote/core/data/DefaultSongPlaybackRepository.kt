@@ -19,12 +19,14 @@ internal class DefaultSongPlaybackRepository @Inject constructor(
     private val riskChallenges: RiskChallengeRegistry,
     private val playbackPreferences: PlaybackPreferencesRepository,
 ) : SongPlaybackRepository {
-    override suspend fun resolveSource(song: OnlineSong): ResolveSongSourceResult = try {
-        val quality = playbackPreferences.onlinePlaybackQuality
+    override suspend fun resolveSource(
+        song: OnlineSong,
+        qualityOverride: OnlinePlaybackQuality?,
+    ): ResolveSongSourceResult = try {
+        val quality = qualityOverride ?: playbackPreferences.onlinePlaybackQuality
             .catch { emit(OnlinePlaybackQuality.Standard) }
             .first()
-            .wireValue()
-        val source = network.resolveSongSource(song.hash, song.albumId, song.albumAudioId, quality)
+        val source = network.resolveSongSource(song.hash, song.albumId, song.albumAudioId, quality.wireValue())
         ResolveSongSourceResult.Resolved(
             ResolvedSongSource(
                 source.uri,
@@ -32,6 +34,8 @@ internal class DefaultSongPlaybackRepository @Inject constructor(
                     it > 0
                 } ?: song.durationMillis,
                 source.extension,
+                source.isPreview,
+                onlinePlaybackCacheKey(song.hash, quality, source.isPreview),
             ),
         )
     } catch (unavailable: ApiPlaybackUnavailableException) {
@@ -56,3 +60,12 @@ internal class DefaultSongPlaybackRepository @Inject constructor(
         OnlinePlaybackQuality.ViperTape -> "viper_tape"
     }
 }
+
+internal fun onlinePlaybackCacheKey(songHash: String, quality: OnlinePlaybackQuality, isPreview: Boolean): String =
+    buildString {
+        append("online:")
+        append(songHash)
+        append(':')
+        append(quality.name)
+        append(if (isPreview) ":preview" else ":full")
+    }

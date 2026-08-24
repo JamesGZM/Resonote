@@ -20,6 +20,12 @@ data class ResonoteSystemColors internal constructor(
 )
 
 @Immutable
+data class ResonoteBrandColors internal constructor(
+    val harmonicViolet: Color = Color(0xFF66558F),
+    val onHarmonicViolet: Color = Color.White,
+)
+
+@Immutable
 data class ResonoteArtworkShapes internal constructor(
     val standard: Shape = RoundedCornerShape(12.dp),
     val compact: Shape = RoundedCornerShape(8.dp),
@@ -41,6 +47,7 @@ internal val LocalResonoteExtendedShapes = staticCompositionLocalOf { ResonoteEx
 internal val LocalResonoteMotion = staticCompositionLocalOf { ResonoteMotionScheme.Standard }
 internal val LocalResonoteStateLayers = staticCompositionLocalOf { ResonoteStateLayers() }
 internal val LocalResonoteSystemColors = staticCompositionLocalOf { ResonoteSystemColors() }
+internal val LocalResonoteBrandColors = staticCompositionLocalOf { ResonoteBrandColors() }
 
 object ResonoteTokens {
     val spacing: ResonoteSpacing
@@ -79,4 +86,7 @@ object ResonoteTokens {
     val systemColors: ResonoteSystemColors
         @Composable @ReadOnlyComposable
         get() = LocalResonoteSystemColors.current
+    val brandColors: ResonoteBrandColors
+        @Composable @ReadOnlyComposable
+        get() = LocalResonoteBrandColors.current
 }

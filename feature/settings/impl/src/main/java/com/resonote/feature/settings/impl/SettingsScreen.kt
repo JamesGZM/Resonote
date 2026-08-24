@@ -3,38 +3,33 @@
 package com.resonote.feature.settings.impl
 
 import android.os.Build
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.ChevronRight
-import androidx.compose.material.icons.rounded.DarkMode
-import androidx.compose.material.icons.rounded.GraphicEq
-import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material.icons.rounded.Speed
-import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Language
+import androidx.compose.material.icons.rounded.Lyrics
+import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.PlayCircle
+import androidx.compose.material.icons.rounded.Security
+import androidx.compose.material.icons.rounded.Storage
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -45,25 +40,36 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.core.os.LocaleListCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.resonote.core.designsystem.component.LocalResonoteSnackbarController
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
-import com.resonote.core.model.OnlinePlaybackQuality
-import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.model.ThemeMode
 
 @Composable
-fun SettingsRoute(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewModel()) {
+fun SettingsRoute(
+    onBack: () -> Unit,
+    onPlaybackClick: () -> Unit = {},
+    onLyricsClick: () -> Unit = {},
+    onPermissionsClick: () -> Unit = {},
+    onAboutClick: () -> Unit = {},
+    bottomContentPadding: Dp = 32.dp,
+    viewModel: SettingsViewModel = hiltViewModel(),
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarController = LocalResonoteSnackbarController.current
     val saveFailureMessage = stringResource(R.string.feature_settings_impl_save_error)
+    val language = if (LocalConfiguration.current.locales[0].language == "zh") {
+        AppLanguage.SimplifiedChinese
+    } else {
+        AppLanguage.English
+    }
 
     LaunchedEffect((state as? SettingsUiState.Ready)?.saveFailed) {
         if ((state as? SettingsUiState.Ready)?.saveFailed == true) {
@@ -74,12 +80,21 @@ fun SettingsRoute(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMod
 
     SettingsScreen(
         state = state,
+        bottomContentPadding = bottomContentPadding,
         onBack = onBack,
         onRetry = viewModel::retry,
-        onPlaybackSpeedChange = viewModel::setPlaybackSpeed,
-        onOnlinePlaybackQualityChange = viewModel::setOnlinePlaybackQuality,
+        onPlaybackClick = onPlaybackClick,
+        onLyricsClick = onLyricsClick,
+        onPermissionsClick = onPermissionsClick,
+        onAboutClick = onAboutClick,
         onThemeModeChange = viewModel::setThemeMode,
         onDynamicColorChange = viewModel::setDynamicColorEnabled,
+        onClearCache = viewModel::clearCache,
+        language = language,
+        onLanguageChange = { selected ->
+            AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(selected.languageTag))
+        },
+        onLogout = viewModel::logout,
     )
 }
 
@@ -88,16 +103,24 @@ internal fun SettingsScreen(
     state: SettingsUiState,
     onBack: () -> Unit,
     onRetry: () -> Unit,
-    onPlaybackSpeedChange: (PlaybackSpeed) -> Unit,
-    onOnlinePlaybackQualityChange: (OnlinePlaybackQuality) -> Unit = {},
+    modifier: Modifier = Modifier,
+    bottomContentPadding: Dp = 32.dp,
+    onPlaybackClick: () -> Unit = {},
+    onLyricsClick: () -> Unit = {},
+    onPermissionsClick: () -> Unit = {},
+    onAboutClick: () -> Unit = {},
     onThemeModeChange: (ThemeMode) -> Unit = {},
     onDynamicColorChange: (Boolean) -> Unit = {},
+    onClearCache: () -> Unit = {},
+    language: AppLanguage = AppLanguage.English,
+    onLanguageChange: (AppLanguage) -> Unit = {},
+    onLogout: () -> Unit = {},
     supportsDynamicColor: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
-    modifier: Modifier = Modifier,
 ) {
-    var speedDialogOpen by remember { mutableStateOf(false) }
-    var qualityDialogOpen by remember { mutableStateOf(false) }
-    var themeDialogOpen by remember { mutableStateOf(false) }
+    var showAppearance by remember { mutableStateOf(false) }
+    var showLanguage by remember { mutableStateOf(false) }
+    var confirmClearCache by remember { mutableStateOf(false) }
+    var confirmLogout by remember { mutableStateOf(false) }
     val ready = state as? SettingsUiState.Ready
 
     Scaffold(
@@ -116,525 +139,197 @@ internal fun SettingsScreen(
                 },
             )
         },
-    ) { padding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding).testTag("settings-list"),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-        ) {
-            item(key = "intro") { SettingsIntroCard() }
-            if (state is SettingsUiState.Ready) {
-                item(key = "appearance-label") {
-                    SettingsSectionLabel(R.string.feature_settings_impl_appearance_section)
-                }
-                item(key = "theme-mode") {
-                    ThemeModeSettingsCard(
-                        state = state,
-                        onClick = { themeDialogOpen = true },
-                    )
-                }
-                if (supportsDynamicColor) {
-                    item(key = "dynamic-color") {
-                        DynamicColorSettingsCard(
-                            state = state,
-                            onCheckedChange = onDynamicColorChange,
+    ) { scaffoldPadding ->
+        Box(Modifier.fillMaxSize().padding(scaffoldPadding), contentAlignment = Alignment.TopCenter) {
+            when (state) {
+                SettingsUiState.Loading -> Text(
+                    stringResource(R.string.feature_settings_impl_loading),
+                    modifier = Modifier.padding(24.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                SettingsUiState.LoadFailed -> SettingsActionRow(
+                    title = stringResource(R.string.feature_settings_impl_load_error),
+                    value = stringResource(R.string.feature_settings_impl_retry),
+                    onClick = onRetry,
+                    modifier = Modifier.widthIn(max = 720.dp),
+                )
+                is SettingsUiState.Ready -> LazyColumn(
+                    modifier = Modifier.fillMaxHeight().widthIn(max = 720.dp).testTag("settings-list"),
+                    contentPadding = PaddingValues(top = 8.dp, bottom = bottomContentPadding),
+                ) {
+                    item {
+                        SettingsNavigationRow(
+                            title = stringResource(R.string.feature_settings_impl_appearance_section),
+                            supportingText = stringResource(R.string.feature_settings_impl_appearance_summary),
+                            icon = Icons.Rounded.Palette,
+                            onClick = { showAppearance = true },
+                            modifier = Modifier.testTag("settings-appearance"),
                         )
                     }
-                }
-            }
-            item(key = "playback-label") {
-                SettingsSectionLabel(R.string.feature_settings_impl_playback_section)
-            }
-            item(key = "playback-speed") {
-                when (state) {
-                    SettingsUiState.Loading -> PlaybackLoadingCard()
-                    SettingsUiState.LoadFailed -> PlaybackLoadFailureCard(onRetry)
-                    is SettingsUiState.Ready -> PlaybackSpeedSettingsCard(
-                        state = state,
-                        onClick = { speedDialogOpen = true },
-                    )
-                }
-            }
-            if (state is SettingsUiState.Ready) {
-                item(key = "online-quality") {
-                    OnlineQualitySettingsCard(
-                        state = state,
-                        onClick = { qualityDialogOpen = true },
-                    )
-                }
-            }
-        }
-    }
-
-    if (speedDialogOpen && ready != null) {
-        PlaybackSpeedDialog(
-            selected = ready.playbackSpeed,
-            onSelect = {
-                speedDialogOpen = false
-                onPlaybackSpeedChange(it)
-            },
-            onDismiss = { speedDialogOpen = false },
-        )
-    }
-    if (qualityDialogOpen && ready != null) {
-        OnlineQualityDialog(
-            selected = ready.onlinePlaybackQuality,
-            onSelect = {
-                qualityDialogOpen = false
-                onOnlinePlaybackQualityChange(it)
-            },
-            onDismiss = { qualityDialogOpen = false },
-        )
-    }
-    if (themeDialogOpen && ready != null) {
-        ThemeModeDialog(
-            selected = ready.themePreferences.themeMode,
-            onSelect = {
-                themeDialogOpen = false
-                onThemeModeChange(it)
-            },
-            onDismiss = { themeDialogOpen = false },
-        )
-    }
-}
-
-@Composable
-private fun SettingsSectionLabel(textRes: Int) {
-    Text(
-        text = stringResource(textRes),
-        modifier = Modifier.padding(horizontal = 4.dp),
-        color = MaterialTheme.colorScheme.primary,
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold,
-    )
-}
-
-@Composable
-private fun ThemeModeSettingsCard(state: SettingsUiState.Ready, onClick: () -> Unit) {
-    Card(
-        onClick = onClick,
-        enabled = !state.isSaving,
-        modifier = Modifier.fillMaxWidth().testTag("settings-theme-mode"),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        shape = MaterialTheme.shapes.extraLarge,
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(18.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Surface(
-                modifier = Modifier.size(48.dp),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Rounded.DarkMode, contentDescription = null, modifier = Modifier.size(24.dp))
-                }
-            }
-            Column(modifier = Modifier.weight(1f).padding(horizontal = 14.dp)) {
-                Text(
-                    text = stringResource(R.string.feature_settings_impl_theme_mode),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text = state.themePreferences.themeMode.label(),
-                    modifier = Modifier.padding(top = 3.dp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-            Icon(Icons.Rounded.ChevronRight, contentDescription = null)
-        }
-    }
-}
-
-@Composable
-private fun DynamicColorSettingsCard(state: SettingsUiState.Ready, onCheckedChange: (Boolean) -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth().testTag("settings-dynamic-color"),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        shape = MaterialTheme.shapes.extraLarge,
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(18.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.feature_settings_impl_dynamic_color),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text = stringResource(R.string.feature_settings_impl_dynamic_color_body),
-                    modifier = Modifier.padding(top = 3.dp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-            Switch(
-                checked = state.themePreferences.dynamicColorEnabled,
-                enabled = !state.isSaving,
-                onCheckedChange = onCheckedChange,
-            )
-        }
-    }
-}
-
-@Composable
-private fun SettingsIntroCard() {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        shape = MaterialTheme.shapes.extraLarge,
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    Brush.linearGradient(
-                        listOf(
-                            MaterialTheme.colorScheme.primaryContainer,
-                            MaterialTheme.colorScheme.surfaceContainerLow,
-                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.72f),
-                        ),
-                    ),
-                )
-                .padding(22.dp),
-        ) {
-            Surface(
-                modifier = Modifier.align(Alignment.TopEnd).size(72.dp),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.26f),
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        Icons.Rounded.GraphicEq,
-                        contentDescription = null,
-                        modifier = Modifier.size(34.dp),
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
-                }
-            }
-            Column(modifier = Modifier.fillMaxWidth().padding(end = 76.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Rounded.Tune,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
-                    Text(
-                        text = stringResource(R.string.feature_settings_impl_intro_eyebrow),
-                        modifier = Modifier.padding(start = 8.dp),
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
-                Text(
-                    text = stringResource(R.string.feature_settings_impl_intro_title),
-                    modifier = Modifier.padding(top = 16.dp),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    text = stringResource(R.string.feature_settings_impl_intro_body),
-                    modifier = Modifier.padding(top = 8.dp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun PlaybackSpeedSettingsCard(state: SettingsUiState.Ready, onClick: () -> Unit) {
-    Card(
-        onClick = onClick,
-        enabled = !state.isSaving,
-        modifier = Modifier.fillMaxWidth().testTag("settings-playback-speed"),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        shape = MaterialTheme.shapes.extraLarge,
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(18.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Surface(
-                modifier = Modifier.size(48.dp),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Rounded.Speed, contentDescription = null, modifier = Modifier.size(24.dp))
-                }
-            }
-            Column(modifier = Modifier.weight(1f).padding(horizontal = 14.dp)) {
-                Text(
-                    text = stringResource(R.string.feature_settings_impl_playback_speed),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text = stringResource(R.string.feature_settings_impl_playback_speed_body),
-                    modifier = Modifier.padding(top = 3.dp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-            if (state.isSaving) {
-                CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-            } else {
-                Surface(
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                ) {
-                    Text(
-                        text = state.playbackSpeed.label(),
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
-                Icon(Icons.Rounded.ChevronRight, contentDescription = null, modifier = Modifier.padding(start = 6.dp))
-            }
-        }
-    }
-}
-
-@Composable
-private fun OnlineQualitySettingsCard(state: SettingsUiState.Ready, onClick: () -> Unit) {
-    Card(
-        onClick = onClick,
-        enabled = !state.isSaving,
-        modifier = Modifier.fillMaxWidth().testTag("settings-online-quality"),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        shape = MaterialTheme.shapes.extraLarge,
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(18.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Surface(
-                modifier = Modifier.size(48.dp),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Rounded.GraphicEq, contentDescription = null, modifier = Modifier.size(24.dp))
-                }
-            }
-            Column(modifier = Modifier.weight(1f).padding(horizontal = 14.dp)) {
-                Text(
-                    text = stringResource(R.string.feature_settings_impl_online_quality),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text = stringResource(R.string.feature_settings_impl_online_quality_body),
-                    modifier = Modifier.padding(top = 3.dp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-            Text(
-                text = state.onlinePlaybackQuality.label(),
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-            )
-            Icon(Icons.Rounded.ChevronRight, contentDescription = null, modifier = Modifier.padding(start = 6.dp))
-        }
-    }
-}
-
-@Composable
-private fun PlaybackLoadingCard() {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.extraLarge,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-    ) {
-        Row(modifier = Modifier.padding(22.dp), verticalAlignment = Alignment.CenterVertically) {
-            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-            Text(
-                text = stringResource(R.string.feature_settings_impl_loading),
-                modifier = Modifier.padding(start = 14.dp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
-
-@Composable
-private fun PlaybackLoadFailureCard(onRetry: () -> Unit) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.extraLarge,
-        color = MaterialTheme.colorScheme.errorContainer,
-        contentColor = MaterialTheme.colorScheme.onErrorContainer,
-    ) {
-        Row(
-            modifier = Modifier.padding(18.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(Icons.Rounded.Refresh, contentDescription = null)
-            Text(
-                text = stringResource(R.string.feature_settings_impl_load_error),
-                modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            TextButton(onClick = onRetry) {
-                Text(stringResource(R.string.feature_settings_impl_retry))
-            }
-        }
-    }
-}
-
-@Composable
-private fun PlaybackSpeedDialog(selected: PlaybackSpeed, onSelect: (PlaybackSpeed) -> Unit, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        icon = { Icon(Icons.Rounded.Speed, contentDescription = null) },
-        title = { Text(stringResource(R.string.feature_settings_impl_playback_speed)) },
-        text = {
-            Column {
-                PlaybackSpeed.entries.forEach { speed ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .selectable(
-                                selected = speed == selected,
-                                role = Role.RadioButton,
-                                onClick = { onSelect(speed) },
-                            )
-                            .padding(horizontal = 4.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        RadioButton(selected = speed == selected, onClick = null)
-                        Text(speed.label(), modifier = Modifier.padding(start = 12.dp))
+                    item { SettingsDivider() }
+                    item {
+                        SettingsNavigationRow(
+                            title = stringResource(R.string.feature_settings_impl_language),
+                            supportingText = stringResource(R.string.feature_settings_impl_language_summary),
+                            value = language.label(),
+                            icon = Icons.Rounded.Language,
+                            onClick = { showLanguage = true },
+                            modifier = Modifier.testTag("settings-language"),
+                        )
+                    }
+                    item { SettingsDivider() }
+                    item {
+                        SettingsNavigationRow(
+                            title = stringResource(R.string.feature_settings_impl_playback_section),
+                            supportingText = stringResource(R.string.feature_settings_impl_playback_summary),
+                            icon = Icons.Rounded.PlayCircle,
+                            onClick = onPlaybackClick,
+                            modifier = Modifier.testTag("settings-playback"),
+                        )
+                    }
+                    item { SettingsDivider() }
+                    item {
+                        SettingsNavigationRow(
+                            title = stringResource(R.string.feature_settings_impl_lyrics_section),
+                            supportingText = stringResource(R.string.feature_settings_impl_lyrics_summary),
+                            icon = Icons.Rounded.Lyrics,
+                            onClick = onLyricsClick,
+                        )
+                    }
+                    item { SettingsDivider() }
+                    item {
+                        SettingsNavigationRow(
+                            title = stringResource(R.string.feature_settings_impl_cache_title),
+                            supportingText = stringResource(R.string.feature_settings_impl_cache_body),
+                            value = state.cacheBytes?.let(::formatBytes)
+                                ?: stringResource(R.string.feature_settings_impl_calculating),
+                            icon = Icons.Rounded.Storage,
+                            onClick = { confirmClearCache = true },
+                            loading = state.isClearingCache,
+                        )
+                    }
+                    item { SettingsDivider() }
+                    item {
+                        SettingsNavigationRow(
+                            title = stringResource(R.string.feature_settings_impl_permissions_section),
+                            supportingText = stringResource(R.string.feature_settings_impl_permissions_summary),
+                            icon = Icons.Rounded.Security,
+                            onClick = onPermissionsClick,
+                        )
+                    }
+                    item { SettingsDivider() }
+                    item {
+                        SettingsNavigationRow(
+                            title = stringResource(R.string.feature_settings_impl_about_section),
+                            supportingText = stringResource(R.string.feature_settings_impl_about_summary),
+                            icon = Icons.Rounded.Info,
+                            onClick = onAboutClick,
+                        )
+                    }
+                    if (state.isAuthenticated) {
+                        item { Spacer(Modifier.height(24.dp)) }
+                        item {
+                            OutlinedButton(
+                                onClick = { confirmLogout = true },
+                                enabled = state.savingKey != SettingsSaveKey.Logout,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp)
+                                    .testTag("settings-logout"),
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.55f)),
+                            ) {
+                                Text(
+                                    stringResource(R.string.feature_settings_impl_logout),
+                                    color = MaterialTheme.colorScheme.error,
+                                )
+                            }
+                        }
                     }
                 }
             }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.feature_settings_impl_cancel))
-            }
-        },
-    )
+        }
+    }
+
+    if (showAppearance && ready != null) {
+        AppearanceSettingsSheet(
+            themeMode = ready.themePreferences.themeMode,
+            dynamicColorEnabled = ready.themePreferences.dynamicColorEnabled,
+            supportsDynamicColor = supportsDynamicColor,
+            enabled = ready.savingKey == null,
+            onThemeModeChange = onThemeModeChange,
+            onDynamicColorChange = onDynamicColorChange,
+            onDismiss = { showAppearance = false },
+        )
+    }
+    if (showLanguage) {
+        SettingsSingleChoiceSheet(
+            title = stringResource(R.string.feature_settings_impl_language),
+            selected = language,
+            options = AppLanguage.entries.map { it to it.label() },
+            onSelect = { selected ->
+                showLanguage = false
+                onLanguageChange(selected)
+            },
+            onDismiss = { showLanguage = false },
+        )
+    }
+    if (confirmClearCache) {
+        ConfirmationDialog(
+            title = stringResource(R.string.feature_settings_impl_clear_cache),
+            body = stringResource(R.string.feature_settings_impl_clear_cache_confirm),
+            confirm = stringResource(R.string.feature_settings_impl_clear),
+            onConfirm = {
+                confirmClearCache = false
+                onClearCache()
+            },
+            onDismiss = { confirmClearCache = false },
+        )
+    }
+    if (confirmLogout) {
+        ConfirmationDialog(
+            title = stringResource(R.string.feature_settings_impl_logout),
+            body = stringResource(R.string.feature_settings_impl_logout_confirm),
+            confirm = stringResource(R.string.feature_settings_impl_logout),
+            confirmTestTag = "settings-logout-confirm",
+            onConfirm = {
+                confirmLogout = false
+                onLogout()
+            },
+            onDismiss = { confirmLogout = false },
+        )
+    }
 }
 
 @Composable
-private fun OnlineQualityDialog(
-    selected: OnlinePlaybackQuality,
-    onSelect: (OnlinePlaybackQuality) -> Unit,
+internal fun ConfirmationDialog(
+    title: String,
+    body: String,
+    confirm: String,
+    onConfirm: () -> Unit,
     onDismiss: () -> Unit,
+    confirmTestTag: String? = null,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        icon = { Icon(Icons.Rounded.GraphicEq, contentDescription = null) },
-        title = { Text(stringResource(R.string.feature_settings_impl_online_quality)) },
-        text = {
-            Column {
-                OnlinePlaybackQuality.entries.forEach { quality ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .selectable(
-                                selected = quality == selected,
-                                role = Role.RadioButton,
-                                onClick = { onSelect(quality) },
-                            )
-                            .padding(horizontal = 4.dp, vertical = 5.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        RadioButton(selected = quality == selected, onClick = null)
-                        Text(quality.label(), modifier = Modifier.padding(start = 12.dp))
-                    }
-                }
+        title = { Text(title) },
+        text = { Text(body) },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm,
+                modifier = confirmTestTag?.let { Modifier.testTag(it) } ?: Modifier,
+            ) {
+                Text(confirm)
             }
         },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.feature_settings_impl_cancel))
-            }
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.feature_settings_impl_cancel)) }
         },
     )
 }
 
-@Composable
-private fun ThemeModeDialog(selected: ThemeMode, onSelect: (ThemeMode) -> Unit, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        icon = { Icon(Icons.Rounded.DarkMode, contentDescription = null) },
-        title = { Text(stringResource(R.string.feature_settings_impl_theme_mode)) },
-        text = {
-            Column {
-                ThemeMode.entries.forEach { themeMode ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .selectable(
-                                selected = themeMode == selected,
-                                role = Role.RadioButton,
-                                onClick = { onSelect(themeMode) },
-                            )
-                            .padding(horizontal = 4.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        RadioButton(selected = themeMode == selected, onClick = null)
-                        Text(themeMode.label(), modifier = Modifier.padding(start = 12.dp))
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.feature_settings_impl_cancel))
-            }
-        },
-    )
+internal fun formatBytes(bytes: Long): String = when {
+    bytes >= 1024L * 1024L * 1024L -> "%.1f GB".format(bytes / (1024.0 * 1024.0 * 1024.0))
+    bytes >= 1024L * 1024L -> "%.1f MB".format(bytes / (1024.0 * 1024.0))
+    bytes >= 1024L -> "%.1f KB".format(bytes / 1024.0)
+    else -> "$bytes B"
 }
-
-@Composable
-private fun ThemeMode.label(): String = stringResource(
-    when (this) {
-        ThemeMode.SYSTEM -> R.string.feature_settings_impl_theme_system
-        ThemeMode.LIGHT -> R.string.feature_settings_impl_theme_light
-        ThemeMode.DARK -> R.string.feature_settings_impl_theme_dark
-        ThemeMode.AMOLED -> R.string.feature_settings_impl_theme_amoled
-    },
-)
-
-@Composable
-private fun OnlinePlaybackQuality.label(): String = stringResource(
-    when (this) {
-        OnlinePlaybackQuality.Standard -> R.string.feature_settings_impl_quality_standard
-        OnlinePlaybackQuality.HighQuality -> R.string.feature_settings_impl_quality_high
-        OnlinePlaybackQuality.Lossless -> R.string.feature_settings_impl_quality_lossless
-        OnlinePlaybackQuality.HighResolution -> R.string.feature_settings_impl_quality_hi_res
-        OnlinePlaybackQuality.ViperAtmos -> R.string.feature_settings_impl_quality_atmos
-        OnlinePlaybackQuality.ViperClear -> R.string.feature_settings_impl_quality_clear
-        OnlinePlaybackQuality.ViperTape -> R.string.feature_settings_impl_quality_tape
-    },
-)
-
-@Composable
-private fun PlaybackSpeed.label(): String = stringResource(
-    R.string.feature_settings_impl_speed_value,
-    when (this) {
-        PlaybackSpeed.Half -> "0.5"
-        PlaybackSpeed.ThreeQuarters -> "0.75"
-        PlaybackSpeed.Normal -> "1"
-        PlaybackSpeed.OneAndQuarter -> "1.25"
-        PlaybackSpeed.OneAndHalf -> "1.5"
-        PlaybackSpeed.Double -> "2"
-    },
-)

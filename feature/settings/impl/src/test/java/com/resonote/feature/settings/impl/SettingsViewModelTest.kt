@@ -1,12 +1,20 @@
 package com.resonote.feature.settings.impl
 
 import com.google.common.truth.Truth.assertThat
+import com.resonote.core.data.AuthRepository
 import com.resonote.core.data.PlaybackPreferencesRepository
 import com.resonote.core.data.ThemePreferencesRepository
+import com.resonote.core.model.AuthState
+import com.resonote.core.model.MobileCodeLoginResult
 import com.resonote.core.model.OnlinePlaybackQuality
+import com.resonote.core.model.PasswordLoginResult
 import com.resonote.core.model.PlaybackSpeed
+import com.resonote.core.model.QrLoginCheckResult
+import com.resonote.core.model.QrLoginKeyResult
+import com.resonote.core.model.SendMobileCodeResult
 import com.resonote.core.model.ThemeMode
 import com.resonote.core.model.ThemePreferences
+import com.resonote.core.playback.PlaybackCacheController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -34,37 +42,52 @@ class SettingsViewModelTest {
     @Test
     fun repositoryPreferenceIsTheDisplayedFactSource() = runTest(dispatcher) {
         val repository = FakePlaybackPreferencesRepository(PlaybackSpeed.ThreeQuarters)
-        val viewModel = SettingsViewModel(repository, FakeThemePreferencesRepository())
+        val viewModel = SettingsViewModel(
+            repository,
+            FakeThemePreferencesRepository(),
+            FakePlaybackCacheController(),
+            FakeAuthRepository(),
+        )
 
         advanceUntilIdle()
 
         assertThat(viewModel.uiState.value).isEqualTo(
-            SettingsUiState.Ready(PlaybackSpeed.ThreeQuarters),
+            SettingsUiState.Ready(PlaybackSpeed.ThreeQuarters, cacheBytes = 0),
         )
 
         repository.speed.value = PlaybackSpeed.Double
         advanceUntilIdle()
 
-        assertThat(viewModel.uiState.value).isEqualTo(SettingsUiState.Ready(PlaybackSpeed.Double))
+        assertThat(viewModel.uiState.value).isEqualTo(SettingsUiState.Ready(PlaybackSpeed.Double, cacheBytes = 0))
     }
 
     @Test
     fun selectingSpeedPersistsThroughTheSharedRepository() = runTest(dispatcher) {
         val repository = FakePlaybackPreferencesRepository(PlaybackSpeed.Normal)
-        val viewModel = SettingsViewModel(repository, FakeThemePreferencesRepository())
+        val viewModel = SettingsViewModel(
+            repository,
+            FakeThemePreferencesRepository(),
+            FakePlaybackCacheController(),
+            FakeAuthRepository(),
+        )
         advanceUntilIdle()
 
         viewModel.setPlaybackSpeed(PlaybackSpeed.OneAndHalf)
         advanceUntilIdle()
 
         assertThat(repository.writes).containsExactly(PlaybackSpeed.OneAndHalf)
-        assertThat(viewModel.uiState.value).isEqualTo(SettingsUiState.Ready(PlaybackSpeed.OneAndHalf))
+        assertThat(viewModel.uiState.value).isEqualTo(SettingsUiState.Ready(PlaybackSpeed.OneAndHalf, cacheBytes = 0))
     }
 
     @Test
     fun selectingOnlineQualityPersistsThroughTheSharedRepository() = runTest(dispatcher) {
         val repository = FakePlaybackPreferencesRepository(PlaybackSpeed.Normal)
-        val viewModel = SettingsViewModel(repository, FakeThemePreferencesRepository())
+        val viewModel = SettingsViewModel(
+            repository,
+            FakeThemePreferencesRepository(),
+            FakePlaybackCacheController(),
+            FakeAuthRepository(),
+        )
         advanceUntilIdle()
 
         viewModel.setOnlinePlaybackQuality(OnlinePlaybackQuality.Lossless)
@@ -81,6 +104,8 @@ class SettingsViewModelTest {
         val viewModel = SettingsViewModel(
             FakePlaybackPreferencesRepository(PlaybackSpeed.Normal),
             themeRepository,
+            FakePlaybackCacheController(),
+            FakeAuthRepository(),
         )
         advanceUntilIdle()
 
@@ -101,12 +126,24 @@ class SettingsViewModelTest {
             override suspend fun setPlaybackSpeed(speed: PlaybackSpeed) = Unit
             override suspend fun setOnlinePlaybackQuality(quality: OnlinePlaybackQuality) = Unit
         }
-        val loadingViewModel = SettingsViewModel(failedLoad, FakeThemePreferencesRepository())
+        val loadingViewModel =
+            SettingsViewModel(
+                failedLoad,
+                FakeThemePreferencesRepository(),
+                FakePlaybackCacheController(),
+                FakeAuthRepository(),
+            )
         advanceUntilIdle()
         assertThat(loadingViewModel.uiState.value).isEqualTo(SettingsUiState.LoadFailed)
 
         val failedSave = FakePlaybackPreferencesRepository(PlaybackSpeed.Normal, failWrites = true)
-        val savingViewModel = SettingsViewModel(failedSave, FakeThemePreferencesRepository())
+        val savingViewModel =
+            SettingsViewModel(
+                failedSave,
+                FakeThemePreferencesRepository(),
+                FakePlaybackCacheController(),
+                FakeAuthRepository(),
+            )
         advanceUntilIdle()
         savingViewModel.setPlaybackSpeed(PlaybackSpeed.Double)
         advanceUntilIdle()
@@ -114,6 +151,25 @@ class SettingsViewModelTest {
         assertThat((savingViewModel.uiState.value as SettingsUiState.Ready).saveFailed).isTrue()
         savingViewModel.acknowledgeSaveFailure()
         assertThat((savingViewModel.uiState.value as SettingsUiState.Ready).saveFailed).isFalse()
+    }
+
+    @Test
+    fun logoutClearsTheAuthenticatedState() = runTest(dispatcher) {
+        val authRepository = FakeAuthRepository(AuthState.Authenticated("42"))
+        val viewModel = SettingsViewModel(
+            FakePlaybackPreferencesRepository(PlaybackSpeed.Normal),
+            FakeThemePreferencesRepository(),
+            FakePlaybackCacheController(),
+            authRepository,
+        )
+        advanceUntilIdle()
+        assertThat((viewModel.uiState.value as SettingsUiState.Ready).isAuthenticated).isTrue()
+
+        viewModel.logout()
+        advanceUntilIdle()
+
+        assertThat(authRepository.logoutCalls).isEqualTo(1)
+        assertThat((viewModel.uiState.value as SettingsUiState.Ready).isAuthenticated).isFalse()
     }
 
     private class FakePlaybackPreferencesRepository(
@@ -161,5 +217,35 @@ class SettingsViewModelTest {
                 dynamicColorEnabled = enabled,
             )
         }
+    }
+
+    private class FakeAuthRepository(initial: AuthState = AuthState.Anonymous) : AuthRepository {
+        private val state = MutableStateFlow(initial)
+        override val authState: Flow<AuthState> = state
+        var logoutCalls = 0
+
+        override suspend fun acknowledgeAuthenticationGate() = Unit
+
+        override suspend fun logout() {
+            logoutCalls += 1
+            state.value = AuthState.Anonymous
+        }
+
+        override suspend fun sendMobileCode(mobile: String): SendMobileCodeResult = error("unused")
+        override suspend fun loginWithMobileCode(
+            mobile: String,
+            code: String,
+            selectedUserId: String?,
+        ): MobileCodeLoginResult = error("unused")
+        override suspend fun loginWithPassword(username: String, password: String): PasswordLoginResult =
+            error("unused")
+        override suspend fun createQrLoginKey(): QrLoginKeyResult = error("unused")
+        override suspend fun checkQrLogin(key: String): QrLoginCheckResult = error("unused")
+    }
+
+    private class FakePlaybackCacheController : PlaybackCacheController {
+        override suspend fun sizeBytes(): Long = 0
+
+        override suspend fun clear(): Long = 0
     }
 }

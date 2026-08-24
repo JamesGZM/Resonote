@@ -2,7 +2,9 @@ package com.resonote.feature.local.impl
 
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -21,7 +23,7 @@ import org.robolectric.annotation.GraphicsMode
 
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(sdk = [35], qualifiers = "w390dp-h844dp-420dpi")
+@Config(sdk = [35], qualifiers = "zh-rCN-w390dp-h844dp-420dpi")
 class LocalMusicScreenshotTest {
     @get:Rule
     val composeRule = createComposeRule()
@@ -29,6 +31,7 @@ class LocalMusicScreenshotTest {
     @Test
     fun localMusic_empty() {
         setScreen(LocalMusicUiState(isLoading = false))
+        composeRule.onNodeWithTag("resonote-empty-state").assertIsDisplayed()
         capture("empty")
     }
 

@@ -4,8 +4,10 @@ import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -14,6 +16,7 @@ import com.resonote.core.designsystem.theme.ResonoteThemeMode
 import com.resonote.core.model.Album
 import com.resonote.core.model.AlbumRegion
 import com.resonote.core.model.AudioQuality
+import com.resonote.core.model.ContentFailure
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.PlaylistCategory
 import com.resonote.core.model.PlaylistSummary
@@ -28,7 +31,7 @@ import org.robolectric.annotation.GraphicsMode
 
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(sdk = [35], qualifiers = "w390dp-h844dp-420dpi")
+@Config(sdk = [35], qualifiers = "zh-rCN-w390dp-h844dp-420dpi")
 class DiscoverScreenshotTest {
     @get:Rule
     val composeRule = createComposeRule()
@@ -38,11 +41,13 @@ class DiscoverScreenshotTest {
         render(
             baseState.copy(
                 categories = DiscoverLoadState.Content(categories),
+                selectedParentCategoryId = 10,
+                selectedPlaylistCategoryId = 11,
                 playlists = DiscoverPageState.Content(playlists, 1, true),
             ),
             "playlists",
         )
-        composeRule.onNodeWithText("推荐").assertExists()
+        composeRule.onNodeWithText("流行").assertExists()
         composeRule.onNodeWithText("深夜航线").assertExists()
     }
 
@@ -97,8 +102,81 @@ class DiscoverScreenshotTest {
             ),
             "songs",
         )
-        composeRule.onNodeWithText("播放当前页").assertExists()
+        composeRule.onNodeWithText("播放全部").assertExists()
         composeRule.onNodeWithText("潮汐信号").assertExists()
+    }
+
+    @Test
+    fun discover_compactPlaylistLoading() {
+        render(baseState, "playlists_loading")
+    }
+
+    @Test
+    fun discover_compactRankingLoading() {
+        render(baseState.copy(selectedSection = DiscoverSection.RANKINGS), "rankings_loading")
+    }
+
+    @Test
+    fun discover_compactAlbumLoading() {
+        render(baseState.copy(selectedSection = DiscoverSection.ALBUMS), "albums_loading")
+    }
+
+    @Test
+    fun discover_compactSongLoading() {
+        render(baseState.copy(selectedSection = DiscoverSection.SONGS), "songs_loading")
+    }
+
+    @Test
+    fun discover_compactEmpty() {
+        render(
+            baseState.copy(
+                categories = DiscoverLoadState.Content(categories),
+                playlists = DiscoverPageState.Empty,
+            ),
+            "empty",
+        )
+    }
+
+    @Test
+    fun discover_compactError() {
+        render(
+            baseState.copy(
+                categories = DiscoverLoadState.Content(categories),
+                playlists = DiscoverPageState.Error(ContentFailure.Network),
+            ),
+            "error",
+        )
+    }
+
+    @Test
+    fun discover_compactPaginationLoading() {
+        render(
+            baseState.copy(
+                categories = DiscoverLoadState.Content(categories),
+                playlists = DiscoverPageState.Content(playlists, 1, true, isLoadingMore = true),
+            ),
+            "pagination_loading",
+        )
+        composeRule.onNodeWithTag("resonote-load-more-footer").performScrollTo()
+        capture("pagination_loading")
+    }
+
+    @Test
+    fun discover_compactPaginationError() {
+        render(
+            baseState.copy(
+                selectedSection = DiscoverSection.SONGS,
+                songs = DiscoverPageState.Content(
+                    songs,
+                    1,
+                    true,
+                    loadMoreFailure = ContentFailure.Network,
+                ),
+            ),
+            "pagination_error",
+        )
+        composeRule.onNodeWithTag("resonote-load-more-footer").performScrollTo()
+        capture("pagination_error")
     }
 
     private fun render(state: DiscoverUiState, name: String, themeMode: ResonoteThemeMode = ResonoteThemeMode.LIGHT) {
@@ -117,6 +195,7 @@ class DiscoverScreenshotTest {
                         onSelectAlbumRegion = {},
                         onRetryCategories = {},
                         onRetry = {},
+                        onRefresh = {},
                         onLoadMore = {},
                         onPlaylistClick = {},
                         onRankingClick = {},
@@ -129,7 +208,6 @@ class DiscoverScreenshotTest {
             }
         }
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("发现").assertIsDisplayed()
         composeRule.onNodeWithText(
             when (state.selectedSection) {
                 DiscoverSection.PLAYLISTS -> "歌单"
@@ -138,6 +216,10 @@ class DiscoverScreenshotTest {
                 DiscoverSection.SONGS -> "新歌"
             },
         ).assertIsDisplayed()
+        capture(name)
+    }
+
+    private fun capture(name: String) {
         composeRule.onRoot().captureRoboImage(
             filePath = "src/test/screenshots/Discover/DiscoverCompact_$name.png",
             roborazziOptions = DefaultRoborazziOptions,

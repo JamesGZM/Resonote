@@ -10,6 +10,8 @@ import com.resonote.core.datastore.EncryptedApiSessionSerializer
 import com.resonote.core.datastore.EncryptedSessionStorage
 import com.resonote.core.datastore.HomeSnapshotSerializer
 import com.resonote.core.datastore.HomeSnapshotStorage
+import com.resonote.core.datastore.LyricsPreferencesSerializer
+import com.resonote.core.datastore.LyricsPreferencesStorage
 import com.resonote.core.datastore.PlaybackPreferencesSerializer
 import com.resonote.core.datastore.PlaybackPreferencesStorage
 import com.resonote.core.datastore.PlaybackSessionSnapshotSerializer
@@ -17,6 +19,7 @@ import com.resonote.core.datastore.PlaybackSessionSnapshotStorage
 import com.resonote.core.datastore.ProtoAppearancePreferencesStorage
 import com.resonote.core.datastore.ProtoEncryptedSessionStorage
 import com.resonote.core.datastore.ProtoHomeSnapshotStorage
+import com.resonote.core.datastore.ProtoLyricsPreferencesStorage
 import com.resonote.core.datastore.ProtoPlaybackPreferencesStorage
 import com.resonote.core.datastore.ProtoPlaybackSessionSnapshotStorage
 import com.resonote.core.datastore.ProtoSearchHistoryStorage
@@ -26,6 +29,7 @@ import com.resonote.core.datastore.SessionCipher
 import com.resonote.core.datastore.proto.AppearancePreferences
 import com.resonote.core.datastore.proto.EncryptedApiSession
 import com.resonote.core.datastore.proto.HomeSnapshot
+import com.resonote.core.datastore.proto.LyricsPreferences
 import com.resonote.core.datastore.proto.PlaybackPreferences
 import com.resonote.core.datastore.proto.PlaybackSessionSnapshot
 import com.resonote.core.datastore.proto.SearchHistory
@@ -63,6 +67,14 @@ internal object DataStoreModule {
         DataStoreFactory.create(
             serializer = PlaybackPreferencesSerializer,
             produceFile = { File(context.filesDir, "datastore/playback_preferences.pb") },
+        )
+
+    @Provides
+    @Singleton
+    fun provideLyricsPreferencesDataStore(@ApplicationContext context: Context): DataStore<LyricsPreferences> =
+        DataStoreFactory.create(
+            serializer = LyricsPreferencesSerializer,
+            produceFile = { File(context.filesDir, "datastore/lyrics_preferences.pb") },
         )
 
     @Provides
@@ -120,4 +132,7 @@ internal abstract class DataStoreBindings {
     abstract fun bindPlaybackPreferencesStorage(
         implementation: ProtoPlaybackPreferencesStorage,
     ): PlaybackPreferencesStorage
+
+    @Binds
+    abstract fun bindLyricsPreferencesStorage(implementation: ProtoLyricsPreferencesStorage): LyricsPreferencesStorage
 }

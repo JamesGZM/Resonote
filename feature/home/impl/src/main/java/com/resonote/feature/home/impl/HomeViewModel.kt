@@ -9,7 +9,9 @@ import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.RadioRecommendationResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -21,6 +23,8 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(private val repository: HomeRepository) : ViewModel() {
     private val refreshState = MutableStateFlow<RefreshState>(RefreshState.Idle)
     private val radioSongs = MutableStateFlow<List<OnlineSong>>(emptyList())
+    private val mutableRefreshFailures = MutableSharedFlow<Set<HomeSection>>(extraBufferCapacity = 1)
+    val refreshFailures: SharedFlow<Set<HomeSection>> = mutableRefreshFailures
     private var refreshJob: Job? = null
 
     val uiState: StateFlow<HomeUiState> =
@@ -48,15 +52,22 @@ class HomeViewModel @Inject constructor(private val repository: HomeRepository) 
 
     fun refresh() {
         if (refreshJob?.isActive == true) return
+        val hadContent = repository.content.value != null
         refreshState.value = RefreshState.Refreshing
 
         refreshJob = viewModelScope.launch {
-            refreshState.value =
-                when (val result = repository.refresh()) {
-                    is HomeRefreshResult.Updated -> RefreshState.Complete(result.issues.failedSections())
-                    is HomeRefreshResult.Failed -> RefreshState.Complete(result.issues.failedSections())
-                    HomeRefreshResult.Superseded -> RefreshState.Idle
-                }
+            val result = repository.refresh()
+            val issues = when (result) {
+                is HomeRefreshResult.Updated -> result.issues.failedSections()
+                is HomeRefreshResult.Failed -> result.issues.failedSections()
+                HomeRefreshResult.Superseded -> emptySet()
+            }
+            refreshState.value = if (result == HomeRefreshResult.Superseded) {
+                RefreshState.Idle
+            } else {
+                RefreshState.Complete(issues)
+            }
+            if (hadContent && issues.isNotEmpty()) mutableRefreshFailures.emit(issues)
         }
     }
 

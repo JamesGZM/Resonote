@@ -122,6 +122,11 @@ Compact Overlay Icon Button 仅用于封面、缩略图等受限视觉容器右�
 - Icon + Label 使用 18dp Icon、8dp Gap，并作为完整 Content Row 居中；文字较长时 Chip 扩宽或换行，不裁掉末尾或突破 Container。
 - Chip Group 允许换行，不横向压缩 Label；长 Filter 集合优先打开 Filter Sheet。
 
+Resonote 浏览筛选采用单选 Filter Pill 变体：40dp 视觉高度、48dp Touch Target、`shapeFull`、
+16dp Horizontal Padding，组内间距 8dp。Selected 使用 `primaryContainer/onPrimaryContainer`，
+Unselected 使用 `surfaceContainer/onSurfaceVariant`，不绘制边框。单选语义与容器、文字颜色已共同表达
+当前项，因此不额外加入 Check；Check 保留给需要强调多选确认的标准 Filter Chip。
+
 #### Tag
 
 | Property | Value |
@@ -160,6 +165,11 @@ Compact Overlay Icon Button 仅用于封面、缩略图等受限视觉容器右�
 - Primary Tabs 表达同层级内容视图；固定 Tabs 用于少量短 Label，Scrollable Tabs 用于更多或更长 Label。
 - Selected 同时使用 Indicator + Selected Semantics；Tab 切换不创建新的 Navigation Back Stack。
 - 200% 下优先 Scrollable、Label 换行或切换 Segmented/List 方案，不横向压缩文字。
+
+当 Root 页面本身没有标题或其他 App Bar Action 时，可使用 Tabbed Toolbar 变体：Top Insets 后内容高
+64dp，少量短 Label 固定等分。Selected 使用 `titleMedium`、SemiBold 与 `primary`，Unselected 使用
+`labelLarge`、Medium 与 `onSurfaceVariant`；Selected Label 下方使用 16dp × 3dp、`shapeFull` 的短指示条，
+不绘制大面积选中容器或 Divider。该变体仍暴露 Tab Selected Semantics，切换行为与 Primary Tabs 一致。
 
 #### Segmented Control
 

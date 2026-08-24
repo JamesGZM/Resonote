@@ -64,10 +64,6 @@ class CloudViewModel @Inject constructor(private val repository: CloudRepository
         mutableUiState.update { it.copy(sort = sort) }
     }
 
-    fun updateViewMode(viewMode: CloudViewMode) {
-        mutableUiState.update { it.copy(viewMode = viewMode) }
-    }
-
     fun playTrack(trackHash: String) {
         val tracks = mutableUiState.value.visibleTracks
         val index = tracks.indexOfFirst { it.hash == trackHash }

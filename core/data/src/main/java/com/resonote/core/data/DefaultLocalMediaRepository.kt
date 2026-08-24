@@ -9,6 +9,9 @@ import com.resonote.core.media.local.LocalMediaSourceInspection
 import com.resonote.core.media.local.LocalMediaStore
 import com.resonote.core.media.local.LocalMediaStoreError
 import com.resonote.core.media.local.LocalMediaStoreResult
+import com.resonote.core.media.local.LocalMediaTreeScanFailure
+import com.resonote.core.media.local.LocalMediaTreeScanResult
+import com.resonote.core.media.local.LocalMediaTreeSource
 import com.resonote.core.media.local.StoredLocalMedia
 import com.resonote.core.model.LocalMediaDeleteResult
 import com.resonote.core.model.LocalMediaDuplicateAction
@@ -32,6 +35,7 @@ import javax.inject.Singleton
 internal class DefaultLocalMediaRepository internal constructor(
     private val dao: LocalMediaDao,
     private val store: LocalMediaStore,
+    private val treeSource: LocalMediaTreeSource,
     private val newId: () -> LocalMediaId,
     private val now: () -> Long,
 ) : LocalMediaRepository {
@@ -39,14 +43,28 @@ internal class DefaultLocalMediaRepository internal constructor(
     constructor(
         dao: LocalMediaDao,
         store: LocalMediaStore,
+        treeSource: LocalMediaTreeSource,
     ) : this(
         dao = dao,
         store = store,
+        treeSource = treeSource,
         newId = { LocalMediaId(UUID.randomUUID().toString()) },
         now = System::currentTimeMillis,
     )
 
     private val mutationMutex = Mutex()
+
+    override suspend fun scanDirectory(treeUri: String): LocalMediaDirectoryScanResult =
+        when (val result = treeSource.scan(treeUri)) {
+            is LocalMediaTreeScanResult.Available -> LocalMediaDirectoryScanResult.Available(result.documentUris)
+            is LocalMediaTreeScanResult.Failed -> LocalMediaDirectoryScanResult.Failed(
+                when (result.reason) {
+                    LocalMediaTreeScanFailure.InvalidTree -> LocalMediaDirectoryScanFailure.InvalidTree
+                    LocalMediaTreeScanFailure.PermissionDenied -> LocalMediaDirectoryScanFailure.PermissionDenied
+                    LocalMediaTreeScanFailure.Unavailable -> LocalMediaDirectoryScanFailure.Unavailable
+                },
+            )
+        }
 
     override suspend fun recoverStorage(): Boolean = mutationMutex.withLock {
         val rows = try {

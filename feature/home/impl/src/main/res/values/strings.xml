@@ -18,4 +18,7 @@
     <string name="feature_home_impl_new_releases_subtitle">Fresh tracks as they arrive</string>
     <string name="feature_home_impl_play_all">Play all</string>
     <string name="feature_home_impl_retry">Retry</string>
+    <string name="feature_home_impl_error_title">Couldn’t load your home feed</string>
+    <string name="feature_home_impl_error_message">Check your connection and try loading your recommendations again.</string>
+    <string name="feature_home_impl_refresh_failed">Some home content couldn’t be refreshed.</string>
 </resources>

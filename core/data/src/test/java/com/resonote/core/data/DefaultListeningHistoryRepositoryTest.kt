@@ -10,6 +10,7 @@ import com.resonote.core.model.DeviceHistoryRecord
 import com.resonote.core.model.DeviceHistorySource
 import com.resonote.core.network.ApiAuthenticationRequiredException
 import com.resonote.core.network.ListeningHistoryNetworkDataSource
+import com.resonote.core.network.NetworkListeningHistoryPage
 import com.resonote.core.network.model.NetworkSong
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -23,10 +24,12 @@ class DefaultListeningHistoryRepositoryTest {
 
         val result = repository.loadAccountHistory() as CollectionLoadResult.Available
 
-        assertThat(result.value.single().title).isEqualTo("Song")
-        assertThat(result.value.single().coverUrl).isEqualTo("https://image/480/cover.jpg")
-        assertThat(result.value.single().quality).isEqualTo(AudioQuality.Standard)
-        assertThat(result.value.single().vip).isFalse()
+        assertThat(result.value.songs.single().title).isEqualTo("Song")
+        assertThat(result.value.songs.single().coverUrl).isEqualTo("https://image/480/cover.jpg")
+        assertThat(result.value.songs.single().quality).isEqualTo(AudioQuality.Standard)
+        assertThat(result.value.songs.single().vip).isFalse()
+        assertThat(result.value.nextCursor).isEqualTo("next")
+        assertThat(result.value.hasMore).isTrue()
     }
 
     @Test
@@ -56,6 +59,20 @@ class DefaultListeningHistoryRepositoryTest {
         assertThat(item.record).isEqualTo(record)
         assertThat(item.lastPlayedAtEpochMillis).isEqualTo(2_000)
         assertThat(item.playCount).isEqualTo(1)
+    }
+
+    @Test
+    fun accountPlaybackIsUploadedThroughHistoryNetwork() = runTest {
+        val network = FakeHistoryNetwork()
+        val repository = DefaultListeningHistoryRepository(
+            network,
+            RiskChallengeRegistry(),
+            FakeDeviceHistoryDao(),
+            now = { 2_000 },
+        )
+
+        assertThat(repository.recordAccountPlayback("32155307")).isTrue()
+        assertThat(network.uploadedAlbumAudioIds).containsExactly("32155307")
     }
 
     @Test
@@ -92,22 +109,33 @@ class DefaultListeningHistoryRepositoryTest {
 
     private class FakeHistoryNetwork(private val failure: ApiAuthenticationRequiredException? = null) :
         ListeningHistoryNetworkDataSource {
-        override suspend fun accountHistory(): List<NetworkSong> {
+        val uploadedAlbumAudioIds = mutableListOf<String>()
+
+        override suspend fun accountHistory(cursor: String?): NetworkListeningHistoryPage {
             failure?.let { throw it }
-            return listOf(
-                NetworkSong(
-                    hash = "HASH",
-                    title = "Song",
-                    artist = "Artist",
-                    coverUrl = "https://image/{size}/cover.jpg",
-                    albumId = null,
-                    albumAudioId = null,
-                    durationMillis = 120_000,
-                    highQualityHash = null,
-                    losslessHash = null,
-                    vip = false,
+            return NetworkListeningHistoryPage(
+                songs = listOf(
+                    NetworkSong(
+                        hash = "HASH",
+                        title = "Song",
+                        artist = "Artist",
+                        coverUrl = "https://image/{size}/cover.jpg",
+                        albumId = null,
+                        albumAudioId = null,
+                        durationMillis = 120_000,
+                        highQualityHash = null,
+                        losslessHash = null,
+                        vip = false,
+                    ),
                 ),
+                nextCursor = "next",
+                hasMore = true,
             )
+        }
+
+        override suspend fun uploadAccountPlayback(albumAudioId: String) {
+            failure?.let { throw it }
+            uploadedAlbumAudioIds += albumAudioId
         }
     }
 

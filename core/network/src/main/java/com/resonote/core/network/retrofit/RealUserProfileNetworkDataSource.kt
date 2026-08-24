@@ -54,6 +54,7 @@ internal class RealUserProfileNetworkDataSource @Inject constructor(
             fans = data.fans?.coerceAtLeast(0) ?: 0,
             follows = data.follows?.coerceAtLeast(0) ?: 0,
             listenMinutes = data.duration?.coerceAtLeast(0) ?: 0,
+            registrationEpochSeconds = data.rtime?.takeIf { it > 0 },
         )
     }
 

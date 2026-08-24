@@ -13,7 +13,7 @@ class SplashAnimationTimingTest {
             animationsEnabled = true,
         )
 
-        assertThat(remainingDurationMillis).isEqualTo(750L)
+        assertThat(remainingDurationMillis).isEqualTo(850L)
     }
 
     @Test
@@ -25,11 +25,23 @@ class SplashAnimationTimingTest {
             animationsEnabled = true,
         )
 
-        assertThat(remainingDurationMillis).isEqualTo(250L)
+        assertThat(remainingDurationMillis).isEqualTo(350L)
     }
 
     @Test
-    fun completedAnimationDoesNotDelaySplashExit() {
+    fun completedAnimationHoldsItsFinalFrameBriefly() {
+        val remainingDurationMillis = remainingSplashAnimationDurationMillis(
+            animationStartMillis = 1_000L,
+            animationDurationMillis = 750L,
+            currentTimeMillis = 1_750L,
+            animationsEnabled = true,
+        )
+
+        assertThat(remainingDurationMillis).isEqualTo(100L)
+    }
+
+    @Test
+    fun completedAnimationPastFinalFrameHoldDoesNotDelaySplashExit() {
         val remainingDurationMillis = remainingSplashAnimationDurationMillis(
             animationStartMillis = 1_000L,
             animationDurationMillis = 750L,

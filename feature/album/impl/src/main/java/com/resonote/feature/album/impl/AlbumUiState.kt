@@ -25,6 +25,8 @@ sealed interface AlbumUiState {
         val hasMore: Boolean,
         val isLoadingMore: Boolean = false,
         val loadMoreFailure: ContentFailure? = null,
+        val isRefreshing: Boolean = false,
+        val refreshFailure: ContentFailure? = null,
     ) : AlbumUiState
 
     data class Empty(val metadata: AlbumMetadata) : AlbumUiState

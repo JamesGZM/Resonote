@@ -1,18 +1,19 @@
 package com.resonote.feature.home.impl
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.resonote.core.designsystem.component.LocalResonoteSnackbarController
+import com.resonote.core.designsystem.component.ResonoteContentPhase
+import com.resonote.core.designsystem.component.ResonoteContentStateLayout
+import com.resonote.core.designsystem.component.ResonoteErrorState
 import com.resonote.core.model.OnlineSong
 import kotlinx.coroutines.launch
 
@@ -32,18 +33,39 @@ fun HomeRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val coroutineScope = rememberCoroutineScope()
-    when (val state = uiState) {
-        HomeUiState.Loading -> HomeLoading(
-            bottomContentPadding = bottomContentPadding,
-            onSearchClick = onSearchClick,
-            onRecognitionClick = onRecognitionClick,
-            modifier = modifier,
-        )
-        is HomeUiState.Error -> HomeLoadError(onRetry = viewModel::refresh, modifier = modifier)
-        is HomeUiState.Content ->
+    val snackbarController = LocalResonoteSnackbarController.current
+    val refreshFailureMessage = stringResource(R.string.feature_home_impl_refresh_failed)
+    LaunchedEffect(viewModel, snackbarController) {
+        viewModel.refreshFailures.collect { snackbarController?.show(refreshFailureMessage) }
+    }
+
+    val state = uiState
+    ResonoteContentStateLayout(
+        phase = when (state) {
+            HomeUiState.Loading -> ResonoteContentPhase.LOADING
+            is HomeUiState.Error -> ResonoteContentPhase.ERROR
+            is HomeUiState.Content -> ResonoteContentPhase.CONTENT
+        },
+        modifier = modifier,
+        loading = {
+            HomeLoading(
+                bottomContentPadding = bottomContentPadding,
+                onSearchClick = onSearchClick,
+                onRecognitionClick = onRecognitionClick,
+            )
+        },
+        error = {
+            HomeLoadError(
+                onRetry = viewModel::refresh,
+                onSearchClick = onSearchClick,
+                onRecognitionClick = onRecognitionClick,
+            )
+        },
+        content = {
+            val contentState = state as? HomeUiState.Content ?: return@ResonoteContentStateLayout
             HomeScreen(
-                state = state.content,
-                isRefreshing = state.isRefreshing,
+                state = contentState.content,
+                isRefreshing = contentState.isRefreshing,
                 playingMediaId = playingMediaId,
                 bottomContentPadding = bottomContentPadding,
                 onRefresh = viewModel::refresh,
@@ -64,16 +86,28 @@ fun HomeRoute(
                     viewModel.playbackRequest(collection)?.let(onPlay)
                 },
                 onPlaylistClick = onPlaylistClick,
-                modifier = modifier,
             )
-    }
+        },
+    )
 }
 
 @Composable
-internal fun HomeLoadError(onRetry: () -> Unit, modifier: Modifier) {
-    Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Button(onClick = onRetry) {
-            Text(stringResource(R.string.feature_home_impl_retry))
-        }
+internal fun HomeLoadError(
+    onRetry: () -> Unit,
+    onSearchClick: () -> Unit,
+    onRecognitionClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    androidx.compose.material3.Scaffold(
+        modifier = modifier,
+        containerColor = androidx.compose.material3.MaterialTheme.colorScheme.background,
+        topBar = { HomeTopBar(onSearchClick, onRecognitionClick) },
+    ) { padding ->
+        ResonoteErrorState(
+            onRetry = onRetry,
+            title = stringResource(R.string.feature_home_impl_error_title),
+            message = stringResource(R.string.feature_home_impl_error_message),
+            modifier = Modifier.padding(padding),
+        )
     }
 }

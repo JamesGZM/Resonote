@@ -24,6 +24,15 @@ class TabsShellStateTest {
     }
 
     @Test
+    fun secondaryTab_doesNotHandleBackWhileChildDestinationIsOnTop() {
+        val state = TabsShellState(ResonoteTab.MY)
+
+        assertFalse(state.canHandleBack(isActiveDestination = false))
+        assertEquals(ResonoteTab.MY, state.selectedTab)
+        assertTrue(state.canHandleBack(isActiveDestination = true))
+    }
+
+    @Test
     fun savedValue_restoresSelectedTab() {
         val restored = requireNotNull(TabsShellState.Saver.restore(ResonoteTab.MY.name))
 

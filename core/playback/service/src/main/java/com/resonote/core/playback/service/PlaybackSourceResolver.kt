@@ -18,7 +18,10 @@ internal class PlaybackSourceResolver @Inject constructor(
     suspend fun resolve(item: PlaybackItem): ResolveSongSourceResult =
         item.resolvedSource?.let(ResolveSongSourceResult::Resolved)
             ?: when (val origin = item.origin) {
-                is PlaybackOrigin.Online -> songPlaybackRepository.resolveSource(origin.song)
+                is PlaybackOrigin.Online -> songPlaybackRepository.resolveSource(
+                    origin.song,
+                    item.onlineQualityOverride,
+                )
                 is PlaybackOrigin.Cloud -> cloudRepository.resolveSource(origin.track)
                 is PlaybackOrigin.Local -> localMediaRepository.resolvePlaybackSource(origin.id)?.let { source ->
                     ResolveSongSourceResult.Resolved(

@@ -45,7 +45,8 @@ class UserListenProtocolClientTest {
         server.enqueue(jsonResponse(fixture("user_listen_response_synthetic.json")))
         val signer = ApiRequestSigner()
 
-        val songs = client(signer = signer).accountHistory()
+        val page = client(signer = signer).accountHistory("cursor-1")
+        val songs = page.songs
 
         assertThat(songs).hasSize(2)
         assertThat(songs[0].title).isEqualTo("First Song")
@@ -53,22 +54,22 @@ class UserListenProtocolClientTest {
         assertThat(songs[0].coverUrl).isEqualTo("https://image.example/{size}/first.jpg")
         assertThat(songs[0].durationMillis).isEqualTo(245_000)
         assertThat(songs[1].durationMillis).isEqualTo(180_000)
+        assertThat(page.nextCursor).isEqualTo("cursor-2")
+        assertThat(page.hasMore).isTrue()
         val request = server.takeRequest()
         val requestUrl = requireNotNull(request.requestUrl)
         val bodyBytes = request.body.readByteArray()
         val body = json.parseToJsonElement(bodyBytes.decodeToString()).jsonObject
         assertThat(request.method).isEqualTo("POST")
-        assertThat(requestUrl.encodedPath).isEqualTo("/v2/get_list")
+        assertThat(requestUrl.encodedPath).isEqualTo("/playhistory/v1/get_songs")
         assertThat(requestUrl.queryParameter("clienttime")).isEqualTo("1700000000")
-        assertThat(requestUrl.queryParameter("plat")).isEqualTo("0")
         assertThat(requestUrl.queryParameter("token")).isEqualTo("fixture-token")
         assertThat(requestUrl.queryParameter("userid")).isEqualTo("99")
-        assertThat(body["t_userid"]?.jsonPrimitive?.content).isEqualTo("99")
         assertThat(body["userid"]?.jsonPrimitive?.content).isEqualTo("99")
-        assertThat(body["list_type"]?.jsonPrimitive?.content).isEqualTo("1")
-        assertThat(body["area_code"]?.jsonPrimitive?.content).isEqualTo("1")
-        assertThat(body["cover"]?.jsonPrimitive?.content).isEqualTo("2")
-        assertThat(body["p"]?.jsonPrimitive?.content).matches("[0-9A-F]{256}")
+        assertThat(body["token"]?.jsonPrimitive?.content).isEqualTo("fixture-token")
+        assertThat(body["source_classify"]?.jsonPrimitive?.content).isEqualTo("app")
+        assertThat(body["to_subdivide_sr"]?.jsonPrimitive?.content).isEqualTo("1")
+        assertThat(body["bp"]?.jsonPrimitive?.content).isEqualTo("cursor-1")
         assertThat(request.getHeader("Cookie")).contains("token=fixture-token")
         val signedParameters =
             requestUrl.queryParameterNames
@@ -81,11 +82,11 @@ class UserListenProtocolClientTest {
     fun partialUnknownItemsAreSkippedButValidOrderIsPreserved() = runTest {
         server.enqueue(
             jsonResponse(
-                """{"status":1,"data":{"lists":[{"hash":"","name":"Bad"},{"hash":"GOOD","name":"Artist - Track","duration":"12"}]}}""",
+                """{"status":1,"data":{"songs":[{"info":{"hash":"","name":"Bad"}},{"info":{"hash":"GOOD","name":"Artist - Track","duration":"12"}}]}}""",
             ),
         )
 
-        val songs = client().accountHistory()
+        val songs = client().accountHistory().songs
 
         assertThat(songs.map { it.hash }).containsExactly("GOOD").inOrder()
         assertThat(songs.single().artist).isEqualTo("Artist")
@@ -94,7 +95,7 @@ class UserListenProtocolClientTest {
 
     @Test
     fun nonEmptyHistoryWithoutConsumableSongsIsProtocolFailure() {
-        server.enqueue(jsonResponse("""{"status":1,"data":{"lists":[{"hash":123,"name":"Bad"}]}}"""))
+        server.enqueue(jsonResponse("""{"status":1,"data":{"songs":[{"info":{"hash":123,"name":"Bad"}}]}}"""))
 
         val failure = assertThrows(ApiProtocolException::class.java) {
             runTest { client().accountHistory() }
@@ -126,6 +127,33 @@ class UserListenProtocolClientTest {
     }
 
     @Test
+    fun accountPlaybackUploadMatchesMobileContract() = runTest {
+        server.enqueue(jsonResponse("""{"status":1,"data":{}}"""))
+        val signer = ApiRequestSigner()
+
+        client(signer = signer).uploadAccountPlayback("32155307")
+
+        val request = server.takeRequest()
+        val requestUrl = requireNotNull(request.requestUrl)
+        val bodyBytes = request.body.readByteArray()
+        val body = json.parseToJsonElement(bodyBytes.decodeToString()).jsonObject
+        val song = body["songs"]?.let { it as kotlinx.serialization.json.JsonArray }?.single()?.jsonObject
+        assertThat(request.method).isEqualTo("POST")
+        assertThat(requestUrl.encodedPath).isEqualTo("/playhistory/v1/upload_songs")
+        assertThat(requestUrl.queryParameter("plat")).isEqualTo("3")
+        assertThat(song?.get("mxid")?.jsonPrimitive?.content).isEqualTo("32155307")
+        assertThat(song?.get("op")?.jsonPrimitive?.content).isEqualTo("1")
+        assertThat(song?.get("ot")?.jsonPrimitive?.content).isEqualTo("1700000000")
+        assertThat(song?.get("pc")?.jsonPrimitive?.content).isEqualTo("1")
+        assertThat(body["userid"]?.jsonPrimitive?.content).isEqualTo("99")
+        assertThat(body["token"]?.jsonPrimitive?.content).isEqualTo("fixture-token")
+        val signedParameters = requestUrl.queryParameterNames
+            .filterNot { it == "signature" }
+            .associateWith { requestUrl.queryParameter(it).orEmpty() }
+        assertThat(requestUrl.queryParameter("signature")).isEqualTo(signer.sign(signedParameters, bodyBytes))
+    }
+
+    @Test
     fun riskAndServiceFailuresRemainTyped() {
         server.enqueue(jsonResponse("""{"status":0,"error_code":20028,"ssaCode":"risk-event"}"""))
         server.enqueue(jsonResponse("""{"status":0,"error_code":"E_UPSTREAM"}"""))
@@ -147,7 +175,7 @@ class UserListenProtocolClientTest {
     ): UserListenProtocolClient {
         val sessions = ApiSessionManager(Optional.of(MemoryStore(initialSession)), ApiDeviceIdentityFactory())
         val crypto = ApiProtocolCrypto(ProtocolRandom { length -> "A".repeat(length) })
-        val origins = ApiEndpointOrigins(listen = server.origin())
+        val origins = ApiEndpointOrigins(gateway = server.origin())
         val transport =
             ProtocolTransport(
                 { OkHttpClient() },
@@ -167,7 +195,7 @@ class UserListenProtocolClientTest {
                 origins,
                 fixtureDeviceProfileProvider(),
             )
-        return UserListenProtocolClient(transport, registration, crypto, origins)
+        return UserListenProtocolClient(transport, registration, origins)
     }
 
     private fun fixture(name: String): String = checkNotNull(javaClass.classLoader?.getResourceAsStream(name)) {

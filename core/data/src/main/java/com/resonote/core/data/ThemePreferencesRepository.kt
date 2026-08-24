@@ -9,4 +9,5 @@ interface ThemePreferencesRepository {
 
     suspend fun setThemeMode(themeMode: ThemeMode)
     suspend fun setDynamicColorEnabled(enabled: Boolean)
+    suspend fun reset() = Unit
 }

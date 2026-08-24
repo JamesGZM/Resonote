@@ -1,6 +1,7 @@
 package com.resonote.feature.auth.impl
 
 import com.resonote.core.model.AuthAccountOption
+import com.resonote.core.model.RiskChallengeHandle
 
 enum class LoginMethod {
     MobileCode,
@@ -29,6 +30,7 @@ data class LoginUiState(
     val isLoggingIn: Boolean = false,
     val message: LoginMessage? = null,
     val accounts: List<AuthAccountOption> = emptyList(),
+    val securitySms: LoginSecuritySms? = null,
 ) {
     val canSendCode: Boolean
         get() = mobile.matches(Regex("1\\d{10}")) && !isSendingCode && !isLoggingIn
@@ -39,5 +41,13 @@ data class LoginUiState(
             LoginMethod.Password -> username.isNotBlank() && password.isNotEmpty()
         } &&
             !isSendingCode &&
-            !isLoggingIn
+            !isLoggingIn &&
+            securitySms == null
 }
+
+data class LoginSecuritySms(
+    val challenge: RiskChallengeHandle,
+    val code: String = "",
+    val submitting: Boolean = false,
+    val failed: Boolean = false,
+)

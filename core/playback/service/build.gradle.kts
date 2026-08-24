@@ -13,11 +13,15 @@ dependencies {
     implementation(projects.core.model)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.media3.common)
+    implementation(libs.androidx.media3.database)
+    implementation(libs.androidx.media3.datasource)
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.session)
     implementation(libs.kotlinx.coroutines.core)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.androidx.media3.test.utils)
+    testImplementation(libs.robolectric)
     testImplementation(libs.truth)
 }

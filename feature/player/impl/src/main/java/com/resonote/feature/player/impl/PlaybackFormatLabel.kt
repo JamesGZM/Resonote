@@ -1,11 +1,13 @@
 package com.resonote.feature.player.impl
 
+import com.resonote.core.designsystem.component.compactBadgeLabel
 import com.resonote.core.model.AudioQuality
+import com.resonote.core.model.OnlinePlaybackQuality
 import com.resonote.core.playback.PlaybackFormat
 import java.util.Locale
 
 fun PlaybackFormat.badgeLabel(): String? = when (this) {
-    is PlaybackFormat.Online -> quality.badgeLabel()
+    is PlaybackFormat.Online -> quality.compactBadgeLabel()
     is PlaybackFormat.Cloud -> extension?.uppercase()
     is PlaybackFormat.Local -> buildList {
         (extension ?: mimeType?.substringAfterLast('/'))?.uppercase()?.let(::add)
@@ -15,11 +17,26 @@ fun PlaybackFormat.badgeLabel(): String? = when (this) {
     }.takeIf(List<String>::isNotEmpty)?.joinToString(" · ")
 }
 
-private fun AudioQuality.badgeLabel(): String? = when (this) {
-    AudioQuality.Standard -> null
-    AudioQuality.HighQuality -> "HQ"
-    AudioQuality.HighResolution -> "HI-RES"
-    AudioQuality.Lossless -> "LOSSLESS"
+internal fun PlaybackFormat.playerTagLabel(): String? = when (this) {
+    is PlaybackFormat.Online -> when (quality) {
+        AudioQuality.Standard -> "128K"
+        AudioQuality.HighQuality -> "HQ"
+        AudioQuality.Lossless -> "SQ"
+        AudioQuality.HighResolution -> "Hi-Res"
+    }
+    is PlaybackFormat.Cloud,
+    is PlaybackFormat.Local,
+    -> badgeLabel()?.substringBefore(" · ")
+}
+
+internal fun OnlinePlaybackQuality.playerTagLabel(): String = when (this) {
+    OnlinePlaybackQuality.Standard -> "128K"
+    OnlinePlaybackQuality.HighQuality -> "HQ"
+    OnlinePlaybackQuality.Lossless -> "SQ"
+    OnlinePlaybackQuality.HighResolution -> "Hi-Res"
+    OnlinePlaybackQuality.ViperAtmos -> "Atmos"
+    OnlinePlaybackQuality.ViperClear -> "Clear"
+    OnlinePlaybackQuality.ViperTape -> "Tape"
 }
 
 private fun Int.sampleRateLabel(): String = if (this % 1_000 == 0) {

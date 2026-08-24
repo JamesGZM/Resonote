@@ -7,7 +7,6 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -15,6 +14,7 @@ import com.resonote.core.designsystem.theme.ResonoteTheme
 import com.resonote.core.designsystem.theme.ResonoteThemeMode
 import com.resonote.core.model.CloudStorage
 import com.resonote.core.model.CloudTrack
+import com.resonote.core.model.ContentFailure
 import com.resonote.core.screenshottesting.DefaultRoborazziOptions
 import org.junit.Rule
 import org.junit.Test
@@ -25,27 +25,30 @@ import org.robolectric.annotation.GraphicsMode
 
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(sdk = [35], qualifiers = "w390dp-h844dp-420dpi")
+@Config(sdk = [35], qualifiers = "zh-rCN-w390dp-h844dp-420dpi")
 class CloudScreenshotTest {
     @get:Rule
     val composeRule = createComposeRule()
 
     @Test
-    fun cloud_listTop() {
-        setScreen(state())
-
-        composeRule.onNodeWithTag("cloud-vault").assertIsDisplayed()
-        composeRule.onNodeWithText("播放当前结果").assertIsDisplayed()
-        capture("list_top")
+    fun cloud_emptyUsesCommonState() {
+        setScreen(CloudUiState(initialLoading = false))
+        composeRule.onNodeWithTag("resonote-empty-state").assertExists()
     }
 
     @Test
-    fun cloud_grid() {
-        setScreen(state().copy(viewMode = CloudViewMode.Grid))
-        composeRule.onNodeWithTag("cloud-list").performScrollToIndex(4)
-        composeRule.waitForIdle()
-        composeRule.onNodeWithText("潮汐来信").assertIsDisplayed()
-        capture("grid")
+    fun cloud_errorUsesCommonState() {
+        setScreen(CloudUiState(initialLoading = false, failure = ContentFailure.Network))
+        composeRule.onNodeWithTag("resonote-error-state").assertExists()
+    }
+
+    @Test
+    fun cloud_listTop() {
+        setScreen(state())
+
+        composeRule.onNodeWithTag("cloud-summary").assertIsDisplayed()
+        composeRule.onNodeWithText("播放全部").assertIsDisplayed()
+        capture("list_top")
     }
 
     @Test
@@ -81,7 +84,6 @@ class CloudScreenshotTest {
                         onRefresh = {},
                         onQueryChange = {},
                         onSortChange = {},
-                        onViewModeChange = {},
                         onPlayAll = {},
                         onPlayTrack = {},
                         onAppendTracks = {},

@@ -26,6 +26,7 @@ class SearchViewModel @Inject constructor(
     private var suggestionJob: Job? = null
     private var searchJob: Job? = null
     private var loadMoreJob: Job? = null
+    private var currentSessionId: Long? = null
 
     init {
         loadHotKeywords()
@@ -34,6 +35,24 @@ class SearchViewModel @Inject constructor(
                 mutableUiState.update { it.copy(history = queries) }
             }
         }
+    }
+
+    fun initialize(sessionId: Long, initialQuery: String) {
+        if (currentSessionId == sessionId) return
+        currentSessionId = sessionId
+        suggestionJob?.cancel()
+        searchJob?.cancel()
+        loadMoreJob?.cancel()
+        val query = initialQuery.trim()
+        mutableUiState.update {
+            it.copy(
+                query = query,
+                suggestions = emptyList(),
+                selectedCategory = SearchCategory.ALL,
+                result = SearchResultUiState.Idle,
+            )
+        }
+        if (query.isNotEmpty()) submit()
     }
 
     fun updateQuery(value: String) {

@@ -6,7 +6,7 @@ import com.resonote.core.database.history.toEntity
 import com.resonote.core.model.CollectionLoadResult
 import com.resonote.core.model.DeviceHistoryItem
 import com.resonote.core.model.DeviceHistoryRecord
-import com.resonote.core.model.OnlineSong
+import com.resonote.core.model.ListeningHistoryPage
 import com.resonote.core.network.ApiException
 import com.resonote.core.network.ListeningHistoryNetworkDataSource
 import kotlinx.coroutines.CancellationException
@@ -29,8 +29,15 @@ internal class DefaultListeningHistoryRepository internal constructor(
         deviceHistory: DeviceHistoryDao,
     ) : this(network, riskChallenges, deviceHistory, System::currentTimeMillis)
 
-    override suspend fun loadAccountHistory(): CollectionLoadResult<List<OnlineSong>> = try {
-        CollectionLoadResult.Available(network.accountHistory().map { it.toOnlineSong() })
+    override suspend fun loadAccountHistory(cursor: String?): CollectionLoadResult<ListeningHistoryPage> = try {
+        val page = network.accountHistory(cursor)
+        CollectionLoadResult.Available(
+            ListeningHistoryPage(
+                songs = page.songs.map { it.toOnlineSong() },
+                nextCursor = page.nextCursor,
+                hasMore = page.hasMore,
+            ),
+        )
     } catch (failure: ApiException) {
         CollectionLoadResult.Failed(failure.toContentFailure(riskChallenges))
     }
@@ -41,6 +48,10 @@ internal class DefaultListeningHistoryRepository internal constructor(
 
     override suspend fun recordDevicePlayback(record: DeviceHistoryRecord): Boolean = mutate {
         deviceHistory.record(record.toEntity(now()))
+    }
+
+    override suspend fun recordAccountPlayback(albumAudioId: String): Boolean = mutate {
+        network.uploadAccountPlayback(albumAudioId)
     }
 
     override suspend fun deleteDeviceHistory(record: DeviceHistoryRecord): Boolean = mutate {

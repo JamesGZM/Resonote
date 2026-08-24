@@ -39,6 +39,36 @@ class SearchViewModelTest {
     fun tearDown() = Dispatchers.resetMain()
 
     @Test
+    fun categoriesFollowLegacyMobileOrder() {
+        assertThat(SearchCategory.entries).containsExactly(
+            SearchCategory.ALL,
+            SearchCategory.SONGS,
+            SearchCategory.PLAYLISTS,
+            SearchCategory.ALBUMS,
+            SearchCategory.MVS,
+            SearchCategory.ARTISTS,
+        ).inOrder()
+    }
+
+    @Test
+    fun aNewSearchSessionResetsTransientStateButReturningToTheSameSessionDoesNot() = runTest(dispatcher) {
+        val viewModel = viewModel(FakeSearchRepository())
+        advanceUntilIdle()
+
+        viewModel.initialize(sessionId = 1, initialQuery = "林澈")
+        advanceUntilIdle()
+        assertThat(viewModel.uiState.value.result).isInstanceOf(SearchResultUiState.Content::class.java)
+
+        viewModel.initialize(sessionId = 1, initialQuery = "")
+        assertThat(viewModel.uiState.value.query).isEqualTo("林澈")
+
+        viewModel.initialize(sessionId = 2, initialQuery = "")
+        assertThat(viewModel.uiState.value.query).isEmpty()
+        assertThat(viewModel.uiState.value.selectedCategory).isEqualTo(SearchCategory.ALL)
+        assertThat(viewModel.uiState.value.result).isEqualTo(SearchResultUiState.Idle)
+    }
+
+    @Test
     fun hotKeywordFailureDoesNotBlockManualSearch() = runTest(dispatcher) {
         val repository = FakeSearchRepository(hotResult = CollectionLoadResult.Failed(ContentFailure.Network))
         val viewModel = viewModel(repository)

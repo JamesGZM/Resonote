@@ -1,10 +1,17 @@
 package com.resonote.feature.player.impl
 
 import com.google.common.truth.Truth.assertThat
+import com.resonote.core.model.AudioQuality
 import com.resonote.core.playback.PlaybackFormat
 import org.junit.Test
 
 class PlaybackFormatLabelTest {
+    @Test
+    fun onlineFormatUsesCompactMusicBadgeLabel() {
+        assertThat(PlaybackFormat.Online(AudioQuality.Lossless).badgeLabel()).isEqualTo("SQ")
+        assertThat(PlaybackFormat.Online(AudioQuality.HighResolution).badgeLabel()).isEqualTo("HR")
+    }
+
     @Test
     fun localFormatUsesActualTechnicalMetadata() {
         val format = PlaybackFormat.Local(

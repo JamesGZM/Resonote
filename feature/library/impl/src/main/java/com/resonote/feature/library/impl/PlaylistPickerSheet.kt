@@ -25,7 +25,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -37,9 +36,10 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.resonote.core.designsystem.component.ResonoteBottomSheet
+import com.resonote.core.designsystem.component.ResonoteBottomSheetHeader
 import com.resonote.core.designsystem.component.ResonoteRemoteArtwork
 import com.resonote.core.model.ContentFailure
 import com.resonote.core.model.OnlineSong
@@ -63,28 +63,15 @@ fun PlaylistPickerSheet(
             target != SheetValue.Hidden || !currentSubmitting
         },
     )
-    ModalBottomSheet(
+    ResonoteBottomSheet(
         onDismissRequest = { if (!submitting) onDismiss() },
         sheetState = sheetState,
     ) {
         Column(Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier.padding(horizontal = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Text(
-                    text = stringResource(R.string.feature_library_impl_playlist_picker_title),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    text = song.title,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
+            ResonoteBottomSheetHeader(
+                title = stringResource(R.string.feature_library_impl_playlist_picker_title),
+                subtitle = song.title,
+            )
             Spacer(Modifier.height(12.dp))
             when (state) {
                 MyUiState.CheckingAccount -> PickerLoading()

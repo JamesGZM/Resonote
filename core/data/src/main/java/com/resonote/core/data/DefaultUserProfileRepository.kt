@@ -8,6 +8,9 @@ import com.resonote.core.network.UserProfileNetworkDataSource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.supervisorScope
+import java.time.Instant
+import java.time.Year
+import java.time.ZoneId
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -55,10 +58,17 @@ internal class DefaultUserProfileRepository @Inject constructor(
                     listenMinutes = detail.listenMinutes,
                     isVip = vip?.isVip == true,
                     vipLabel = vip?.label.orEmpty(),
+                    musicAgeYears = detail.registrationEpochSeconds?.musicAgeYears(),
                 ),
             )
         }
     } catch (failure: ApiException) {
         CollectionLoadResult.Failed(failure.toContentFailure(riskChallenges))
     }
+}
+
+internal fun Long.musicAgeYears(currentYear: Int = Year.now().value, zoneId: ZoneId = ZoneId.systemDefault()): Int? {
+    if (this <= 0) return null
+    val registrationYear = runCatching { Instant.ofEpochSecond(this).atZone(zoneId).year }.getOrNull() ?: return null
+    return (currentYear - registrationYear).coerceAtLeast(0)
 }

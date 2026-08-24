@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 
 const seeds = Object.freeze({
   primary: "#B83252",
-  secondary: "#66558F",
+  secondary: "#70585B",
   tertiary: "#855300",
 });
 

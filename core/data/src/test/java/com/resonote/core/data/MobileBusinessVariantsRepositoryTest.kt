@@ -3,7 +3,7 @@ package com.resonote.core.data
 import com.google.common.truth.Truth.assertThat
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.CollectionLoadResult
-import com.resonote.core.model.LyricLine
+import com.resonote.core.model.ContentFailure
 import com.resonote.core.network.CatalogNetworkDataSource
 import com.resonote.core.network.HomeNetworkDataSource
 import com.resonote.core.network.LyricsNetworkDataSource
@@ -13,6 +13,7 @@ import com.resonote.core.network.model.NetworkAlbumSongPage
 import com.resonote.core.network.model.NetworkArtistInfo
 import com.resonote.core.network.model.NetworkArtistSongPage
 import com.resonote.core.network.model.NetworkComplexSearch
+import com.resonote.core.network.model.NetworkFollowedArtist
 import com.resonote.core.network.model.NetworkLyricCandidate
 import com.resonote.core.network.model.NetworkPlaylistSummary
 import com.resonote.core.network.model.NetworkRecommendationMode
@@ -24,8 +25,18 @@ import com.resonote.core.network.model.NetworkSearchResultPage
 import com.resonote.core.network.model.NetworkSong
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
+import java.util.Base64
 
 class MobileBusinessVariantsRepositoryTest {
+    @Test
+    fun followedArtistsMapArtworkSize() = runTest {
+        val repository = DefaultContentCatalogRepository(FakeCatalog(), FakeHome(), RiskChallengeRegistry())
+
+        val result = repository.loadFollowedArtists() as CollectionLoadResult.Available
+
+        assertThat(result.value.single().avatarUrl).isEqualTo("https://artist/240")
+    }
+
     @Test
     fun categoryPlaylistsForwardsCategoryPagingAndMapsDomain() = runTest {
         val remote = FakeCatalog()
@@ -84,7 +95,7 @@ class MobileBusinessVariantsRepositoryTest {
 
         val result = repository.loadLyrics("hash") as CollectionLoadResult.Available
 
-        assertThat(result.value.map { it.timeMillis }).containsExactly(1_500L, 2_500L, 3_500L).inOrder()
+        assertThat(result.value.lines.map { it.timeMillis }).containsExactly(1_500L, 2_500L, 3_500L).inOrder()
     }
 
     @Test
@@ -102,11 +113,53 @@ class MobileBusinessVariantsRepositoryTest {
 
         val result = repository.loadLyrics("hash") as CollectionLoadResult.Available
 
-        assertThat(result.value).containsExactly(
-            LyricLine(0, "MoeKoe"),
-            LyricLine(1_200, "Music"),
+        assertThat(result.value.lines.map { it.timeMillis to it.text }).containsExactly(
+            0L to "MoeKoe",
+            1_200L to "Music",
         ).inOrder()
     }
+
+    @Test
+    fun lyricRepositoryMapsKrcTranslationPhoneticsAndSyllableTiming() = runTest {
+        val metadata =
+            """
+            {"content":[
+              {"type":1,"lyricContent":[["萌音"]]},
+              {"type":0,"lyricContent":[[["Moe"],["Koe"]]]}
+            ]}
+            """.trimIndent()
+        val encodedMetadata = Base64.getEncoder().encodeToString(metadata.encodeToByteArray())
+        val repository = lyricsRepository(
+            "[language:$encodedMetadata]\n[0,1200]<0,600,0>Moe<600,600,0>Koe",
+        )
+
+        val result = repository.loadLyrics("hash") as CollectionLoadResult.Available
+        val line = result.value.lines.single()
+
+        assertThat(line.translation).isEqualTo("萌音")
+        assertThat(line.transliteration).isEqualTo("MoeKoe")
+        assertThat(line.syllables.map { it.startTimeMillis to it.endTimeMillis }).containsExactly(
+            0L to 600L,
+            600L to 1_200L,
+        ).inOrder()
+    }
+
+    @Test
+    fun lyricRepositorySafelyRejectsMalformedPayload() = runTest {
+        val result = lyricsRepository("[0,1000]plain text without syllable timing").loadLyrics("hash")
+
+        assertThat(result).isEqualTo(CollectionLoadResult.Failed(ContentFailure.Protocol))
+    }
+
+    private fun lyricsRepository(source: String) = DefaultLyricsRepository(
+        object : LyricsNetworkDataSource {
+            override suspend fun searchLyric(hash: String, albumAudioId: String?) =
+                NetworkLyricCandidate("lyric-id", "access-key")
+
+            override suspend fun downloadLyric(candidate: NetworkLyricCandidate) = source
+        },
+        RiskChallengeRegistry(),
+    )
 
     private class FakeCatalog : CatalogNetworkDataSource {
         var request: Triple<Int, Int, Int>? = null
@@ -131,6 +184,7 @@ class MobileBusinessVariantsRepositoryTest {
             pageSize: Int,
             newestFirst: Boolean,
         ): NetworkArtistSongPage = error("unused")
+        override suspend fun followedArtists() = listOf(NetworkFollowedArtist("88", "歌手", "https://artist/{size}"))
     }
 
     private class FakeHome : HomeNetworkDataSource {

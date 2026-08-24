@@ -3,8 +3,12 @@ package com.resonote.feature.artist.impl
 import com.google.common.truth.Truth.assertThat
 import com.resonote.core.data.ContentCatalogRepository
 import com.resonote.core.model.Album
+import com.resonote.core.model.ArtistAlbum
+import com.resonote.core.model.ArtistAlbumsPage
 import com.resonote.core.model.ArtistInfo
 import com.resonote.core.model.ArtistSongsPage
+import com.resonote.core.model.ArtistVideo
+import com.resonote.core.model.ArtistVideosPage
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.Banner
 import com.resonote.core.model.CatalogSongPage
@@ -14,8 +18,11 @@ import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.PlaylistCategory
 import com.resonote.core.model.PlaylistSummary
 import com.resonote.feature.artist.api.ArtistNavKey
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -36,7 +43,7 @@ class ArtistViewModelTest {
     fun tearDown() = Dispatchers.resetMain()
 
     @Test
-    fun firstPagePublishesRealProfileAndPopularSongs() = runTest(dispatcher) {
+    fun firstPagePublishesProfileAndPopularSongs() = runTest(dispatcher) {
         val repository = FakeCatalogRepository()
         val viewModel = ArtistViewModel(repository)
 
@@ -46,54 +53,78 @@ class ArtistViewModelTest {
         val state = viewModel.uiState.value
         assertThat(state.profile?.name).isEqualTo("林澈与潮汐记忆")
         assertThat(state.profile?.intro).isEqualTo("来自响应的歌手简介")
-        assertThat(state.profile?.fansCount).isEqualTo(128_000L)
-        assertThat((state.popular as ArtistPageUiState.Content).songs.map { it.hash })
-            .containsExactly("hot-1", "hot-2").inOrder()
-        assertThat(repository.requests).containsExactly(Request(page = 1, newestFirst = false))
+        assertThat(state.popularSongs.songIds()).containsExactly("hot-1", "hot-2").inOrder()
+        assertThat(repository.requests).containsExactly(Request.Songs(1, false))
     }
 
     @Test
-    fun selectingLatestLoadsIndependentPageAndPreservesPopular() = runTest(dispatcher) {
+    fun newNavigationSessionReloadsSameArtist() = runTest(dispatcher) {
+        val repository = FakeCatalogRepository()
+        val viewModel = ArtistViewModel(repository)
+
+        viewModel.load(key(sessionId = 1))
+        advanceUntilIdle()
+        viewModel.selectSection(ArtistSection.ALBUMS)
+        advanceUntilIdle()
+        viewModel.load(key(sessionId = 2))
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.selectedSection).isEqualTo(ArtistSection.SONGS)
+        assertThat(repository.requests).containsExactly(
+            Request.Songs(1, false),
+            Request.Albums(1, false),
+            Request.Songs(1, false),
+        ).inOrder()
+    }
+
+    @Test
+    fun latestSortLoadsIndependentPageAndReturningUsesCache() = runTest(dispatcher) {
         val repository = FakeCatalogRepository()
         val viewModel = ArtistViewModel(repository)
         viewModel.load(key())
         advanceUntilIdle()
 
-        viewModel.selectSection(ArtistSongSection.LATEST)
+        viewModel.selectSort(ArtistSort.LATEST)
+        advanceUntilIdle()
+        viewModel.selectSort(ArtistSort.POPULAR)
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
-        assertThat(state.selectedSection).isEqualTo(ArtistSongSection.LATEST)
-        assertThat((state.popular as ArtistPageUiState.Content).songs.map { it.hash })
-            .containsExactly("hot-1", "hot-2").inOrder()
-        assertThat((state.latest as ArtistPageUiState.Content).songs.map { it.hash })
-            .containsExactly("new-1", "new-2").inOrder()
+        assertThat(state.popularSongs.songIds()).containsExactly("hot-1", "hot-2").inOrder()
+        assertThat(state.latestSongs.songIds()).containsExactly("new-1", "new-2").inOrder()
         assertThat(repository.requests).containsExactly(
-            Request(1, false),
-            Request(1, true),
+            Request.Songs(1, false),
+            Request.Songs(1, true),
         ).inOrder()
     }
 
     @Test
-    fun returningToCachedSectionDoesNotReload() = runTest(dispatcher) {
+    fun albumsAndVideosLoadAsIndependentSections() = runTest(dispatcher) {
         val repository = FakeCatalogRepository()
         val viewModel = ArtistViewModel(repository)
         viewModel.load(key())
         advanceUntilIdle()
-        viewModel.selectSection(ArtistSongSection.LATEST)
+
+        viewModel.selectSection(ArtistSection.ALBUMS)
+        advanceUntilIdle()
+        viewModel.selectSort(ArtistSort.LATEST)
+        advanceUntilIdle()
+        viewModel.selectSection(ArtistSection.MVS)
         advanceUntilIdle()
 
-        viewModel.selectSection(ArtistSongSection.POPULAR)
-        advanceUntilIdle()
-
-        assertThat(repository.requests).containsExactly(
-            Request(1, false),
-            Request(1, true),
-        ).inOrder()
+        val state = viewModel.uiState.value
+        assertThat(state.popularAlbums.albumIds()).containsExactly("album-hot")
+        assertThat(state.latestAlbums.albumIds()).containsExactly("album-new")
+        assertThat(state.videos.videoIds()).containsExactly("mv-1")
+        assertThat(repository.requests).containsAtLeast(
+            Request.Albums(1, false),
+            Request.Albums(1, true),
+            Request.Videos(1),
+        )
     }
 
     @Test
-    fun selectedSectionPaginationAppendsUniqueSongs() = runTest(dispatcher) {
+    fun loadMoreAppendsUniqueItems() = runTest(dispatcher) {
         val viewModel = ArtistViewModel(FakeCatalogRepository())
         viewModel.load(key())
         advanceUntilIdle()
@@ -101,62 +132,83 @@ class ArtistViewModelTest {
         viewModel.loadMore()
         advanceUntilIdle()
 
-        val page = viewModel.uiState.value.popular as ArtistPageUiState.Content
-        assertThat(page.songs.map { it.hash }).containsExactly("hot-1", "hot-2", "hot-3").inOrder()
+        val page = viewModel.uiState.value.popularSongs as ArtistPageUiState.Content
+        assertThat(page.songIds()).containsExactly("hot-1", "hot-2", "hot-3").inOrder()
         assertThat(page.page).isEqualTo(2)
         assertThat(page.hasMore).isFalse()
     }
 
     @Test
-    fun latestFailureDoesNotReplaceLoadedPopularSection() = runTest(dispatcher) {
-        val viewModel = ArtistViewModel(FakeCatalogRepository(failLatestFirstPage = true))
+    fun refreshFailureKeepsCurrentItemsUntilAcknowledged() = runTest(dispatcher) {
+        val viewModel = ArtistViewModel(FakeCatalogRepository(failPopularRefresh = true))
         viewModel.load(key())
         advanceUntilIdle()
 
-        viewModel.selectSection(ArtistSongSection.LATEST)
+        viewModel.refresh()
         advanceUntilIdle()
 
-        val state = viewModel.uiState.value
-        assertThat(state.latest).isEqualTo(ArtistPageUiState.Error(ContentFailure.Network))
-        assertThat(state.popular).isInstanceOf(ArtistPageUiState.Content::class.java)
+        val failed = viewModel.uiState.value.popularSongs as ArtistPageUiState.Content
+        assertThat(failed.songIds()).containsExactly("hot-1", "hot-2").inOrder()
+        assertThat(failed.refreshFailure).isEqualTo(ContentFailure.Network)
+
+        viewModel.acknowledgeRefreshFailure()
+        assertThat((viewModel.uiState.value.popularSongs as ArtistPageUiState.Content).refreshFailure).isNull()
     }
 
     @Test
-    fun loadMoreFailureKeepsLoadedSongsAndOffersFooterRecovery() = runTest(dispatcher) {
-        val viewModel = ArtistViewModel(FakeCatalogRepository(failPopularSecondPage = true))
+    fun followStateLoadsAndTogglePersists() = runTest(dispatcher) {
+        val repository = FakeCatalogRepository(initiallyFollowed = false)
+        val viewModel = ArtistViewModel(repository)
+
         viewModel.load(key())
         advanceUntilIdle()
+        assertThat(viewModel.uiState.value.follow).isEqualTo(ArtistFollowUiState.Available(false))
 
-        viewModel.loadMore()
+        viewModel.toggleFollow()
         advanceUntilIdle()
 
-        val page = viewModel.uiState.value.popular as ArtistPageUiState.Content
-        assertThat(page.songs.map { it.hash }).containsExactly("hot-1", "hot-2").inOrder()
-        assertThat(page.loadMoreFailure).isEqualTo(ContentFailure.Network)
-        assertThat(page.isLoadingMore).isFalse()
+        assertThat(repository.followTargets).containsExactly(true)
+        assertThat(viewModel.uiState.value.follow).isEqualTo(ArtistFollowUiState.Available(true))
     }
 
     @Test
-    fun missingDetailKeepsSearchHints() = runTest(dispatcher) {
-        val viewModel = ArtistViewModel(FakeCatalogRepository(includeInfo = false))
-
+    fun unauthenticatedFollowRequestsLogin() = runTest(dispatcher) {
+        val repository = FakeCatalogRepository(followLoadFailure = ContentFailure.AuthenticationRequired)
+        val viewModel = ArtistViewModel(repository)
         viewModel.load(key())
         advanceUntilIdle()
+        assertThat(viewModel.uiState.value.follow).isEqualTo(ArtistFollowUiState.AuthenticationRequired)
 
-        val profile = viewModel.uiState.value.profile
-        assertThat(profile?.name).isEqualTo("搜索结果歌手")
-        assertThat(profile?.songCount).isEqualTo(36)
-        assertThat(profile?.albumCount).isEqualTo(4)
+        val loginRequest = backgroundScope.async(start = CoroutineStart.UNDISPATCHED) {
+            viewModel.loginRequests.first()
+        }
+        viewModel.toggleFollow()
+
+        assertThat(loginRequest.await()).isEqualTo(Unit)
     }
 
-    private data class Request(val page: Int, val newestFirst: Boolean)
+    private sealed interface Request {
+        data class Songs(val page: Int, val newestFirst: Boolean) : Request
+        data class Albums(val page: Int, val newestFirst: Boolean) : Request
+        data class Videos(val page: Int) : Request
+    }
 
     private class FakeCatalogRepository(
-        private val includeInfo: Boolean = true,
-        private val failLatestFirstPage: Boolean = false,
-        private val failPopularSecondPage: Boolean = false,
+        private val failPopularRefresh: Boolean = false,
+        private val initiallyFollowed: Boolean = false,
+        private val followLoadFailure: ContentFailure? = null,
     ) : ContentCatalogRepository {
         val requests = mutableListOf<Request>()
+        val followTargets = mutableListOf<Boolean>()
+
+        override suspend fun loadArtistFollowed(artistId: String): CollectionLoadResult<Boolean> =
+            followLoadFailure?.let { CollectionLoadResult.Failed(it) }
+                ?: CollectionLoadResult.Available(initiallyFollowed)
+
+        override suspend fun setArtistFollowed(artistId: String, followed: Boolean): CollectionLoadResult<Boolean> {
+            followTargets += followed
+            return CollectionLoadResult.Available(followed)
+        }
 
         override suspend fun loadArtistSongs(
             artistId: String,
@@ -164,26 +216,55 @@ class ArtistViewModelTest {
             pageSize: Int,
             newestFirst: Boolean,
         ): CollectionLoadResult<ArtistSongsPage> {
-            requests += Request(page, newestFirst)
-            if (newestFirst && page == 1 && failLatestFirstPage) {
-                return CollectionLoadResult.Failed(ContentFailure.Network)
-            }
-            if (!newestFirst && page == 2 && failPopularSecondPage) {
+            requests += Request.Songs(page, newestFirst)
+            if (!newestFirst && page == 1 && failPopularRefresh && requests.count { it is Request.Songs } > 1) {
                 return CollectionLoadResult.Failed(ContentFailure.Network)
             }
             val songs = when {
-                newestFirst && page == 1 -> listOf(song("new-1"), song("new-2"))
-                newestFirst -> listOf(song("new-2"), song("new-3"))
+                newestFirst -> listOf(song("new-1"), song("new-2"))
                 page == 1 -> listOf(song("hot-1"), song("hot-2"))
                 else -> listOf(song("hot-2"), song("hot-3"))
             }
             return CollectionLoadResult.Available(
                 ArtistSongsPage(
-                    info = if (page == 1 && includeInfo) info() else null,
+                    info = if (page == 1) info() else null,
                     songs = songs,
                     page = page,
                     total = 36,
-                    hasMore = page == 1,
+                    hasMore = !newestFirst && page == 1,
+                ),
+            )
+        }
+
+        override suspend fun loadArtistAlbums(
+            artistId: String,
+            page: Int,
+            pageSize: Int,
+            newestFirst: Boolean,
+        ): CollectionLoadResult<ArtistAlbumsPage> {
+            requests += Request.Albums(page, newestFirst)
+            return CollectionLoadResult.Available(
+                ArtistAlbumsPage(
+                    albums = listOf(album(if (newestFirst) "album-new" else "album-hot")),
+                    page = page,
+                    total = 4,
+                    hasMore = false,
+                ),
+            )
+        }
+
+        override suspend fun loadArtistVideos(
+            artistId: String,
+            page: Int,
+            pageSize: Int,
+        ): CollectionLoadResult<ArtistVideosPage> {
+            requests += Request.Videos(page)
+            return CollectionLoadResult.Available(
+                ArtistVideosPage(
+                    videos = listOf(ArtistVideo("mv-1", "潮汐 MV", "林澈", null, 180_000)),
+                    page = page,
+                    total = 7,
+                    hasMore = false,
                 ),
             )
         }
@@ -209,12 +290,23 @@ class ArtistViewModelTest {
     }
 
     private companion object {
-        fun key() = ArtistNavKey(
+        fun ArtistPageUiState.songIds() = (this as ArtistPageUiState.Content).songIds()
+
+        fun ArtistPageUiState.Content.songIds() = items.mapNotNull { (it as? ArtistItem.Song)?.value?.hash }
+
+        fun ArtistPageUiState.albumIds() = (this as ArtistPageUiState.Content).items
+            .mapNotNull { (it as? ArtistItem.Album)?.value?.id }
+
+        fun ArtistPageUiState.videoIds() = (this as ArtistPageUiState.Content).items
+            .mapNotNull { (it as? ArtistItem.Video)?.value?.hash }
+
+        fun key(sessionId: Long = 0) = ArtistNavKey(
             artistId = "artist",
             name = "搜索结果歌手",
             avatarUrl = "https://search-avatar",
             songCount = 36,
             albumCount = 4,
+            sessionId = sessionId,
         )
 
         fun info() = ArtistInfo(
@@ -226,6 +318,8 @@ class ArtistViewModelTest {
             mvCount = 7,
             fansCount = 128_000,
         )
+
+        fun album(id: String) = ArtistAlbum(id, id, "林澈", null, "2026-08-23", 10)
 
         fun song(id: String) = OnlineSong(
             hash = id,

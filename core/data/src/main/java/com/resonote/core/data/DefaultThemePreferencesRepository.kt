@@ -41,4 +41,8 @@ internal class DefaultThemePreferencesRepository @Inject constructor(
             )
         }
     }
+
+    override suspend fun reset() {
+        storage.update { com.resonote.core.datastore.StoredAppearancePreferences("", false) }
+    }
 }

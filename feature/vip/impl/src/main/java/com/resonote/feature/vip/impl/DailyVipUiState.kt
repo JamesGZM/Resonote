@@ -1,6 +1,7 @@
 package com.resonote.feature.vip.impl
 
 import com.resonote.core.model.ContentFailure
+import com.resonote.core.model.RiskChallengeHandle
 
 sealed interface DailyVipUiState {
     val receiveDay: String
@@ -18,6 +19,13 @@ sealed interface DailyVipUiState {
     data class UpgradeComplete(override val receiveDay: String, val alreadyUpgraded: Boolean) : DailyVipUiState
 
     data class RiskBlocked(override val receiveDay: String) : DailyVipUiState
+
+    data class RiskVerificationRequired(
+        override val receiveDay: String,
+        val challenge: RiskChallengeHandle,
+        val operation: DailyVipOperation,
+        val alreadyClaimed: Boolean = false,
+    ) : DailyVipUiState
 
     data class Failed(
         override val receiveDay: String,

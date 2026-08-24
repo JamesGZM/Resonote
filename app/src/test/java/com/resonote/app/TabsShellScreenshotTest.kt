@@ -81,7 +81,7 @@ class TabsShellScreenshotTest {
             ) {
                 ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
                     val homeViewModel = remember { HomeViewModel(ScreenshotHomeRepository()) }
-                    TabsShell(homeViewModel = homeViewModel)
+                    TabsShell(tabsShellState = rememberTabsShellState(), homeViewModel = homeViewModel)
                 }
             }
         }
@@ -116,6 +116,7 @@ class TabsShellScreenshotTest {
                     var tabBarInset by remember { mutableStateOf(0.dp) }
                     Box(Modifier.fillMaxSize()) {
                         TabsShell(
+                            tabsShellState = rememberTabsShellState(),
                             homeViewModel = homeViewModel,
                             playbackState = playbackState,
                             onBottomBarInsetChanged = { tabBarInset = it },
@@ -163,13 +164,45 @@ class TabsShellScreenshotTest {
             ) {
                 ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
                     val homeViewModel = remember { HomeViewModel(ScreenshotHomeRepository()) }
-                    TabsShell(homeViewModel = homeViewModel)
+                    TabsShell(tabsShellState = rememberTabsShellState(), homeViewModel = homeViewModel)
                 }
             }
         }
 
         composeRule.onNodeWithTag("resonote-tab-home")
             .assertHeightIsEqualTo(64.dp)
+    }
+
+    @Test
+    fun externallyOwnedTabStateSurvivesShellRecreation() {
+        val tabsShellState = TabsShellState(ResonoteTab.HOME)
+        val showShell = mutableStateOf(true)
+        composeRule.setContent {
+            ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                val homeViewModel = remember { HomeViewModel(ScreenshotHomeRepository()) }
+                val discoverViewModel = remember {
+                    DiscoverViewModel(ScreenshotCatalogRepository(), ScreenshotRankingRepository())
+                }
+                if (showShell.value) {
+                    TabsShell(
+                        tabsShellState = tabsShellState,
+                        homeViewModel = homeViewModel,
+                        discoverViewModel = discoverViewModel,
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithTag("resonote-tab-discover").performClick()
+        composeRule.runOnIdle {
+            assertThat(tabsShellState.selectedTab).isEqualTo(ResonoteTab.DISCOVER)
+            showShell.value = false
+        }
+        composeRule.runOnIdle { showShell.value = true }
+
+        composeRule.runOnIdle {
+            assertThat(tabsShellState.selectedTab).isEqualTo(ResonoteTab.DISCOVER)
+        }
     }
 
     @Test
@@ -183,7 +216,11 @@ class TabsShellScreenshotTest {
                     val discoverViewModel = remember {
                         DiscoverViewModel(ScreenshotCatalogRepository(), ScreenshotRankingRepository())
                     }
-                    TabsShell(homeViewModel = homeViewModel, discoverViewModel = discoverViewModel)
+                    TabsShell(
+                        tabsShellState = rememberTabsShellState(),
+                        homeViewModel = homeViewModel,
+                        discoverViewModel = discoverViewModel,
+                    )
                 }
             }
         }
@@ -210,7 +247,11 @@ class TabsShellScreenshotTest {
                 val discoverViewModel = remember {
                     DiscoverViewModel(ScreenshotCatalogRepository(), ScreenshotRankingRepository())
                 }
-                TabsShell(homeViewModel = homeViewModel, discoverViewModel = discoverViewModel)
+                TabsShell(
+                    tabsShellState = rememberTabsShellState(),
+                    homeViewModel = homeViewModel,
+                    discoverViewModel = discoverViewModel,
+                )
             }
         }
 
@@ -349,6 +390,7 @@ class TabsShellScreenshotTest {
                 }
                 Box(Modifier.fillMaxSize()) {
                     TabsShell(
+                        tabsShellState = rememberTabsShellState(),
                         homeViewModel = homeViewModel,
                         playbackState = playbackState,
                         onBottomBarInsetChanged = { tabBarInset = it },

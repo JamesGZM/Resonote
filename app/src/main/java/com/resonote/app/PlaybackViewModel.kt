@@ -5,10 +5,10 @@ import com.resonote.core.model.CloudTrack
 import com.resonote.core.model.DeviceHistoryItem
 import com.resonote.core.model.LocalMedia
 import com.resonote.core.model.OnlineSong
+import com.resonote.core.model.PlaybackMode
 import com.resonote.core.model.ResolvedSongSource
 import com.resonote.core.playback.PlaybackController
 import com.resonote.core.playback.PlaybackItem
-import com.resonote.core.playback.PlaybackMode
 import com.resonote.core.playback.PlaybackState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.StateFlow
@@ -78,6 +78,8 @@ internal class PlaybackViewModel @Inject constructor(private val playbackControl
     fun seekTo(positionMillis: Long) = playbackController.seekTo(positionMillis)
 
     fun setMode(mode: PlaybackMode) = playbackController.setMode(mode)
+
+    fun refreshCurrentOnlineSource(force: Boolean = false) = playbackController.refreshCurrentOnlineSource(force)
 
     fun selectQueueItem(index: Int) = playbackController.selectQueueItem(index)
 

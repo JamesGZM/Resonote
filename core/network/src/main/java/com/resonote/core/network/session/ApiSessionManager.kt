@@ -115,6 +115,14 @@ class ApiSessionManager @Inject constructor(
 
     suspend fun acknowledgeAuthenticationGate() = mutex.withLock { gateReason.value = null }
 
+    suspend fun clearAuthentication() = mutex.withLock {
+        resolvedStore.clearAuthentication()
+        snapshot = resolvedStore.read()
+        revision += 1
+        lastFailureRevision = null
+        gateReason.value = null
+    }
+
     fun snapshot(): ApiSession = checkNotNull(snapshot) { "API session must be initialized before a Retrofit request" }
 }
 

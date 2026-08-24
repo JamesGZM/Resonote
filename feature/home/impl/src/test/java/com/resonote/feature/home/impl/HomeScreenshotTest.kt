@@ -123,7 +123,12 @@ class HomeScreenshotTest {
                 override = DeviceConfigurationOverride.Locales(LocaleList(Locale("zh-CN"))),
             ) {
                 ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
-                    HomeLoadError(onRetry = { retryCalls += 1 }, modifier = Modifier)
+                    HomeLoadError(
+                        onRetry = { retryCalls += 1 },
+                        onSearchClick = {},
+                        onRecognitionClick = {},
+                        modifier = Modifier,
+                    )
                 }
             }
         }
@@ -131,6 +136,7 @@ class HomeScreenshotTest {
         composeRule.onNodeWithText("重试").performClick()
 
         assertThat(retryCalls).isEqualTo(1)
+        capture("error")
     }
 
     private fun setHomeContent(languageTag: String, isRefreshing: Boolean = false, onRefresh: () -> Unit = {}) {

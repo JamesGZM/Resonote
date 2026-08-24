@@ -19,6 +19,8 @@ sealed interface RankingUiState {
         val hasMore: Boolean,
         val isLoadingMore: Boolean = false,
         val loadMoreFailure: ContentFailure? = null,
+        val isRefreshing: Boolean = false,
+        val refreshFailure: ContentFailure? = null,
     ) : RankingUiState
 
     data class Empty(val metadata: RankingMetadata) : RankingUiState

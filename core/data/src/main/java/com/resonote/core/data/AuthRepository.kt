@@ -13,6 +13,8 @@ interface AuthRepository {
 
     suspend fun acknowledgeAuthenticationGate()
 
+    suspend fun logout()
+
     suspend fun sendMobileCode(mobile: String): SendMobileCodeResult
 
     suspend fun loginWithMobileCode(

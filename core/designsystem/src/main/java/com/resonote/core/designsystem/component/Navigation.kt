@@ -34,6 +34,7 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
@@ -41,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
@@ -54,12 +56,15 @@ fun ResonoteNavigationSuiteScaffold(
     navigationSuiteItems: ResonoteNavigationSuiteScope.() -> Unit,
     modifier: Modifier = Modifier,
     windowAdaptiveInfo: WindowAdaptiveInfo = currentWindowAdaptiveInfo(),
+    onBottomBarInsetChanged: (Dp) -> Unit = {},
     content: @Composable () -> Unit,
 ) {
     val colors = MaterialTheme.colorScheme
     val items = mutableListOf<ResonoteNavigationSuiteItem>()
     ResonoteNavigationSuiteScope(items::add).navigationSuiteItems()
     val layoutType = NavigationSuiteScaffoldDefaults.calculateFromAdaptiveInfo(windowAdaptiveInfo)
+    val bottomBarInset = if (layoutType == NavigationSuiteType.NavigationBar) CompactNavigationItemHeight else 0.dp
+    LaunchedEffect(bottomBarInset) { onBottomBarInsetChanged(bottomBarInset) }
     val itemColors = NavigationSuiteItemColors(
         navigationBarItemColors = NavigationBarItemDefaults.colors(
             selectedIconColor = colors.primary,

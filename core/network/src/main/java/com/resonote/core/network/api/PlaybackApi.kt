@@ -4,6 +4,7 @@ import com.resonote.core.network.api.model.ApiResponse
 import com.resonote.core.network.api.model.SongPrivilegeRequest
 import com.resonote.core.network.api.model.SongSourceResponse
 import com.resonote.core.network.protocol.ApiRequestPolicy
+import com.resonote.core.network.protocol.ApiSessionPropagation
 import kotlinx.serialization.json.JsonElement
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -12,12 +13,16 @@ import retrofit2.http.POST
 import retrofit2.http.Query
 
 internal interface PlaybackApi {
-    @ApiRequestPolicy(router = "media.store.kugou.com")
+    @ApiRequestPolicy(router = "media.store.kugou.com", sessionPropagation = ApiSessionPropagation.DeviceOnly)
     @Headers("Content-Type: application/json")
     @POST("v2/get_res_privilege/lite")
-    suspend fun songPrivilege(@Body body: SongPrivilegeRequest): ApiResponse<JsonElement>
+    suspend fun songPrivilege(
+        @Query("token") token: String,
+        @Query("userid") userId: String,
+        @Body body: SongPrivilegeRequest,
+    ): ApiResponse<JsonElement>
 
-    @ApiRequestPolicy(router = "trackercdn.kugou.com")
+    @ApiRequestPolicy(router = "trackercdn.kugou.com", sessionPropagation = ApiSessionPropagation.DeviceOnly)
     @GET("v5/url")
     suspend fun songSource(
         @Query("album_id") albumId: String,
@@ -38,6 +43,8 @@ internal interface PlaybackApi {
         @Query("module") module: String = "",
         @Query("clientver") clientVersion: String = "11430",
         @Query("key") key: String,
+        @Query("token") token: String?,
+        @Query("userid") userId: String?,
     ): SongSourceResponse
 
     @ApiRequestPolicy

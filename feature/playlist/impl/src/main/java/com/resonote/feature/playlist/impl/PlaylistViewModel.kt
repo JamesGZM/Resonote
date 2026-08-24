@@ -8,8 +8,11 @@ import com.resonote.core.model.CollectionLoadResult
 import com.resonote.core.model.OnlineSong
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -22,30 +25,44 @@ class PlaylistViewModel @Inject constructor(
 ) : ViewModel() {
     private val mutableUiState = MutableStateFlow<PlaylistUiState>(PlaylistUiState.Loading)
     val uiState: StateFlow<PlaylistUiState> = mutableUiState.asStateFlow()
+    private val mutableLoginRequests = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val loginRequests: SharedFlow<Unit> = mutableLoginRequests.asSharedFlow()
 
     private var playlistId: String? = null
+    private var initialPlaylistTitle: String? = null
     private var writableListId: String? = null
     private var writableAccountId: String? = null
+    private var currentAccountId: String? = null
+    private var favoriteState: PlaylistFavoriteUiState = PlaylistFavoriteUiState.Loading
     private var loadGeneration = 0
     private var mutationGeneration = 0
     private var loadJob: Job? = null
     private var loadMoreJob: Job? = null
     private var removeJob: Job? = null
+    private var favoriteJob: Job? = null
 
-    fun load(id: String, writableListId: String? = null, accountId: String? = null) {
+    fun load(id: String, writableListId: String? = null, accountId: String? = null, initialTitle: String? = null) {
         val normalizedListId = writableListId?.takeIf { accountId != null }
         val normalizedAccountId = accountId?.takeIf { normalizedListId != null }
         val playlistChanged = id != playlistId
         val writeContextChanged = normalizedListId != this.writableListId ||
             normalizedAccountId != writableAccountId
-        if (!playlistChanged && !writeContextChanged && mutableUiState.value !is PlaylistUiState.Error) return
+        val accountChanged = accountId != currentAccountId
+        if (!playlistChanged &&
+            !writeContextChanged &&
+            !accountChanged &&
+            mutableUiState.value !is PlaylistUiState.Error
+        ) {
+            return
+        }
 
-        if (playlistChanged || writeContextChanged) {
+        if (playlistChanged || writeContextChanged || accountChanged) {
             mutationGeneration += 1
             removeJob?.cancel()
             removeJob = null
             this.writableListId = normalizedListId
             writableAccountId = normalizedAccountId
+            currentAccountId = accountId
         }
         if (!playlistChanged) {
             mutableUiState.update { state ->
@@ -54,16 +71,21 @@ class PlaylistViewModel @Inject constructor(
                     removal = PlaylistRemovalUiState.Idle,
                 ) ?: state
             }
+            if (writeContextChanged || accountChanged) loadFavoriteState()
             if (mutableUiState.value !is PlaylistUiState.Error) return
         }
 
         playlistId = id
+        initialPlaylistTitle = initialTitle?.takeIf(String::isNotBlank)
         loadGeneration += 1
         val generation = loadGeneration
         loadJob?.cancel()
         loadMoreJob?.cancel()
         removeJob?.cancel()
+        favoriteJob?.cancel()
+        updateFavoriteState(PlaylistFavoriteUiState.Loading)
         mutableUiState.value = PlaylistUiState.Loading
+        loadFavoriteState()
         loadJob = viewModelScope.launch {
             when (val result = repository.loadPlaylist(id, page = 1)) {
                 is CollectionLoadResult.Available -> {
@@ -78,6 +100,7 @@ class PlaylistViewModel @Inject constructor(
                             value.page,
                             value.hasMore,
                             writableListId = this@PlaylistViewModel.writableListId,
+                            favorite = favoriteState,
                         )
                     }
                 }
@@ -94,15 +117,81 @@ class PlaylistViewModel @Inject constructor(
         val id = playlistId ?: return
         val listId = writableListId
         val accountId = writableAccountId
+        val initialTitle = initialPlaylistTitle
         playlistId = null
-        load(id, listId, accountId)
+        load(id, listId, accountId, initialTitle)
+    }
+
+    fun refresh() {
+        val id = playlistId ?: return
+        val current = mutableUiState.value as? PlaylistUiState.Content ?: return
+        if (current.isRefreshing ||
+            removeJob?.isActive == true ||
+            current.removal != PlaylistRemovalUiState.Idle
+        ) {
+            return
+        }
+        loadMoreJob?.cancel()
+        mutableUiState.value = current.copy(
+            isLoadingMore = false,
+            loadMoreFailure = null,
+            isRefreshing = true,
+            refreshFailure = null,
+        )
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
+            when (val result = repository.loadPlaylist(id, page = 1)) {
+                is CollectionLoadResult.Available -> {
+                    val value = result.value
+                    mutableUiState.value = if (value.details == null && value.songs.isEmpty()) {
+                        PlaylistUiState.Empty
+                    } else {
+                        PlaylistUiState.Content(
+                            details = value.details ?: current.details,
+                            songs = value.songs.distinctBy(OnlineSong::hash),
+                            page = value.page,
+                            hasMore = value.hasMore,
+                            writableListId = current.writableListId,
+                            favorite = favoriteState,
+                        )
+                    }
+                }
+                is CollectionLoadResult.Failed -> mutableUiState.update { state ->
+                    val latest = state as? PlaylistUiState.Content ?: return@update state
+                    latest.copy(isRefreshing = false, refreshFailure = result.failure)
+                }
+            }
+        }
+    }
+
+    fun acknowledgeRefreshFailure() {
+        mutableUiState.update { state ->
+            val content = state as? PlaylistUiState.Content ?: return@update state
+            content.copy(refreshFailure = null)
+        }
+    }
+
+    fun toggleFavorite() {
+        when (val favorite = favoriteState) {
+            PlaylistFavoriteUiState.AuthenticationRequired -> mutableLoginRequests.tryEmit(Unit)
+            is PlaylistFavoriteUiState.Error -> loadFavoriteState()
+            PlaylistFavoriteUiState.Hidden,
+            PlaylistFavoriteUiState.Loading,
+            -> Unit
+            is PlaylistFavoriteUiState.Available -> updateFavorite(favorite)
+        }
+    }
+
+    fun acknowledgeFavoriteFailure() {
+        val favorite = favoriteState as? PlaylistFavoriteUiState.Available ?: return
+        updateFavoriteState(favorite.copy(updateFailure = null))
     }
 
     fun loadMore() {
         if (loadMoreJob?.isActive == true || removeJob?.isActive == true) return
         val id = playlistId ?: return
         val current = mutableUiState.value as? PlaylistUiState.Content ?: return
-        if (!current.hasMore || current.isLoadingMore) return
+        if (!current.hasMore || current.isLoadingMore || current.isRefreshing) return
         mutableUiState.value = current.copy(isLoadingMore = true, loadMoreFailure = null)
         loadMoreJob = viewModelScope.launch {
             when (val result = repository.loadPlaylist(id, page = current.page + 1)) {
@@ -129,6 +218,7 @@ class PlaylistViewModel @Inject constructor(
     fun removeSong(song: OnlineSong) {
         if (removeJob?.isActive == true || loadMoreJob?.isActive == true) return
         val current = mutableUiState.value as? PlaylistUiState.Content ?: return
+        if (current.isRefreshing) return
         val listId = writableListId ?: return
         val accountId = writableAccountId ?: return
         val fileId = song.fileId?.takeIf(String::isNotBlank) ?: return
@@ -184,4 +274,95 @@ class PlaylistViewModel @Inject constructor(
 
     private fun isCurrentMutation(generation: Int, listId: String, accountId: String): Boolean =
         generation == mutationGeneration && listId == writableListId && accountId == writableAccountId
+
+    private fun loadFavoriteState() {
+        val id = playlistId ?: return
+        favoriteJob?.cancel()
+        if (currentAccountId == null) {
+            updateFavoriteState(PlaylistFavoriteUiState.AuthenticationRequired)
+            return
+        }
+        if (writableListId != null) {
+            updateFavoriteState(PlaylistFavoriteUiState.Hidden)
+            return
+        }
+        val generation = mutationGeneration
+        updateFavoriteState(PlaylistFavoriteUiState.Loading)
+        favoriteJob = viewModelScope.launch {
+            when (val result = libraryRepository.loadPlaylists()) {
+                is CollectionLoadResult.Available -> {
+                    if (generation != mutationGeneration || id != playlistId) return@launch
+                    val matching = result.value.firstOrNull { it.globalId == id }
+                    updateFavoriteState(
+                        when {
+                            matching?.isMine == true -> PlaylistFavoriteUiState.Hidden
+                            matching != null -> PlaylistFavoriteUiState.Available(
+                                isFavorited = true,
+                                collectedListId = matching.listId,
+                            )
+                            else -> PlaylistFavoriteUiState.Available(isFavorited = false)
+                        },
+                    )
+                }
+                is CollectionLoadResult.Failed -> {
+                    if (generation != mutationGeneration || id != playlistId) return@launch
+                    updateFavoriteState(
+                        if (result.failure == com.resonote.core.model.ContentFailure.AuthenticationRequired) {
+                            PlaylistFavoriteUiState.AuthenticationRequired
+                        } else {
+                            PlaylistFavoriteUiState.Error(result.failure)
+                        },
+                    )
+                }
+            }
+        }
+    }
+
+    private fun updateFavorite(current: PlaylistFavoriteUiState.Available) {
+        if (current.isUpdating) return
+        val id = playlistId ?: return
+        val title = (mutableUiState.value as? PlaylistUiState.Content)?.details?.title ?: initialPlaylistTitle ?: return
+        val generation = mutationGeneration
+        updateFavoriteState(current.copy(isUpdating = true, updateFailure = null))
+        favoriteJob?.cancel()
+        favoriteJob = viewModelScope.launch {
+            val result = if (current.isFavorited) {
+                val listId = current.collectedListId ?: return@launch updateFavoriteState(
+                    current.copy(isUpdating = false),
+                )
+                libraryRepository.deletePlaylist(listId).mapValue { listId }
+            } else {
+                libraryRepository.favoritePlaylist(title, id)
+            }
+            if (generation != mutationGeneration || id != playlistId) return@launch
+            when (result) {
+                is CollectionLoadResult.Available -> updateFavoriteState(
+                    PlaylistFavoriteUiState.Available(
+                        isFavorited = !current.isFavorited,
+                        collectedListId = if (current.isFavorited) null else result.value,
+                    ),
+                )
+                is CollectionLoadResult.Failed -> {
+                    if (result.failure == com.resonote.core.model.ContentFailure.AuthenticationRequired) {
+                        updateFavoriteState(PlaylistFavoriteUiState.AuthenticationRequired)
+                        mutableLoginRequests.emit(Unit)
+                    } else {
+                        updateFavoriteState(current.copy(isUpdating = false, updateFailure = result.failure))
+                    }
+                }
+            }
+        }
+    }
+
+    private fun updateFavoriteState(state: PlaylistFavoriteUiState) {
+        favoriteState = state
+        mutableUiState.update { current ->
+            (current as? PlaylistUiState.Content)?.copy(favorite = state) ?: current
+        }
+    }
+}
+
+private fun <T, R> CollectionLoadResult<T>.mapValue(transform: (T) -> R): CollectionLoadResult<R> = when (this) {
+    is CollectionLoadResult.Available -> CollectionLoadResult.Available(transform(value))
+    is CollectionLoadResult.Failed -> this
 }

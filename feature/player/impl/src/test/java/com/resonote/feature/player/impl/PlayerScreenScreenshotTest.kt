@@ -1,10 +1,16 @@
 package com.resonote.feature.player.impl
 
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertWidthIsEqualTo
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.DpSize
@@ -15,10 +21,13 @@ import com.resonote.core.designsystem.theme.ResonoteTheme
 import com.resonote.core.designsystem.theme.ResonoteThemeMode
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.LyricLine
+import com.resonote.core.model.LyricSyllable
+import com.resonote.core.model.LyricsDocument
+import com.resonote.core.model.OnlinePlaybackQuality
 import com.resonote.core.model.OnlineSong
+import com.resonote.core.model.PlaybackMode
 import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.playback.PlaybackItem
-import com.resonote.core.playback.PlaybackMode
 import com.resonote.core.playback.PlaybackState
 import com.resonote.core.playback.PlaybackStatus
 import com.resonote.core.screenshottesting.DefaultRoborazziOptions
@@ -42,6 +51,8 @@ class PlayerScreenScreenshotTest {
     fun player_compactCover() {
         setPlayerContent()
 
+        composeRule.onNodeWithTag("player-cover-artwork").assertWidthIsEqualTo(350.dp)
+
         captureScreenRoboImage(
             filePath = "src/test/screenshots/Player/PlayerCompact_cover.png",
             roborazziOptions = DefaultRoborazziOptions,
@@ -52,6 +63,10 @@ class PlayerScreenScreenshotTest {
     fun player_compactLyrics() {
         setPlayerContent(initialPage = 1)
 
+        composeRule.onNodeWithContentDescription("Pause").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Queue").assertIsDisplayed()
+        composeRule.onNodeWithText("SQ").assertIsDisplayed()
+
         captureScreenRoboImage(
             filePath = "src/test/screenshots/Player/PlayerCompact_lyrics.png",
             roborazziOptions = DefaultRoborazziOptions,
@@ -61,8 +76,9 @@ class PlayerScreenScreenshotTest {
     @Test
     fun player_compactSpeedDialog() {
         setPlayerContent()
-        composeRule.onNodeWithContentDescription("More options").performClick()
-        composeRule.onNodeWithText("Playback speed").performClick()
+        composeRule.onNodeWithContentDescription("Playback speed")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "1×"))
+        composeRule.onNodeWithContentDescription("Playback speed").performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule.onAllNodesWithText("1.5×").fetchSemanticsNodes().isNotEmpty()
         }
@@ -89,15 +105,41 @@ class PlayerScreenScreenshotTest {
     }
 
     @Test
-    fun playbackSpeedSelectionDispatchesFromOverflow() {
+    fun playbackSpeedSelectionDispatchesFromToolRow() {
         var selected: PlaybackSpeed? = null
         setPlayerContent(onPlaybackSpeedChange = { selected = it })
 
-        composeRule.onNodeWithContentDescription("More options").performClick()
-        composeRule.onNodeWithText("Playback speed").performClick()
+        composeRule.onNodeWithContentDescription("Playback speed").performClick()
         composeRule.onNodeWithText("1.5×").performClick()
 
         assertEquals(PlaybackSpeed.OneAndHalf, selected)
+    }
+
+    @Test
+    fun currentFormatOpensBottomSheet() {
+        setPlayerContent()
+
+        composeRule.onNodeWithText("Lossless").assertDoesNotExist()
+        composeRule.onNodeWithContentDescription("Current format").performClick()
+
+        composeRule.onNodeWithText("Viper Atmos").assertIsDisplayed()
+        composeRule.mainClock.advanceTimeByFrame()
+        composeRule.waitForIdle()
+        captureScreenRoboImage(
+            filePath = "src/test/screenshots/Player/PlayerCompact_format.png",
+            roborazziOptions = DefaultRoborazziOptions,
+        )
+    }
+
+    @Test
+    fun onlineQualitySelectionIsScopedThroughPlayerCallback() {
+        var selected: OnlinePlaybackQuality? = null
+        setPlayerContent(onOnlineQualityChange = { selected = it })
+
+        composeRule.onNodeWithContentDescription("Current format").performClick()
+        composeRule.onNodeWithText("Hi-Res").performClick()
+
+        assertEquals(OnlinePlaybackQuality.HighResolution, selected)
     }
 
     @Test
@@ -115,6 +157,7 @@ class PlayerScreenScreenshotTest {
         onTogglePlay: () -> Unit = {},
         onNext: () -> Unit = {},
         onPlaybackSpeedChange: (PlaybackSpeed) -> Unit = {},
+        onOnlineQualityChange: (OnlinePlaybackQuality) -> Unit = {},
         onSongMoreClick: (() -> Unit)? = null,
         initialPage: Int = 0,
     ) {
@@ -132,12 +175,19 @@ class PlayerScreenScreenshotTest {
                         onSeek = {},
                         onModeChange = {},
                         onPlaybackSpeedChange = onPlaybackSpeedChange,
+                        onOnlineQualityChange = onOnlineQualityChange,
                         onRetryLyrics = {},
                         onSelectQueueItem = {},
                         onRemoveQueueItem = {},
                         onClearQueue = {},
                         initialPage = initialPage,
                         onSongMoreClick = onSongMoreClick,
+                        paletteSeed = PlayerPaletteSeed(
+                            mediaId = "current",
+                            artworkUri = "test-artwork",
+                            backgroundArgb = 0xFF071315.toInt(),
+                            accentArgb = 0xFFFFA45B.toInt(),
+                        ),
                     )
                 }
             }
@@ -154,14 +204,25 @@ class PlayerScreenScreenshotTest {
                     currentIndex = 0,
                     status = PlaybackStatus.Playing,
                     positionMillis = 102_000,
+                    bufferedPositionMillis = 158_000,
                     durationMillis = 248_000,
                     mode = PlaybackMode.ListLoop,
                 ),
                 lyrics = LyricsUiState.Content(
-                    listOf(
-                        LyricLine(0, "夜色落进无声的海"),
-                        LyricLine(38_000, "微光沿着波纹醒来"),
-                        LyricLine(92_000, "潮汐把记忆推回岸边"),
+                    LyricsDocument(
+                        listOf(
+                            LyricLine(0, "夜色落进无声的海"),
+                            LyricLine(38_000, "微光沿着波纹醒来"),
+                            LyricLine(
+                                syllables = listOf(
+                                    LyricSyllable("潮汐", 92_000, 99_000, "cháo xī"),
+                                    LyricSyllable("把记忆", 99_000, 107_000, "bǎ jì yì"),
+                                    LyricSyllable("推回岸边", 107_000, 116_000, "tuī huí àn biān"),
+                                ),
+                                translation = "The tide brings the memories ashore",
+                            ),
+                            LyricLine(126_000, "我们在微光里重逢"),
+                        ),
                     ),
                 ),
             )

@@ -1,0 +1,12 @@
+<resources>
+    <string name="feature_risk_impl_title">Security verification</string>
+    <string name="feature_risk_impl_back">Back</string>
+    <string name="feature_risk_impl_context">This action requires security verification</string>
+    <string name="feature_risk_impl_sms_hint">Enter the SMS verification code</string>
+    <string name="feature_risk_impl_submit">Complete verification</string>
+    <string name="feature_risk_impl_submitting">Verifying…</string>
+    <string name="feature_risk_impl_loading">Preparing security verification…</string>
+    <string name="feature_risk_impl_error">Security verification could not be loaded.</string>
+    <string name="feature_risk_impl_unsupported">This verification method is not supported yet.</string>
+    <string name="feature_risk_impl_retry">Retry</string>
+</resources>

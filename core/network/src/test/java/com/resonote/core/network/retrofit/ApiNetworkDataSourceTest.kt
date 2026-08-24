@@ -24,6 +24,7 @@ import com.resonote.core.network.UserProfileNetworkDataSource
 import com.resonote.core.network.VideoNetworkDataSource
 import com.resonote.core.network.VipNetworkDataSource
 import com.resonote.core.network.api.MusicApi
+import com.resonote.core.network.model.NetworkFollowedArtist
 import com.resonote.core.network.model.NetworkMobileCodeLoginResult
 import com.resonote.core.network.model.NetworkPasswordLoginResult
 import com.resonote.core.network.model.NetworkPlaylistTrackInput
@@ -41,6 +42,7 @@ import com.resonote.core.network.protocol.DeviceRegistrationCoordinator
 import com.resonote.core.network.protocol.DeviceRegistrationProfile
 import com.resonote.core.network.protocol.DeviceRegistrationProfileProvider
 import com.resonote.core.network.protocol.MobileAuthProtocolClient
+import com.resonote.core.network.protocol.PlaylistMutationProtocolClient
 import com.resonote.core.network.protocol.ProtocolRandom
 import com.resonote.core.network.protocol.ProtocolTransport
 import com.resonote.core.network.risk.ApiRiskChallengeDetector
@@ -233,7 +235,7 @@ class ApiNetworkDataSourceTest {
         assertThat(body["key"]?.jsonPrimitive?.content).isNotEmpty()
         val nested = body["special_recommend"]?.jsonObject
         assertThat(nested?.get("categoryid")?.jsonPrimitive?.content).isEqualTo("0")
-        assertThat(nested?.get("withsong")?.jsonPrimitive?.content).isEqualTo("1")
+        assertThat(nested?.get("withsong")?.jsonPrimitive?.content).isEqualTo("0")
     }
 
     @Test
@@ -310,17 +312,28 @@ class ApiNetworkDataSourceTest {
             ),
         )
 
-        val source = dataSource().resolveSongSource("ABCDEF", "12", "34")
+        val staleVipSession = session.copy(
+            cookies = session.cookies + mapOf("vip_type" to "0", "vip_token" to "stale-vip-token"),
+        )
+        val source = dataSource(staleVipSession).resolveSongSource("ABCDEF", "12", "34")
 
         assertThat(source.uri).isEqualTo("https://cdn.example/song.mp3")
         assertThat(source.durationMillis).isEqualTo(321_000)
+        assertThat(source.isPreview).isFalse()
         val privilegeRequest = gatewayServer.takeRequest()
         assertThat(privilegeRequest.method).isEqualTo("POST")
         assertThat(privilegeRequest.requestUrl?.encodedPath).isEqualTo("/v2/get_res_privilege/lite")
         assertThat(privilegeRequest.getHeader("x-router")).isEqualTo("media.store.kugou.com")
+        assertThat(privilegeRequest.requestUrl?.queryParameter("token")).isEqualTo("existing-token")
+        assertThat(privilegeRequest.requestUrl?.queryParameter("userid")).isEqualTo("99")
+        assertThat(privilegeRequest.getHeader("Cookie")).doesNotContain("vip_type")
+        assertThat(privilegeRequest.getHeader("Cookie")).doesNotContain("vip_token")
         val privilegeBody = json.parseToJsonElement(privilegeRequest.body.readUtf8()).jsonObject
         assertThat(privilegeBody["resource"]?.jsonArray?.single()?.jsonObject?.get("hash")?.jsonPrimitive?.content)
             .isEqualTo("abcdef")
+        assertThat(
+            privilegeBody["resource"]?.jsonArray?.single()?.jsonObject?.get("album_id")?.jsonPrimitive?.content,
+        ).isNull()
 
         val sourceRequest = gatewayServer.takeRequest()
         assertThat(sourceRequest.method).isEqualTo("GET")
@@ -331,12 +344,14 @@ class ApiNetworkDataSourceTest {
         assertThat(sourceRequest.requestUrl?.queryParameter("quality")).isEqualTo("128")
         assertThat(sourceRequest.requestUrl?.queryParameter("IsFreePart")).isEqualTo("0")
         assertThat(sourceRequest.requestUrl?.queryParameter("ppage_id")).isEqualTo("356753938")
-        assertThat(sourceRequest.requestUrl?.queryParameter("album_id")).isEqualTo("12")
-        assertThat(sourceRequest.requestUrl?.queryParameter("album_audio_id")).isEqualTo("34")
+        assertThat(sourceRequest.requestUrl?.queryParameter("album_id")).isEqualTo("0")
+        assertThat(sourceRequest.requestUrl?.queryParameter("album_audio_id")).isEqualTo("0")
         assertThat(sourceRequest.requestUrl?.queryParameter("dfid")).isEqualTo("fixture-dfid")
         assertThat(sourceRequest.requestUrl?.queryParameter("userid")).isEqualTo("99")
         assertThat(sourceRequest.requestUrl?.queryParameter("token")).isEqualTo("existing-token")
-        assertThat(sourceRequest.getHeader("Cookie")).contains("token=existing-token")
+        assertThat(sourceRequest.requestUrl?.queryParameter("vip_type")).isNull()
+        assertThat(sourceRequest.requestUrl?.queryParameter("vip_token")).isNull()
+        assertThat(sourceRequest.getHeader("Cookie")).isEqualTo("mid=fixture-mid")
         assertThat(sourceRequest.requestUrl?.queryParameter("key")).isNotEmpty()
         assertThat(sourceRequest.requestUrl?.queryParameter("signature")).isNotEmpty()
     }
@@ -450,6 +465,69 @@ class ApiNetworkDataSourceTest {
     }
 
     @Test
+    fun copyrightRestrictedViperMasterFallsBackToLowerQuality() = runTest {
+        gatewayServer.enqueue(
+            jsonResponse(
+                """{"status":1,"data":[{"hash":"TAPE_HASH","quality":"viper_tape","level":1}]}""",
+            ),
+        )
+        gatewayServer.enqueue(jsonResponse("""{"status":3,"url":[],"extName":"flac"}"""))
+        repeat(5) { gatewayServer.enqueue(jsonResponse("""{"status":0,"error_code":31863}""")) }
+        gatewayServer.enqueue(
+            jsonResponse("""{"status":1,"url":["https://cdn.example/song.mp3"],"extName":"mp3"}"""),
+        )
+
+        val source = dataSource().resolveSongSource("ORIGINAL", requestedQuality = "viper_tape")
+
+        assertThat(source.uri).isEqualTo("https://cdn.example/song.mp3")
+        gatewayServer.takeRequest()
+        val sourceRequests = List(7) { gatewayServer.takeRequest() }
+        assertThat(sourceRequests.map { it.requestUrl?.queryParameter("quality") })
+            .containsExactly("viper_tape", "viper_clear", "viper_atmos", "high", "flac", "320", "128")
+            .inOrder()
+        assertThat(sourceRequests.first().requestUrl?.queryParameter("hash")).isEqualTo("tape_hash")
+        assertThat(sourceRequests.drop(1).map { it.requestUrl?.queryParameter("hash") }.distinct())
+            .containsExactly("original")
+    }
+
+    @Test
+    fun malformedViperMasterUrlFallsBackToLowerQuality() = runTest {
+        gatewayServer.enqueue(
+            jsonResponse(
+                """{"status":1,"data":[{"hash":"TAPE_HASH","quality":"viper_tape","level":1}]}""",
+            ),
+        )
+        gatewayServer.enqueue(jsonResponse("""{"status":1,"url":["not-a-url"],"extName":"flac"}"""))
+        gatewayServer.enqueue(
+            jsonResponse("""{"status":1,"url":["https://cdn.example/song.flac"],"extName":"flac"}"""),
+        )
+
+        val source = dataSource().resolveSongSource("ORIGINAL", requestedQuality = "viper_tape")
+
+        assertThat(source.uri).isEqualTo("https://cdn.example/song.flac")
+        gatewayServer.takeRequest()
+        assertThat(gatewayServer.takeRequest().requestUrl?.queryParameter("quality")).isEqualTo("viper_tape")
+        assertThat(gatewayServer.takeRequest().requestUrl?.queryParameter("quality")).isEqualTo("viper_clear")
+    }
+
+    @Test
+    fun emptyAuthenticatedCandidatesAreProtocolFailureRatherThanVipFailure() = runTest {
+        gatewayServer.enqueue(
+            jsonResponse(
+                """{"status":1,"data":[{"hash":"HQ_HASH","quality":"320","level":1,"relate_goods":[{"hash":"STD_HASH","quality":"128","level":1}]}]}""",
+            ),
+        )
+        repeat(2) { gatewayServer.enqueue(jsonResponse("""{"status":1,"url":[]}""")) }
+
+        val failure = runCatching {
+            dataSource().resolveSongSource("ORIGINAL", requestedQuality = "320")
+        }.exceptionOrNull()
+
+        assertThat(failure).isInstanceOf(ApiProtocolException::class.java)
+        assertThat(gatewayServer.requestCount).isEqualTo(3)
+    }
+
+    @Test
     fun unavailablePrivilegeVariantsUseRequestedQualityFallbackChain() = runTest {
         gatewayServer.enqueue(jsonResponse("""{"status":1,"data":[]}"""))
         repeat(3) { gatewayServer.enqueue(jsonResponse("""{"status":0,"error_code":31863}""")) }
@@ -479,9 +557,12 @@ class ApiNetworkDataSourceTest {
         val source = dataSource(anonymousSession).resolveSongSource("ABCDEF", "12", "34")
 
         assertThat(source.uri).isEqualTo("http://fs.youthandroid2.kugou.com/song.mp3?token=value")
+        assertThat(source.isPreview).isTrue()
         val request = gatewayServer.takeRequest()
         assertThat(request.requestUrl?.queryParameter("IsFreePart")).isEqualTo("1")
         assertThat(request.requestUrl?.queryParameter("ppage_id")).isEqualTo("356753938,823673182,967485191")
+        assertThat(request.requestUrl?.queryParameter("album_id")).isEqualTo("12")
+        assertThat(request.requestUrl?.queryParameter("album_audio_id")).isEqualTo("34")
     }
 
     @Test
@@ -544,15 +625,14 @@ class ApiNetworkDataSourceTest {
     }
 
     @Test
-    fun songSourceClassifiesVipAndMalformedResponseSeparately() {
+    fun songSourceRequiresExplicitVipCodeAndClassifiesEmptySuccessAsMalformed() {
         gatewayServer.enqueue(jsonResponse("""{"status":1,"url":[],"backupUrl":[]}"""))
         gatewayServer.enqueue(jsonResponse("""{"url":[]}"""))
         gatewayServer.enqueue(jsonResponse("""{"status":1,"url":["not-a-url"]}"""))
 
-        val vip = assertThrows(ApiPlaybackUnavailableException::class.java) {
+        assertThrows(ApiProtocolException::class.java) {
             runTest { dataSource(anonymousSession).resolveSongSource("ABCDEF") }
         }
-        assertThat(vip.reason).isEqualTo(ApiPlaybackUnavailableException.Reason.Vip)
         assertThrows(ApiProtocolException::class.java) {
             runTest { dataSource(anonymousSession).resolveSongSource("ABCDEF") }
         }
@@ -647,16 +727,17 @@ class ApiNetworkDataSourceTest {
     }
 
     @Test
-    fun playlistRejectsListInfoWithoutRequiredTitle() {
+    fun playlistIgnoresIncompleteListInfoWithoutRejectingThePage() = runTest {
         gatewayServer.enqueue(
             jsonResponse(
                 """{"status":1,"data":{"count":1,"list_info":{"intro":"missing title"},"songs":[]}}""",
             ),
         )
 
-        assertThrows(ApiProtocolException::class.java) {
-            runTest { dataSource().playlistSongs("gid") }
-        }
+        val page = dataSource().playlistSongs("gid")
+
+        assertThat(page.info).isNull()
+        assertThat(page.songs).isEmpty()
     }
 
     @Test
@@ -1128,7 +1209,7 @@ class ApiNetworkDataSourceTest {
     fun userDetailUsesAuthenticatedMobileContractAndMapsConsumerFields() = runTest {
         gatewayServer.enqueue(
             jsonResponse(
-                """{"status":1,"data":{"userid":99,"nickname":"Fixture User","pic":"https://avatar/{size}","bg_pic":"https://background/{size}","descri":"signature","fans":"12","follows":3,"duration":456}}""",
+                """{"status":1,"data":{"userid":99,"nickname":"Fixture User","pic":"https://avatar/{size}","bg_pic":"https://background/{size}","descri":"signature","fans":"12","follows":3,"duration":456,"rtime":"1530403200"}}""",
             ),
         )
 
@@ -1138,6 +1219,7 @@ class ApiNetworkDataSourceTest {
         assertThat(detail.nickname).isEqualTo("Fixture User")
         assertThat(detail.fans).isEqualTo(12)
         assertThat(detail.listenMinutes).isEqualTo(456)
+        assertThat(detail.registrationEpochSeconds).isEqualTo(1_530_403_200)
         val request = gatewayServer.takeRequest()
         assertThat(request.requestUrl?.encodedPath).isEqualTo("/v3/get_my_info")
         assertThat(request.requestUrl?.queryParameter("plat")).isEqualTo("1")
@@ -1293,6 +1375,50 @@ class ApiNetworkDataSourceTest {
         assertThat(body["source"]?.jsonPrimitive?.content).isEqualTo("1")
         assertThat(body["list_create_userid"]?.jsonPrimitive?.content).isEqualTo("99")
         assertThat(body["list_create_gid"]?.jsonPrimitive?.content).isEmpty()
+    }
+
+    @Test
+    fun favoritePlaylistUsesCollectedTypeAndSourceGlobalId() = runTest {
+        gatewayServer.enqueue(jsonResponse("""{"status":1,"data":{"info":{"listid":654}}}"""))
+
+        val listId = dataSource().favoritePlaylist("  深夜歌单  ", "  collection-id  ")
+
+        assertThat(listId).isEqualTo("654")
+        val request = gatewayServer.takeRequest()
+        assertThat(request.requestUrl?.encodedPath).isEqualTo("/cloudlist.service/v5/add_list")
+        val body = json.parseToJsonElement(request.body.readUtf8()).jsonObject
+        assertThat(body["name"]?.jsonPrimitive?.content).isEqualTo("深夜歌单")
+        assertThat(body["type"]?.jsonPrimitive?.content).isEqualTo("1")
+        assertThat(body["list_create_userid"]?.jsonPrimitive?.content).isEqualTo("99")
+        assertThat(body["list_create_gid"]?.jsonPrimitive?.content).isEqualTo("collection-id")
+    }
+
+    @Test
+    fun deletePlaylistUsesEncryptedCloudListContract() = runTest {
+        gatewayServer.enqueue(encryptedCloudResponse("""{"status":1,"data":{}}"""))
+
+        dataSource().deletePlaylist("654")
+
+        val request = gatewayServer.takeRequest()
+        assertThat(request.requestUrl?.encodedPath).isEqualTo("/v2/delete_list")
+        assertThat(request.getHeader("x-router")).isEqualTo("cloudlist.service.kugou.com")
+        assertThat(request.requestUrl?.queryParameter("clienttime")).isEqualTo("1700000000")
+        assertThat(request.requestUrl?.queryParameter("last_time")).isEqualTo("1700000000")
+        assertThat(request.requestUrl?.queryParameter("key")).isNotEmpty()
+        assertThat(request.requestUrl?.queryParameter("p")).isNotEmpty()
+        assertThat(request.requestUrl?.queryParameter("signature")).isNotEmpty()
+        val bodyBytes = request.body.readByteArray()
+        val signedParameters = request.requestUrl!!.queryParameterNames
+            .filterNot { it == "signature" }
+            .associateWith { request.requestUrl!!.queryParameter(it).orEmpty() }
+        assertThat(request.requestUrl?.queryParameter("signature"))
+            .isEqualTo(ApiRequestSigner().sign(signedParameters, bodyBytes))
+        val body = json.parseToJsonElement(
+            crypto.decryptPlaylist(bodyBytes, "aaaaaa"),
+        ).jsonObject
+        assertThat(body["listid"]?.jsonPrimitive?.content).isEqualTo("654")
+        assertThat(body["total_ver"]?.jsonPrimitive?.content).isEqualTo("0")
+        assertThat(body["type"]?.jsonPrimitive?.content).isEqualTo("1")
     }
 
     @Test
@@ -1541,6 +1667,88 @@ class ApiNetworkDataSourceTest {
     }
 
     @Test
+    fun artistAlbumsAndVideosUseSectionContractsAndDecodeCards() = runTest {
+        gatewayServer.enqueue(
+            jsonResponse(
+                """{"status":1,"data":{"albums":[{"album_id":"album-1","album_name":"潮汐记忆","author_name":"林澈","sizable_cover":"https://album/{size}","publish_date":"2026-08-23 00:00:00","audio_count":"12"}],"total":"1"}}""",
+            ),
+        )
+        openApiServer.enqueue(
+            jsonResponse(
+                """{"status":1,"total":1,"data":[{"mkv_sd_hash":"MVHASH","video_name":"潮汐 MV","author_name":"林澈","hdpic":"https://mv/{size}","timelength":245000}]}""",
+            ),
+        )
+
+        val albums = dataSource().artistAlbums("88", page = 1, pageSize = 30, newestFirst = true)
+        val videos = dataSource().artistVideos("88", page = 1, pageSize = 30)
+
+        assertThat(albums.albums.single().id).isEqualTo("album-1")
+        assertThat(albums.albums.single().songCount).isEqualTo(12)
+        assertThat(videos.videos.single().hash).isEqualTo("MVHASH")
+        assertThat(videos.videos.single().durationMillis).isEqualTo(245_000)
+        assertThat(videos.total).isEqualTo(1)
+
+        val albumRequest = gatewayServer.takeRequest()
+        val albumBody = json.parseToJsonElement(albumRequest.body.readUtf8()).jsonObject
+        assertThat(albumRequest.requestUrl?.encodedPath).isEqualTo("/kmr/v1/author/albums")
+        assertThat(albumRequest.getHeader("x-router")).isEqualTo("openapi.kugou.com")
+        assertThat(albumRequest.getHeader("kg-tid")).isEqualTo("36")
+        assertThat(albumBody["sort"]?.jsonPrimitive?.content).isEqualTo("1")
+        assertThat(albumBody["category"]?.jsonPrimitive?.content).isEqualTo("1")
+        assertThat(albumBody["area_code"]?.jsonPrimitive?.content).isEqualTo("all")
+
+        val videoRequest = openApiServer.takeRequest()
+        assertThat(videoRequest.requestUrl?.encodedPath).isEqualTo("/kmr/v1/author/videos")
+        assertThat(videoRequest.requestUrl?.queryParameter("author_id")).isEqualTo("88")
+        assertThat(videoRequest.requestUrl?.queryParameter("pagesize")).isEqualTo("30")
+    }
+
+    @Test
+    fun artistFollowReadsRelationListAndUsesEncryptedMutationContracts() = runTest {
+        val listResponse = jsonResponse(
+            """{"status":1,"data":{"total":3,"lists":[{"source":7,"singerid":"88","singername":"Fixture Artist","k_pic":"https://artist/{size}"},{"source":7,"singerid":"88","singername":"Fixture Artist"},{"source":1,"userid":"9","nickname":"Fixture User"}]}}""",
+        )
+        gatewayServer.enqueue(listResponse)
+        gatewayServer.enqueue(
+            jsonResponse("""{"status":1,"data":{"total":1,"lists":[{"source":7,"singerid":"88"}]}}"""),
+        )
+        gatewayServer.enqueue(jsonResponse("""{"status":1,"data":{}}"""))
+        gatewayServer.enqueue(jsonResponse("""{"status":1,"data":{}}"""))
+        val source = dataSource()
+
+        val followedArtists = source.followedArtists()
+        assertThat(followedArtists).containsExactly(
+            NetworkFollowedArtist("88", "Fixture Artist", "https://artist/{size}"),
+        )
+        assertThat(source.isArtistFollowed("88")).isTrue()
+        source.setArtistFollowed("88", followed = true)
+        source.setArtistFollowed("88", followed = false)
+
+        val listRequest = gatewayServer.takeRequest()
+        val listBody = json.parseToJsonElement(listRequest.body.readUtf8()).jsonObject
+        assertThat(listRequest.requestUrl?.encodedPath).isEqualTo("/v4/follow_list")
+        assertThat(listRequest.requestUrl?.queryParameter("plat")).isEqualTo("1")
+        assertThat(listRequest.getHeader("x-router")).isEqualTo("relationuser.kugou.com")
+        assertThat(listBody["userid"]?.jsonPrimitive?.content).isEqualTo("99")
+        assertThat(listBody["p"]?.jsonPrimitive?.content).isNotEmpty()
+
+        val followedCheckRequest = gatewayServer.takeRequest()
+        assertThat(followedCheckRequest.requestUrl?.encodedPath).isEqualTo("/v4/follow_list")
+
+        val followRequest = gatewayServer.takeRequest()
+        val followBody = json.parseToJsonElement(followRequest.body.readUtf8()).jsonObject
+        assertThat(followRequest.requestUrl?.encodedPath).isEqualTo("/followservice/v3/follow_singer")
+        assertThat(followRequest.requestUrl?.queryParameter("clienttime")).isEqualTo("1700000000")
+        assertThat(followBody["singerid"]?.jsonPrimitive?.content).isEqualTo("88")
+        assertThat(followBody["source"]?.jsonPrimitive?.content).isEqualTo("7")
+        assertThat(followBody["params"]?.jsonPrimitive?.content).isNotEmpty()
+        assertThat(followBody["p"]?.jsonPrimitive?.content).isNotEmpty()
+
+        val unfollowRequest = gatewayServer.takeRequest()
+        assertThat(unfollowRequest.requestUrl?.encodedPath).isEqualTo("/followservice/v3/unfollow_singer")
+    }
+
+    @Test
     fun complexHotAndSuggestSearchMatchMobileConsumerShapes() = runTest {
         complexSearchServer.enqueue(
             jsonResponse(
@@ -1671,9 +1879,11 @@ class ApiNetworkDataSourceTest {
     }
 
     @Test
-    fun videoUrlUsesSongKeyAndRejectsCleartext() = runTest {
+    fun videoUrlPreservesMvHashAllowsKugouCdnAndRejectsOtherCleartextHosts() = runTest {
         gatewayServer.enqueue(
-            jsonResponse("""{"status":1,"data":{"dynamic":{"backupdownurl":["https://video.example/fixture.mp4"]}}}"""),
+            jsonResponse(
+                """{"status":1,"data":{"dynamic":{"backupdownurl":["http://fsmvpc.kugou.com/fixture.mkv"]}}}""",
+            ),
         )
         gatewayServer.enqueue(
             jsonResponse("""{"status":1,"data":{"dynamic":{"downurl":"http://video.example/insecure.mp4"}}}"""),
@@ -1682,12 +1892,13 @@ class ApiNetworkDataSourceTest {
         val url = dataSource().resolveVideoUrl("MVHASH")
         val insecure = runCatching { dataSource().resolveVideoUrl("MVHASH") }.exceptionOrNull() as ApiProtocolException
 
-        assertThat(url).isEqualTo("https://video.example/fixture.mp4")
+        assertThat(url).isEqualTo("http://fsmvpc.kugou.com/fixture.mkv")
         assertThat(insecure.reason).isEqualTo(ApiProtocolException.Reason.InsecureMediaUrl)
         val request = gatewayServer.takeRequest()
         assertThat(request.getHeader("x-router")).isEqualTo("trackermv.kugou.com")
         assertThat(request.requestUrl?.queryParameter("cmd")).isEqualTo("123")
-        assertThat(request.requestUrl?.queryParameter("key")).isNotEmpty()
+        assertThat(request.requestUrl?.queryParameter("hash")).isEqualTo("MVHASH")
+        assertThat(request.requestUrl?.queryParameter("key")).isEqualTo("197f1ff2375eaf4228431e5c94368b5f")
     }
 
     @Test
@@ -1850,6 +2061,7 @@ class ApiNetworkDataSourceTest {
                 vip = vipServer.origin(),
                 cloud = cloudServer.origin(),
                 openApi = openApiServer.origin(),
+                openApiCdn = openApiServer.origin(),
                 complexSearch = complexSearchServer.origin(),
                 lyrics = lyricsServer.origin(),
                 qrLogin = qrLoginServer.origin(),
@@ -1879,6 +2091,15 @@ class ApiNetworkDataSourceTest {
             origins,
             riskDetector,
         )
+        val playlistMutations = PlaylistMutationProtocolClient(
+            executor,
+            registration,
+            json,
+            crypto,
+            signer,
+            origins,
+            riskDetector,
+        )
         val responses = ApiResponseVerifier(riskDetector, sessions)
         val calls = ApiCallExecutor(sessions)
         val home = RealHomeNetworkDataSource(musicApi, registration, signer, clock, responses, calls)
@@ -1887,6 +2108,7 @@ class ApiNetworkDataSourceTest {
             registration,
             signer,
             clock,
+            crypto,
             responses,
             calls,
             origins,
@@ -1922,7 +2144,7 @@ class ApiNetworkDataSourceTest {
             calls,
             responses,
         )
-        val library = RealLibraryNetworkDataSource(musicApi, registration, clock, calls, responses)
+        val library = RealLibraryNetworkDataSource(musicApi, registration, clock, calls, responses, playlistMutations)
         val vip = RealVipNetworkDataSource(musicApi, registration, calls, responses)
         return TestNetworkDataSource(
             home,

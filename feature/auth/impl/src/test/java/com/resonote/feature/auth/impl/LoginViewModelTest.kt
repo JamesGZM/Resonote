@@ -2,6 +2,7 @@ package com.resonote.feature.auth.impl
 
 import com.google.common.truth.Truth.assertThat
 import com.resonote.core.data.AuthRepository
+import com.resonote.core.data.RiskVerificationRepository
 import com.resonote.core.model.AuthAccountOption
 import com.resonote.core.model.AuthFailure
 import com.resonote.core.model.AuthState
@@ -9,6 +10,11 @@ import com.resonote.core.model.MobileCodeLoginResult
 import com.resonote.core.model.PasswordLoginResult
 import com.resonote.core.model.QrLoginCheckResult
 import com.resonote.core.model.QrLoginKeyResult
+import com.resonote.core.model.RiskChallengeHandle
+import com.resonote.core.model.RiskVerificationMethod
+import com.resonote.core.model.RiskVerificationMethodResult
+import com.resonote.core.model.RiskVerificationProof
+import com.resonote.core.model.RiskVerificationSubmitResult
 import com.resonote.core.model.SendMobileCodeResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -35,7 +41,7 @@ class LoginViewModelTest {
     @Test
     fun mobileInputIsNormalizedAndCodeCanOnlyBeSentForValidNumber() = runTest(dispatcher) {
         val repository = FakeAuthRepository()
-        val viewModel = LoginViewModel(repository)
+        val viewModel = LoginViewModel(repository, FakeRiskRepository())
 
         viewModel.updateMobile("13a8 0000-00001")
         assertThat(viewModel.uiState.value.mobile).isEqualTo("13800000000")
@@ -59,7 +65,7 @@ class LoginViewModelTest {
                 listOf(MobileCodeLoginResult.MultipleAccounts(accounts), MobileCodeLoginResult.Authenticated),
             ),
         )
-        val viewModel = LoginViewModel(repository)
+        val viewModel = LoginViewModel(repository, FakeRiskRepository())
         viewModel.updateMobile("13800000000")
         viewModel.updateCode("246810")
 
@@ -79,8 +85,10 @@ class LoginViewModelTest {
 
     @Test
     fun passwordLoginTrimsUsernameClearsPasswordAndKeepsUsername() = runTest(dispatcher) {
-        val repository = FakeAuthRepository(passwordResult = PasswordLoginResult.Authenticated)
-        val viewModel = LoginViewModel(repository)
+        val repository = FakeAuthRepository(
+            passwordResults = ArrayDeque(listOf(PasswordLoginResult.Authenticated)),
+        )
+        val viewModel = LoginViewModel(repository, FakeRiskRepository())
         viewModel.selectMethod(LoginMethod.Password)
         viewModel.updateUsername("  listener@example.com ")
         viewModel.updatePassword("never-log-this")
@@ -97,9 +105,9 @@ class LoginViewModelTest {
     fun failuresMapToActionableUiMessages() = runTest(dispatcher) {
         val repository = FakeAuthRepository(
             sendCodeResult = SendMobileCodeResult.Failed(AuthFailure.Network),
-            passwordResult = PasswordLoginResult.MultipleAccounts(emptyList()),
+            passwordResults = ArrayDeque(listOf(PasswordLoginResult.MultipleAccounts(emptyList()))),
         )
-        val viewModel = LoginViewModel(repository)
+        val viewModel = LoginViewModel(repository, FakeRiskRepository())
         viewModel.updateMobile("13800000000")
         viewModel.sendCode()
         advanceUntilIdle()
@@ -113,6 +121,60 @@ class LoginViewModelTest {
         assertThat(viewModel.uiState.value.message).isEqualTo(LoginMessage.PasswordMultipleAccounts)
     }
 
+    @Test
+    fun passwordSmsRiskReusesLoginStateAndRetriesAfterVerification() = runTest(dispatcher) {
+        val challenge = RiskChallengeHandle("fixture-risk")
+        val auth = FakeAuthRepository(
+            passwordResults = ArrayDeque(
+                listOf(
+                    PasswordLoginResult.Failed(AuthFailure.RiskVerificationRequired(challenge)),
+                    PasswordLoginResult.Authenticated,
+                ),
+            ),
+        )
+        val risk = FakeRiskRepository(RiskVerificationMethod.Sms)
+        val viewModel = LoginViewModel(auth, risk)
+        viewModel.selectMethod(LoginMethod.Password)
+        viewModel.updateUsername("listener")
+        viewModel.updatePassword("secret")
+
+        viewModel.login()
+        advanceUntilIdle()
+        assertThat(viewModel.uiState.value.securitySms?.challenge).isEqualTo(challenge)
+
+        viewModel.updateSecuritySmsCode("24a6810")
+        viewModel.submitSecuritySms()
+        advanceUntilIdle()
+
+        assertThat(risk.proofs).containsExactly(RiskVerificationProof.Sms("246810"))
+        assertThat(auth.passwordRequests).hasSize(2)
+        assertThat(viewModel.uiState.value.password).isEmpty()
+    }
+
+    @Test
+    fun dismissingPasswordSmsRiskReturnsToPasswordLoginWithoutRetrying() = runTest(dispatcher) {
+        val challenge = RiskChallengeHandle("fixture-risk")
+        val auth = FakeAuthRepository(
+            passwordResults = ArrayDeque(
+                listOf(PasswordLoginResult.Failed(AuthFailure.RiskVerificationRequired(challenge))),
+            ),
+        )
+        val risk = FakeRiskRepository(RiskVerificationMethod.Sms)
+        val viewModel = LoginViewModel(auth, risk)
+        viewModel.selectMethod(LoginMethod.Password)
+        viewModel.updateUsername("listener")
+        viewModel.updatePassword("secret")
+
+        viewModel.login()
+        advanceUntilIdle()
+        viewModel.dismissSecuritySms()
+
+        assertThat(viewModel.uiState.value.securitySms).isNull()
+        assertThat(viewModel.uiState.value.canLogin).isTrue()
+        assertThat(auth.passwordRequests).hasSize(1)
+        assertThat(risk.proofs).isEmpty()
+    }
+
     private data class MobileRequest(val mobile: String, val code: String, val selectedUserId: String?)
 
     private class FakeAuthRepository(
@@ -120,7 +182,9 @@ class LoginViewModelTest {
         private val mobileResults: ArrayDeque<MobileCodeLoginResult> = ArrayDeque(
             listOf(MobileCodeLoginResult.Authenticated),
         ),
-        private val passwordResult: PasswordLoginResult = PasswordLoginResult.Failed(AuthFailure.ServiceRejected),
+        private val passwordResults: ArrayDeque<PasswordLoginResult> = ArrayDeque(
+            listOf(PasswordLoginResult.Failed(AuthFailure.ServiceRejected)),
+        ),
     ) : AuthRepository {
         override val authState = MutableStateFlow<AuthState>(AuthState.Anonymous)
         val sentCodeMobiles = mutableListOf<String>()
@@ -128,6 +192,8 @@ class LoginViewModelTest {
         val passwordRequests = mutableListOf<Pair<String, String>>()
 
         override suspend fun acknowledgeAuthenticationGate() = Unit
+
+        override suspend fun logout() = Unit
 
         override suspend fun sendMobileCode(mobile: String): SendMobileCodeResult {
             sentCodeMobiles += mobile
@@ -145,11 +211,26 @@ class LoginViewModelTest {
 
         override suspend fun loginWithPassword(username: String, password: String): PasswordLoginResult {
             passwordRequests += username to password
-            return passwordResult
+            return passwordResults.removeFirst()
         }
 
         override suspend fun createQrLoginKey(): QrLoginKeyResult = error("unused")
 
         override suspend fun checkQrLogin(key: String): QrLoginCheckResult = error("unused")
+    }
+
+    private class FakeRiskRepository(private val method: RiskVerificationMethod? = null) : RiskVerificationRepository {
+        val proofs = mutableListOf<RiskVerificationProof>()
+
+        override suspend fun methodFor(challenge: RiskChallengeHandle): RiskVerificationMethodResult =
+            RiskVerificationMethodResult.Available(checkNotNull(method))
+
+        override suspend fun submit(
+            challenge: RiskChallengeHandle,
+            proof: RiskVerificationProof,
+        ): RiskVerificationSubmitResult {
+            proofs += proof
+            return RiskVerificationSubmitResult.Verified
+        }
     }
 }

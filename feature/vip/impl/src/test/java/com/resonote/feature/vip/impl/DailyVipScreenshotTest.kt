@@ -22,7 +22,7 @@ import org.robolectric.annotation.GraphicsMode
 
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(sdk = [35], qualifiers = "w390dp-h844dp-420dpi")
+@Config(sdk = [35], qualifiers = "zh-rCN-w390dp-h844dp-420dpi")
 class DailyVipScreenshotTest {
     @get:Rule
     val composeRule = createComposeRule()
@@ -31,8 +31,7 @@ class DailyVipScreenshotTest {
     fun dailyVip_ready() {
         setScreen(DailyVipUiState.Ready("2026-08-13"))
 
-        composeRule.onNodeWithTag("daily-vip-ticket").assertIsDisplayed()
-        composeRule.onNodeWithText("领取今日 VIP").assertIsDisplayed()
+        composeRule.onNodeWithTag("daily-vip-dialog").assertIsDisplayed()
         capture("ready")
     }
 
@@ -59,9 +58,9 @@ class DailyVipScreenshotTest {
                 override = DeviceConfigurationOverride.ForcedSize(DpSize(390.dp, 844.dp)),
             ) {
                 ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
-                    DailyVipScreen(
+                    DailyVipDialog(
                         state = state,
-                        onBack = {},
+                        onDismiss = {},
                         onClaim = {},
                         onUpgrade = {},
                         onDeclineUpgrade = {},

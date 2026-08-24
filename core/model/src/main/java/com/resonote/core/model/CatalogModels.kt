@@ -28,6 +28,8 @@ data class ArtistInfo(
     val fansCount: Long,
 )
 
+data class FollowedArtist(val id: String, val name: String, val avatarUrl: String?)
+
 data class ArtistSongsPage(
     val info: ArtistInfo?,
     val songs: List<OnlineSong>,
@@ -35,3 +37,24 @@ data class ArtistSongsPage(
     val total: Int,
     val hasMore: Boolean,
 )
+
+data class ArtistAlbum(
+    val id: String,
+    val name: String,
+    val artist: String?,
+    val coverUrl: String?,
+    val publishDate: String,
+    val songCount: Int,
+)
+
+data class ArtistAlbumsPage(val albums: List<ArtistAlbum>, val page: Int, val total: Int?, val hasMore: Boolean)
+
+data class ArtistVideo(
+    val hash: String,
+    val name: String,
+    val singer: String?,
+    val coverUrl: String?,
+    val durationMillis: Long,
+)
+
+data class ArtistVideosPage(val videos: List<ArtistVideo>, val page: Int, val total: Int?, val hasMore: Boolean)

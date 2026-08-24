@@ -2,10 +2,15 @@ package com.resonote.core.data
 
 import com.resonote.core.model.Album
 import com.resonote.core.model.AlbumRegion
+import com.resonote.core.model.ArtistAlbum
+import com.resonote.core.model.ArtistAlbumsPage
 import com.resonote.core.model.ArtistInfo
 import com.resonote.core.model.ArtistSongsPage
+import com.resonote.core.model.ArtistVideo
+import com.resonote.core.model.ArtistVideosPage
 import com.resonote.core.model.Banner
 import com.resonote.core.model.CatalogSongPage
+import com.resonote.core.model.FollowedArtist
 import com.resonote.core.model.PlaylistCategory
 import com.resonote.core.model.PlaylistSummary
 import com.resonote.core.model.SongPage
@@ -95,6 +100,63 @@ internal class DefaultContentCatalogRepository @Inject constructor(
             val result = network.artistSongs(artistId, page, pageSize, newestFirst)
             ArtistSongsPage(info, result.songs.map { it.toOnlineSong() }, page, info?.songCount ?: 0, result.hasMore)
         }
+
+    override suspend fun loadArtistAlbums(artistId: String, page: Int, pageSize: Int, newestFirst: Boolean) =
+        loadCollection(riskChallenges) {
+            require(artistId.isNotBlank()) { "artistId must not be blank" }
+            validateCollectionPage(page, pageSize)
+            val result = network.artistAlbums(artistId, page, pageSize, newestFirst)
+            ArtistAlbumsPage(
+                albums = result.albums.map {
+                    ArtistAlbum(
+                        id = it.id,
+                        name = it.name,
+                        artist = it.artist,
+                        coverUrl = it.coverUrl?.replace("{size}", "480"),
+                        publishDate = it.publishDate,
+                        songCount = it.songCount,
+                    )
+                },
+                page = page,
+                total = result.total,
+                hasMore = result.hasMore,
+            )
+        }
+
+    override suspend fun loadArtistVideos(artistId: String, page: Int, pageSize: Int) = loadCollection(riskChallenges) {
+        require(artistId.isNotBlank()) { "artistId must not be blank" }
+        validateCollectionPage(page, pageSize)
+        val result = network.artistVideos(artistId, page, pageSize)
+        ArtistVideosPage(
+            videos = result.videos.map {
+                ArtistVideo(it.hash, it.name, it.singer, it.coverUrl?.replace("{size}", "480"), it.durationMillis)
+            },
+            page = page,
+            total = result.total,
+            hasMore = result.hasMore,
+        )
+    }
+
+    override suspend fun loadFollowedArtists() = loadCollection(riskChallenges) {
+        network.followedArtists().map {
+            FollowedArtist(
+                id = it.id,
+                name = it.name,
+                avatarUrl = it.avatarUrl?.replace("{size}", "240"),
+            )
+        }
+    }
+
+    override suspend fun loadArtistFollowed(artistId: String) = loadCollection(riskChallenges) {
+        require(artistId.isNotBlank()) { "artistId must not be blank" }
+        network.isArtistFollowed(artistId)
+    }
+
+    override suspend fun setArtistFollowed(artistId: String, followed: Boolean) = loadCollection(riskChallenges) {
+        require(artistId.isNotBlank()) { "artistId must not be blank" }
+        network.setArtistFollowed(artistId, followed)
+        followed
+    }
 
     private fun com.resonote.core.network.model.NetworkPlaylistCategory.toDomain(): PlaylistCategory = PlaylistCategory(
         tagId,

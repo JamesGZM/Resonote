@@ -1,22 +1,32 @@
 {
   "status": 1,
   "data": {
-    "lists": [
+    "bp": "cursor-2",
+    "has_more": 1,
+    "songs": [
       {
-        "hash": "ABC123",
-        "name": "Artist One - First Song",
-        "singername": "Artist One",
-        "author_name": "Artist One",
-        "image": "https://image.example/{size}/first.jpg",
-        "duration": 245,
-        "future_field": "ignored"
+        "mxid": 456,
+        "ot": 1700000000,
+        "info": {
+          "hash": "DEF456",
+          "name": "Second Song",
+          "author_name": "Artist Two",
+          "image": "",
+          "duration": 180000
+        }
       },
       {
-        "hash": "DEF456",
-        "name": "Second Song",
-        "author_name": "Artist Two",
-        "image": "",
-        "duration": 180000
+        "mxid": 123,
+        "ot": 1700000200,
+        "info": {
+          "hash": "ABC123",
+          "name": "Artist One - First Song",
+          "singername": "Artist One",
+          "author_name": "Artist One",
+          "image": "https://image.example/{size}/first.jpg",
+          "duration": 245,
+          "future_field": "ignored"
+        }
       }
     ]
   }

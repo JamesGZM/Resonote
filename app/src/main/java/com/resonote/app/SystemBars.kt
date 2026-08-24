@@ -16,17 +16,24 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 
 @Composable
-internal fun SyncSystemBars(navigationBarColor: Color) {
+internal fun SyncSystemBars(
+    navigationBarColor: Color,
+    statusBarColor: Color = Color.Transparent,
+    forceDarkStatusBar: Boolean = false,
+) {
     val view = LocalView.current
     val activity = LocalContext.current.findComponentActivity()
-    val statusBarIsDark = MaterialTheme.colorScheme.background.luminance() < DARK_SURFACE_LUMINANCE_THRESHOLD
+    val statusBarIsDark =
+        forceDarkStatusBar ||
+            (if (statusBarColor == Color.Transparent) MaterialTheme.colorScheme.background else statusBarColor)
+                .luminance() < DARK_SURFACE_LUMINANCE_THRESHOLD
     val navigationBarIsDark = navigationBarColor.luminance() < DARK_SURFACE_LUMINANCE_THRESHOLD
     if (!view.isInEditMode && activity != null) {
         SideEffect {
             activity.enableEdgeToEdge(
                 statusBarStyle = SystemBarStyle.auto(
-                    lightScrim = android.graphics.Color.TRANSPARENT,
-                    darkScrim = android.graphics.Color.TRANSPARENT,
+                    lightScrim = statusBarColor.toArgb(),
+                    darkScrim = statusBarColor.toArgb(),
                 ) { statusBarIsDark },
                 navigationBarStyle = navigationBarColor.toSystemBarStyle(navigationBarIsDark),
             )

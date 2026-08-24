@@ -23,3 +23,5 @@ data class OnlineSong(
 )
 
 data class SongPage(val songs: List<OnlineSong>, val page: Int, val total: Int?, val hasMore: Boolean)
+
+data class ListeningHistoryPage(val songs: List<OnlineSong>, val nextCursor: String?, val hasMore: Boolean)

@@ -32,7 +32,7 @@ internal class AndroidLocalMediaStore internal constructor(
     ) : this(
         privateRoot = File(context.filesDir, ROOT_DIRECTORY),
         availableBytes = { StatFs(context.filesDir.absolutePath).availableBytes },
-        sourceGateway = ContentResolverSourceGateway(context.contentResolver),
+        sourceGateway = ContentResolverSourceGateway(context),
         mediaProbe = PlatformLocalMediaProbe(context),
         ioDispatcher = Dispatchers.IO,
     )

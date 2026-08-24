@@ -58,3 +58,34 @@ internal data class ArtistAudiosRequest(
     val sort: Int,
     @SerialName("area_code") val areaCode: String,
 )
+
+@Serializable
+internal data class ArtistAlbumsRequest(
+    @SerialName("author_id") val artistId: String,
+    val pagesize: Int,
+    val page: Int,
+    val sort: Int,
+    val category: Int,
+    @SerialName("area_code") val areaCode: String,
+)
+
+@Serializable
+internal data class ArtistFollowListRequest(
+    val merge: Int,
+    @SerialName("need_iden_type") val needIdentityType: Int,
+    @SerialName("ext_params") val extendedParams: String,
+    val userid: Long,
+    val type: Int,
+    @SerialName("id_type") val idType: Int,
+    val p: String,
+)
+
+@Serializable
+internal data class ArtistFollowMutationRequest(
+    val plat: Int,
+    val userid: Long,
+    val singerid: Long,
+    val source: Int,
+    val p: String,
+    val params: String,
+)

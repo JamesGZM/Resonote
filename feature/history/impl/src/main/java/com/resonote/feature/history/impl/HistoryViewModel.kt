@@ -33,6 +33,8 @@ class HistoryViewModel @Inject constructor(
 
     private val mutableLoginRequests = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val loginRequests: SharedFlow<Unit> = mutableLoginRequests.asSharedFlow()
+    private val mutableRefreshFailures = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val refreshFailures: SharedFlow<Unit> = mutableRefreshFailures.asSharedFlow()
 
     private var initialized = false
     private var activeUserId: String? = null
@@ -85,6 +87,33 @@ class HistoryViewModel @Inject constructor(
         }
     }
 
+    fun loadMoreOnline() {
+        val userId = activeUserId ?: return
+        val current = mutableUiState.value.online as? OnlineHistoryUiState.Available ?: return
+        val cursor = current.nextCursor ?: return
+        if (onlineJob?.isActive == true || !current.hasMore || current.isLoadingMore) return
+        onlineJob = viewModelScope.launch {
+            mutableUiState.update { state ->
+                state.copy(online = current.copy(isLoadingMore = true, loadMoreFailure = null))
+            }
+            val updated = when (val result = historyRepository.loadAccountHistory(cursor)) {
+                is CollectionLoadResult.Available -> current.copy(
+                    songs = (current.songs + result.value.songs).distinctBy { it.hash },
+                    nextCursor = result.value.nextCursor,
+                    hasMore = result.value.hasMore && result.value.nextCursor != cursor,
+                    isLoadingMore = false,
+                    loadMoreFailure = null,
+                )
+                is CollectionLoadResult.Failed -> current.copy(
+                    isLoadingMore = false,
+                    loadMoreFailure = result.failure,
+                )
+            }
+            if (activeUserId == userId) mutableUiState.update { it.copy(online = updated) }
+            onlineJob = null
+        }
+    }
+
     fun deleteDeviceItem(item: DeviceHistoryItem) = mutateDeviceHistory {
         historyRepository.deleteDeviceHistory(item.record)
     }
@@ -99,6 +128,10 @@ class HistoryViewModel @Inject constructor(
         when (authState) {
             is AuthState.Authenticated -> {
                 val accountChanged = activeUserId != authState.userId
+                if (accountChanged) {
+                    onlineJob?.cancel()
+                    onlineJob = null
+                }
                 activeUserId = authState.userId
                 mutableUiState.update { state ->
                     state.copy(
@@ -127,12 +160,25 @@ class HistoryViewModel @Inject constructor(
     private fun loadOnline(force: Boolean = false) {
         val userId = activeUserId ?: return
         if (onlineJob?.isActive == true) return
-        if (!force && mutableUiState.value.online is OnlineHistoryUiState.Available) return
+        val current = mutableUiState.value.online as? OnlineHistoryUiState.Available
+        if (!force && current != null) return
         onlineJob = viewModelScope.launch {
-            mutableUiState.update { it.copy(online = OnlineHistoryUiState.Loading) }
+            mutableUiState.update {
+                it.copy(
+                    online = current?.copy(isRefreshing = true, loadMoreFailure = null)
+                        ?: OnlineHistoryUiState.Loading,
+                )
+            }
             val section = when (val result = historyRepository.loadAccountHistory()) {
-                is CollectionLoadResult.Available -> OnlineHistoryUiState.Available(result.value)
-                is CollectionLoadResult.Failed -> OnlineHistoryUiState.Failed(result.failure)
+                is CollectionLoadResult.Available -> OnlineHistoryUiState.Available(
+                    songs = result.value.songs,
+                    nextCursor = result.value.nextCursor,
+                    hasMore = result.value.hasMore,
+                )
+                is CollectionLoadResult.Failed -> current?.let {
+                    mutableRefreshFailures.emit(Unit)
+                    it.copy(isRefreshing = false)
+                } ?: OnlineHistoryUiState.Failed(result.failure)
             }
             if (activeUserId == userId) mutableUiState.update { it.copy(online = section) }
             onlineJob = null

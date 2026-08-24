@@ -2,8 +2,11 @@ package com.resonote.core.network.api
 
 import com.resonote.core.network.api.model.AlbumSongsRequest
 import com.resonote.core.network.api.model.ApiResponse
+import com.resonote.core.network.api.model.ArtistAlbumsRequest
 import com.resonote.core.network.api.model.ArtistAudiosRequest
 import com.resonote.core.network.api.model.ArtistDetailRequest
+import com.resonote.core.network.api.model.ArtistFollowListRequest
+import com.resonote.core.network.api.model.ArtistFollowMutationRequest
 import com.resonote.core.network.api.model.BannerRequest
 import com.resonote.core.network.api.model.MusicSongDto
 import com.resonote.core.network.api.model.NewSongsRequest
@@ -97,4 +100,34 @@ internal interface ContentApi {
     @ApiRequestPolicy(router = "openapi.kugou.com", kgTid = 220)
     @POST
     suspend fun artistSongs(@Url url: String, @Body body: ArtistAudiosRequest): ApiResponse<JsonElement>
+
+    @ApiRequestPolicy(router = "openapi.kugou.com", kgTid = 36)
+    @POST("kmr/v1/author/albums")
+    suspend fun artistAlbums(@Body body: ArtistAlbumsRequest): ApiResponse<JsonElement>
+
+    @ApiRequestPolicy
+    @GET
+    suspend fun artistVideos(
+        @Url url: String,
+        @Query("author_id") artistId: String,
+        @Query("is_fanmade") isFanmade: String = "",
+        @Query("tag_idx") tagIndex: String = "",
+        @Query("pagesize") pageSize: Int,
+        @Query("page") page: Int,
+    ): ApiResponse<JsonElement>
+
+    @ApiRequestPolicy(router = "relationuser.kugou.com")
+    @POST("v4/follow_list")
+    suspend fun artistFollowList(
+        @Query("plat") platform: Int = 1,
+        @Body body: ArtistFollowListRequest,
+    ): ApiResponse<JsonElement>
+
+    @ApiRequestPolicy
+    @POST
+    suspend fun mutateArtistFollow(
+        @Url url: String,
+        @Query("clienttime") clientTime: Long,
+        @Body body: ArtistFollowMutationRequest,
+    ): ApiResponse<JsonElement>
 }

@@ -37,7 +37,6 @@ internal class RealPlaylistNetworkDataSource @Inject constructor(
         val count = sequenceOf(data.count, listInfo?.count).filterNotNull().firstOrNull()
             ?.coerceIn(0, Int.MAX_VALUE.toLong())?.toInt()
         val title = listInfo?.name?.takeIf(String::isNotBlank)
-        if (listInfo != null && title == null) throw missingField()
         val info = title?.let {
             NetworkPlaylistInfo(
                 normalizedId,

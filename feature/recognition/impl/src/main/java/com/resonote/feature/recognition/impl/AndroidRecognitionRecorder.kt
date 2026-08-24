@@ -21,7 +21,7 @@ internal class AndroidRecognitionRecorder @Inject constructor() : RecognitionRec
 
     override suspend fun capture(
         maxDurationMillis: Long,
-        onProgress: (elapsedMillis: Long) -> Unit,
+        onProgress: (elapsedMillis: Long, amplitude: Float, waveform: List<Float>) -> Unit,
     ): RecognitionCaptureResult = withContext(Dispatchers.IO) {
         require(maxDurationMillis > 0) { "maxDurationMillis must be positive" }
         val bytesPerSecond = RECOGNITION_SAMPLE_RATE * Short.SIZE_BYTES
@@ -52,9 +52,10 @@ internal class AndroidRecognitionRecorder @Inject constructor() : RecognitionRec
         }
 
         val output = ByteArrayOutputStream(maximumBytes)
-        val buffer = ByteArray(minimumBuffer.coerceAtLeast(1_024))
+        val buffer = ByteArray(minimumBuffer.coerceAtLeast(256).coerceAtMost(512))
         synchronized(recorderLock) { activeRecorder = recorder }
         capturing.set(true)
+        var smoothedAmplitude = 0f
         try {
             recorder.startRecording()
             if (recorder.recordingState != AudioRecord.RECORDSTATE_RECORDING) {
@@ -66,7 +67,15 @@ internal class AndroidRecognitionRecorder @Inject constructor() : RecognitionRec
                 val count = recorder.read(buffer, 0, requested, AudioRecord.READ_BLOCKING)
                 if (count <= 0) return@withContext RecognitionCaptureResult.Failed
                 output.write(buffer, 0, count)
-                onProgress(output.size().toLong() * 1_000L / bytesPerSecond)
+                val analysis = analyzeRecognitionPcm(buffer, count)
+                val measuredAmplitude = analysis.rmsAmplitude
+                val smoothing = if (measuredAmplitude > smoothedAmplitude) 0.52f else 0.18f
+                smoothedAmplitude += (measuredAmplitude - smoothedAmplitude) * smoothing
+                onProgress(
+                    output.size().toLong() * 1_000L / bytesPerSecond,
+                    smoothedAmplitude,
+                    analysis.waveform,
+                )
             }
             RecognitionCaptureResult.Captured(output.toByteArray())
         } catch (cancellation: CancellationException) {

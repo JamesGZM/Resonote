@@ -4,7 +4,16 @@
     <string name="core_designsystem_playing">Playing</string>
     <string name="core_designsystem_song_artwork">Artwork for %1$s</string>
     <string name="core_designsystem_playlist_artwork">Playlist artwork for %1$s</string>
+    <string name="core_designsystem_artist_artwork">Artist artwork for %1$s</string>
+    <string name="core_designsystem_video_artwork">Video artwork for %1$s</string>
+    <string name="core_designsystem_play_video">Play %1$s</string>
     <string name="core_designsystem_refreshing">Refreshing</string>
+    <string name="core_designsystem_empty_title">Nothing here yet</string>
+    <string name="core_designsystem_empty_message">Try another filter or come back later.</string>
+    <string name="core_designsystem_error_title">Couldn’t load content</string>
+    <string name="core_designsystem_error_message">Please check your connection and try again.</string>
+    <string name="core_designsystem_retry">Retry</string>
+    <string name="core_designsystem_load_more_failed">Couldn’t load more</string>
     <plurals name="core_designsystem_text_field_character_limit_exceeded">
         <item quantity="one">Maximum %1$d character.</item>
         <item quantity="other">Maximum %1$d characters.</item>

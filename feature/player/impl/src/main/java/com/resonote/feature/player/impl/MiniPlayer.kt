@@ -1,5 +1,6 @@
 package com.resonote.feature.player.impl
 
+import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,6 +36,8 @@ import com.resonote.core.designsystem.component.ResonoteArtworkBadge
 import com.resonote.core.designsystem.component.ResonoteArtworkState
 import com.resonote.core.designsystem.component.ResonoteIconButton
 import com.resonote.core.designsystem.component.ResonoteRemoteArtwork
+import com.resonote.core.designsystem.component.resonoteHero
+import com.resonote.core.designsystem.component.resonoteHeroElement
 import com.resonote.core.designsystem.tokens.ResonoteTokens
 import com.resonote.feature.player.impl.R
 
@@ -57,6 +60,7 @@ fun ResonoteMiniPlayer(
     onTogglePlay: () -> Unit,
     onOpenQueue: () -> Unit,
     modifier: Modifier = Modifier,
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
 ) {
     val containerHeightModifier = if (LocalDensity.current.fontScale < 1.75f) {
         Modifier.height(72.dp)
@@ -67,6 +71,7 @@ fun ResonoteMiniPlayer(
         onClick = onOpenPlayer,
         modifier = modifier
             .fillMaxWidth()
+            .resonoteHero(ResonotePlayerHeroKeys.container(state.mediaId), animatedVisibilityScope)
             .then(containerHeightModifier),
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceContainer,
@@ -93,6 +98,10 @@ fun ResonoteMiniPlayer(
                         contentDescription = stringResource(R.string.feature_player_impl_artwork, state.title),
                         modifier = Modifier
                             .size(56.dp)
+                            .resonoteHeroElement(
+                                ResonotePlayerHeroKeys.artwork(state.mediaId),
+                                animatedVisibilityScope,
+                            )
                             .testTag("resonote-mini-player-artwork"),
                         shape = ResonoteTokens.artworkShapes.standard,
                     ) {

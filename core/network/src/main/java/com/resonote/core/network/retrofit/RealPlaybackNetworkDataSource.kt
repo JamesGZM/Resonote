@@ -42,24 +42,31 @@ internal class RealPlaybackNetworkDataSource @Inject constructor(
         require(hash.isNotBlank()) { "hash must not be blank" }
         val session = registration.ensureRegisteredSession()
         val normalizedHash = hash.trim().lowercase()
-        val normalizedAlbumId = albumId?.toLongOrNull() ?: 0
+        val normalizedAlbumId = (albumId?.toLongOrNull() ?: 0).toString()
+        val normalizedAlbumAudioId = (albumAudioId?.toLongOrNull() ?: 0).toString()
         val normalizedQuality = requestedQuality.takeIf(QUALITY_LEVELS::contains) ?: STANDARD_QUALITY
         val candidates = if (session.isAuthenticated) {
-            resolveCandidates(normalizedHash, normalizedAlbumId, normalizedQuality)
+            resolveCandidates(
+                hash = normalizedHash,
+                requestedQuality = normalizedQuality,
+                token = requireNotNull(session.token),
+                userId = requireNotNull(session.userId),
+            )
         } else {
             listOf(PlaybackCandidate(normalizedHash, STANDARD_QUALITY))
         }
         var lastFailureCode: String? = null
         var lastFailure: ApiException? = null
         var sawVipRequired = false
+        var sawCopyrightRestricted = false
         for (candidate in candidates) {
             val response = try {
                 calls.execute(detectHttpAuthenticationFailure = false) {
                     musicApi.songSource(
-                        albumId = normalizedAlbumId.toString(),
+                        albumId = if (session.isAuthenticated) NO_ALBUM_ID else normalizedAlbumId,
                         hash = candidate.hash,
                         quality = candidate.quality,
-                        albumAudioId = (albumAudioId?.toLongOrNull() ?: 0).toString(),
+                        albumAudioId = if (session.isAuthenticated) NO_ALBUM_AUDIO_ID else normalizedAlbumAudioId,
                         isFreePart = if (session.isAuthenticated) "0" else "1",
                         parentPageId =
                         if (session.isAuthenticated) {
@@ -68,6 +75,8 @@ internal class RealPlaybackNetworkDataSource @Inject constructor(
                             ANONYMOUS_PARENT_PAGE_ID
                         },
                         key = signer.signSongKey(candidate.hash, session.mid, session.userId),
+                        token = session.token,
+                        userId = session.userId,
                     )
                 }
             } catch (authentication: ApiAuthenticationRequiredException) {
@@ -83,10 +92,21 @@ internal class RealPlaybackNetworkDataSource @Inject constructor(
             if (failureCode == null) {
                 if (response.extension.equals("mp4", ignoreCase = true)) continue
                 if (response.status?.toDoubleOrNull() == SUCCESS_STATUS && !response.hasAnyUrl()) {
-                    sawVipRequired = true
+                    lastFailure = ApiProtocolException(ApiProtocolException.Reason.MalformedResponse)
                     continue
                 }
-                return decodeSongSource(response)
+                try {
+                    return decodeSongSource(response, isPreview = !session.isAuthenticated)
+                } catch (unavailable: ApiPlaybackUnavailableException) {
+                    if (unavailable.reason == ApiPlaybackUnavailableException.Reason.Copyright) {
+                        sawCopyrightRestricted = true
+                        continue
+                    }
+                    throw unavailable
+                } catch (failure: ApiException) {
+                    lastFailure = failure
+                    continue
+                }
             }
             if (failureCode == SONG_SOURCE_VIP_REQUIRED_CODE) {
                 sawVipRequired = true
@@ -94,14 +114,16 @@ internal class RealPlaybackNetworkDataSource @Inject constructor(
                 lastFailureCode = failureCode
             }
         }
-        if (sawVipRequired && lastFailureCode == null) {
-            throw ApiPlaybackUnavailableException(ApiPlaybackUnavailableException.Reason.Vip)
+        lastFailureCode?.let { throw ApiServiceException(it) }
+        if (sawVipRequired) throw ApiPlaybackUnavailableException(ApiPlaybackUnavailableException.Reason.Vip)
+        if (sawCopyrightRestricted) {
+            throw ApiPlaybackUnavailableException(ApiPlaybackUnavailableException.Reason.Copyright)
         }
-        if (lastFailureCode == null) lastFailure?.let { throw it }
-        throw ApiServiceException(lastFailureCode)
+        lastFailure?.let { throw it }
+        throw ApiProtocolException(ApiProtocolException.Reason.MalformedResponse)
     }
 
-    private fun decodeSongSource(response: SongSourceResponse): NetworkSongSource {
+    private fun decodeSongSource(response: SongSourceResponse, isPreview: Boolean): NetworkSongSource {
         val status = response.status?.toLongOrNull() ?: throw missingField()
         val rawUrls = sequenceOf(response.url, response.backupUrl, response.legacyBackupUrl)
             .flatten()
@@ -117,33 +139,35 @@ internal class RealPlaybackNetworkDataSource @Inject constructor(
             throw ApiProtocolException(ApiProtocolException.Reason.MalformedResponse)
         }
         if (playableUrl == null) {
-            val reason = if (status == 3L) {
-                ApiPlaybackUnavailableException.Reason.Copyright
-            } else {
-                ApiPlaybackUnavailableException.Reason.Vip
+            if (status == 3L) {
+                throw ApiPlaybackUnavailableException(ApiPlaybackUnavailableException.Reason.Copyright)
             }
-            throw ApiPlaybackUnavailableException(reason)
+            throw ApiProtocolException(ApiProtocolException.Reason.MalformedResponse)
         }
         return NetworkSongSource(
             uri = playableUrl.toString(),
             durationMillis = normalizeDurationMillis(response.timeLength),
             extension = response.extension?.takeIf(String::isNotBlank),
+            isPreview = isPreview,
         )
     }
 
     private suspend fun resolveCandidates(
         hash: String,
-        albumId: Long,
         requestedQuality: String,
+        token: String,
+        userId: String,
     ): List<PlaybackCandidate> {
         val fallbackQualities = fallbackQualities(requestedQuality)
         val response = try {
             calls.execute(detectHttpAuthenticationFailure = false) {
                 musicApi.songPrivilege(
-                    SongPrivilegeRequest(
+                    token = token,
+                    userId = userId,
+                    body = SongPrivilegeRequest(
                         appid = ApiProtocolConfig.APP_ID.toInt(),
                         clientver = ApiProtocolConfig.CLIENT_VERSION.toInt(),
-                        resource = listOf(SongPrivilegeResource(hash = hash, albumId = albumId)),
+                        resource = listOf(SongPrivilegeResource(hash = hash)),
                     ),
                 )
             }
@@ -171,8 +195,9 @@ internal class RealPlaybackNetworkDataSource @Inject constructor(
             }
             .distinctBy(PlaybackCandidate::quality)
             .associateBy(PlaybackCandidate::quality)
-        return fallbackQualities.mapNotNull(candidatesByQuality::get)
-            .ifEmpty { fallbackQualities.map { PlaybackCandidate(hash, it) } }
+        return fallbackQualities.map { quality ->
+            candidatesByQuality[quality] ?: PlaybackCandidate(hash, quality)
+        }
     }
 
     private fun fallbackQualities(requestedQuality: String): List<String> = QUALITY_LEVELS.take(
@@ -208,6 +233,8 @@ internal class RealPlaybackNetworkDataSource @Inject constructor(
         data class PlaybackCandidate(val hash: String, val quality: String)
 
         const val KUGOU_DOMAIN = "kugou.com"
+        const val NO_ALBUM_ID = "0"
+        const val NO_ALBUM_AUDIO_ID = "0"
         const val STANDARD_QUALITY = "128"
         const val AUTHENTICATED_PARENT_PAGE_ID = "356753938"
         const val ANONYMOUS_PARENT_PAGE_ID = "356753938,823673182,967485191"

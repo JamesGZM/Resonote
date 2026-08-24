@@ -7,7 +7,9 @@ import com.resonote.core.model.DeviceHistoryRecord
 import com.resonote.core.model.DeviceHistorySource
 import com.resonote.core.model.LocalMedia
 import com.resonote.core.model.LocalMediaId
+import com.resonote.core.model.OnlinePlaybackQuality
 import com.resonote.core.model.OnlineSong
+import com.resonote.core.model.PlaybackMode
 import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.model.PlaybackUnavailableReason
 import com.resonote.core.model.ResolvedSongSource
@@ -56,6 +58,7 @@ data class PlaybackItem(
     val metadata: PlaybackMetadata,
     val origin: PlaybackOrigin,
     val resolvedSource: ResolvedSongSource? = null,
+    val onlineQualityOverride: OnlinePlaybackQuality? = null,
 ) {
     constructor(
         song: OnlineSong,
@@ -112,13 +115,6 @@ enum class PlaybackStatus {
     Paused,
     Ended,
     Failed,
-}
-
-enum class PlaybackMode {
-    ListLoop,
-    Shuffle,
-    SingleLoop,
-    Sequential,
 }
 
 sealed interface PlaybackIssue {
@@ -187,6 +183,10 @@ interface PlaybackController {
     fun setMode(mode: PlaybackMode)
 
     fun setPlaybackSpeed(speed: PlaybackSpeed)
+
+    fun setCurrentOnlineQuality(quality: OnlinePlaybackQuality)
+
+    fun refreshCurrentOnlineSource(force: Boolean = false)
 
     fun clear()
 }

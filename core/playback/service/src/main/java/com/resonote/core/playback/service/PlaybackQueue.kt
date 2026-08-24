@@ -141,6 +141,16 @@ internal class PlaybackQueue {
         }
     }
 
+    fun peekNext(wrap: Boolean): PlaybackItem? {
+        if (mutableItems.isEmpty()) return null
+        val nextIndex = currentIndex + 1
+        return when {
+            nextIndex in mutableItems.indices -> mutableItems[nextIndex]
+            wrap -> mutableItems.first()
+            else -> null
+        }
+    }
+
     fun previous(wrap: Boolean): PlaybackItem? {
         if (mutableItems.isEmpty()) return null
         val previousIndex = currentIndex - 1

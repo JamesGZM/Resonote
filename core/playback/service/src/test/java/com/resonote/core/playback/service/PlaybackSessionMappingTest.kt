@@ -36,6 +36,26 @@ class PlaybackSessionMappingTest {
     }
 
     @Test
+    fun restoredVipProgressIsNotClampedToPreviewBeforeSourceResolution() {
+        val vipItem = PlaybackItem(
+            onlineSong("vip").copy(
+                vip = true,
+                previewDurationMillis = 60_000,
+            ),
+        )
+
+        val state = PlaybackSessionSnapshot(
+            entries = listOf(vipItem.toSessionEntry()),
+            currentIndex = 0,
+            positionMillis = 157_000,
+            mode = "ListLoop",
+        ).toPlaybackState(PlaybackSpeed.Normal)
+
+        assertThat(state?.positionMillis).isEqualTo(157_000)
+        assertThat(state?.durationMillis).isEqualTo(180_000)
+    }
+
+    @Test
     fun mappingsPreserveQueueMetadataAndOriginsWithoutResolvedSource() {
         val online = PlaybackItem(
             OnlineSong(

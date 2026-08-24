@@ -53,7 +53,7 @@ android {
             applicationIdSuffix = ".debug"
         }
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             signingConfig = signingConfigs.named("release").get()
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
@@ -87,17 +87,19 @@ dependencies {
     implementation(projects.feature.playlist.impl)
     implementation(projects.feature.ranking.api)
     implementation(projects.feature.ranking.impl)
+    implementation(projects.feature.risk.impl)
     implementation(projects.feature.recognition.api)
     implementation(projects.feature.recognition.impl)
     implementation(projects.feature.search.api)
     implementation(projects.feature.search.impl)
     implementation(projects.feature.settings.api)
     implementation(projects.feature.settings.impl)
-    implementation(projects.feature.vip.api)
     implementation(projects.feature.vip.impl)
     implementation(projects.feature.video.api)
     implementation(projects.feature.video.impl)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.compose.animation)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.compose.material3)
@@ -108,10 +110,8 @@ dependencies {
     implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.navigation3)
     implementation(libs.coil.compose)
-    implementation(libs.coil.network.okhttp)
-    implementation(platform(libs.okhttp.bom))
-    implementation(libs.okhttp.core)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

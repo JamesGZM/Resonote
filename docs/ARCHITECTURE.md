@@ -84,6 +84,13 @@ flowchart TB
 
 `core:data` 提供 Repository，是 Feature 获取应用数据的唯一入口。Repository 决定如何组合远端、本地数据库、偏好和媒体文件，并负责转换为 `core:model`。
 
+事实源按数据寿命确定：
+
+- 用户持久状态、设备历史和本地媒体以 Room / DataStore / App 私有文件为本地单一事实源。
+- 首页快照是启动和离线降级缓存，成功刷新后更新，不替代远端内容事实。
+- 搜索、榜单、在线歌单、艺人/专辑、云盘、歌词、MV 地址与短时播放地址以远端为事实源；没有产品合同不得为了形式上的“离线优先”持久化。
+- 只有批准离线能力或后台同步后，才为对应数据增加 Room 缓存、刷新策略与 WorkManager；Repository 的存在本身不表示数据可离线使用。
+
 - `core:network`：语义化 Network DataSource、私有 Retrofit Service/DTO、签名、Session、风控和特殊协议。
 - `core:database`：Room Database、DAO、Entity 与 Migration。
 - `core:datastore` / `datastore-proto`：主题、播放偏好、Session 等非关系型持久状态。
@@ -91,9 +98,11 @@ flowchart TB
 
 ### Playback
 
-`core:playback:api` 定义 UI 可消费的播放状态和命令，不暴露 Media3。`core:playback:service` 持有 ExoPlayer、Queue、Source Resolver、失败恢复、播放历史资格和 MediaSessionService。
+`core:playback:api` 定义 UI 可消费的后台音频播放状态和命令，不暴露 Media3。`core:playback:service` 持有音频 ExoPlayer、Queue、Source Resolver、失败恢复、播放历史资格和 MediaSessionService。
 
-页面销毁不能成为停止播放的信号；Feature 只向 `PlaybackController` 发送意图并观察状态。
+音频页面销毁不能成为停止播放的信号；Feature 只向 `PlaybackController` 发送意图并观察状态。
+
+MV 是不支持后台播放、MediaSession 或画中画的前台页面资源。`:feature:video:impl` 可以在页面组合期间持有独立 Video Player，并必须在页面退出时释放；它不得加入音频 Queue、复用短时音频 URL 或改变后台音频的事实源。完整边界见 [ADR-0005](adr/0005-video-playback-ownership.md)。
 
 ## 4. UI 与数据流
 
