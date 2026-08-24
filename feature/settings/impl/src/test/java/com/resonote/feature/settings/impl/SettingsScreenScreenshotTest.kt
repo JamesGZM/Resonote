@@ -3,6 +3,7 @@ package com.resonote.feature.settings.impl
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -102,6 +103,29 @@ class SettingsScreenScreenshotTest {
         composeRule.onNodeWithText("Lossless · FLAC").performClick()
 
         assertThat(selected).isEqualTo(OnlinePlaybackQuality.Lossless)
+    }
+
+    @Test
+    fun lyricsSupplementalSheetUsesTwoIndependentEnabledSwitches() {
+        var translationEnabled: Boolean? = null
+        var transliterationEnabled: Boolean? = null
+        composeRule.setContent {
+            ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                LyricsSupplementalTextSheet(
+                    translationEnabled = true,
+                    transliterationEnabled = true,
+                    onTranslationEnabledChange = { translationEnabled = it },
+                    onTransliterationEnabledChange = { transliterationEnabled = it },
+                    onDismiss = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("lyrics-translation-switch").assertIsOn().performClick()
+        composeRule.onNodeWithTag("lyrics-transliteration-switch").assertIsOn().performClick()
+
+        assertThat(translationEnabled).isFalse()
+        assertThat(transliterationEnabled).isFalse()
     }
 
     @Test

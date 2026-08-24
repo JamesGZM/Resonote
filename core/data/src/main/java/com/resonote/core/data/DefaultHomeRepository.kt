@@ -96,12 +96,17 @@ internal class DefaultHomeRepository @Inject constructor(
                     }.take(HOME_ITEM_COUNT)
                 }
             }
-        val dailyResult = daily.await()
+        var dailyResult = daily.await()
         val playlistResult = playlists.await()
         val newSongResult = newSongs.await()
-        val issues = listOfNotNull(dailyResult.issue, playlistResult.issue, newSongResult.issue)
 
         awaitCache()
+        if (dailyResult.value?.isEmpty() == true && mutableContent.value?.dailyRecommendations.isNullOrEmpty()) {
+            dailyResult = loadSection(HomeSection.DailyRecommendations) {
+                homeNetwork.dailyRecommendations().map { it.toOnlineSong() }
+            }
+        }
+        val issues = listOfNotNull(dailyResult.issue, playlistResult.issue, newSongResult.issue)
         stateMutex.withLock {
             if (requestGeneration != generation.get()) {
                 return@withLock HomeRefreshResult.Superseded

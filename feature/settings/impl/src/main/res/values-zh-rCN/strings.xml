@@ -59,6 +59,8 @@
     <string name="feature_settings_impl_lyrics_supplemental">辅助文本</string>
     <string name="feature_settings_impl_lyrics_translation">翻译</string>
     <string name="feature_settings_impl_lyrics_transliteration">音译</string>
+    <string name="feature_settings_impl_lyrics_translation_and_transliteration">翻译、音译</string>
+    <string name="feature_settings_impl_lyrics_supplemental_off">关闭</string>
     <string name="feature_settings_impl_lyrics_display">显示方式</string>
     <string name="feature_settings_impl_lyrics_scrolling">滚动歌词</string>
     <string name="feature_settings_impl_lyrics_single_line">仅当前行</string>

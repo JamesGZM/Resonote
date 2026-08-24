@@ -50,7 +50,7 @@ This section records the user-approved layout and lyrics behavior for the next F
 - Lyrics loading, empty, pure-music, error, and retry states replace only the lyrics content inside the Pager viewport. They do not change the shared shell geometry or interrupt playback.
 - The original lyric is always the primary text layer. The active line is distinguished with the strongest palette content/accent color, larger type, and stronger weight; nearby inactive lines use smaller type and reduced contrast. The active state does not require a card, filled container, or other competing surface.
 - When syllable or character timing exists, the primary lyric advances through its timed units with color emphasis. Translation and transliteration do not compete for per-character emphasis; they remain supplemental line-level text.
-- The default supplemental rule is original plus translation. When translation is absent and transliteration exists, the supplemental line becomes transliteration. When both exist, the persisted lyrics setting chooses which single supplemental line is shown; the default does not stack original, translation, and transliteration into three visible layers.
+- Translation and transliteration are independently persisted supplemental-text switches and both default to enabled. When both values exist, translation is shown first and transliteration second; either missing or disabled value is omitted without reserving empty space. Supplemental rows remain visually subordinate to the primary lyric.
 - Supplemental text uses smaller type, lighter weight, and lower contrast than the original lyric. It is shown only when real non-blank data exists and must remain visually subordinate even on the active line.
 - The active line follows playback, tapping a line seeks, and user scrolling pauses automatic follow for 3.5 seconds as defined below. These interactions remain confined to the Pager viewport so horizontal page swiping and the shared controls stay available.
 - Automatic follow centers the target from the actual viewport and measured line height after a frame. Active/inactive hierarchy is rendered with a visual scale rather than changing measured text size, preventing list remeasurement from fighting the scroll animation and producing vertical jitter.
@@ -59,7 +59,7 @@ Required implementation evidence:
 
 - Cover-page and lyrics-page screenshots at the same viewport prove the shell below the Pager has identical anchors and complete controls on both pages.
 - A focused progress screenshot proves played/buffered/remaining layering and resting thumb geometry; interaction tests cover tap, drag preview, release-to-seek, clamping, drag thumb expansion, and accessibility progress changes.
-- Lyrics screenshots cover active word timing, original plus translation, translation-missing transliteration fallback, no supplemental data, and inactive-line hierarchy.
+- Lyrics screenshots cover active word timing, original plus translation and transliteration, each independently disabled state, no supplemental data, and inactive-line hierarchy.
 - Interaction tests cover horizontal page switching, lyric seeking, user-scroll follow suspension, and use of every shared primary playback control while the lyrics page is selected.
 
 ## Navigation and state ownership
@@ -96,7 +96,8 @@ Required implementation evidence:
 - Applying a per-item quality override resolves a replacement source while preserving the current position and play/pause intent. The queue item is updated only after resolution succeeds; failure leaves the prior source and override intact. Local and cloud formats remain informational.
 - Mini Player expansion and Full Player collapse use the reduced-motion-aware `spatialSlow` shared-bounds transform. Mini Player endpoint visibility uses the corresponding slow effects token, making the container's growth and contraction—not a fast page fade—the primary navigation signal.
 - While Full Player changes songs, visible palette roles and the system navigation bar animate to the matching new palette. The previous palette remains visible during preparation, a stale result cannot recolor the current song, and missing artwork falls back to the theme palette after the bounded preparation window.
-- Share remains visible as an explicit unavailable action. It does not start an Intent or make a network call.
+- The top-right sheet directly exposes Play next, Add to queue, Add to playlist, Song information, and Lyrics settings without a nested song-actions sheet. Song information uses a Material 3 bottom sheet; its song and artist rows open an auto-submitted search while Back restores the same Full Player state.
+- Full Player and song-action overlays do not expose a share action.
 - Empty playback state has a recoverable back action.
 
 ## Lyrics behavior and data boundary

@@ -15,10 +15,13 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.LibraryAdd
 import androidx.compose.material.icons.rounded.Lyrics
 import androidx.compose.material.icons.rounded.MoreVert
-import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -121,13 +124,36 @@ internal fun PlayerTopBar(
 @Composable
 internal fun PlayerActionsSheet(
     onDismiss: () -> Unit,
-    onSongActions: (() -> Unit)?,
+    onPlayNext: (() -> Unit)?,
+    onAppendToQueue: (() -> Unit)?,
+    onAddToPlaylist: (() -> Unit)?,
+    onShowInfo: (() -> Unit)?,
     onLyricsSettings: () -> Unit,
-    onShare: () -> Unit,
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
-        onSongActions?.let {
-            PlayerActionRow(Icons.Rounded.MoreVert, stringResource(R.string.feature_player_impl_song_actions)) {
+        onPlayNext?.let {
+            PlayerActionRow(Icons.Rounded.SkipNext, stringResource(R.string.feature_player_impl_play_next)) {
+                onDismiss()
+                it()
+            }
+        }
+        onAppendToQueue?.let {
+            PlayerActionRow(
+                Icons.AutoMirrored.Rounded.PlaylistAdd,
+                stringResource(R.string.feature_player_impl_append_queue),
+            ) {
+                onDismiss()
+                it()
+            }
+        }
+        onAddToPlaylist?.let {
+            PlayerActionRow(Icons.Rounded.LibraryAdd, stringResource(R.string.feature_player_impl_add_playlist)) {
+                onDismiss()
+                it()
+            }
+        }
+        onShowInfo?.let {
+            PlayerActionRow(Icons.Rounded.Info, stringResource(R.string.feature_player_impl_song_info)) {
                 onDismiss()
                 it()
             }
@@ -135,10 +161,6 @@ internal fun PlayerActionsSheet(
         PlayerActionRow(Icons.Rounded.Lyrics, stringResource(R.string.feature_player_impl_lyrics_settings)) {
             onDismiss()
             onLyricsSettings()
-        }
-        PlayerActionRow(Icons.Rounded.Share, stringResource(R.string.feature_player_impl_share)) {
-            onDismiss()
-            onShare()
         }
         Spacer(Modifier.height(24.dp))
     }

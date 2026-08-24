@@ -46,7 +46,7 @@ import com.resonote.core.model.LyricsBackgroundMode
 import com.resonote.core.model.LyricsDisplayMode
 import com.resonote.core.model.LyricsFontSize
 import com.resonote.core.model.LyricsHighlightMode
-import com.resonote.core.model.LyricsSupplementalText
+import com.resonote.core.model.LyricsPreferences
 import com.resonote.core.model.LyricsTextAlignment
 import com.resonote.core.model.OnlinePlaybackQuality
 import com.resonote.core.model.PlaybackMode
@@ -271,7 +271,7 @@ fun LyricsSettingsRoute(
             item {
                 SettingsValueRow(
                     stringResource(R.string.feature_settings_impl_lyrics_supplemental),
-                    preferences.supplementalText.label(),
+                    preferences.supplementalTextLabel(),
                     { openSheet = LyricsSettingsSheet.Supplemental },
                 )
             }
@@ -343,21 +343,12 @@ fun LyricsSettingsRoute(
         }
     }
     when (openSheet) {
-        LyricsSettingsSheet.Supplemental -> choiceSheet(
-            stringResource(
-                R.string.feature_settings_impl_lyrics_supplemental,
-            ),
-            preferences.supplementalText,
-            LyricsSupplementalText.entries,
-            {
-                it.label()
-            },
-            {
-                openSheet =
-                    null
-                viewModel.update(preferences.copy(supplementalText = it))
-            },
-            { openSheet = null },
+        LyricsSettingsSheet.Supplemental -> LyricsSupplementalTextSheet(
+            translationEnabled = preferences.translationEnabled,
+            transliterationEnabled = preferences.transliterationEnabled,
+            onTranslationEnabledChange = viewModel::setTranslationEnabled,
+            onTransliterationEnabledChange = viewModel::setTransliterationEnabled,
+            onDismiss = { openSheet = null },
         )
         LyricsSettingsSheet.Display -> choiceSheet(
             stringResource(
@@ -443,13 +434,14 @@ fun LyricsSettingsRoute(
     }
 }
 
-@Composable private fun LyricsSupplementalText.label() = stringResource(
-    if (this ==
-        LyricsSupplementalText.Translation
-    ) {
-        R.string.feature_settings_impl_lyrics_translation
-    } else {
-        R.string.feature_settings_impl_lyrics_transliteration
+@Composable
+private fun LyricsPreferences.supplementalTextLabel() = stringResource(
+    when {
+        translationEnabled && transliterationEnabled ->
+            R.string.feature_settings_impl_lyrics_translation_and_transliteration
+        translationEnabled -> R.string.feature_settings_impl_lyrics_translation
+        transliterationEnabled -> R.string.feature_settings_impl_lyrics_transliteration
+        else -> R.string.feature_settings_impl_lyrics_supplemental_off
     },
 )
 

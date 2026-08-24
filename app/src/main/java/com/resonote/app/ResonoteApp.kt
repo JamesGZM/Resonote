@@ -40,6 +40,7 @@ import com.resonote.feature.local.api.LocalMusicNavKey
 import com.resonote.feature.player.api.PlayerNavKey
 import com.resonote.feature.player.impl.PlayerPalette
 import com.resonote.feature.player.impl.PlayerPaletteViewModel
+import com.resonote.feature.search.api.SearchNavKey
 import com.resonote.feature.video.api.VideoNavKey
 import com.resonote.feature.vip.impl.DailyVipViewModel
 import kotlinx.coroutines.delay
@@ -131,6 +132,10 @@ internal fun ResonoteApp(
         }
     }
 
+    fun openSongInfo(song: OnlineSong) {
+        overlayState.infoSong = song
+    }
+
     LaunchedEffect(authState) {
         backStack.synchronizeAuthenticationGate(authState)
         if (authState !is AuthState.Authenticated) {
@@ -186,6 +191,7 @@ internal fun ResonoteApp(
                     onFinishExternalTask = onFinishExternalTask,
                     onOpenSongActions = ::openSongActions,
                     onOpenPlaylistPicker = ::openPlaylistPicker,
+                    onOpenSongInfo = ::openSongInfo,
                     onOpenDailyVip = { overlayState.dailyVipDialogOpen = true },
                     onTabBarInsetChanged = { tabBarInset = it },
                     onVideoFullscreenChange = setVideoFullscreen,
@@ -230,6 +236,9 @@ internal fun ResonoteApp(
             snackbarHostState = snackbarHostState,
             snackbarController = snackbarController,
             onOpenPlaylistPicker = ::openPlaylistPicker,
+            onSearch = { query ->
+                backStack.add(SearchNavKey(sessionId = System.nanoTime(), initialQuery = query))
+            },
             dailyVipViewModel = dailyVipViewModel,
             onOpenRiskVerification = { challenge ->
                 overlayState.dailyVipDialogOpen = false

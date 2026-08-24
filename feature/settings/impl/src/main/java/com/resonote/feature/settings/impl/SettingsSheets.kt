@@ -130,3 +130,33 @@ internal fun <T> SettingsSingleChoiceSheet(
         }
     }
 }
+
+@Composable
+internal fun LyricsSupplementalTextSheet(
+    translationEnabled: Boolean,
+    transliterationEnabled: Boolean,
+    onTranslationEnabledChange: (Boolean) -> Unit,
+    onTransliterationEnabledChange: (Boolean) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    ResonoteBottomSheet(onDismissRequest = onDismiss) {
+        Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(bottom = 12.dp)) {
+            ResonoteBottomSheetHeader(
+                title = stringResource(R.string.feature_settings_impl_lyrics_supplemental),
+            )
+            Spacer(Modifier.height(8.dp))
+            SettingsSwitchRow(
+                title = stringResource(R.string.feature_settings_impl_lyrics_translation),
+                checked = translationEnabled,
+                onCheckedChange = onTranslationEnabledChange,
+                switchTestTag = "lyrics-translation-switch",
+            )
+            SettingsSwitchRow(
+                title = stringResource(R.string.feature_settings_impl_lyrics_transliteration),
+                checked = transliterationEnabled,
+                onCheckedChange = onTransliterationEnabledChange,
+                switchTestTag = "lyrics-transliteration-switch",
+            )
+        }
+    }
+}

@@ -71,7 +71,6 @@ data class LyricLine(
 
 data class LyricsDocument(val lines: List<LyricLine>)
 
-enum class LyricsSupplementalText { Translation, Transliteration }
 enum class LyricsDisplayMode { Scrolling, SingleLine }
 enum class LyricsHighlightMode { Word, Line }
 enum class LyricsTextAlignment { Center, Start }
@@ -79,7 +78,8 @@ enum class LyricsFontSize { Small, Medium, Large }
 enum class LyricsBackgroundMode { Palette, Artwork, Off }
 
 data class LyricsPreferences(
-    val supplementalText: LyricsSupplementalText = LyricsSupplementalText.Translation,
+    val translationEnabled: Boolean = true,
+    val transliterationEnabled: Boolean = true,
     val displayMode: LyricsDisplayMode = LyricsDisplayMode.Scrolling,
     val highlightMode: LyricsHighlightMode = LyricsHighlightMode.Word,
     val textAlignment: LyricsTextAlignment = LyricsTextAlignment.Center,

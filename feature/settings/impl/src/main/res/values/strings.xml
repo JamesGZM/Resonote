@@ -61,6 +61,8 @@
     <string name="feature_settings_impl_lyrics_supplemental">Supplemental text</string>
     <string name="feature_settings_impl_lyrics_translation">Translation</string>
     <string name="feature_settings_impl_lyrics_transliteration">Transliteration</string>
+    <string name="feature_settings_impl_lyrics_translation_and_transliteration">Translation, transliteration</string>
+    <string name="feature_settings_impl_lyrics_supplemental_off">Off</string>
     <string name="feature_settings_impl_lyrics_display">Display mode</string>
     <string name="feature_settings_impl_lyrics_scrolling">Scrolling lyrics</string>
     <string name="feature_settings_impl_lyrics_single_line">Current line only</string>

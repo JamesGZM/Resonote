@@ -1,5 +1,6 @@
 package com.resonote.feature.player.impl
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -21,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -33,6 +35,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.resonote.core.designsystem.component.LocalResonoteSnackbarController
 import com.resonote.core.designsystem.component.resonoteHero
+import com.resonote.core.designsystem.tokens.ResonoteTokens
 import com.resonote.core.model.LyricsBackgroundMode
 import com.resonote.core.model.OnlinePlaybackQuality
 import com.resonote.core.model.OnlineSong
@@ -49,7 +52,10 @@ object ResonotePlayerHeroKeys {
 @Composable
 fun PlayerRoute(
     onBack: () -> Unit,
-    onSongMoreClick: (OnlineSong) -> Unit,
+    onPlayNextClick: (OnlineSong) -> Unit,
+    onAppendToQueueClick: (OnlineSong) -> Unit,
+    onAddToPlaylistClick: (OnlineSong) -> Unit,
+    onSongInfoClick: (OnlineSong) -> Unit,
     onLoginRequest: () -> Unit = {},
     onLyricsSettingsClick: () -> Unit = {},
     paletteSeed: PlayerPaletteSeed? = null,
@@ -59,6 +65,9 @@ fun PlayerRoute(
     val snackbar = LocalResonoteSnackbarController.current
     val likeFailed = stringResource(R.string.feature_player_impl_like_failed)
     val likeUnsupported = stringResource(R.string.feature_player_impl_like_unsupported)
+    val queuedNext = stringResource(R.string.feature_player_impl_added_next)
+    val queuedLast = stringResource(R.string.feature_player_impl_added_queue)
+    val onlineSong = (state.playback.currentItem?.origin as? PlaybackOrigin.Online)?.song
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
@@ -85,9 +94,20 @@ fun PlayerRoute(
         onToggleLike = viewModel::toggleLike,
         onLyricsSettingsClick = onLyricsSettingsClick,
         paletteSeed = paletteSeed,
-        onSongMoreClick = (state.playback.currentItem?.origin as? PlaybackOrigin.Online)?.song?.let { song ->
-            { onSongMoreClick(song) }
+        onPlayNextClick = onlineSong?.let { song ->
+            {
+                onPlayNextClick(song)
+                snackbar?.show(queuedNext)
+            }
         },
+        onAppendToQueueClick = onlineSong?.let { song ->
+            {
+                onAppendToQueueClick(song)
+                snackbar?.show(queuedLast)
+            }
+        },
+        onAddToPlaylistClick = onlineSong?.let { song -> { onAddToPlaylistClick(song) } },
+        onSongInfoClick = onlineSong?.let { song -> { onSongInfoClick(song) } },
     )
 }
 
@@ -109,7 +129,10 @@ fun PlayerScreen(
     onOnlineQualityChange: (OnlinePlaybackQuality) -> Unit = {},
     modifier: Modifier = Modifier,
     initialPage: Int = 0,
-    onSongMoreClick: (() -> Unit)? = null,
+    onPlayNextClick: (() -> Unit)? = null,
+    onAppendToQueueClick: (() -> Unit)? = null,
+    onAddToPlaylistClick: (() -> Unit)? = null,
+    onSongInfoClick: (() -> Unit)? = null,
     onToggleLike: () -> Unit = {},
     onLyricsSettingsClick: () -> Unit = {},
     paletteSeed: PlayerPaletteSeed? = null,
@@ -134,13 +157,25 @@ fun PlayerScreen(
         }
     }
     val palette = animatePlayerPalette(targetPalette)
-    val snackbar = LocalResonoteSnackbarController.current
-    val unavailable = stringResource(R.string.feature_player_impl_share_unavailable)
     var actionsOpen by remember { mutableStateOf(false) }
     var queueOpen by remember { mutableStateOf(false) }
     var speedOpen by remember { mutableStateOf(false) }
     var formatOpen by remember { mutableStateOf(false) }
     var currentPage by rememberSaveable { mutableStateOf(initialPage.coerceIn(0, 1)) }
+    val artworkBackdropVisible = currentPage == 0 ||
+        state.lyricsPreferences.backgroundMode == LyricsBackgroundMode.Artwork
+    val decorationVisible = currentPage == 0 ||
+        state.lyricsPreferences.backgroundMode != LyricsBackgroundMode.Off
+    val artworkBackdropAlpha by animateFloatAsState(
+        if (artworkBackdropVisible) 0.86f else 0f,
+        animationSpec = ResonoteTokens.motion.effectsSlow(),
+        label = "player artwork backdrop",
+    )
+    val decorationAlpha by animateFloatAsState(
+        if (decorationVisible) 1f else 0f,
+        animationSpec = ResonoteTokens.motion.effectsSlow(),
+        label = "player backdrop decoration",
+    )
 
     Scaffold(
         modifier.fillMaxSize(),
@@ -160,18 +195,28 @@ fun PlayerScreen(
                 )
                 .background(palette.background),
         ) {
-            if (song != null &&
-                state.lyricsPreferences.backgroundMode == LyricsBackgroundMode.Artwork &&
-                !song.artworkUri.isNullOrBlank()
-            ) {
+            if (decorationAlpha > 0f) {
+                Box(
+                    Modifier.matchParentSize().background(
+                        Brush.radialGradient(
+                            listOf(
+                                palette.accent.copy(alpha = 0.24f * decorationAlpha),
+                                palette.background.copy(alpha = 0.08f * decorationAlpha),
+                                Color.Transparent,
+                            ),
+                        ),
+                    ),
+                )
+            }
+            if (song != null && !song.artworkUri.isNullOrBlank() && artworkBackdropAlpha > 0f) {
                 AsyncImage(
                     song.artworkUri,
                     null,
                     Modifier.matchParentSize().graphicsLayer {
-                        scaleX = 1.28f
-                        scaleY = 1.28f
-                        alpha = 0.42f
-                    }.blur(64.dp),
+                        scaleX = 1.20f
+                        scaleY = 1.20f
+                        alpha = artworkBackdropAlpha
+                    }.blur(52.dp, BlurredEdgeTreatment.Unbounded),
                     contentScale = ContentScale.Crop,
                 )
             }
@@ -179,9 +224,10 @@ fun PlayerScreen(
                 Modifier.matchParentSize().background(
                     Brush.verticalGradient(
                         listOf(
-                            palette.background.copy(alpha = 0.78f),
-                            palette.background.copy(alpha = 0.54f),
-                            palette.background.copy(alpha = 0.96f),
+                            palette.background.copy(alpha = 0.48f),
+                            palette.background.copy(alpha = 0.18f),
+                            palette.background.copy(alpha = 0.40f),
+                            palette.background.copy(alpha = 0.82f),
                         ),
                     ),
                 ),
@@ -252,9 +298,11 @@ fun PlayerScreen(
     if (actionsOpen) {
         PlayerActionsSheet(
             { actionsOpen = false },
-            onSongMoreClick,
+            onPlayNextClick,
+            onAppendToQueueClick,
+            onAddToPlaylistClick,
+            onSongInfoClick,
             onLyricsSettingsClick,
-            { snackbar?.show(unavailable) },
         )
     }
     if (queueOpen) {

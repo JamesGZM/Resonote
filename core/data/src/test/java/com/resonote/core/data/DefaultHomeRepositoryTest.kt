@@ -91,6 +91,26 @@ class DefaultHomeRepositoryTest {
     }
 
     @Test
+    fun firstLoadRetriesAnEmptyDailyRecommendationResponseBeforePublishing() = runTest {
+        var requestCount = 0
+        val repository = createHomeRepository(
+            FakeNetwork(
+                daily = {
+                    requestCount += 1
+                    if (requestCount == 1) emptyList() else listOf(song("fresh"))
+                },
+            ),
+            HomeRecommendationSampler { songs, count -> songs.take(count) },
+        )
+
+        val result = repository.refresh() as HomeRefreshResult.Updated
+
+        assertThat(requestCount).isEqualTo(2)
+        assertThat(result.content.dailyRecommendations.single().hash).isEqualTo("fresh")
+        assertThat(repository.content.value).isEqualTo(result.content)
+    }
+
+    @Test
     fun successfulEmptySectionsReplaceCachedContentAndPersist() = runTest {
         val cached = HomeContent(
             dailyRecommendations = listOf(domainSong(120_000)),

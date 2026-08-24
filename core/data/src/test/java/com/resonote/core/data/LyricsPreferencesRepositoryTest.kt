@@ -7,7 +7,6 @@ import com.resonote.core.model.LyricsDisplayMode
 import com.resonote.core.model.LyricsFontSize
 import com.resonote.core.model.LyricsHighlightMode
 import com.resonote.core.model.LyricsPreferences
-import com.resonote.core.model.LyricsSupplementalText
 import com.resonote.core.model.LyricsTextAlignment
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -31,7 +30,8 @@ class LyricsPreferencesRepositoryTest {
         val storage = FakeLyricsPreferencesStorage()
         val repository = DefaultLyricsPreferencesRepository(storage)
         val selected = LyricsPreferences(
-            supplementalText = LyricsSupplementalText.Transliteration,
+            translationEnabled = false,
+            transliterationEnabled = true,
             displayMode = LyricsDisplayMode.SingleLine,
             highlightMode = LyricsHighlightMode.Line,
             textAlignment = LyricsTextAlignment.Start,
@@ -44,6 +44,16 @@ class LyricsPreferencesRepositoryTest {
 
         repository.reset()
         assertThat(repository.preferences.first()).isEqualTo(LyricsPreferences())
+    }
+
+    @Test
+    fun legacySingleChoicePreferenceMigratesToBothSupplementalTextsEnabled() = runTest {
+        val storage = FakeLyricsPreferencesStorage(
+            StoredLyricsPreferences(supplementalText = "Transliteration"),
+        )
+
+        assertThat(DefaultLyricsPreferencesRepository(storage).preferences.first())
+            .isEqualTo(LyricsPreferences())
     }
 }
 
