@@ -167,7 +167,7 @@ fun PlayerScreen(
     val decorationVisible = currentPage == 0 ||
         state.lyricsPreferences.backgroundMode != LyricsBackgroundMode.Off
     val artworkBackdropAlpha by animateFloatAsState(
-        if (artworkBackdropVisible) 0.86f else 0f,
+        if (artworkBackdropVisible) 0.60f else 0f,
         animationSpec = ResonoteTokens.motion.effectsSlow(),
         label = "player artwork backdrop",
     )
@@ -200,8 +200,8 @@ fun PlayerScreen(
                     Modifier.matchParentSize().background(
                         Brush.radialGradient(
                             listOf(
-                                palette.accent.copy(alpha = 0.24f * decorationAlpha),
-                                palette.background.copy(alpha = 0.08f * decorationAlpha),
+                                palette.accent.copy(alpha = 0.16f * decorationAlpha),
+                                palette.background.copy(alpha = 0.06f * decorationAlpha),
                                 Color.Transparent,
                             ),
                         ),
@@ -213,10 +213,10 @@ fun PlayerScreen(
                     song.artworkUri,
                     null,
                     Modifier.matchParentSize().graphicsLayer {
-                        scaleX = 1.20f
-                        scaleY = 1.20f
+                        scaleX = 1.14f
+                        scaleY = 1.14f
                         alpha = artworkBackdropAlpha
-                    }.blur(52.dp, BlurredEdgeTreatment.Unbounded),
+                    }.blur(36.dp, BlurredEdgeTreatment.Unbounded),
                     contentScale = ContentScale.Crop,
                 )
             }
@@ -239,7 +239,7 @@ fun PlayerScreen(
                     val systemBarVerticalInset =
                         WindowInsets.statusBars.asPaddingValues().calculateTopPadding() +
                             WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-                    val pagerHeight = (maxHeight - 330.dp - systemBarVerticalInset).coerceAtLeast(260.dp)
+                    val pagerHeight = (maxHeight - 310.dp - systemBarVerticalInset).coerceAtLeast(280.dp)
                     Column(
                         Modifier.fillMaxSize(),
                         horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,

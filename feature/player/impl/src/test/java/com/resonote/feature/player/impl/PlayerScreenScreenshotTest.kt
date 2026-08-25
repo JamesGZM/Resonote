@@ -1,11 +1,16 @@
 package com.resonote.feature.player.impl
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertLeftPositionInRootIsEqualTo
 import androidx.compose.ui.test.assertWidthIsEqualTo
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -13,6 +18,8 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
@@ -51,7 +58,9 @@ class PlayerScreenScreenshotTest {
     fun player_compactCover() {
         setPlayerContent()
 
-        composeRule.onNodeWithTag("player-cover-artwork").assertWidthIsEqualTo(350.dp)
+        composeRule.onNodeWithTag("player-cover-artwork")
+            .assertWidthIsEqualTo(342.dp)
+            .assertLeftPositionInRootIsEqualTo(24.dp)
 
         captureScreenRoboImage(
             filePath = "src/test/screenshots/Player/PlayerCompact_cover.png",
@@ -68,11 +77,29 @@ class PlayerScreenScreenshotTest {
         composeRule.onNodeWithText("SQ").assertIsDisplayed()
         composeRule.onNodeWithText("The tide brings the memories ashore").assertIsDisplayed()
         composeRule.onNodeWithText("cháo xībǎ jì yìtuī huí àn biān").assertIsDisplayed()
+        val lyricsBounds = composeRule.onNodeWithTag("player-lyrics").fetchSemanticsNode().boundsInRoot
+        val activeBounds = composeRule.onNodeWithTag("player-active-lyric").fetchSemanticsNode().boundsInRoot
+        assertEquals(lyricsBounds.center.y.toDouble(), activeBounds.center.y.toDouble(), 1.0)
 
         captureScreenRoboImage(
             filePath = "src/test/screenshots/Player/PlayerCompact_lyrics.png",
             roborazziOptions = DefaultRoborazziOptions,
         )
+    }
+
+    @Test
+    fun tappingLyricAfterManualScrollResumesCenteredFollowing() {
+        var seekPositionMillis = -1L
+        setPlayerContent(initialPage = 1, onSeek = { seekPositionMillis = it })
+
+        composeRule.onNodeWithTag("player-lyrics").performTouchInput { swipeUp() }
+        composeRule.onNodeWithText("微光沿着波纹醒来").performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(38_000L, seekPositionMillis)
+        val lyricsBounds = composeRule.onNodeWithTag("player-lyrics").fetchSemanticsNode().boundsInRoot
+        val activeBounds = composeRule.onNodeWithTag("player-active-lyric").fetchSemanticsNode().boundsInRoot
+        assertEquals(lyricsBounds.center.y.toDouble(), activeBounds.center.y.toDouble(), 1.0)
     }
 
     @Test
@@ -194,6 +221,7 @@ class PlayerScreenScreenshotTest {
     private fun setPlayerContent(
         onTogglePlay: () -> Unit = {},
         onNext: () -> Unit = {},
+        onSeek: (Long) -> Unit = {},
         onPlaybackSpeedChange: (PlaybackSpeed) -> Unit = {},
         onOnlineQualityChange: (OnlinePlaybackQuality) -> Unit = {},
         onPlayNextClick: (() -> Unit)? = null,
@@ -207,13 +235,19 @@ class PlayerScreenScreenshotTest {
                 override = DeviceConfigurationOverride.ForcedSize(DpSize(390.dp, 844.dp)),
             ) {
                 ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                    var playerState by remember { mutableStateOf(screenshotState()) }
                     PlayerScreen(
-                        state = screenshotState(),
+                        state = playerState,
                         onBack = {},
                         onTogglePlay = onTogglePlay,
                         onPrevious = {},
                         onNext = onNext,
-                        onSeek = {},
+                        onSeek = { positionMillis ->
+                            playerState = playerState.copy(
+                                playback = playerState.playback.copy(positionMillis = positionMillis),
+                            )
+                            onSeek(positionMillis)
+                        },
                         onModeChange = {},
                         onPlaybackSpeedChange = onPlaybackSpeedChange,
                         onOnlineQualityChange = onOnlineQualityChange,

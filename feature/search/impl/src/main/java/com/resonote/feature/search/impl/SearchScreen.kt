@@ -54,11 +54,13 @@ import com.resonote.core.model.SearchAlbum
 import com.resonote.core.model.SearchArtist
 import com.resonote.core.model.SearchMv
 import com.resonote.core.model.SearchPlaylist
+import com.resonote.feature.search.api.SearchTab
 
 @Composable
 fun SearchRoute(
     sessionId: Long,
     initialQuery: String,
+    initialTab: SearchTab,
     playingMediaId: String?,
     onBack: () -> Unit,
     onRecognitionClick: (() -> Unit)?,
@@ -72,7 +74,9 @@ fun SearchRoute(
     viewModel: SearchViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    LaunchedEffect(sessionId, initialQuery) { viewModel.initialize(sessionId, initialQuery) }
+    LaunchedEffect(sessionId, initialQuery, initialTab) {
+        viewModel.initialize(sessionId, initialQuery, initialTab.toCategory())
+    }
     SearchScreen(
         state = state,
         playingMediaId = playingMediaId,
@@ -93,6 +97,15 @@ fun SearchRoute(
         onMvClick = onMvClick,
         bottomContentPadding = bottomContentPadding,
     )
+}
+
+private fun SearchTab.toCategory(): SearchCategory = when (this) {
+    SearchTab.ALL -> SearchCategory.ALL
+    SearchTab.SONGS -> SearchCategory.SONGS
+    SearchTab.PLAYLISTS -> SearchCategory.PLAYLISTS
+    SearchTab.ALBUMS -> SearchCategory.ALBUMS
+    SearchTab.MVS -> SearchCategory.MVS
+    SearchTab.ARTISTS -> SearchCategory.ARTISTS
 }
 
 @Composable

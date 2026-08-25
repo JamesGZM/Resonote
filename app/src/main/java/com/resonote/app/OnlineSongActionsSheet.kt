@@ -4,7 +4,6 @@ package com.resonote.app
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -29,14 +28,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.resonote.core.designsystem.component.ResonoteBottomSheet
 import com.resonote.core.designsystem.component.ResonoteBottomSheetHeader
@@ -143,21 +141,24 @@ internal fun OnlineSongInfoSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
     ) {
-        Column(Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 28.dp)) {
+        Column(Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 24.dp)) {
             Row(
-                Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
+                Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 ResonoteRemoteArtwork(
                     model = song.coverUrl,
                     contentDescription = stringResource(R.string.song_info_artwork, song.title),
-                    modifier = Modifier.size(84.dp).clip(RoundedCornerShape(18.dp)),
+                    modifier = Modifier.size(76.dp).clip(RoundedCornerShape(16.dp)),
                 )
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
                     SongInfoLink(
                         text = song.title,
                         onClick = onSearchSong,
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 2,
                     )
                     song.artist?.takeIf(String::isNotBlank)?.let { artist ->
                         onSearchArtist?.let { searchArtist ->
@@ -165,76 +166,112 @@ internal fun OnlineSongInfoSheet(
                                 text = artist,
                                 onClick = searchArtist,
                                 style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
                             )
                         } ?: Text(
                             text = artist,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodyLarge,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
                 }
             }
-            Text(
-                stringResource(R.string.song_info_details),
-                modifier = Modifier.padding(start = 24.dp, top = 12.dp, bottom = 8.dp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.labelLarge,
-            )
-            Column(
-                Modifier.fillMaxWidth().padding(horizontal = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+            Surface(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),
+                shape = RoundedCornerShape(20.dp),
+                color = MaterialTheme.colorScheme.surfaceContainer,
             ) {
-                song.albumTitle?.takeIf(String::isNotBlank)?.let {
-                    SongInfoField(
-                        label = stringResource(R.string.song_info_album),
-                        value = it,
-                        onClick = onSearchAlbum,
+                Column(Modifier.padding(horizontal = 18.dp, vertical = 16.dp)) {
+                    Text(
+                        stringResource(R.string.song_info_details),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.labelLarge,
                     )
+                    song.albumTitle?.takeIf(String::isNotBlank)?.let {
+                        Spacer(Modifier.height(12.dp))
+                        SongInfoField(
+                            label = stringResource(R.string.song_info_album),
+                            value = it,
+                            onClick = onSearchAlbum,
+                        )
+                        HorizontalDivider(
+                            Modifier.padding(vertical = 14.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant,
+                        )
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+                        SongInfoMetric(
+                            label = stringResource(R.string.song_info_duration),
+                            value = song.durationMillis.asDurationLabel(),
+                            modifier = Modifier.weight(1f),
+                        )
+                        SongInfoMetric(
+                            label = stringResource(R.string.song_info_quality),
+                            value = song.quality.label(),
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
                 }
-                SongInfoField(
-                    stringResource(R.string.song_info_duration),
-                    song.durationMillis.asDurationLabel(),
-                )
-                SongInfoField(stringResource(R.string.song_info_quality), song.quality.label())
             }
         }
     }
 }
 
 @Composable
-private fun SongInfoLink(text: String, onClick: () -> Unit, style: TextStyle) {
-    val linkColor = if (MaterialTheme.colorScheme.surface.luminance() < 0.5f) {
-        Color(0xFF8AB4F8)
-    } else {
-        Color(0xFF1565C0)
-    }
+private fun SongInfoLink(
+    text: String,
+    onClick: () -> Unit,
+    style: TextStyle,
+    color: androidx.compose.ui.graphics.Color,
+    maxLines: Int,
+) {
     ResonotePlainAction(
         onClick = onClick,
     ) {
-        Text(text = text, color = linkColor, style = style, textDecoration = TextDecoration.Underline)
+        Text(
+            text = text,
+            color = color,
+            style = style,
+            maxLines = maxLines,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
 @Composable
 private fun SongInfoField(label: String, value: String, onClick: (() -> Unit)? = null) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(
             label,
-            modifier = Modifier.weight(0.35f),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.labelMedium,
         )
         if (onClick == null) {
-            Text(value, modifier = Modifier.weight(0.65f), style = MaterialTheme.typography.bodyMedium)
+            Text(value, style = MaterialTheme.typography.bodyLarge)
         } else {
-            Box(Modifier.weight(0.65f)) {
-                SongInfoLink(
-                    text = value,
-                    onClick = onClick,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
+            SongInfoLink(
+                text = value,
+                onClick = onClick,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.primary,
+                maxLines = 2,
+            )
         }
+    }
+}
+
+@Composable
+private fun SongInfoMetric(label: String, value: String, modifier: Modifier = Modifier) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(3.dp)) {
+        Text(
+            label,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.labelMedium,
+        )
+        Text(value, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
     }
 }
 

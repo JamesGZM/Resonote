@@ -145,6 +145,48 @@ class MobileBusinessVariantsRepositoryTest {
     }
 
     @Test
+    fun lyricRepositoryMapsFlatKrcPhoneticsFromLivePayloads() = runTest {
+        val metadata =
+            """
+            {"content":[
+              {"type":0,"lyricContent":[["Moe","Koe"]]},
+              {"type":1,"lyricContent":[["萌音"]]}
+            ]}
+            """.trimIndent()
+        val encodedMetadata = Base64.getEncoder().encodeToString(metadata.encodeToByteArray())
+        val repository = lyricsRepository(
+            "[language:$encodedMetadata]\n[0,1200]<0,600,0>Moe<600,600,0>Koe",
+        )
+
+        val result = repository.loadLyrics("hash") as CollectionLoadResult.Available
+        val line = result.value.lines.single()
+
+        assertThat(line.translation).isEqualTo("萌音")
+        assertThat(line.transliteration).isEqualTo("MoeKoe")
+    }
+
+    @Test
+    fun lyricRepositoryKeepsKrcTranslationWhenPhoneticsAreMalformed() = runTest {
+        val metadata =
+            """
+            {"content":[
+              {"type":0,"lyricContent":[[{"unexpected":"shape"}]]},
+              {"type":1,"lyricContent":[["萌音"]]}
+            ]}
+            """.trimIndent()
+        val encodedMetadata = Base64.getEncoder().encodeToString(metadata.encodeToByteArray())
+        val repository = lyricsRepository(
+            "[language:$encodedMetadata]\n[0,1200]<0,600,0>Moe<600,600,0>Koe",
+        )
+
+        val result = repository.loadLyrics("hash") as CollectionLoadResult.Available
+        val line = result.value.lines.single()
+
+        assertThat(line.translation).isEqualTo("萌音")
+        assertThat(line.transliteration).isNull()
+    }
+
+    @Test
     fun lyricRepositorySafelyRejectsMalformedPayload() = runTest {
         val result = lyricsRepository("[0,1000]plain text without syllable timing").loadLyrics("hash")
 

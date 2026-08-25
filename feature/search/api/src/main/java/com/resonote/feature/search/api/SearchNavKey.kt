@@ -4,4 +4,18 @@ import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class SearchNavKey(val sessionId: Long, val initialQuery: String = "") : NavKey
+enum class SearchTab {
+    ALL,
+    SONGS,
+    PLAYLISTS,
+    ALBUMS,
+    MVS,
+    ARTISTS,
+}
+
+@Serializable
+data class SearchNavKey(
+    val sessionId: Long,
+    val initialQuery: String = "",
+    val initialTab: SearchTab = SearchTab.ALL,
+) : NavKey

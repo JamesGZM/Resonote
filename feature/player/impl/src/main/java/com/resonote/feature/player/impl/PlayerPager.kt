@@ -5,9 +5,11 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -48,7 +51,6 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -62,6 +64,7 @@ import coil3.compose.AsyncImage
 import com.resonote.core.designsystem.component.ResonoteArtwork
 import com.resonote.core.designsystem.component.ResonoteArtworkState
 import com.resonote.core.designsystem.component.resonoteHeroElement
+import com.resonote.core.designsystem.tokens.ResonoteTokens
 import com.resonote.core.model.LyricLine
 import com.resonote.core.model.LyricsDisplayMode
 import com.resonote.core.model.LyricsFontSize
@@ -102,7 +105,7 @@ internal fun PlayerPager(
 @Composable
 internal fun PlayerPageIndicator(currentPage: Int, palette: PlayerPalette) {
     Row(
-        Modifier.padding(vertical = 10.dp),
+        Modifier.padding(top = 10.dp, bottom = 17.dp),
         horizontalArrangement = Arrangement.spacedBy(7.dp),
     ) {
         repeat(2) { index ->
@@ -120,31 +123,42 @@ internal fun PlayerPageIndicator(currentPage: Int, palette: PlayerPalette) {
 @Composable
 private fun CoverPage(song: PlaybackMetadata, palette: PlayerPalette) {
     val shape = RoundedCornerShape(22.dp)
-    val artworkSize = Modifier.fillMaxWidth().widthIn(max = 380.dp).aspectRatio(1f)
+    val artworkSize = Modifier.widthIn(max = 342.dp).fillMaxWidth().aspectRatio(1f)
     Box(
-        Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 12.dp),
+        Modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
+        Box(
+            artworkSize
+                .graphicsLayer {
+                    scaleX = 0.99f
+                    scaleY = 0.99f
+                    alpha = 0.24f
+                }
+                .offset(y = 5.dp)
+                .blur(20.dp, BlurredEdgeTreatment.Unbounded)
+                .background(Color.Black, shape),
+        )
         if (song.artworkUri.isNullOrBlank()) {
             Box(
                 artworkSize
-                    .background(palette.accent.copy(alpha = 0.28f), shape)
                     .graphicsLayer {
-                        scaleX = 1.06f
-                        scaleY = 1.06f
-                        alpha = 0.30f
+                        scaleX = 1.018f
+                        scaleY = 1.018f
+                        alpha = 0.12f
                     }
-                    .blur(30.dp, BlurredEdgeTreatment.Unbounded),
+                    .blur(22.dp, BlurredEdgeTreatment.Unbounded)
+                    .background(palette.accent, shape),
             )
         } else {
             AsyncImage(
                 song.artworkUri,
                 null,
-                artworkSize.clip(shape).graphicsLayer {
-                    scaleX = 1.06f
-                    scaleY = 1.06f
-                    alpha = 0.52f
-                }.blur(28.dp, BlurredEdgeTreatment.Unbounded),
+                artworkSize.graphicsLayer {
+                    scaleX = 1.018f
+                    scaleY = 1.018f
+                    alpha = 0.12f
+                }.blur(22.dp, BlurredEdgeTreatment.Unbounded).clip(shape),
                 contentScale = ContentScale.Crop,
             )
         }
@@ -154,11 +168,11 @@ private fun CoverPage(song: PlaybackMetadata, palette: PlayerPalette) {
             modifier = artworkSize
                 .testTag("player-cover-artwork")
                 .shadow(
-                    elevation = 28.dp,
+                    elevation = ResonoteTokens.elevation.level3.maximumShadow,
                     shape = shape,
                     clip = false,
-                    ambientColor = Color.Black.copy(alpha = 0.72f),
-                    spotColor = Color.Black.copy(alpha = 0.86f),
+                    ambientColor = Color.Black.copy(alpha = 0.16f),
+                    spotColor = Color.Black.copy(alpha = 0.26f),
                 )
                 .resonoteHeroElement(ResonotePlayerHeroKeys.artwork(song.mediaId)),
             shape = shape,
@@ -224,27 +238,24 @@ private fun SyncedLyrics(
         return
     }
     val listState = rememberLazyListState()
-    val density = LocalDensity.current
     val dragged by listState.interactionSource.collectIsDraggedAsState()
     var follow by remember { mutableStateOf(true) }
     LaunchedEffect(activeIndex, follow) {
         if (follow) {
             withFrameNanos {}
             if (listState.layoutInfo.visibleItemsInfo.none { it.index == activeIndex }) {
-                listState.scrollToItem(activeIndex)
+                val layoutInfo = listState.layoutInfo
+                val estimatedItemHeight = layoutInfo.visibleItemsInfo.firstOrNull()?.size ?: 0
+                val centeredOffset = -((layoutInfo.viewportSize.height - estimatedItemHeight).coerceAtLeast(0) / 2)
+                listState.animateScrollToItem(activeIndex, centeredOffset)
                 withFrameNanos {}
             }
-            val viewportHeight = listState.layoutInfo.viewportSize.height
-            if (viewportHeight > 0) {
-                val targetHeight = listState.layoutInfo.visibleItemsInfo
-                    .firstOrNull { it.index == activeIndex }
-                    ?.size
-                    ?: with(density) { 72.dp.roundToPx() }
-                val upwardBias = with(density) { 8.dp.roundToPx() }
-                listState.animateScrollToItem(
-                    activeIndex,
-                    -((viewportHeight - targetHeight).coerceAtLeast(0) / 2) + upwardBias,
-                )
+            val layoutInfo = listState.layoutInfo
+            val target = layoutInfo.visibleItemsInfo.firstOrNull { it.index == activeIndex }
+            if (target != null) {
+                val viewportCenter = (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2f
+                val targetCenter = target.offset + target.size / 2f
+                listState.animateScrollBy(targetCenter - viewportCenter)
             }
         }
     }
@@ -256,14 +267,25 @@ private fun SyncedLyrics(
             follow = true
         }
     }
-    LazyColumn(
-        state = listState,
-        modifier = Modifier.fillMaxSize().testTag("player-lyrics"),
-        contentPadding = PaddingValues(vertical = 96.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        itemsIndexed(lines, key = { index, line -> "${line.timeMillis}-$index" }) { index, line ->
-            LyricLineContent(line, index == activeIndex, preferences, positionMillis, palette, onSeek)
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxSize().testTag("player-lyrics"),
+            contentPadding = PaddingValues(vertical = maxHeight / 2),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            itemsIndexed(lines, key = { index, line -> "${line.timeMillis}-$index" }) { index, line ->
+                LyricLineContent(
+                    line,
+                    index == activeIndex,
+                    preferences,
+                    positionMillis,
+                    palette,
+                ) { targetPositionMillis ->
+                    onSeek(targetPositionMillis)
+                    follow = true
+                }
+            }
         }
     }
 }
@@ -318,6 +340,7 @@ private fun LyricLineContent(
     }
     Column(
         Modifier.fillMaxWidth()
+            .then(if (active) Modifier.testTag("player-active-lyric") else Modifier)
             .graphicsLayer {
                 scaleX = lineScale
                 scaleY = lineScale
@@ -327,6 +350,7 @@ private fun LyricLineContent(
                     TransformOrigin(0f, 0.5f)
                 }
             }
+            .clip(CircleShape)
             .clickable { onSeek(line.timeMillis) }
             .padding(vertical = 6.dp),
         horizontalAlignment = if (preferences.textAlignment ==

@@ -98,6 +98,8 @@ internal class DefaultPlaybackController internal constructor(
     )
     private var isRefreshingCurrentSource = false
     private var hasPlaybackMutation = false
+    private var pendingSeekPositionMillis: Long? = null
+    private var pendingSeekRequestedAtMillis = 0L
     private var lastPositionCheckpointAtMillis = 0L
     private val historyRecorder = PlaybackHistoryRecorder(historyRepository, scope, elapsedRealtime)
     private val failureRecovery = PlaybackFailureRecovery(MAX_CONSECUTIVE_AUTOMATIC_SKIPS)
@@ -322,6 +324,8 @@ internal class DefaultPlaybackController internal constructor(
         hasPlaybackMutation = true
         val previewDurationMillis = queue.currentItem?.vipPreviewDurationMillisOrNull()
         val target = positionMillis.coerceIn(0, previewDurationMillis ?: Long.MAX_VALUE)
+        pendingSeekPositionMillis = target
+        pendingSeekRequestedAtMillis = elapsedRealtime()
         runWithController {
             it.seekTo(target)
         }
@@ -709,6 +713,7 @@ internal class DefaultPlaybackController internal constructor(
     }
 
     private fun publishQueue(status: PlaybackStatus = mutableState.value.status, issue: PlaybackIssue? = null) {
+        if (status == PlaybackStatus.Resolving) pendingSeekPositionMillis = null
         val currentDuration = queue.currentItem?.resolvedSource?.durationMillis
             ?: queue.currentItem?.metadata?.durationMillis
             ?: 0L
@@ -740,12 +745,25 @@ internal class DefaultPlaybackController internal constructor(
 
     private fun syncPlayerState(player: Player) {
         if (isResolving) return
-        val updatedState = player.snapshotPlaybackState(
+        val snapshot = player.snapshotPlaybackState(
             queue = queue,
             previousState = mutableState.value,
             pausedPreviewGeneration = pausedPreviewGeneration,
             loadGeneration = loadGeneration,
         )
+        val pendingSeekPosition = pendingSeekPositionMillis
+        val retainsPendingSeek = pendingSeekPosition != null &&
+            shouldRetainPendingSeekPosition(
+                targetPositionMillis = pendingSeekPosition,
+                reportedPositionMillis = snapshot.positionMillis,
+                elapsedSinceRequestMillis = elapsedRealtime() - pendingSeekRequestedAtMillis,
+            )
+        if (pendingSeekPosition != null && !retainsPendingSeek) pendingSeekPositionMillis = null
+        val updatedState = if (retainsPendingSeek) {
+            snapshot.copy(positionMillis = pendingSeekPosition)
+        } else {
+            snapshot
+        }
         if (updatedState.status == PlaybackStatus.Playing) failureRecovery.onPlaybackStarted()
         mutableState.value = updatedState
         historyRecorder.sample(

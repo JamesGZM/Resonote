@@ -14,6 +14,13 @@ import com.resonote.core.network.LyricsNetworkDataSource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonPrimitive
+import java.util.Base64
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.pow
@@ -64,10 +71,54 @@ internal class DefaultLyricsRepository @Inject constructor(
 
     private fun String.parseKrc(): List<LyricLine> {
         if (!KugouKrcParser.canParse(this)) return emptyList()
-        return KugouKrcParser.parse(this).lines
+        return KugouKrcParser.parse(normalizeKrcLanguageMetadata()).lines
             .mapNotNull { (it as? KaraokeLine.MainKaraokeLine)?.toDomainOrNull() }
             .sortedBy(LyricLine::timeMillis)
             .distinctBy { it.timeMillis to it.text }
+    }
+
+    private fun String.normalizeKrcLanguageMetadata(): String {
+        val match = KRC_LANGUAGE_PATTERN.find(this) ?: return this
+        val normalized = runCatching {
+            val decoded = Base64.getDecoder().decode(match.groupValues[1]).decodeToString()
+            val root = Json.parseToJsonElement(decoded) as? JsonObject ?: return@runCatching null
+            val content = root["content"] as? JsonArray ?: return@runCatching null
+            val normalizedContent = content.mapNotNull { element ->
+                val block = element as? JsonObject ?: return@mapNotNull null
+                if (block["type"]?.jsonPrimitive?.intOrNull == PHONETIC_METADATA_TYPE) {
+                    block.normalizeKrcPhonetics()
+                } else {
+                    block
+                }
+            }
+            JsonObject(root + ("content" to JsonArray(normalizedContent)))
+        }.getOrNull() ?: return this
+        val encoded = Base64.getEncoder().encodeToString(normalized.toString().encodeToByteArray())
+        return replaceRange(match.range, "[language:$encoded]")
+    }
+
+    private fun JsonObject.normalizeKrcPhonetics(): JsonObject? {
+        // Kugou emits both ["phonetic"] and [["phonetic"]], while the parser accepts only the latter.
+        val rows = get("lyricContent") as? JsonArray ?: return null
+        val normalizedRows = buildList {
+            rows.forEach { rowElement ->
+                val row = rowElement as? JsonArray ?: return null
+                val normalizedSyllables = buildList {
+                    row.forEach { syllable ->
+                        when (syllable) {
+                            is JsonPrimitive -> add(JsonArray(listOf(syllable)))
+                            is JsonArray -> {
+                                if (syllable.any { it !is JsonPrimitive }) return null
+                                add(syllable)
+                            }
+                            else -> return null
+                        }
+                    }
+                }
+                add(JsonArray(normalizedSyllables))
+            }
+        }
+        return JsonObject(this + ("lyricContent" to JsonArray(normalizedRows)))
     }
 
     private fun KaraokeLine.MainKaraokeLine.toDomainOrNull(): LyricLine? {
@@ -105,6 +156,8 @@ internal class DefaultLyricsRepository @Inject constructor(
     private companion object {
         data object MalformedLyricsException : RuntimeException()
         val LRC_PATTERN = Regex("\\[(\\d{1,3}):(\\d{1,2})(?:[.:](\\d{1,3}))?]")
+        val KRC_LANGUAGE_PATTERN = Regex("(?m)^\\[language:([^]]+)]\\r?$")
+        const val PHONETIC_METADATA_TYPE = 0
         fun lineTimedLyric(timeMillis: Long, text: String) = LyricLine(
             syllables = listOf(LyricSyllable(text, timeMillis, timeMillis + 1L)),
         )

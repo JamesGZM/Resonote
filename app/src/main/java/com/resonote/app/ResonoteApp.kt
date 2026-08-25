@@ -16,6 +16,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -38,12 +39,10 @@ import com.resonote.feature.library.impl.MyViewModel
 import com.resonote.feature.library.impl.PlaylistAdditionUiState
 import com.resonote.feature.local.api.LocalMusicNavKey
 import com.resonote.feature.player.api.PlayerNavKey
-import com.resonote.feature.player.impl.PlayerPalette
 import com.resonote.feature.player.impl.PlayerPaletteViewModel
 import com.resonote.feature.search.api.SearchNavKey
 import com.resonote.feature.video.api.VideoNavKey
 import com.resonote.feature.vip.impl.DailyVipViewModel
-import kotlinx.coroutines.delay
 
 @Composable
 internal fun ResonoteApp(
@@ -77,35 +76,10 @@ internal fun ResonoteApp(
     val playbackIssueMessage = playbackState.issue?.let { stringResource(it.messageRes()) }
     val miniPlayerVisible = backStack.lastOrNull().showsMiniPlayer() && playbackState.currentMetadata != null
     val fullPlayerVisible = backStack.lastOrNull() is PlayerNavKey
-    val currentMediaId = playbackState.currentMetadata?.mediaId
-    var fullPlayerEntryMediaId by remember { mutableStateOf<String?>(null) }
-    var retainedFullPlayerPalette by remember { mutableStateOf<PlayerPalette?>(null) }
-    LaunchedEffect(fullPlayerVisible, currentMediaId, playerPaletteSeed) {
-        if (!fullPlayerVisible) {
-            fullPlayerEntryMediaId = null
-            retainedFullPlayerPalette = null
-            return@LaunchedEffect
-        }
-        if (fullPlayerEntryMediaId == null) {
-            fullPlayerEntryMediaId = currentMediaId
-            retainedFullPlayerPalette = playerPaletteSeed
-                ?.takeIf { it.mediaId == currentMediaId }
-                ?.let(PlayerPalette::fromSeed)
-            return@LaunchedEffect
-        }
-        if (currentMediaId == fullPlayerEntryMediaId) return@LaunchedEffect
-        val prepared = playerPaletteSeed?.takeIf { it.mediaId == currentMediaId }
-        if (prepared != null) {
-            retainedFullPlayerPalette = PlayerPalette.fromSeed(prepared)
-        } else {
-            delay(1_000)
-            retainedFullPlayerPalette = null
-        }
-    }
-    val navigationBarTarget = retainedFullPlayerPalette?.background ?: if (hasTabBar) {
-        MaterialTheme.colorScheme.surfaceContainer
-    } else {
-        MaterialTheme.colorScheme.background
+    val navigationBarTarget = when {
+        fullPlayerVisible -> Color.Transparent
+        hasTabBar -> MaterialTheme.colorScheme.surfaceContainer
+        else -> MaterialTheme.colorScheme.background
     }
     val navigationBarColor by animateColorAsState(
         navigationBarTarget,
@@ -115,7 +89,7 @@ internal fun ResonoteApp(
 
     SyncSystemBars(
         navigationBarColor = navigationBarColor,
-        statusBarColor = androidx.compose.ui.graphics.Color.Transparent,
+        statusBarColor = Color.Transparent,
         forceDarkStatusBar = backStack.lastOrNull() is VideoNavKey || backStack.lastOrNull() is PlayerNavKey,
     )
 
@@ -236,8 +210,14 @@ internal fun ResonoteApp(
             snackbarHostState = snackbarHostState,
             snackbarController = snackbarController,
             onOpenPlaylistPicker = ::openPlaylistPicker,
-            onSearch = { query ->
-                backStack.add(SearchNavKey(sessionId = System.nanoTime(), initialQuery = query))
+            onSearch = { query, tab ->
+                backStack.add(
+                    SearchNavKey(
+                        sessionId = System.nanoTime(),
+                        initialQuery = query,
+                        initialTab = tab,
+                    ),
+                )
             },
             dailyVipViewModel = dailyVipViewModel,
             onOpenRiskVerification = { challenge ->

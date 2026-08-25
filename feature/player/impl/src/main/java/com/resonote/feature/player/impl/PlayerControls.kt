@@ -75,7 +75,7 @@ internal fun PlayerProgress(
     val duration = durationMillis.coerceAtLeast(1L)
     var pendingFraction by remember { mutableStateOf<Float?>(null) }
     val visiblePosition = pendingFraction?.let { (it * duration).toLong() } ?: positionMillis
-    Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
+    Box(Modifier.fillMaxWidth().height(48.dp).padding(horizontal = 24.dp)) {
         ThinPlayerSeekBar(
             visiblePosition,
             bufferedPositionMillis,
@@ -86,9 +86,11 @@ internal fun PlayerProgress(
                 pendingFraction?.let { onSeek((it * duration).toLong()) }
                 pendingFraction = null
             },
-            Modifier.fillMaxWidth(),
+            Modifier.fillMaxSize(),
         )
-        Row(Modifier.fillMaxWidth().padding(horizontal = 7.dp)) {
+        Row(
+            Modifier.fillMaxWidth().align(Alignment.TopCenter).padding(horizontal = 7.dp, vertical = 16.dp),
+        ) {
             Text(
                 visiblePosition.playerTimeLabel(),
                 color = palette.accent,
@@ -151,7 +153,7 @@ internal fun ThinPlayerSeekBar(
         val inset = 7.dp.toPx()
         val start = inset
         val width = (size.width - inset * 2f).coerceAtLeast(0f)
-        val y = size.height - 8.dp.toPx()
+        val y = 8.dp.toPx()
         fun line(end: Float, color: Color) = drawLine(
             color,
             Offset(start, y),
@@ -180,7 +182,7 @@ internal fun PlaybackControls(
 ) {
     val playing = status == PlaybackStatus.Playing
     Row(
-        Modifier.fillMaxWidth().padding(horizontal = 22.dp, vertical = 8.dp),
+        Modifier.fillMaxWidth().padding(start = 22.dp, top = 4.dp, end = 22.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -235,7 +237,7 @@ internal fun PlaybackControls(
             )
         }
         IconButton(onClick = { onModeChange(mode.next()) }, Modifier.size(48.dp)) {
-            Icon(mode.icon(), mode.label(), tint = palette.accent)
+            Icon(mode.icon(), mode.label(), tint = palette.contentPrimary)
         }
     }
 }
@@ -249,7 +251,7 @@ internal fun PlayerToolRow(
     onOpenQueue: () -> Unit,
 ) {
     Row(
-        Modifier.fillMaxWidth().padding(start = 40.dp, top = 4.dp, end = 40.dp, bottom = 4.dp),
+        Modifier.fillMaxWidth().padding(start = 40.dp, top = 8.dp, end = 40.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         PlayerTool(
@@ -264,7 +266,6 @@ internal fun PlayerToolRow(
             palette,
             onOpenSpeed,
             stateValue = playbackSpeed.valueLabel(),
-            iconSize = 32.dp,
         )
         PlayerTool(
             R.drawable.feature_player_impl_ic_queue,
@@ -282,7 +283,6 @@ private fun PlayerTool(
     palette: PlayerPalette,
     onClick: () -> Unit,
     stateValue: String? = null,
-    iconSize: androidx.compose.ui.unit.Dp = 32.dp,
 ) {
     Surface(
         onClick = onClick,
@@ -297,7 +297,7 @@ private fun PlayerTool(
             Icon(
                 painterResource(iconRes),
                 label,
-                Modifier.size(iconSize),
+                Modifier.size(34.dp),
                 tint = palette.contentPrimary,
             )
         }

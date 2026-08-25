@@ -46,6 +46,7 @@ import com.resonote.feature.player.impl.PlaybackQueueSheet
 import com.resonote.feature.player.impl.ResonoteMiniPlayer
 import com.resonote.feature.player.impl.badgeLabel
 import com.resonote.feature.recognition.api.RecognitionNavKey
+import com.resonote.feature.search.api.SearchTab
 import com.resonote.feature.video.api.VideoNavKey
 import com.resonote.feature.vip.impl.DailyVipDialogRoute
 import com.resonote.feature.vip.impl.DailyVipViewModel
@@ -81,7 +82,7 @@ internal fun BoxScope.ResonoteAppOverlays(
     snackbarHostState: SnackbarHostState,
     snackbarController: ResonoteSnackbarController,
     onOpenPlaylistPicker: (OnlineSong) -> Unit,
-    onSearch: (String) -> Unit,
+    onSearch: (String, SearchTab) -> Unit,
     onOpenRiskVerification: (RiskChallengeHandle) -> Unit,
     dailyVipViewModel: DailyVipViewModel,
 ) {
@@ -165,18 +166,18 @@ internal fun BoxScope.ResonoteAppOverlays(
             onDismiss = { state.infoSong = null },
             onSearchSong = {
                 state.infoSong = null
-                onSearch(song.title)
+                onSearch(song.title, SearchTab.SONGS)
             },
             onSearchArtist = song.artist?.takeIf(String::isNotBlank)?.let { artist ->
                 {
                     state.infoSong = null
-                    onSearch(artist)
+                    onSearch(artist, SearchTab.ARTISTS)
                 }
             },
             onSearchAlbum = song.albumTitle?.takeIf(String::isNotBlank)?.let { album ->
                 {
                     state.infoSong = null
-                    onSearch(album)
+                    onSearch(album, SearchTab.ALBUMS)
                 }
             },
         )

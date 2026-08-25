@@ -37,7 +37,7 @@ class SearchViewModel @Inject constructor(
         }
     }
 
-    fun initialize(sessionId: Long, initialQuery: String) {
+    fun initialize(sessionId: Long, initialQuery: String, initialCategory: SearchCategory = SearchCategory.ALL) {
         if (currentSessionId == sessionId) return
         currentSessionId = sessionId
         suggestionJob?.cancel()
@@ -48,7 +48,7 @@ class SearchViewModel @Inject constructor(
             it.copy(
                 query = query,
                 suggestions = emptyList(),
-                selectedCategory = SearchCategory.ALL,
+                selectedCategory = initialCategory,
                 result = SearchResultUiState.Idle,
             )
         }

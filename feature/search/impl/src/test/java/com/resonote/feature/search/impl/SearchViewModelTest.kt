@@ -69,6 +69,24 @@ class SearchViewModelTest {
     }
 
     @Test
+    fun initialCategoryRunsTheSubmittedQueryInThatCategory() = runTest(dispatcher) {
+        val repository = FakeSearchRepository()
+        val viewModel = viewModel(repository)
+        advanceUntilIdle()
+
+        viewModel.initialize(
+            sessionId = 1,
+            initialQuery = "林澈",
+            initialCategory = SearchCategory.SONGS,
+        )
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.selectedCategory).isEqualTo(SearchCategory.SONGS)
+        assertThat(repository.songRequests).containsExactly("林澈" to 1)
+        assertThat(repository.complexQueries).isEmpty()
+    }
+
+    @Test
     fun hotKeywordFailureDoesNotBlockManualSearch() = runTest(dispatcher) {
         val repository = FakeSearchRepository(hotResult = CollectionLoadResult.Failed(ContentFailure.Network))
         val viewModel = viewModel(repository)

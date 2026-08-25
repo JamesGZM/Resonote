@@ -102,4 +102,5 @@
 | 2026-08-24 | P-093 | 当前版本移除歌曲、Full Player、MV、歌单及其他内容的所有对外分享入口、占位提示与回调；文件管理器将音频分享给 Resonote 仍作为本地导入能力保留 | 用户明确要求去除目前所有分享功能；取代 P-027、P-035 中的分享入口约定 | Player、Song Actions、Content Details、Feedback 和 Documentation | 已确认；现行合同 |
 | 2026-08-24 | P-094 | Full Player 右上角 Sheet 直接提供下一首、队尾、添加到歌单、歌曲信息与歌词设置；歌曲信息改为 Material 3 Bottom Sheet，歌曲名和艺人可进入自动搜索并在返回时恢复原 Player | 用户明确要求移除二级歌曲操作并美化信息弹窗、增加搜索跳转 | Player、Song Actions、Search、Navigation、Overlay 和 Roborazzi | 已确认；现行合同 |
 | 2026-08-24 | P-095 | 歌词辅助文本中的翻译与音译改为两个独立持久化开关并默认同时开启；两者存在时翻译在前、音译在后，均保持低于主歌词的视觉层级 | 用户明确指出单选不适合辅助文本能力 | Lyrics、Settings、DataStore、Player 和 Roborazzi | 已确认；现行合同 |
-| 2026-08-24 | P-096 | 歌曲信息 Sheet 不显示独立 Header 或搜索操作卡片；歌曲名、艺人和专辑仅以蓝色下划线文本表达可搜索性，点击后进入对应关键词搜索 | 用户认为 Header 与搜索卡片视觉过重，并补充专辑搜索 | Player、Song Info、Search、Overlay 和 Roborazzi | 已确认；现行合同 |
+| 2026-08-24 | P-096 | 歌曲信息 Sheet 不显示独立 Header 或搜索操作卡片；歌曲名、艺人和专辑仅以蓝色下划线文本表达可搜索性，点击后进入对应关键词搜索 | 用户认为 Header 与搜索卡片视觉过重，并补充专辑搜索 | Player、Song Info、Search、Overlay 和 Roborazzi | 已被 P-097 取代 |
+| 2026-08-25 | P-097 | 歌曲信息 Sheet 使用紧凑封面头部与圆角详情容器，移除网页式蓝色下划线；点击歌曲、艺人和专辑时分别自动提交并直接进入单曲、歌手和专辑分类 | 用户真机审查后要求美化信息弹窗，并明确搜索入口应落到对应 Tab | Player、Song Info、Search、Navigation、Overlay 和 Roborazzi | 已确认；现行合同 |
