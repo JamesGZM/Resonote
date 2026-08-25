@@ -5,11 +5,9 @@ import com.resonote.core.model.AuthGateReason
 import com.resonote.core.model.AuthState
 import com.resonote.core.navigation.LoginContinuation
 import com.resonote.core.navigation.LoginGateNavKey
-import com.resonote.core.navigation.TabsShellNavKey
 import com.resonote.feature.cloud.api.CloudNavKey
 
 internal fun MutableList<NavKey>.synchronizeAuthenticationGate(authState: AuthState) {
-    ensureNavigationRoot()
     val continuation = filterIsInstance<LoginGateNavKey>().lastOrNull()?.continuation
     val destination = when (authState) {
         is AuthState.AuthenticationRequired -> LoginGateNavKey(
@@ -38,15 +36,4 @@ internal fun MutableList<NavKey>.navigateToCloud(authState: AuthState) {
         )
     }
     if (lastOrNull() != destination) add(destination)
-}
-
-internal fun MutableList<NavKey>.popResonoteDestination(): Boolean {
-    ensureNavigationRoot()
-    if (size == 1) return false
-    removeAt(lastIndex)
-    return true
-}
-
-private fun MutableList<NavKey>.ensureNavigationRoot() {
-    if (TabsShellNavKey !in this) add(0, TabsShellNavKey)
 }

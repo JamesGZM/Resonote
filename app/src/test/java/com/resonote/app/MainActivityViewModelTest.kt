@@ -94,27 +94,6 @@ class MainActivityViewModelTest {
     }
 
     @Test
-    fun navigationBackStackAlwaysRetainsItsRoot() {
-        val rootOnly = mutableListOf<NavKey>(TabsShellNavKey)
-
-        assertThat(rootOnly.popResonoteDestination()).isFalse()
-        assertThat(rootOnly).containsExactly(TabsShellNavKey)
-
-        val restoredWithoutRoot = mutableListOf<NavKey>(LoginGateNavKey(sessionExpired = false))
-        assertThat(restoredWithoutRoot.popResonoteDestination()).isTrue()
-        assertThat(restoredWithoutRoot).containsExactly(TabsShellNavKey)
-    }
-
-    @Test
-    fun authenticationSynchronizationRepairsMissingRoot() {
-        val backStack = mutableListOf<NavKey>(LoginGateNavKey(sessionExpired = false))
-
-        backStack.synchronizeAuthenticationGate(AuthState.Anonymous)
-
-        assertThat(backStack).containsExactly(TabsShellNavKey)
-    }
-
-    @Test
     fun cloudNavigationContinuesAfterLoginWithoutDuplicatingDestination() {
         val backStack = mutableListOf<NavKey>(TabsShellNavKey)
 
