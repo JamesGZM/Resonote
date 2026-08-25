@@ -43,6 +43,7 @@ import com.resonote.core.designsystem.component.ResonoteLoadMoreEffect
 import com.resonote.core.designsystem.component.ResonoteLoadMoreFooter
 import com.resonote.core.designsystem.component.ResonoteLoadMoreState
 import com.resonote.core.designsystem.component.ResonotePullToRefreshBox
+import com.resonote.core.designsystem.component.ResonoteTabPager
 import com.resonote.core.designsystem.component.ResonoteTabbedToolbar
 import com.resonote.core.designsystem.component.ResonoteTextButton
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
@@ -124,15 +125,6 @@ internal fun HistoryScreen(
     var confirmClear by remember { mutableStateOf(false) }
     val busy = state.mutation == DeviceHistoryMutation.Working
     val online = state.online as? OnlineHistoryUiState.Available
-    val listState = rememberLazyListState()
-    ResonoteLoadMoreEffect(
-        listState = listState,
-        itemCount = online?.songs?.size ?: 0,
-        enabled = state.selectedTab == HistoryTab.Online &&
-            online?.let { it.hasMore && !it.isLoadingMore && it.loadMoreFailure == null } == true,
-        onLoadMore = onLoadMoreOnline,
-    )
-
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
@@ -179,78 +171,95 @@ internal fun HistoryScreen(
             }
         },
     ) { padding ->
-        ResonotePullToRefreshBox(
-            isRefreshing = online?.isRefreshing == true,
-            onRefresh = onRefreshOnline,
-            enabled = state.selectedTab == HistoryTab.Online && online?.songs?.isNotEmpty() == true,
-            modifier = Modifier.fillMaxSize().padding(padding).testTag("history-pull-to-refresh"),
-        ) {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.fillMaxSize().testTag("history-list"),
-                contentPadding = PaddingValues(
-                    start = 16.dp,
-                    top = 10.dp,
-                    end = 16.dp,
-                    bottom = bottomContentPadding,
-                ),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+        ResonoteTabPager(
+            selectedPage = state.selectedTab.ordinal,
+            pageCount = HistoryTab.entries.size,
+            onPageSelected = { onSelectTab(HistoryTab.entries[it]) },
+            modifier = Modifier.padding(padding),
+        ) { page ->
+            val tab = HistoryTab.entries[page]
+            val pageState = state.copy(selectedTab = tab)
+            val listState = rememberLazyListState()
+            ResonoteLoadMoreEffect(
+                listState = listState,
+                itemCount = online?.songs?.size ?: 0,
+                enabled = tab == HistoryTab.Online &&
+                    online?.let { it.hasMore && !it.isLoadingMore && it.loadMoreFailure == null } == true,
+                onLoadMore = onLoadMoreOnline,
+            )
+            ResonotePullToRefreshBox(
+                isRefreshing = online?.isRefreshing == true,
+                onRefresh = onRefreshOnline,
+                enabled = tab == HistoryTab.Online && online?.songs?.isNotEmpty() == true,
+                modifier = Modifier.fillMaxSize().testTag("history-pull-to-refresh"),
             ) {
-                if (state.visibleCount > 0) {
-                    item(key = "summary") {
-                        HistorySummary(
-                            count = state.visibleCount,
-                            enabled = !busy,
-                            onPlayAll = {
-                                when (val available = state.online) {
-                                    is OnlineHistoryUiState.Available -> if (
-                                        state.selectedTab == HistoryTab.Online
-                                    ) {
-                                        onPlayOnline(available.songs, 0)
-                                    }
-                                    else -> Unit
-                                }
-                                if (state.selectedTab == HistoryTab.Device && state.deviceItems.isNotEmpty()) {
-                                    onPlayDevice(state.deviceItems, 0)
-                                }
-                            },
-                        )
-                    }
-                }
-                if (state.mutation == DeviceHistoryMutation.Failed) {
-                    item(key = "mutation-failure") {
-                        MutationFailureCard(onDismiss = onDismissMutationFailure)
-                    }
-                }
-                when (state.selectedTab) {
-                    HistoryTab.Online -> onlineContent(
-                        state = state,
-                        playingMediaId = playingMediaId,
-                        onLoginRequest = onLoginRequest,
-                        onRetry = onRefreshOnline,
-                        onPlay = onPlayOnline,
-                        onSongMoreClick = onSongMoreClick,
-                    )
-                    HistoryTab.Device -> deviceContent(
-                        state = state,
-                        playingMediaId = playingMediaId,
-                        busy = busy,
-                        onPlay = onPlayDevice,
-                        onDelete = { pendingDelete = it },
-                    )
-                }
-                if (state.selectedTab == HistoryTab.Online &&
-                    online?.let { it.isLoadingMore || it.loadMoreFailure != null } == true
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize().testTag("history-list"),
+                    contentPadding = PaddingValues(
+                        start = 16.dp,
+                        top = 10.dp,
+                        end = 16.dp,
+                        bottom = bottomContentPadding,
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    item(key = "load-more") {
-                        ResonoteLoadMoreFooter(
-                            state = if (online.isLoadingMore) {
-                                ResonoteLoadMoreState.LOADING
-                            } else {
-                                ResonoteLoadMoreState.ERROR
-                            },
-                            onRetry = onLoadMoreOnline,
+                    if (pageState.visibleCount > 0) {
+                        item(key = "summary") {
+                            HistorySummary(
+                                count = pageState.visibleCount,
+                                enabled = !busy,
+                                onPlayAll = {
+                                    when (val available = state.online) {
+                                        is OnlineHistoryUiState.Available -> if (
+                                            tab == HistoryTab.Online
+                                        ) {
+                                            onPlayOnline(available.songs, 0)
+                                        }
+                                        else -> Unit
+                                    }
+                                    if (tab == HistoryTab.Device && state.deviceItems.isNotEmpty()) {
+                                        onPlayDevice(state.deviceItems, 0)
+                                    }
+                                },
+                            )
+                        }
+                    }
+                    if (state.mutation == DeviceHistoryMutation.Failed) {
+                        item(key = "mutation-failure") {
+                            MutationFailureCard(onDismiss = onDismissMutationFailure)
+                        }
+                    }
+                    when (tab) {
+                        HistoryTab.Online -> onlineContent(
+                            state = state,
+                            playingMediaId = playingMediaId,
+                            onLoginRequest = onLoginRequest,
+                            onRetry = onRefreshOnline,
+                            onPlay = onPlayOnline,
+                            onSongMoreClick = onSongMoreClick,
                         )
+                        HistoryTab.Device -> deviceContent(
+                            state = state,
+                            playingMediaId = playingMediaId,
+                            busy = busy,
+                            onPlay = onPlayDevice,
+                            onDelete = { pendingDelete = it },
+                        )
+                    }
+                    if (tab == HistoryTab.Online &&
+                        online?.let { it.isLoadingMore || it.loadMoreFailure != null } == true
+                    ) {
+                        item(key = "load-more") {
+                            ResonoteLoadMoreFooter(
+                                state = if (online.isLoadingMore) {
+                                    ResonoteLoadMoreState.LOADING
+                                } else {
+                                    ResonoteLoadMoreState.ERROR
+                                },
+                                onRetry = onLoadMoreOnline,
+                            )
+                        }
                     }
                 }
             }

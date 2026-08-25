@@ -10,6 +10,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.put
+import java.util.Base64
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -43,6 +44,7 @@ internal class PlaylistMutationProtocolClient @Inject constructor(
                 }.toString(),
             ).uppercase()
             val clientTime = nowMillis / 1_000
+            val body = Base64.getEncoder().encode(encrypted.ciphertext)
             ApiExchange(
                 spec = ApiEndpointSpec(
                     origin = origins.gateway,
@@ -58,17 +60,15 @@ internal class PlaylistMutationProtocolClient @Inject constructor(
                         "p" to p,
                     ),
                     headers = mapOf("x-router" to "cloudlist.service.kugou.com"),
-                    body = encrypted.ciphertext,
+                    body = body,
                     contentType = "application/octet-stream",
                     signatureMode = ApiSignatureMode.Android,
-                    includeDefaultParams = false,
                     responseFormat = ApiResponseFormat.Bytes,
                 ),
                 decode = { response ->
-                    val plaintext = runCatching { crypto.decryptPlaylist(response.bytes, encrypted.key) }
-                        .getOrElse { throw malformedResponse() }
-                    val root = runCatching { json.parseToJsonElement(plaintext) as? JsonObject }
-                        .getOrNull() ?: throw malformedResponse()
+                    val root = encryptedResponse(response.bytes, encrypted.key)
+                        ?: plainResponse(response.bytes)
+                        ?: throw malformedResponse()
                     riskDetector.detect(response.copy(body = root))?.let {
                         throw ApiRiskException(it, ApiRiskException.Reason.VerificationUnavailable)
                     }
@@ -79,6 +79,14 @@ internal class PlaylistMutationProtocolClient @Inject constructor(
             )
         }
     }
+
+    private fun encryptedResponse(bytes: ByteArray, key: String): JsonObject? = runCatching {
+        json.parseToJsonElement(crypto.decryptPlaylist(bytes, key)) as? JsonObject
+    }.getOrNull()
+
+    private fun plainResponse(bytes: ByteArray): JsonObject? = runCatching {
+        json.parseToJsonElement(bytes.decodeToString()) as? JsonObject
+    }.getOrNull()
 
     private fun malformedResponse() = ApiProtocolException(ApiProtocolException.Reason.MalformedResponse)
 

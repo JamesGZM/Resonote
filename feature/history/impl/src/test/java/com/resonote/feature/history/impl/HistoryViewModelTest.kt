@@ -43,6 +43,11 @@ class HistoryViewModelTest {
     fun tearDown() = Dispatchers.resetMain()
 
     @Test
+    fun initialStateDefaultsToOnlineHistory() {
+        assertThat(HistoryUiState().selectedTab).isEqualTo(HistoryTab.Online)
+    }
+
+    @Test
     fun deviceHistoryIsAvailableWithoutAccount() = runTest(dispatcher) {
         val repository = FakeHistoryRepository(device = MutableStateFlow(listOf(deviceItem("local"))))
         val viewModel = HistoryViewModel(repository, FakeAuthRepository(AuthState.Anonymous))
@@ -87,6 +92,25 @@ class HistoryViewModelTest {
         val online = viewModel.uiState.value.online as OnlineHistoryUiState.Available
         assertThat(online.songs.map(OnlineSong::hash)).containsExactly("first")
         assertThat(repository.accountLoads).isEqualTo(1)
+    }
+
+    @Test
+    fun reenteringAppliesInitialTabAndRefreshesOnlineHistory() = runTest(dispatcher) {
+        val repository = FakeHistoryRepository(
+            accountResults = ArrayDeque(listOf(availablePage("first"), availablePage("second"))),
+        )
+        val viewModel = HistoryViewModel(repository, FakeAuthRepository(AuthState.Authenticated("user-a")))
+        viewModel.initialize(HistoryTab.Online)
+        advanceUntilIdle()
+
+        viewModel.selectTab(HistoryTab.Device)
+        viewModel.initialize(HistoryTab.Online)
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.selectedTab).isEqualTo(HistoryTab.Online)
+        val online = viewModel.uiState.value.online as OnlineHistoryUiState.Available
+        assertThat(online.songs.map(OnlineSong::hash)).containsExactly("second")
+        assertThat(repository.accountLoads).isEqualTo(2)
     }
 
     @Test

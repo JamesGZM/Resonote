@@ -70,6 +70,7 @@ internal fun ArtistHeader(
     artworkUrl: String? = profile?.avatarUrl,
     follow: ArtistFollowUiState,
     onFollowClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val name = profile?.name ?: stringResource(R.string.feature_artist_impl_artist_title_fallback)
     val portraitDescription = stringResource(R.string.feature_artist_impl_artist_portrait, name)
@@ -81,7 +82,7 @@ internal fun ArtistHeader(
         blurRadius = 3.5f,
     )
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 340.dp)
             .semantics { contentDescription = portraitDescription },

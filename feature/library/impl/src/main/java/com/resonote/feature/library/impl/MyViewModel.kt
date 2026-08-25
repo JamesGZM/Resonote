@@ -39,6 +39,7 @@ class MyViewModel @Inject constructor(
     val refreshFailures: SharedFlow<Unit> = mutableRefreshFailures.asSharedFlow()
 
     private var activeUserId: String? = null
+    private var lastVisibleUserId: String? = null
     private var refreshJob: Job? = null
     private var createPlaylistJob: Job? = null
     private var addTrackJob: Job? = null
@@ -46,6 +47,7 @@ class MyViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             authRepository.authState.collectLatest { authState ->
+                lastVisibleUserId = null
                 refreshJob?.cancel()
                 refreshJob = null
                 createPlaylistJob?.cancel()
@@ -67,8 +69,21 @@ class MyViewModel @Inject constructor(
         }
     }
 
+    fun onVisible() {
+        val userId = activeUserId ?: return
+        if (lastVisibleUserId != userId) {
+            lastVisibleUserId = userId
+            return
+        }
+        refresh(userId, showIndicator = false, reportFailure = false)
+    }
+
     fun refresh() {
         val userId = activeUserId ?: return
+        refresh(userId, showIndicator = true, reportFailure = true)
+    }
+
+    private fun refresh(userId: String, showIndicator: Boolean, reportFailure: Boolean) {
         if (
             refreshJob?.isActive == true ||
             createPlaylistJob?.isActive == true ||
@@ -76,13 +91,15 @@ class MyViewModel @Inject constructor(
         ) {
             return
         }
-        mutableUiState.update { state ->
-            (state as? MyUiState.Authenticated)?.copy(isRefreshing = true) ?: state
+        if (showIndicator) {
+            mutableUiState.update { state ->
+                (state as? MyUiState.Authenticated)?.copy(isRefreshing = true) ?: state
+            }
         }
         refreshJob = viewModelScope.launch {
             val succeeded = refreshAll(userId)
             updateAuthenticated(userId) { it.copy(isRefreshing = false) }
-            if (!succeeded) mutableRefreshFailures.tryEmit(Unit)
+            if (!succeeded && reportFailure) mutableRefreshFailures.tryEmit(Unit)
         }
     }
 

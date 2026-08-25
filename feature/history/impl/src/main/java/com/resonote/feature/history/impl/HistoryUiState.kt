@@ -6,7 +6,7 @@ import com.resonote.core.model.OnlineSong
 import com.resonote.feature.history.api.HistoryTab
 
 data class HistoryUiState(
-    val selectedTab: HistoryTab = HistoryTab.Device,
+    val selectedTab: HistoryTab = HistoryTab.Online,
     val accountState: HistoryAccountState = HistoryAccountState.Checking,
     val online: OnlineHistoryUiState = OnlineHistoryUiState.NotLoaded,
     val deviceItems: List<DeviceHistoryItem> = emptyList(),

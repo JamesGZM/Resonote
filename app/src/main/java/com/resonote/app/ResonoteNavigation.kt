@@ -94,6 +94,9 @@ internal fun ResonoteNavDisplay(
 ) {
     NavDisplay(
         backStack = backStack,
+        onBack = {
+            backStack.lastOrNull()?.let(backStack::popIfCurrent)
+        },
         entryDecorators = listOf(
             rememberSaveableStateHolderNavEntryDecorator(),
             rememberViewModelStoreNavEntryDecorator(),
@@ -135,15 +138,7 @@ internal fun ResonoteNavDisplay(
                         }
                     },
                     onHistoryClick = {
-                        backStack.add(
-                            HistoryNavKey(
-                                initialTab = if (authState is AuthState.Authenticated) {
-                                    HistoryTab.Online
-                                } else {
-                                    HistoryTab.Device
-                                },
-                            ),
-                        )
+                        backStack.add(HistoryNavKey(initialTab = HistoryTab.Online))
                     },
                     onCloudClick = { backStack.navigateToCloud(authState) },
                     onLocalMusicClick = { backStack.add(LocalMusicNavKey()) },
@@ -195,7 +190,7 @@ internal fun ResonoteNavDisplay(
                     initialTab = key.initialTab,
                     playingMediaId = playbackState.currentMetadata?.mediaId,
                     bottomContentPadding = standaloneBottomContentPadding,
-                    onBack = { backStack.removeLastOrNull() },
+                    onBack = { backStack.popIfCurrent(key) },
                     onRecognitionClick = {
                         backStack.add(RecognitionNavKey(sessionId = System.nanoTime()))
                     },
@@ -248,10 +243,10 @@ internal fun ResonoteNavDisplay(
                     },
                 )
             }
-            entry<FollowingNavKey> {
+            entry<FollowingNavKey> { key ->
                 FollowingRoute(
                     bottomContentPadding = standaloneBottomContentPadding,
-                    onBack = { backStack.removeLastOrNull() },
+                    onBack = { backStack.popIfCurrent(key) },
                     onArtistClick = { artist ->
                         backStack.add(
                             ArtistNavKey(
@@ -283,9 +278,9 @@ internal fun ResonoteNavDisplay(
                             ) + fadeOut(animationSpec = tween(360, delayMillis = 100))
                             )
                 },
-            ) {
+            ) { key ->
                 PlayerRoute(
-                    onBack = { backStack.removeLastOrNull() },
+                    onBack = { backStack.popIfCurrent(key) },
                     onPlayNextClick = { playbackViewModel.playNextOnline(it) },
                     onAppendToQueueClick = playbackViewModel::appendOnline,
                     onAddToPlaylistClick = onOpenPlaylistPicker,
@@ -299,9 +294,9 @@ internal fun ResonoteNavDisplay(
                     paletteSeed = playerPaletteSeed,
                 )
             }
-            entry<SettingsNavKey> {
+            entry<SettingsNavKey> { key ->
                 SettingsRoute(
-                    onBack = { backStack.removeLastOrNull() },
+                    onBack = { backStack.popIfCurrent(key) },
                     onPlaybackClick = { backStack.add(PlaybackSettingsNavKey) },
                     onLyricsClick = { backStack.add(LyricsSettingsNavKey) },
                     onPermissionsClick = { backStack.add(PermissionsSettingsNavKey) },
@@ -309,48 +304,48 @@ internal fun ResonoteNavDisplay(
                     bottomContentPadding = standaloneBottomContentPadding,
                 )
             }
-            entry<PlaybackSettingsNavKey> {
+            entry<PlaybackSettingsNavKey> { key ->
                 PlaybackSettingsRoute(
-                    onBack = { backStack.removeLastOrNull() },
+                    onBack = { backStack.popIfCurrent(key) },
                     bottomContentPadding = standaloneBottomContentPadding,
                 )
             }
-            entry<LyricsSettingsNavKey> {
+            entry<LyricsSettingsNavKey> { key ->
                 LyricsSettingsRoute(
-                    onBack = { backStack.removeLastOrNull() },
+                    onBack = { backStack.popIfCurrent(key) },
                     bottomContentPadding = standaloneBottomContentPadding,
                 )
             }
-            entry<PermissionsSettingsNavKey> {
+            entry<PermissionsSettingsNavKey> { key ->
                 PermissionsSettingsRoute(
-                    onBack = { backStack.removeLastOrNull() },
+                    onBack = { backStack.popIfCurrent(key) },
                     bottomContentPadding = standaloneBottomContentPadding,
                 )
             }
-            entry<AboutSettingsNavKey> {
+            entry<AboutSettingsNavKey> { key ->
                 AboutSettingsRoute(
-                    onBack = { backStack.removeLastOrNull() },
+                    onBack = { backStack.popIfCurrent(key) },
                     onPrivacyClick = { backStack.add(PrivacySettingsNavKey) },
                     onLicenseClick = { backStack.add(LicenseSettingsNavKey) },
                     onLibrariesClick = { backStack.add(OpenSourceLibrariesNavKey) },
                     bottomContentPadding = standaloneBottomContentPadding,
                 )
             }
-            entry<PrivacySettingsNavKey> {
+            entry<PrivacySettingsNavKey> { key ->
                 PrivacySettingsRoute(
-                    onBack = { backStack.removeLastOrNull() },
+                    onBack = { backStack.popIfCurrent(key) },
                     bottomContentPadding = standaloneBottomContentPadding,
                 )
             }
-            entry<LicenseSettingsNavKey> {
+            entry<LicenseSettingsNavKey> { key ->
                 LicenseSettingsRoute(
-                    onBack = { backStack.removeLastOrNull() },
+                    onBack = { backStack.popIfCurrent(key) },
                     bottomContentPadding = standaloneBottomContentPadding,
                 )
             }
-            entry<OpenSourceLibrariesNavKey> {
+            entry<OpenSourceLibrariesNavKey> { key ->
                 OpenSourceLibrariesRoute(
-                    onBack = { backStack.removeLastOrNull() },
+                    onBack = { backStack.popIfCurrent(key) },
                     bottomContentPadding = standaloneBottomContentPadding,
                 )
             }
@@ -360,7 +355,7 @@ internal fun ResonoteNavDisplay(
                     playingMediaId = playbackState.currentMetadata?.mediaId,
                     bottomContentPadding = standaloneBottomContentPadding,
                     currentAccountId = (authState as? AuthState.Authenticated)?.userId,
-                    onBack = { backStack.removeLastOrNull() },
+                    onBack = { backStack.popIfCurrent(key) },
                     onLoginRequest = {
                         if (backStack.lastOrNull() !is LoginGateNavKey) {
                             backStack.add(LoginGateNavKey(sessionExpired = false))
@@ -376,7 +371,7 @@ internal fun ResonoteNavDisplay(
                     key = key,
                     playingMediaId = playbackState.currentMetadata?.mediaId,
                     bottomContentPadding = standaloneBottomContentPadding,
-                    onBack = { backStack.removeLastOrNull() },
+                    onBack = { backStack.popIfCurrent(key) },
                     onPlayAll = playbackViewModel::playAll,
                     onSongClick = playbackViewModel::play,
                     onSongMoreClick = { onOpenSongActions(it, null) },
@@ -388,7 +383,7 @@ internal fun ResonoteNavDisplay(
                     currentAccountId = (authState as? AuthState.Authenticated)?.userId,
                     playingMediaId = playbackState.currentMetadata?.mediaId,
                     bottomContentPadding = standaloneBottomContentPadding,
-                    onBack = { backStack.removeLastOrNull() },
+                    onBack = { backStack.popIfCurrent(key) },
                     onLoginRequest = {
                         if (backStack.lastOrNull() !is LoginGateNavKey) {
                             backStack.add(LoginGateNavKey(sessionExpired = false))
@@ -428,17 +423,17 @@ internal fun ResonoteNavDisplay(
                     key = key,
                     playingMediaId = playbackState.currentMetadata?.mediaId,
                     bottomContentPadding = standaloneBottomContentPadding,
-                    onBack = { backStack.removeLastOrNull() },
+                    onBack = { backStack.popIfCurrent(key) },
                     onPlayAll = playbackViewModel::playAll,
                     onSongClick = playbackViewModel::play,
                     onSongMoreClick = { onOpenSongActions(it, null) },
                 )
             }
-            entry<CloudNavKey> {
+            entry<CloudNavKey> { key ->
                 CloudRoute(
                     playingMediaId = playbackState.currentMetadata?.mediaId,
                     bottomContentPadding = standaloneBottomContentPadding,
-                    onBack = { backStack.removeLastOrNull() },
+                    onBack = { backStack.popIfCurrent(key) },
                     onPlayRequest = { request ->
                         playbackViewModel.playCloud(request.tracks, request.startIndex, request.source)
                     },
@@ -450,7 +445,7 @@ internal fun ResonoteNavDisplay(
                     initialTab = key.initialTab,
                     playingMediaId = playbackState.currentMetadata?.mediaId,
                     bottomContentPadding = standaloneBottomContentPadding,
-                    onBack = { backStack.removeLastOrNull() },
+                    onBack = { backStack.popIfCurrent(key) },
                     onLoginRequest = {
                         if (backStack.lastOrNull() !is LoginGateNavKey) {
                             backStack.add(LoginGateNavKey(sessionExpired = false))
@@ -478,13 +473,13 @@ internal fun ResonoteNavDisplay(
             entry<VideoNavKey> { key ->
                 VideoRoute(
                     key = key,
-                    onBack = { backStack.removeLastOrNull() },
+                    onBack = { backStack.popIfCurrent(key) },
                     onFullscreenChange = onVideoFullscreenChange,
                 )
             }
-            entry<RecognitionNavKey> {
+            entry<RecognitionNavKey> { key ->
                 RecognitionRoute(
-                    onBack = { backStack.removeLastOrNull() },
+                    onBack = { backStack.popIfCurrent(key) },
                     onCaptureStarted = playbackViewModel::pause,
                     onPlay = playbackViewModel::play,
                     onSearch = { match ->
@@ -510,21 +505,23 @@ internal fun ResonoteNavDisplay(
                         )
                     },
                     onBack = {
-                        if (backStack.lastOrNull() is LoginGateNavKey) backStack.removeLastOrNull()
-                        viewModel.acknowledgeAuthenticationGate()
+                        if (backStack.popIfCurrent(key)) {
+                            viewModel.acknowledgeAuthenticationGate()
+                        }
                     },
                 )
             }
             entry<RiskVerificationNavKey> { key ->
                 RiskVerificationRoute(
                     key = key,
-                    onBack = { backStack.removeLastOrNull() },
+                    onBack = { backStack.popIfCurrent(key) },
                     onVerified = {
-                        backStack.removeLastOrNull()
-                        if (key.continuation == RiskVerificationContinuation.Login) {
-                            onLoginRiskVerified(key.challengeHandle)
-                        } else if (key.continuation == RiskVerificationContinuation.DailyVip) {
-                            onDailyVipRiskVerified(key.challengeHandle)
+                        if (backStack.popIfCurrent(key)) {
+                            if (key.continuation == RiskVerificationContinuation.Login) {
+                                onLoginRiskVerified(key.challengeHandle)
+                            } else if (key.continuation == RiskVerificationContinuation.DailyVip) {
+                                onDailyVipRiskVerified(key.challengeHandle)
+                            }
                         }
                     },
                 )
@@ -535,6 +532,12 @@ internal fun ResonoteNavDisplay(
 
 internal fun MutableList<NavKey>.leaveLocalMusic(key: LocalMusicNavKey): Boolean {
     if (key.finishTaskOnBack) return true
-    if (lastOrNull() == key) removeAt(lastIndex)
+    popIfCurrent(key)
     return false
+}
+
+internal fun MutableList<NavKey>.popIfCurrent(key: NavKey): Boolean {
+    if (key == TabsShellNavKey || lastOrNull() != key) return false
+    removeAt(lastIndex)
+    return true
 }

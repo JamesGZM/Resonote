@@ -187,6 +187,13 @@ class SearchViewModelTest {
         assertThat(repository.songRequests).containsExactly("歌曲" to 1)
         assertThat(page.items.map { it.stableId }).containsExactly("song-1", "song-2").inOrder()
 
+        viewModel.selectCategory(SearchCategory.ALL)
+        viewModel.selectCategory(SearchCategory.SONGS)
+        advanceUntilIdle()
+
+        assertThat(repository.complexQueries).containsExactly("歌曲")
+        assertThat(repository.songRequests).containsExactly("歌曲" to 1)
+
         viewModel.loadMore()
         advanceUntilIdle()
 

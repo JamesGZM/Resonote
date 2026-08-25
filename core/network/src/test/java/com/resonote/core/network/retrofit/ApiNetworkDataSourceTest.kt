@@ -1404,21 +1404,36 @@ class ApiNetworkDataSourceTest {
         assertThat(request.getHeader("x-router")).isEqualTo("cloudlist.service.kugou.com")
         assertThat(request.requestUrl?.queryParameter("clienttime")).isEqualTo("1700000000")
         assertThat(request.requestUrl?.queryParameter("last_time")).isEqualTo("1700000000")
+        assertThat(request.requestUrl?.queryParameter("dfid")).isEqualTo("fixture-dfid")
+        assertThat(request.requestUrl?.queryParameter("mid")).isEqualTo("fixture-mid")
+        assertThat(request.requestUrl?.queryParameter("uuid")).isNotEmpty()
+        assertThat(request.requestUrl?.queryParameter("userid")).isEqualTo("99")
+        assertThat(request.requestUrl?.queryParameter("token")).isEqualTo("existing-token")
         assertThat(request.requestUrl?.queryParameter("key")).isNotEmpty()
         assertThat(request.requestUrl?.queryParameter("p")).isNotEmpty()
         assertThat(request.requestUrl?.queryParameter("signature")).isNotEmpty()
         val bodyBytes = request.body.readByteArray()
+        val encryptedBody = Base64.getDecoder().decode(bodyBytes)
         val signedParameters = request.requestUrl!!.queryParameterNames
             .filterNot { it == "signature" }
             .associateWith { request.requestUrl!!.queryParameter(it).orEmpty() }
         assertThat(request.requestUrl?.queryParameter("signature"))
             .isEqualTo(ApiRequestSigner().sign(signedParameters, bodyBytes))
         val body = json.parseToJsonElement(
-            crypto.decryptPlaylist(bodyBytes, "aaaaaa"),
+            crypto.decryptPlaylist(encryptedBody, "aaaaaa"),
         ).jsonObject
         assertThat(body["listid"]?.jsonPrimitive?.content).isEqualTo("654")
         assertThat(body["total_ver"]?.jsonPrimitive?.content).isEqualTo("0")
         assertThat(body["type"]?.jsonPrimitive?.content).isEqualTo("1")
+    }
+
+    @Test
+    fun deletePlaylistAcceptsPlainJsonResponse() = runTest {
+        gatewayServer.enqueue(jsonResponse("""{"status":1,"data":{}}"""))
+
+        dataSource().deletePlaylist("654")
+
+        assertThat(gatewayServer.takeRequest().requestUrl?.encodedPath).isEqualTo("/v2/delete_list")
     }
 
     @Test

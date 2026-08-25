@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,11 +22,18 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.resonote.core.designsystem.component.ResonoteArtworkState
 import com.resonote.core.designsystem.component.ResonoteEmptyState
@@ -39,6 +47,7 @@ import com.resonote.core.designsystem.component.ResonoteMusicItem
 import com.resonote.core.designsystem.component.ResonotePlainAction
 import com.resonote.core.designsystem.component.ResonotePullToRefreshBox
 import com.resonote.core.designsystem.component.ResonoteSectionHeader
+import com.resonote.core.designsystem.component.ResonoteTabPager
 import com.resonote.core.designsystem.component.ResonoteTabbedToolbar
 import com.resonote.core.designsystem.component.ResonoteVideoItem
 import com.resonote.core.designsystem.component.ResonoteVideoMetadata
@@ -68,102 +77,187 @@ internal fun ArtistContent(
     bottomContentPadding: Dp,
     modifier: Modifier = Modifier,
 ) {
-    val listState = remember(profile?.id) { LazyListState() }
-    val page = state.selectedPage()
-    val content = page as? ArtistPageUiState.Content
-    ResonoteLoadMoreEffect(
-        listState = listState,
-        itemCount = content?.items?.size ?: 0,
-        enabled = content?.let {
-            it.hasMore && !it.isLoadingMore && !it.isRefreshing && it.loadMoreFailure == null
-        } == true,
-        onLoadMore = onLoadMore,
-    )
-    ResonotePullToRefreshBox(
-        isRefreshing = content?.isRefreshing == true,
-        onRefresh = onRefresh,
-        enabled = content != null,
-        modifier = modifier.fillMaxSize().testTag("artist-pull-to-refresh"),
-    ) {
-        Box(Modifier.fillMaxSize()) {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.fillMaxSize().testTag(
-                    if (page is ArtistPageUiState.Loading || page is ArtistPageUiState.Idle) {
-                        "artist-skeleton"
-                    } else {
-                        "artist-list"
-                    },
-                ),
-                contentPadding = PaddingValues(bottom = bottomContentPadding),
-            ) {
-                item(key = "profile") {
-                    ArtistHeader(
-                        profile = profile,
-                        artworkUrl = heroArtworkUrl,
-                        follow = state.follow,
-                        onFollowClick = onFollowClick,
-                    )
-                }
-                item(key = "sections") {
-                    ResonoteTabbedToolbar(
-                        labels = ArtistSection.entries.map { it.label() },
-                        selectedIndex = state.selectedSection.ordinal,
-                        onSelected = { onSelectSection(ArtistSection.entries[it]) },
-                        modifier = Modifier.testTag("artist-section-tabs"),
-                        windowInsets = WindowInsets(0, 0, 0, 0),
-                    )
-                }
-                item(key = "section-actions") {
-                    ArtistSectionActions(
-                        section = state.selectedSection,
-                        sort = state.selectedSort,
-                        content = content,
-                        onSelectSort = onSelectSort,
-                        onPlayAll = onPlayAll,
-                    )
-                }
-                when (page) {
-                    ArtistPageUiState.Idle,
-                    ArtistPageUiState.Loading,
-                    -> artistSkeleton(state.selectedSection)
-                    ArtistPageUiState.Empty -> item(key = "empty") {
-                        ResonoteEmptyState(
-                            title = state.selectedSection.emptyTitle(),
-                            message = state.selectedSection.emptyBody(),
-                            modifier = Modifier.fillParentMaxHeight(0.55f),
-                        )
-                    }
-                    is ArtistPageUiState.Error -> item(key = "error") {
-                        ResonoteErrorState(
-                            onRetry = onRetry,
-                            title = stringResource(R.string.feature_artist_impl_artist_error_title),
-                            message = page.failure.errorMessage(),
-                            retryLabel = stringResource(R.string.feature_artist_impl_artist_retry),
-                            modifier = Modifier.fillParentMaxHeight(0.55f),
-                        )
-                    }
-                    is ArtistPageUiState.Content -> {
-                        when (state.selectedSection) {
-                            ArtistSection.SONGS -> songs(
-                                page = page,
-                                playingMediaId = playingMediaId,
-                                onSongClick = onSongClick,
-                                onSongMoreClick = onSongMoreClick,
-                            )
-                            ArtistSection.ALBUMS -> albums(page.items, onAlbumClick)
-                            ArtistSection.MVS -> videos(page.items, onVideoClick)
-                        }
-                        loadMoreFooter(page, onLoadMore)
-                    }
-                }
-                item(key = "end-spacing") { Spacer(Modifier.height(8.dp)) }
+    val density = LocalDensity.current
+    val defaultHeaderHeightPx = with(density) { 340.dp.roundToPx() }
+    val defaultTabHeightPx = with(density) { 64.dp.roundToPx() }
+    val listStates = remember(profile?.id) { List(ArtistSection.entries.size) { LazyListState() } }
+    val selectedListState = listStates[state.selectedSection.ordinal]
+    var headerHeightPx by remember(profile?.id, defaultHeaderHeightPx) {
+        mutableIntStateOf(defaultHeaderHeightPx)
+    }
+    var tabHeightPx by remember(profile?.id, defaultTabHeightPx) {
+        mutableIntStateOf(defaultTabHeightPx)
+    }
+    val headerHeight = with(density) { headerHeightPx.toDp() }
+    val tabHeight = with(density) { tabHeightPx.toDp() }
+    val selectSection: (Int) -> Unit = { targetIndex ->
+        if (targetIndex != state.selectedSection.ordinal) {
+            val sourceState = listStates[state.selectedSection.ordinal]
+            val targetState = listStates[targetIndex]
+            when {
+                sourceState.firstVisibleItemIndex == 0 -> targetState.requestScrollToItem(
+                    index = 0,
+                    scrollOffset = sourceState.firstVisibleItemScrollOffset,
+                )
+                targetState.firstVisibleItemIndex == 0 -> targetState.requestScrollToItem(index = 1)
             }
-            ArtistImmersiveToolbar(
-                title = profile?.name,
-                onBack = onBack,
+            onSelectSection(ArtistSection.entries[targetIndex])
+        }
+    }
+    val headerOffsetPx by remember(selectedListState, headerHeightPx) {
+        derivedStateOf {
+            if (selectedListState.firstVisibleItemIndex == 0) {
+                -selectedListState.firstVisibleItemScrollOffset.coerceAtMost(headerHeightPx)
+            } else {
+                -headerHeightPx
+            }
+        }
+    }
+    val tabOffsetPx by remember(selectedListState, headerHeightPx, tabHeightPx) {
+        derivedStateOf {
+            if (selectedListState.firstVisibleItemIndex == 0) {
+                headerHeightPx - selectedListState.firstVisibleItemScrollOffset
+            } else {
+                -tabHeightPx
+            }
+        }
+    }
+
+    Box(modifier.fillMaxSize()) {
+        ResonoteTabPager(
+            selectedPage = state.selectedSection.ordinal,
+            pageCount = ArtistSection.entries.size,
+            onPageSelected = selectSection,
+        ) { pageIndex ->
+            val section = ArtistSection.entries[pageIndex]
+            val listState = listStates[pageIndex]
+            val page = state.page(section, state.selectedSort)
+            val content = page as? ArtistPageUiState.Content
+            val isSelected = section == state.selectedSection
+            ResonoteLoadMoreEffect(
                 listState = listState,
+                itemCount = content?.items?.size ?: 0,
+                enabled = isSelected &&
+                    content?.let {
+                        it.hasMore && !it.isLoadingMore && !it.isRefreshing && it.loadMoreFailure == null
+                    } == true,
+                onLoadMore = onLoadMore,
             )
+            ResonotePullToRefreshBox(
+                isRefreshing = isSelected && content?.isRefreshing == true,
+                onRefresh = onRefresh,
+                enabled = isSelected && content != null,
+                modifier = Modifier.fillMaxSize().testTag(
+                    if (isSelected) "artist-pull-to-refresh" else "artist-pull-to-refresh-${section.name}",
+                ),
+            ) {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize().testTag(
+                        if (isSelected) {
+                            if (page is ArtistPageUiState.Loading || page is ArtistPageUiState.Idle) {
+                                "artist-skeleton"
+                            } else {
+                                "artist-list"
+                            }
+                        } else {
+                            "artist-list-${section.name}"
+                        },
+                    ),
+                    contentPadding = PaddingValues(bottom = bottomContentPadding),
+                ) {
+                    item(key = "chrome-spacer") {
+                        Spacer(Modifier.height(headerHeight + tabHeight))
+                    }
+                    item(key = "section-actions") {
+                        ArtistSectionActions(
+                            section = section,
+                            sort = state.selectedSort,
+                            content = content,
+                            onSelectSort = onSelectSort,
+                            onPlayAll = onPlayAll,
+                        )
+                    }
+                    artistPageContent(
+                        section = section,
+                        page = page,
+                        playingMediaId = playingMediaId,
+                        onRetry = onRetry,
+                        onLoadMore = onLoadMore,
+                        onSongClick = onSongClick,
+                        onSongMoreClick = onSongMoreClick,
+                        onAlbumClick = onAlbumClick,
+                        onVideoClick = onVideoClick,
+                    )
+                    item(key = "end-spacing") { Spacer(Modifier.height(8.dp)) }
+                }
+            }
+        }
+        ArtistHeader(
+            profile = profile,
+            artworkUrl = heroArtworkUrl,
+            follow = state.follow,
+            onFollowClick = onFollowClick,
+            modifier = Modifier
+                .onSizeChanged { headerHeightPx = it.height }
+                .offset { IntOffset(0, headerOffsetPx) },
+        )
+        ResonoteTabbedToolbar(
+            labels = ArtistSection.entries.map { it.label() },
+            selectedIndex = state.selectedSection.ordinal,
+            onSelected = selectSection,
+            modifier = Modifier
+                .onSizeChanged { tabHeightPx = it.height }
+                .offset { IntOffset(0, tabOffsetPx) }
+                .testTag("artist-section-tabs"),
+            windowInsets = WindowInsets(0, 0, 0, 0),
+        )
+        ArtistImmersiveToolbar(
+            title = profile?.name,
+            onBack = onBack,
+            listState = selectedListState,
+        )
+    }
+}
+
+private fun LazyListScope.artistPageContent(
+    section: ArtistSection,
+    page: ArtistPageUiState,
+    playingMediaId: String?,
+    onRetry: () -> Unit,
+    onLoadMore: () -> Unit,
+    onSongClick: (OnlineSong) -> Unit,
+    onSongMoreClick: ((OnlineSong) -> Unit)?,
+    onAlbumClick: (ArtistAlbum) -> Unit,
+    onVideoClick: (ArtistVideo) -> Unit,
+) {
+    when (page) {
+        ArtistPageUiState.Idle,
+        ArtistPageUiState.Loading,
+        -> artistSkeleton(section)
+        ArtistPageUiState.Empty -> item(key = "empty") {
+            ResonoteEmptyState(
+                title = section.emptyTitle(),
+                message = section.emptyBody(),
+                modifier = Modifier.fillParentMaxHeight(0.55f),
+            )
+        }
+        is ArtistPageUiState.Error -> item(key = "error") {
+            ResonoteErrorState(
+                onRetry = onRetry,
+                title = stringResource(R.string.feature_artist_impl_artist_error_title),
+                message = page.failure.errorMessage(),
+                retryLabel = stringResource(R.string.feature_artist_impl_artist_retry),
+                modifier = Modifier.fillParentMaxHeight(0.55f),
+            )
+        }
+        is ArtistPageUiState.Content -> {
+            when (section) {
+                ArtistSection.SONGS -> songs(page, playingMediaId, onSongClick, onSongMoreClick)
+                ArtistSection.ALBUMS -> albums(page.items, onAlbumClick)
+                ArtistSection.MVS -> videos(page.items, onVideoClick)
+            }
+            loadMoreFooter(page, onLoadMore)
         }
     }
 }

@@ -50,6 +50,7 @@ class SearchViewModel @Inject constructor(
                 suggestions = emptyList(),
                 selectedCategory = initialCategory,
                 result = SearchResultUiState.Idle,
+                cachedResults = emptyMap(),
             )
         }
         if (query.isNotEmpty()) submit()
@@ -64,6 +65,11 @@ class SearchViewModel @Inject constructor(
                     SearchResultUiState.Idle
                 } else {
                     state.result
+                },
+                cachedResults = if (submittedQuery != null && submittedQuery != value.trim()) {
+                    emptyMap()
+                } else {
+                    state.cachedResults
                 },
             )
         }
@@ -97,14 +103,22 @@ class SearchViewModel @Inject constructor(
         if (query.isEmpty()) return
         suggestionJob?.cancel()
         viewModelScope.launch { historyRepository.record(query) }
-        runSearch(query, mutableUiState.value.selectedCategory)
+        runSearch(query, mutableUiState.value.selectedCategory, clearCache = true)
     }
 
     fun selectCategory(category: SearchCategory) {
         val state = mutableUiState.value
         if (state.selectedCategory == category) return
-        mutableUiState.update { it.copy(selectedCategory = category) }
-        state.result.queryOrNull()?.let { runSearch(it, category) }
+        val query = state.result.queryOrNull() ?: return mutableUiState.update {
+            it.copy(selectedCategory = category)
+        }
+        val cached = state.cachedResults[category]?.takeIf { it.queryOrNull() == query }
+        if (cached != null) {
+            mutableUiState.update { it.copy(selectedCategory = category, result = cached) }
+        } else {
+            mutableUiState.update { it.copy(selectedCategory = category) }
+            runSearch(query, category)
+        }
     }
 
     fun retry() {
@@ -140,7 +154,7 @@ class SearchViewModel @Inject constructor(
         viewModelScope.launch { historyRepository.clear() }
     }
 
-    private fun runSearch(query: String, category: SearchCategory) {
+    private fun runSearch(query: String, category: SearchCategory, clearCache: Boolean = false) {
         if (query.isBlank()) return
         searchJob?.cancel()
         loadMoreJob?.cancel()
@@ -150,6 +164,7 @@ class SearchViewModel @Inject constructor(
                 suggestions = emptyList(),
                 selectedCategory = category,
                 result = SearchResultUiState.Loading(query, category),
+                cachedResults = if (clearCache) emptyMap() else it.cachedResults,
             )
         }
         searchJob = viewModelScope.launch {
@@ -158,12 +173,14 @@ class SearchViewModel @Inject constructor(
                     if (state.query != query || state.selectedCategory != category) {
                         state
                     } else {
+                        val resolved = if (result.value.hasContent()) {
+                            SearchResultUiState.Content(query, category, result.value)
+                        } else {
+                            SearchResultUiState.Empty(query, category)
+                        }
                         state.copy(
-                            result = if (result.value.hasContent()) {
-                                SearchResultUiState.Content(query, category, result.value)
-                            } else {
-                                SearchResultUiState.Empty(query, category)
-                            },
+                            result = resolved,
+                            cachedResults = state.cachedResults + (category to resolved),
                         )
                     }
                 }
@@ -171,8 +188,10 @@ class SearchViewModel @Inject constructor(
                     if (state.query != query || state.selectedCategory != category) {
                         state
                     } else {
+                        val resolved = SearchResultUiState.Error(query, category, result.failure)
                         state.copy(
-                            result = SearchResultUiState.Error(query, category, result.failure),
+                            result = resolved,
+                            cachedResults = state.cachedResults + (category to resolved),
                         )
                     }
                 }
@@ -229,7 +248,11 @@ class SearchViewModel @Inject constructor(
             if (result?.query != query || result.category != category || page == null) {
                 state
             } else {
-                state.copy(result = result.copy(value = transform(page)))
+                val updated = result.copy(value = transform(page))
+                state.copy(
+                    result = updated,
+                    cachedResults = state.cachedResults + (category to updated),
+                )
             }
         }
     }

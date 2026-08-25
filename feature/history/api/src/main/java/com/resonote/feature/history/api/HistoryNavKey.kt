@@ -4,7 +4,7 @@ import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class HistoryNavKey(val initialTab: HistoryTab = HistoryTab.Device) : NavKey
+data class HistoryNavKey(val initialTab: HistoryTab = HistoryTab.Online) : NavKey
 
 @Serializable
 enum class HistoryTab {

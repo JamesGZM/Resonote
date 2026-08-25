@@ -27,6 +27,7 @@ data class SearchUiState(
     val suggestions: List<String> = emptyList(),
     val selectedCategory: SearchCategory = SearchCategory.ALL,
     val result: SearchResultUiState = SearchResultUiState.Idle,
+    val cachedResults: Map<SearchCategory, SearchResultUiState> = emptyMap(),
 )
 
 @Immutable

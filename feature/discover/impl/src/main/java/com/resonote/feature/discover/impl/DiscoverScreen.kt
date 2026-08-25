@@ -19,6 +19,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.resonote.core.designsystem.component.LocalResonoteSnackbarController
 import com.resonote.core.designsystem.component.ResonotePullToRefreshBox
+import com.resonote.core.designsystem.component.ResonoteTabPager
 import com.resonote.core.designsystem.component.ResonoteTabbedToolbar
 import com.resonote.core.model.Album
 import com.resonote.core.model.AlbumRegion
@@ -106,48 +107,56 @@ fun DiscoverScreen(
             )
         },
     ) { padding ->
-        ResonotePullToRefreshBox(
-            isRefreshing = state.refreshingSection == state.selectedSection,
-            onRefresh = onRefresh,
-            enabled = state.selectedSection.hasContent(state),
-            modifier = Modifier.fillMaxSize().padding(padding).testTag("discover-pull-to-refresh"),
+        ResonoteTabPager(
+            selectedPage = state.selectedSection.ordinal,
+            pageCount = DiscoverSection.entries.size,
+            onPageSelected = { onSelectSection(DiscoverSection.entries[it]) },
+            modifier = Modifier.padding(padding),
         ) {
-            stateHolder.SaveableStateProvider(state.selectedSection.name) {
-                when (state.selectedSection) {
-                    DiscoverSection.PLAYLISTS -> PlaylistPane(
-                        state = state,
-                        bottomContentPadding = bottomContentPadding,
-                        onSelectParent = onSelectPlaylistParent,
-                        onSelectCategory = onSelectPlaylistCategory,
-                        onRetryCategories = onRetryCategories,
-                        onRetry = onRetry,
-                        onLoadMore = onLoadMore,
-                        onPlaylistClick = onPlaylistClick,
-                    )
-                    DiscoverSection.RANKINGS -> RankingPane(
-                        rankings = state.rankings,
-                        bottomContentPadding = bottomContentPadding,
-                        onRetry = onRetry,
-                        onRankingClick = onRankingClick,
-                    )
-                    DiscoverSection.ALBUMS -> AlbumPane(
-                        albums = state.albums,
-                        selectedRegion = state.selectedAlbumRegion,
-                        bottomContentPadding = bottomContentPadding,
-                        onSelectRegion = onSelectAlbumRegion,
-                        onRetry = onRetry,
-                        onAlbumClick = onAlbumClick,
-                    )
-                    DiscoverSection.SONGS -> SongPane(
-                        songs = state.songs,
-                        playingMediaId = playingMediaId,
-                        bottomContentPadding = bottomContentPadding,
-                        onRetry = onRetry,
-                        onLoadMore = onLoadMore,
-                        onPlaySongs = onPlaySongs,
-                        onSongClick = onSongClick,
-                        onSongMoreClick = onSongMoreClick,
-                    )
+            val section = DiscoverSection.entries[it]
+            ResonotePullToRefreshBox(
+                isRefreshing = state.refreshingSection == section,
+                onRefresh = onRefresh,
+                enabled = section.hasContent(state),
+                modifier = Modifier.fillMaxSize().testTag("discover-pull-to-refresh"),
+            ) {
+                stateHolder.SaveableStateProvider(section.name) {
+                    when (section) {
+                        DiscoverSection.PLAYLISTS -> PlaylistPane(
+                            state = state,
+                            bottomContentPadding = bottomContentPadding,
+                            onSelectParent = onSelectPlaylistParent,
+                            onSelectCategory = onSelectPlaylistCategory,
+                            onRetryCategories = onRetryCategories,
+                            onRetry = onRetry,
+                            onLoadMore = onLoadMore,
+                            onPlaylistClick = onPlaylistClick,
+                        )
+                        DiscoverSection.RANKINGS -> RankingPane(
+                            rankings = state.rankings,
+                            bottomContentPadding = bottomContentPadding,
+                            onRetry = onRetry,
+                            onRankingClick = onRankingClick,
+                        )
+                        DiscoverSection.ALBUMS -> AlbumPane(
+                            albums = state.albums,
+                            selectedRegion = state.selectedAlbumRegion,
+                            bottomContentPadding = bottomContentPadding,
+                            onSelectRegion = onSelectAlbumRegion,
+                            onRetry = onRetry,
+                            onAlbumClick = onAlbumClick,
+                        )
+                        DiscoverSection.SONGS -> SongPane(
+                            songs = state.songs,
+                            playingMediaId = playingMediaId,
+                            bottomContentPadding = bottomContentPadding,
+                            onRetry = onRetry,
+                            onLoadMore = onLoadMore,
+                            onPlaySongs = onPlaySongs,
+                            onSongClick = onSongClick,
+                            onSongMoreClick = onSongMoreClick,
+                        )
+                    }
                 }
             }
         }

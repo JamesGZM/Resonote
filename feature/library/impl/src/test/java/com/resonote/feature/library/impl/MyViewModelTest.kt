@@ -126,6 +126,35 @@ class MyViewModelTest {
     }
 
     @Test
+    fun becomingVisibleAgainSilentlyRefreshesProfileAndPlaylists() = runTest(dispatcher) {
+        val profile = FakeProfileRepository(
+            CollectionLoadResult.Available(profile("旧资料").copy(follows = 128)),
+            CollectionLoadResult.Available(profile("新资料").copy(follows = 127)),
+        )
+        val library = FakeLibraryRepository(
+            CollectionLoadResult.Available(listOf(playlist("旧歌单").copy(count = 24))),
+            CollectionLoadResult.Available(listOf(playlist("新歌单").copy(count = 23))),
+        )
+        val viewModel = MyViewModel(FakeAuthRepository(AuthState.Authenticated("42")), profile, library)
+        advanceUntilIdle()
+
+        viewModel.onVisible()
+        advanceUntilIdle()
+        assertThat(profile.requests).isEqualTo(1)
+        assertThat(library.loadRequests).isEqualTo(1)
+
+        viewModel.onVisible()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value as MyUiState.Authenticated
+        assertThat((state.profile as MySectionState.Available).value.follows).isEqualTo(127)
+        val refreshedPlaylist = (state.playlists as MySectionState.Available).value.single()
+        assertThat(refreshedPlaylist.name).isEqualTo("新歌单")
+        assertThat(refreshedPlaylist.count).isEqualTo(23)
+        assertThat(state.isRefreshing).isFalse()
+    }
+
+    @Test
     fun refreshFailureKeepsVisibleContentAndEmitsFeedback() = runTest(dispatcher) {
         val oldProfile = profile("旧名字")
         val oldPlaylists = listOf(playlist("old"))

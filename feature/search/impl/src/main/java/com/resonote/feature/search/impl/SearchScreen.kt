@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.resonote.core.designsystem.component.ResonoteFilterPill
+import com.resonote.core.designsystem.component.ResonoteTabPager
 import com.resonote.core.designsystem.tokens.ResonoteTokens
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.SearchAlbum
@@ -149,8 +150,8 @@ fun SearchScreen(
                     onSelectCategory = onSelectCategory,
                 )
             }
-            when (val result = state.result) {
-                SearchResultUiState.Idle -> SearchDiscovery(
+            if (state.result is SearchResultUiState.Idle) {
+                SearchDiscovery(
                     history = state.history,
                     hotKeywords = state.hotKeywords.map { it.keyword },
                     suggestions = state.suggestions,
@@ -162,26 +163,51 @@ fun SearchScreen(
                     },
                     bottomContentPadding = bottomContentPadding,
                 )
-                is SearchResultUiState.Loading -> LoadingState(result.query)
-                is SearchResultUiState.Empty -> EmptyState()
-                is SearchResultUiState.Error -> ErrorState(result.failure, onRetry)
-                is SearchResultUiState.Content -> SearchResults(
-                    result = result.value,
-                    category = result.category,
-                    playingMediaId = playingMediaId,
-                    onSelectCategory = onSelectCategory,
-                    onLoadMore = onLoadMore,
-                    onSongClick = onSongClick,
-                    onSongMoreClick = onSongMoreClick,
-                    onPlaylistClick = onPlaylistClick,
-                    onAlbumClick = onAlbumClick,
-                    onArtistClick = onArtistClick,
-                    onMvClick = onMvClick,
-                    bottomContentPadding = bottomContentPadding,
-                )
+            } else {
+                ResonoteTabPager(
+                    selectedPage = state.selectedCategory.ordinal,
+                    pageCount = SearchCategory.entries.size,
+                    onPageSelected = { onSelectCategory(SearchCategory.entries[it]) },
+                ) { page ->
+                    val category = SearchCategory.entries[page]
+                    val result = state.result.takeIf { it.categoryOrNull() == category }
+                        ?: state.cachedResults[category]
+                    if (result == null) {
+                        LoadingState(state.query)
+                        return@ResonoteTabPager
+                    }
+                    when (result) {
+                        SearchResultUiState.Idle -> Unit
+                        is SearchResultUiState.Loading -> LoadingState(result.query)
+                        is SearchResultUiState.Empty -> EmptyState()
+                        is SearchResultUiState.Error -> ErrorState(result.failure, onRetry)
+                        is SearchResultUiState.Content -> SearchResults(
+                            result = result.value,
+                            category = result.category,
+                            playingMediaId = playingMediaId,
+                            onSelectCategory = onSelectCategory,
+                            onLoadMore = onLoadMore,
+                            onSongClick = onSongClick,
+                            onSongMoreClick = onSongMoreClick,
+                            onPlaylistClick = onPlaylistClick,
+                            onAlbumClick = onAlbumClick,
+                            onArtistClick = onArtistClick,
+                            onMvClick = onMvClick,
+                            bottomContentPadding = bottomContentPadding,
+                        )
+                    }
+                }
             }
         }
     }
+}
+
+private fun SearchResultUiState.categoryOrNull(): SearchCategory? = when (this) {
+    SearchResultUiState.Idle -> null
+    is SearchResultUiState.Loading -> category
+    is SearchResultUiState.Content -> category
+    is SearchResultUiState.Empty -> category
+    is SearchResultUiState.Error -> category
 }
 
 @Composable

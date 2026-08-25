@@ -23,6 +23,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.resonote.core.designsystem.component.LocalResonoteSnackbarController
 import com.resonote.core.designsystem.component.ResonoteEmptyState
@@ -48,6 +50,7 @@ fun MyRoute(
     LaunchedEffect(viewModel, snackbarController) {
         viewModel.refreshFailures.collect { snackbarController?.show(refreshFailureMessage) }
     }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.onVisible() }
     MyScreen(
         state = state,
         bottomContentPadding = bottomContentPadding,

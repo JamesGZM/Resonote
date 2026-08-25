@@ -36,7 +36,7 @@ class HistoryViewModel @Inject constructor(
     private val mutableRefreshFailures = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val refreshFailures: SharedFlow<Unit> = mutableRefreshFailures.asSharedFlow()
 
-    private var initialized = false
+    private var hasEntered = false
     private var activeUserId: String? = null
     private var onlineJob: Job? = null
     private var mutationJob: Job? = null
@@ -61,10 +61,9 @@ class HistoryViewModel @Inject constructor(
     }
 
     fun initialize(initialTab: HistoryTab) {
-        if (initialized) return
-        initialized = true
+        hasEntered = true
         mutableUiState.update { it.copy(selectedTab = initialTab) }
-        if (initialTab == HistoryTab.Online && activeUserId != null) loadOnline()
+        if (initialTab == HistoryTab.Online && activeUserId != null) loadOnline(force = true)
     }
 
     fun selectTab(tab: HistoryTab) {
@@ -139,7 +138,7 @@ class HistoryViewModel @Inject constructor(
                         online = if (accountChanged) OnlineHistoryUiState.NotLoaded else state.online,
                     )
                 }
-                if (initialized && mutableUiState.value.selectedTab == HistoryTab.Online) {
+                if (hasEntered && mutableUiState.value.selectedTab == HistoryTab.Online) {
                     loadOnline(force = accountChanged)
                 }
             }

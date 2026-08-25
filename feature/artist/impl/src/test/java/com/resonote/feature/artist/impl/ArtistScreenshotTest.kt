@@ -15,6 +15,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -225,6 +226,21 @@ class ArtistScreenshotTest {
                 )
             }
         }
+
+        val heroLeftBeforeSwipe = composeRule.onNodeWithTag("artist-hero")
+            .fetchSemanticsNode().boundsInRoot.left
+        val tabsLeftBeforeSwipe = composeRule.onNodeWithTag("artist-section-tabs")
+            .fetchSemanticsNode().boundsInRoot.left
+        composeRule.onNodeWithTag("artist-list").performTouchInput { swipeLeft() }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("潮汐专辑").assertExists()
+        val heroLeftAfterSwipe = composeRule.onNodeWithTag("artist-hero")
+            .fetchSemanticsNode().boundsInRoot.left
+        val tabsLeftAfterSwipe = composeRule.onNodeWithTag("artist-section-tabs")
+            .fetchSemanticsNode().boundsInRoot.left
+        assertEquals(heroLeftBeforeSwipe, heroLeftAfterSwipe, 1f)
+        assertEquals(tabsLeftBeforeSwipe, tabsLeftAfterSwipe, 1f)
+        composeRule.onNodeWithText("歌曲").performClick()
 
         composeRule.onNodeWithText("已关注").performClick()
         composeRule.onNodeWithText("关注").assertExists()
