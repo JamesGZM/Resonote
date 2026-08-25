@@ -21,11 +21,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
@@ -34,7 +39,6 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.resonote.core.designsystem.component.LocalResonoteSnackbarController
-import com.resonote.core.designsystem.component.resonoteHero
 import com.resonote.core.designsystem.tokens.ResonoteTokens
 import com.resonote.core.model.LyricsBackgroundMode
 import com.resonote.core.model.OnlinePlaybackQuality
@@ -43,11 +47,6 @@ import com.resonote.core.model.PlaybackMode
 import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.playback.PlaybackOrigin
 import kotlinx.coroutines.delay
-
-object ResonotePlayerHeroKeys {
-    fun container(mediaId: String) = "player:${mediaId.trim()}:container"
-    fun artwork(mediaId: String) = "player:${mediaId.trim()}:artwork"
-}
 
 @Composable
 fun PlayerRoute(
@@ -59,6 +58,9 @@ fun PlayerRoute(
     onLoginRequest: () -> Unit = {},
     onLyricsSettingsClick: () -> Unit = {},
     paletteSeed: PlayerPaletteSeed? = null,
+    containerTransitionRunning: Boolean = false,
+    containerTransitionOrigin: Rect? = null,
+    containerTransitionProgress: () -> Float = { 1f },
     viewModel: PlayerViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -94,6 +96,9 @@ fun PlayerRoute(
         onToggleLike = viewModel::toggleLike,
         onLyricsSettingsClick = onLyricsSettingsClick,
         paletteSeed = paletteSeed,
+        containerTransitionRunning = containerTransitionRunning,
+        containerTransitionOrigin = containerTransitionOrigin,
+        containerTransitionProgress = containerTransitionProgress,
         onPlayNextClick = onlineSong?.let { song ->
             {
                 onPlayNextClick(song)
@@ -136,6 +141,9 @@ fun PlayerScreen(
     onToggleLike: () -> Unit = {},
     onLyricsSettingsClick: () -> Unit = {},
     paletteSeed: PlayerPaletteSeed? = null,
+    containerTransitionRunning: Boolean = false,
+    containerTransitionOrigin: Rect? = null,
+    containerTransitionProgress: () -> Float = { 1f },
 ) {
     val song = state.playback.currentMetadata
     val fallbackPalette = defaultPlayerPalette()
@@ -162,6 +170,15 @@ fun PlayerScreen(
     var speedOpen by remember { mutableStateOf(false) }
     var formatOpen by remember { mutableStateOf(false) }
     var currentPage by rememberSaveable { mutableStateOf(initialPage.coerceIn(0, 1)) }
+    var transitionContentReady by remember(song?.mediaId) {
+        mutableStateOf(!containerTransitionRunning)
+    }
+    LaunchedEffect(song?.mediaId) {
+        if (!transitionContentReady) {
+            withFrameNanos { }
+            transitionContentReady = true
+        }
+    }
     val artworkBackdropVisible = currentPage == 0 ||
         state.lyricsPreferences.backgroundMode == LyricsBackgroundMode.Artwork
     val decorationVisible = currentPage == 0 ||
@@ -176,7 +193,6 @@ fun PlayerScreen(
         animationSpec = ResonoteTokens.motion.effectsSlow(),
         label = "player backdrop decoration",
     )
-
     Scaffold(
         modifier.fillMaxSize(),
         containerColor = Color.Transparent,
@@ -184,15 +200,7 @@ fun PlayerScreen(
     ) { padding ->
         Box(
             Modifier.fillMaxSize().padding(padding)
-                .then(
-                    if (song !=
-                        null
-                    ) {
-                        Modifier.resonoteHero(ResonotePlayerHeroKeys.container(song.mediaId))
-                    } else {
-                        Modifier
-                    },
-                )
+                .playerContainerReveal(containerTransitionOrigin, containerTransitionProgress)
                 .background(palette.background),
         ) {
             if (decorationAlpha > 0f) {
@@ -208,7 +216,12 @@ fun PlayerScreen(
                     ),
                 )
             }
-            if (song != null && !song.artworkUri.isNullOrBlank() && artworkBackdropAlpha > 0f) {
+            if (
+                !containerTransitionRunning &&
+                song != null &&
+                !song.artworkUri.isNullOrBlank() &&
+                artworkBackdropAlpha > 0f
+            ) {
                 AsyncImage(
                     song.artworkUri,
                     null,
@@ -234,8 +247,17 @@ fun PlayerScreen(
             )
             if (song == null) {
                 EmptyPlayer(onBack)
-            } else {
-                BoxWithConstraints(Modifier.fillMaxSize()) {
+            } else if (transitionContentReady) {
+                BoxWithConstraints(
+                    Modifier.fillMaxSize().graphicsLayer {
+                        compositingStrategy = CompositingStrategy.ModulateAlpha
+                        alpha = if (containerTransitionRunning) {
+                            ((containerTransitionProgress() - 0.68f) / 0.32f).coerceIn(0f, 1f)
+                        } else {
+                            1f
+                        }
+                    },
+                ) {
                     val systemBarVerticalInset =
                         WindowInsets.statusBars.asPaddingValues().calculateTopPadding() +
                             WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
@@ -263,6 +285,7 @@ fun PlayerScreen(
                             currentPage,
                             { currentPage = it },
                             Modifier.height(pagerHeight),
+                            reduceEffects = containerTransitionRunning,
                         )
                         PlayerPageIndicator(currentPage, palette)
                         PlayerProgress(
@@ -329,5 +352,24 @@ fun PlayerScreen(
             },
             { formatOpen = false },
         )
+    }
+}
+
+private fun Modifier.playerContainerReveal(origin: Rect?, progress: () -> Float): Modifier {
+    if (origin == null) return this
+    return drawWithContent {
+        val fraction = progress().coerceIn(0f, 1f)
+        if (fraction >= 1f) {
+            drawContent()
+            return@drawWithContent
+        }
+        clipRect(
+            left = origin.left * (1f - fraction),
+            top = origin.top * (1f - fraction),
+            right = origin.right + (size.width - origin.right) * fraction,
+            bottom = origin.bottom + (size.height - origin.bottom) * fraction,
+        ) {
+            this@drawWithContent.drawContent()
+        }
     }
 }

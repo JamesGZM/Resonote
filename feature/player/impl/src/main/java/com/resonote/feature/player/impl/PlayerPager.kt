@@ -63,7 +63,6 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.resonote.core.designsystem.component.ResonoteArtwork
 import com.resonote.core.designsystem.component.ResonoteArtworkState
-import com.resonote.core.designsystem.component.resonoteHeroElement
 import com.resonote.core.designsystem.tokens.ResonoteTokens
 import com.resonote.core.model.LyricLine
 import com.resonote.core.model.LyricsDisplayMode
@@ -86,6 +85,7 @@ internal fun PlayerPager(
     initialPage: Int,
     onPageChanged: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    reduceEffects: Boolean = false,
 ) {
     val pagerState = rememberPagerState(initialPage = initialPage.coerceIn(0, 1), pageCount = { 2 })
     LaunchedEffect(pagerState.currentPage) { onPageChanged(pagerState.currentPage) }
@@ -95,7 +95,7 @@ internal fun PlayerPager(
         verticalAlignment = Alignment.CenterVertically,
     ) { page ->
         if (page == 0) {
-            CoverPage(song, palette)
+            CoverPage(song, palette, reduceEffects)
         } else {
             LyricsPage(lyrics, preferences, positionMillis, palette, onSeek, onRetryLyrics)
         }
@@ -121,60 +121,65 @@ internal fun PlayerPageIndicator(currentPage: Int, palette: PlayerPalette) {
 }
 
 @Composable
-private fun CoverPage(song: PlaybackMetadata, palette: PlayerPalette) {
+private fun CoverPage(song: PlaybackMetadata, palette: PlayerPalette, reduceEffects: Boolean) {
     val shape = RoundedCornerShape(22.dp)
     val artworkSize = Modifier.widthIn(max = 342.dp).fillMaxWidth().aspectRatio(1f)
     Box(
         Modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Box(
-            artworkSize
-                .graphicsLayer {
-                    scaleX = 0.99f
-                    scaleY = 0.99f
-                    alpha = 0.24f
-                }
-                .offset(y = 5.dp)
-                .blur(20.dp, BlurredEdgeTreatment.Unbounded)
-                .background(Color.Black, shape),
-        )
-        if (song.artworkUri.isNullOrBlank()) {
+        if (!reduceEffects) {
             Box(
                 artworkSize
                     .graphicsLayer {
+                        scaleX = 0.99f
+                        scaleY = 0.99f
+                        alpha = 0.24f
+                    }
+                    .offset(y = 5.dp)
+                    .blur(20.dp, BlurredEdgeTreatment.Unbounded)
+                    .background(Color.Black, shape),
+            )
+            if (song.artworkUri.isNullOrBlank()) {
+                Box(
+                    artworkSize
+                        .graphicsLayer {
+                            scaleX = 1.018f
+                            scaleY = 1.018f
+                            alpha = 0.12f
+                        }
+                        .blur(22.dp, BlurredEdgeTreatment.Unbounded)
+                        .background(palette.accent, shape),
+                )
+            } else {
+                AsyncImage(
+                    song.artworkUri,
+                    null,
+                    artworkSize.graphicsLayer {
                         scaleX = 1.018f
                         scaleY = 1.018f
                         alpha = 0.12f
-                    }
-                    .blur(22.dp, BlurredEdgeTreatment.Unbounded)
-                    .background(palette.accent, shape),
-            )
-        } else {
-            AsyncImage(
-                song.artworkUri,
-                null,
-                artworkSize.graphicsLayer {
-                    scaleX = 1.018f
-                    scaleY = 1.018f
-                    alpha = 0.12f
-                }.blur(22.dp, BlurredEdgeTreatment.Unbounded).clip(shape),
-                contentScale = ContentScale.Crop,
-            )
+                    }.blur(22.dp, BlurredEdgeTreatment.Unbounded).clip(shape),
+                    contentScale = ContentScale.Crop,
+                )
+            }
         }
         ResonoteArtwork(
             state = if (song.artworkUri.isNullOrBlank()) ResonoteArtworkState.MISSING else ResonoteArtworkState.LOADED,
             contentDescription = stringResource(R.string.feature_player_impl_artwork, song.title),
-            modifier = artworkSize
-                .testTag("player-cover-artwork")
-                .shadow(
-                    elevation = ResonoteTokens.elevation.level3.maximumShadow,
-                    shape = shape,
-                    clip = false,
-                    ambientColor = Color.Black.copy(alpha = 0.16f),
-                    spotColor = Color.Black.copy(alpha = 0.26f),
-                )
-                .resonoteHeroElement(ResonotePlayerHeroKeys.artwork(song.mediaId)),
+            modifier = artworkSize.testTag("player-cover-artwork").then(
+                if (reduceEffects) {
+                    Modifier
+                } else {
+                    Modifier.shadow(
+                        elevation = ResonoteTokens.elevation.level3.maximumShadow,
+                        shape = shape,
+                        clip = false,
+                        ambientColor = Color.Black.copy(alpha = 0.16f),
+                        spotColor = Color.Black.copy(alpha = 0.26f),
+                    )
+                },
+            ),
             shape = shape,
         ) {
             if (!song.artworkUri.isNullOrBlank()) {

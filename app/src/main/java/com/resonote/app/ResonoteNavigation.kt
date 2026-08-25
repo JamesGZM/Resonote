@@ -1,19 +1,23 @@
 package com.resonote.app
 
-import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.EnterExitState
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.runtime.remember
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import androidx.navigation3.ui.NavDisplay
 import androidx.navigation3.ui.defaultPopTransitionSpec
 import com.resonote.core.model.AuthState
@@ -40,6 +44,7 @@ import com.resonote.feature.local.impl.LocalMusicRoute
 import com.resonote.feature.player.api.PlayerNavKey
 import com.resonote.feature.player.impl.PlayerPaletteSeed
 import com.resonote.feature.player.impl.PlayerRoute
+import com.resonote.feature.player.impl.PlayerViewModel
 import com.resonote.feature.playlist.api.PlaylistNavKey
 import com.resonote.feature.playlist.impl.PlaylistRoute
 import com.resonote.feature.ranking.api.RankingNavKey
@@ -68,12 +73,16 @@ import com.resonote.feature.settings.impl.SettingsRoute
 import com.resonote.feature.video.api.VideoNavKey
 import com.resonote.feature.video.impl.VideoRoute
 
+private val PlayerExpandEasing = CubicBezierEasing(0.28f, 0.10f, 0.82f, 0.52f)
+
 @Composable
 internal fun ResonoteNavDisplay(
     backStack: NavBackStack<NavKey>,
     tabsShellState: TabsShellState,
     playbackState: PlaybackState,
     playerPaletteSeed: PlayerPaletteSeed?,
+    playerViewModel: PlayerViewModel,
+    playerTransitionOrigin: Rect?,
     standaloneBottomContentPadding: Dp,
     authState: AuthState,
     externalImportRequest: ExternalLocalImportRequest?,
@@ -259,27 +268,35 @@ internal fun ResonoteNavDisplay(
                 )
             }
             entry<PlayerNavKey>(
-                metadata = NavDisplay.popTransitionSpec {
-                    fadeIn(animationSpec = tween(420)) togetherWith
-                        (
-                            scaleOut(
-                                targetScale = 0.18f,
-                                transformOrigin = TransformOrigin(0.5f, 0.94f),
-                                animationSpec = tween(460, easing = FastOutSlowInEasing),
-                            ) + fadeOut(animationSpec = tween(360, delayMillis = 100))
-                            )
+                metadata = NavDisplay.transitionSpec {
+                    fadeIn(animationSpec = tween(560), initialAlpha = 1f) togetherWith
+                        fadeOut(animationSpec = tween(560), targetAlpha = 1f)
+                } + NavDisplay.popTransitionSpec {
+                    fadeIn(animationSpec = tween(520), initialAlpha = 1f) togetherWith
+                        fadeOut(animationSpec = tween(520), targetAlpha = 1f)
                 } + NavDisplay.predictivePopTransitionSpec { _ ->
-                    fadeIn(animationSpec = tween(420)) togetherWith
-                        (
-                            scaleOut(
-                                targetScale = 0.18f,
-                                transformOrigin = TransformOrigin(0.5f, 0.94f),
-                                animationSpec = tween(460, easing = FastOutSlowInEasing),
-                            ) + fadeOut(animationSpec = tween(360, delayMillis = 100))
-                            )
+                    fadeIn(animationSpec = tween(520), initialAlpha = 1f) togetherWith
+                        fadeOut(animationSpec = tween(520), targetAlpha = 1f)
                 },
             ) { key ->
+                val playerTransition = LocalNavAnimatedContentScope.current.transition
+                val playerTransitionProgress = playerTransition.animateFloat(
+                    transitionSpec = {
+                        if (targetState == EnterExitState.Visible) {
+                            tween(560, easing = PlayerExpandEasing)
+                        } else {
+                            tween(520, easing = LinearOutSlowInEasing)
+                        }
+                    },
+                    label = "Player container reveal",
+                ) { state ->
+                    if (state == EnterExitState.Visible) 1f else 0f
+                }
+                val playerTransitionProgressProvider = remember(playerTransitionProgress) {
+                    { playerTransitionProgress.value }
+                }
                 PlayerRoute(
+                    viewModel = playerViewModel,
                     onBack = { backStack.popIfCurrent(key) },
                     onPlayNextClick = { playbackViewModel.playNextOnline(it) },
                     onAppendToQueueClick = playbackViewModel::appendOnline,
@@ -292,6 +309,9 @@ internal fun ResonoteNavDisplay(
                     },
                     onLyricsSettingsClick = { backStack.add(LyricsSettingsNavKey) },
                     paletteSeed = playerPaletteSeed,
+                    containerTransitionRunning = playerTransition.currentState != playerTransition.targetState,
+                    containerTransitionOrigin = playerTransitionOrigin,
+                    containerTransitionProgress = playerTransitionProgressProvider,
                 )
             }
             entry<SettingsNavKey> { key ->

@@ -1,6 +1,5 @@
 package com.resonote.feature.player.impl
 
-import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -43,8 +42,6 @@ import com.resonote.core.designsystem.component.ResonoteArtworkBadge
 import com.resonote.core.designsystem.component.ResonoteArtworkState
 import com.resonote.core.designsystem.component.ResonoteIconButton
 import com.resonote.core.designsystem.component.ResonoteRemoteArtwork
-import com.resonote.core.designsystem.component.resonoteHero
-import com.resonote.core.designsystem.component.resonoteHeroElement
 import com.resonote.core.designsystem.tokens.ResonoteTokens
 import com.resonote.feature.player.impl.R
 
@@ -67,7 +64,6 @@ fun ResonoteMiniPlayer(
     onTogglePlay: () -> Unit,
     onOpenQueue: () -> Unit,
     modifier: Modifier = Modifier,
-    animatedVisibilityScope: AnimatedVisibilityScope? = null,
     paletteSeed: PlayerPaletteSeed? = null,
 ) {
     val targetPalette = paletteSeed
@@ -84,7 +80,6 @@ fun ResonoteMiniPlayer(
         onClick = onOpenPlayer,
         modifier = modifier
             .fillMaxWidth()
-            .resonoteHero(ResonotePlayerHeroKeys.container(state.mediaId), animatedVisibilityScope)
             .then(containerHeightModifier),
         shape = MaterialTheme.shapes.large,
         color = palette.background,
@@ -148,10 +143,6 @@ fun ResonoteMiniPlayer(
                         contentDescription = stringResource(R.string.feature_player_impl_artwork, state.title),
                         modifier = Modifier
                             .size(56.dp)
-                            .resonoteHeroElement(
-                                ResonotePlayerHeroKeys.artwork(state.mediaId),
-                                animatedVisibilityScope,
-                            )
                             .testTag("resonote-mini-player-artwork"),
                         shape = ResonoteTokens.artworkShapes.standard,
                     ) {

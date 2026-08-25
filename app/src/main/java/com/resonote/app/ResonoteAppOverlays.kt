@@ -1,6 +1,5 @@
 package com.resonote.app
 
-import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.BoxScope
@@ -18,6 +17,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -262,7 +264,7 @@ internal fun BoxScope.GlobalMiniPlayer(
     onAnchorInsetChanged: (Dp) -> Unit = {},
     animationSpec: FiniteAnimationSpec<Dp> = ResonoteTokens.motion.spatialDefault(),
     modifier: Modifier = Modifier,
-    animatedVisibilityScope: AnimatedVisibilityScope? = null,
+    onBoundsChanged: (Rect) -> Unit = {},
 ) {
     val density = LocalDensity.current
     val song = playbackState.currentMetadata
@@ -300,13 +302,13 @@ internal fun BoxScope.GlobalMiniPlayer(
         onTogglePlay = onTogglePlay,
         onOpenQueue = onOpenQueue,
         paletteSeed = paletteSeed,
-        animatedVisibilityScope = animatedVisibilityScope,
         modifier = modifier
             .align(Alignment.BottomCenter)
             .windowInsetsPadding(WindowInsets.safeDrawing)
             .padding(horizontal = 16.dp, vertical = 16.dp)
             .padding(bottom = layoutBottomInset)
             .testTag("resonote-mini-player")
+            .onGloballyPositioned { coordinates -> onBoundsChanged(coordinates.boundsInRoot()) }
             .onSizeChanged { size -> miniPlayerHeight = with(density) { size.height.toDp() } },
     )
 }

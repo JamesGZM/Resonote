@@ -2,6 +2,7 @@ package com.resonote.app
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
@@ -16,6 +17,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -40,6 +42,8 @@ import com.resonote.feature.library.impl.PlaylistAdditionUiState
 import com.resonote.feature.local.api.LocalMusicNavKey
 import com.resonote.feature.player.api.PlayerNavKey
 import com.resonote.feature.player.impl.PlayerPaletteViewModel
+import com.resonote.feature.player.impl.PlayerViewModel
+import com.resonote.feature.recognition.api.RecognitionNavKey
 import com.resonote.feature.search.api.SearchNavKey
 import com.resonote.feature.video.api.VideoNavKey
 import com.resonote.feature.vip.impl.DailyVipViewModel
@@ -49,6 +53,7 @@ internal fun ResonoteApp(
     viewModel: MainActivityViewModel = hiltViewModel(),
     playbackViewModel: PlaybackViewModel = hiltViewModel(),
     playerPaletteViewModel: PlayerPaletteViewModel = hiltViewModel(),
+    playerViewModel: PlayerViewModel = hiltViewModel(),
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     snackbarController: ResonoteSnackbarController = rememberResonoteSnackbarController(snackbarHostState),
     onFinishExternalTask: () -> Unit = {},
@@ -68,6 +73,7 @@ internal fun ResonoteApp(
     val myState by myViewModel.uiState.collectAsStateWithLifecycle()
     val setVideoFullscreen = rememberVideoFullscreenController()
     var tabBarInset by remember { mutableStateOf(0.dp) }
+    var miniPlayerBounds by remember { mutableStateOf<Rect?>(null) }
     var completedLoginRiskHandle by remember { mutableStateOf<String?>(null) }
     val addResult = (myState as? MyUiState.Authenticated)?.playlistAddition
     val addSuccessMessage = (addResult as? PlaylistAdditionUiState.Added)?.let {
@@ -75,9 +81,10 @@ internal fun ResonoteApp(
     }
     val playbackIssueMessage = playbackState.issue?.let { stringResource(it.messageRes()) }
     val miniPlayerVisible = backStack.lastOrNull().showsMiniPlayer() && playbackState.currentMetadata != null
-    val fullPlayerVisible = backStack.lastOrNull() is PlayerNavKey
+    val immersiveDestination = backStack.lastOrNull() is PlayerNavKey ||
+        backStack.lastOrNull() is RecognitionNavKey
     val navigationBarTarget = when {
-        fullPlayerVisible -> Color.Transparent
+        immersiveDestination -> Color.Transparent
         hasTabBar -> MaterialTheme.colorScheme.surfaceContainer
         else -> MaterialTheme.colorScheme.background
     }
@@ -90,7 +97,7 @@ internal fun ResonoteApp(
     SyncSystemBars(
         navigationBarColor = navigationBarColor,
         statusBarColor = Color.Transparent,
-        forceDarkStatusBar = backStack.lastOrNull() is VideoNavKey || backStack.lastOrNull() is PlayerNavKey,
+        forceDarkStatusBar = backStack.lastOrNull() is VideoNavKey || immersiveDestination,
     )
 
     fun openSongActions(song: OnlineSong, onRemoveRequest: (() -> Unit)? = null) {
@@ -156,6 +163,8 @@ internal fun ResonoteApp(
                     tabsShellState = tabsShellState,
                     playbackState = playbackState,
                     playerPaletteSeed = playerPaletteSeed,
+                    playerViewModel = playerViewModel,
+                    playerTransitionOrigin = miniPlayerBounds,
                     standaloneBottomContentPadding = standaloneBottomContentPadding,
                     authState = authState,
                     externalImportRequest = externalImportRequest,
@@ -180,8 +189,8 @@ internal fun ResonoteApp(
                 AnimatedVisibility(
                     visible = miniPlayerVisible,
                     modifier = Modifier.fillMaxSize(),
-                    enter = fadeIn(animationSpec = ResonoteTokens.motion.effectsSlow()),
-                    exit = fadeOut(animationSpec = ResonoteTokens.motion.effectsSlow()),
+                    enter = fadeIn(animationSpec = tween(160, delayMillis = 360)),
+                    exit = fadeOut(animationSpec = tween(120)),
                 ) {
                     Box(Modifier.fillMaxSize()) {
                         GlobalMiniPlayer(
@@ -196,7 +205,7 @@ internal fun ResonoteApp(
                             onTogglePlay = playbackViewModel::togglePlayPause,
                             onOpenQueue = { overlayState.queueOpen = true },
                             onAnchorInsetChanged = { overlayState.playbackChromeInset = it },
-                            animatedVisibilityScope = this@AnimatedVisibility,
+                            onBoundsChanged = { miniPlayerBounds = it },
                         )
                     }
                 }
