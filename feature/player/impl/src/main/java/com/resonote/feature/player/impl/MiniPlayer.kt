@@ -1,6 +1,7 @@
 package com.resonote.feature.player.impl
 
 import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,12 +26,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.BlurredEdgeTreatment
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 import com.resonote.core.designsystem.component.ResonoteArtwork
 import com.resonote.core.designsystem.component.ResonoteArtworkBadge
 import com.resonote.core.designsystem.component.ResonoteArtworkState
@@ -61,7 +68,13 @@ fun ResonoteMiniPlayer(
     onOpenQueue: () -> Unit,
     modifier: Modifier = Modifier,
     animatedVisibilityScope: AnimatedVisibilityScope? = null,
+    paletteSeed: PlayerPaletteSeed? = null,
 ) {
+    val targetPalette = paletteSeed
+        ?.takeIf { it.mediaId == state.mediaId }
+        ?.let(PlayerPalette::fromSeed)
+        ?: defaultPlayerPalette()
+    val palette = animatePlayerPalette(targetPalette)
     val containerHeightModifier = if (LocalDensity.current.fontScale < 1.75f) {
         Modifier.height(72.dp)
     } else {
@@ -74,11 +87,48 @@ fun ResonoteMiniPlayer(
             .resonoteHero(ResonotePlayerHeroKeys.container(state.mediaId), animatedVisibilityScope)
             .then(containerHeightModifier),
         shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceContainer,
+        color = palette.background,
+        contentColor = palette.contentPrimary,
         tonalElevation = 0.dp,
         shadowElevation = ResonoteTokens.elevation.level3.maximumShadow,
     ) {
-        Box {
+        Box(
+            Modifier.background(
+                Brush.radialGradient(
+                    listOf(
+                        palette.accent.copy(alpha = 0.08f),
+                        palette.background.copy(alpha = 0.03f),
+                        Color.Transparent,
+                    ),
+                ),
+            ),
+        ) {
+            if (!state.coverUrl.isNullOrBlank()) {
+                AsyncImage(
+                    model = state.coverUrl,
+                    contentDescription = null,
+                    modifier = Modifier.matchParentSize()
+                        .graphicsLayer {
+                            scaleX = 1.14f
+                            scaleY = 1.14f
+                            alpha = 0.58f
+                        }
+                        .blur(8.dp, BlurredEdgeTreatment.Unbounded),
+                    contentScale = ContentScale.Crop,
+                )
+            }
+            Box(
+                Modifier.matchParentSize().background(
+                    Brush.verticalGradient(
+                        listOf(
+                            palette.background.copy(alpha = 0.38f),
+                            palette.background.copy(alpha = 0.14f),
+                            palette.background.copy(alpha = 0.30f),
+                            palette.background.copy(alpha = 0.70f),
+                        ),
+                    ),
+                ),
+            )
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -125,6 +175,7 @@ fun ResonoteMiniPlayer(
                     ) {
                         Text(
                             text = state.title,
+                            color = palette.contentPrimary,
                             style = MaterialTheme.typography.bodyLarge,
                             maxLines = 1,
                             softWrap = false,
@@ -132,7 +183,7 @@ fun ResonoteMiniPlayer(
                         )
                         Text(
                             text = state.artist,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = palette.contentSecondary,
                             style = MaterialTheme.typography.bodySmall,
                             maxLines = 1,
                             softWrap = false,
@@ -149,7 +200,7 @@ fun ResonoteMiniPlayer(
                         Icon(
                             imageVector = if (state.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
+                            tint = palette.accent,
                         )
                     },
                 )
@@ -160,7 +211,7 @@ fun ResonoteMiniPlayer(
                         Icon(
                             Icons.AutoMirrored.Rounded.QueueMusic,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            tint = palette.contentSecondary,
                         )
                     },
                 )
@@ -171,7 +222,7 @@ fun ResonoteMiniPlayer(
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
                     .height(2.dp),
-                color = MaterialTheme.colorScheme.primary,
+                color = palette.accent,
                 trackColor = Color.Transparent,
             )
         }

@@ -43,6 +43,7 @@ import com.resonote.feature.library.impl.PlaylistPickerSheet
 import com.resonote.feature.player.api.PlayerNavKey
 import com.resonote.feature.player.impl.MiniPlayerUiState
 import com.resonote.feature.player.impl.PlaybackQueueSheet
+import com.resonote.feature.player.impl.PlayerPaletteSeed
 import com.resonote.feature.player.impl.ResonoteMiniPlayer
 import com.resonote.feature.player.impl.badgeLabel
 import com.resonote.feature.recognition.api.RecognitionNavKey
@@ -251,6 +252,7 @@ internal fun BoxScope.GlobalSnackbarHost(hostState: SnackbarHostState, bottomIns
 @Composable
 internal fun BoxScope.GlobalMiniPlayer(
     playbackState: PlaybackState,
+    paletteSeed: PlayerPaletteSeed? = null,
     hasTabBar: Boolean,
     tabBarInset: Dp,
     visible: Boolean,
@@ -297,6 +299,7 @@ internal fun BoxScope.GlobalMiniPlayer(
         onOpenPlayer = onOpenPlayer,
         onTogglePlay = onTogglePlay,
         onOpenQueue = onOpenQueue,
+        paletteSeed = paletteSeed,
         animatedVisibilityScope = animatedVisibilityScope,
         modifier = modifier
             .align(Alignment.BottomCenter)

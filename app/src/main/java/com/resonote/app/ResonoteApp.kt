@@ -186,6 +186,7 @@ internal fun ResonoteApp(
                     Box(Modifier.fillMaxSize()) {
                         GlobalMiniPlayer(
                             playbackState = playbackState,
+                            paletteSeed = playerPaletteSeed,
                             hasTabBar = hasTabBar,
                             tabBarInset = tabBarInset,
                             visible = true,

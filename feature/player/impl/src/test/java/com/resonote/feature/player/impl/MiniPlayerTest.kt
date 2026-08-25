@@ -46,6 +46,12 @@ class MiniPlayerTest {
                     onOpenPlayer = { opens++ },
                     onTogglePlay = { toggles++ },
                     onOpenQueue = { queue++ },
+                    paletteSeed = PlayerPaletteSeed(
+                        mediaId = "quiet-track",
+                        artworkUri = "https://example.test/cover.jpg",
+                        backgroundArgb = 0xff182330.toInt(),
+                        accentArgb = 0xff86b9e8.toInt(),
+                    ),
                     modifier = Modifier.onSizeChanged { miniPlayerHeightPx = it.height },
                 )
             }

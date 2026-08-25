@@ -57,6 +57,7 @@ import com.resonote.core.playback.PlaybackState
 import com.resonote.core.screenshottesting.DefaultRoborazziOptions
 import com.resonote.feature.discover.impl.DiscoverViewModel
 import com.resonote.feature.home.impl.HomeViewModel
+import com.resonote.feature.player.impl.PlayerPaletteSeed
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.junit.Rule
@@ -123,6 +124,12 @@ class TabsShellScreenshotTest {
                         )
                         GlobalMiniPlayer(
                             playbackState = playbackState,
+                            paletteSeed = PlayerPaletteSeed(
+                                mediaId = "theme-preview",
+                                artworkUri = "https://example.test/theme-preview.jpg",
+                                backgroundArgb = 0xff182330.toInt(),
+                                accentArgb = 0xff86b9e8.toInt(),
+                            ),
                             hasTabBar = true,
                             tabBarInset = tabBarInset,
                             visible = true,
