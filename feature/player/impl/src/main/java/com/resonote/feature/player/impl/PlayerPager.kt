@@ -45,7 +45,6 @@ import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
@@ -63,7 +62,6 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.resonote.core.designsystem.component.ResonoteArtwork
 import com.resonote.core.designsystem.component.ResonoteArtworkState
-import com.resonote.core.designsystem.tokens.ResonoteTokens
 import com.resonote.core.model.LyricLine
 import com.resonote.core.model.LyricsDisplayMode
 import com.resonote.core.model.LyricsFontSize
@@ -167,19 +165,7 @@ private fun CoverPage(song: PlaybackMetadata, palette: PlayerPalette, reduceEffe
         ResonoteArtwork(
             state = if (song.artworkUri.isNullOrBlank()) ResonoteArtworkState.MISSING else ResonoteArtworkState.LOADED,
             contentDescription = stringResource(R.string.feature_player_impl_artwork, song.title),
-            modifier = artworkSize.testTag("player-cover-artwork").then(
-                if (reduceEffects) {
-                    Modifier
-                } else {
-                    Modifier.shadow(
-                        elevation = ResonoteTokens.elevation.level3.maximumShadow,
-                        shape = shape,
-                        clip = false,
-                        ambientColor = Color.Black.copy(alpha = 0.16f),
-                        spotColor = Color.Black.copy(alpha = 0.26f),
-                    )
-                },
-            ),
+            modifier = artworkSize.testTag("player-cover-artwork"),
             shape = shape,
         ) {
             if (!song.artworkUri.isNullOrBlank()) {
