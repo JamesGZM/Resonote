@@ -75,7 +75,7 @@ class PlayerScreenScreenshotTest {
         composeRule.onNodeWithContentDescription("Pause").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Queue").assertIsDisplayed()
         composeRule.onNodeWithText("SQ").assertIsDisplayed()
-        composeRule.onNodeWithText("The tide brings the memories ashore").assertIsDisplayed()
+        composeRule.onNodeWithText("飞的宝贝 请接受我的心意 我是你的专属").assertIsDisplayed()
         composeRule.onNodeWithText("cháo xībǎ jì yìtuī huí àn biān").assertIsDisplayed()
         val lyricsBounds = composeRule.onNodeWithTag("player-lyrics").fetchSemanticsNode().boundsInRoot
         val activeBounds = composeRule.onNodeWithTag("player-active-lyric").fetchSemanticsNode().boundsInRoot
@@ -297,7 +297,7 @@ class PlayerScreenScreenshotTest {
                                     LyricSyllable("把记忆", 99_000, 107_000, "bǎ jì yì"),
                                     LyricSyllable("推回岸边", 107_000, 116_000, "tuī huí àn biān"),
                                 ),
-                                translation = "The tide brings the memories ashore",
+                                translation = "飞的宝贝 请接受我的心意 我是你的专属",
                             ),
                             LyricLine(126_000, "我们在微光里重逢"),
                         ),

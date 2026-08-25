@@ -73,6 +73,8 @@ import com.resonote.feature.settings.impl.SettingsRoute
 import com.resonote.feature.video.api.VideoNavKey
 import com.resonote.feature.video.impl.VideoRoute
 
+private const val PLAYER_EXPAND_DURATION_MILLIS = 320
+private const val PLAYER_COLLAPSE_DURATION_MILLIS = 260
 private val PlayerExpandEasing = CubicBezierEasing(0.28f, 0.10f, 0.82f, 0.52f)
 
 @Composable
@@ -269,23 +271,23 @@ internal fun ResonoteNavDisplay(
             }
             entry<PlayerNavKey>(
                 metadata = NavDisplay.transitionSpec {
-                    fadeIn(animationSpec = tween(560), initialAlpha = 1f) togetherWith
-                        fadeOut(animationSpec = tween(560), targetAlpha = 1f)
+                    fadeIn(animationSpec = tween(PLAYER_EXPAND_DURATION_MILLIS), initialAlpha = 1f) togetherWith
+                        fadeOut(animationSpec = tween(PLAYER_EXPAND_DURATION_MILLIS), targetAlpha = 1f)
                 } + NavDisplay.popTransitionSpec {
-                    fadeIn(animationSpec = tween(520), initialAlpha = 1f) togetherWith
-                        fadeOut(animationSpec = tween(520), targetAlpha = 1f)
+                    fadeIn(animationSpec = tween(PLAYER_COLLAPSE_DURATION_MILLIS), initialAlpha = 1f) togetherWith
+                        fadeOut(animationSpec = tween(PLAYER_COLLAPSE_DURATION_MILLIS), targetAlpha = 1f)
                 } + NavDisplay.predictivePopTransitionSpec { _ ->
-                    fadeIn(animationSpec = tween(520), initialAlpha = 1f) togetherWith
-                        fadeOut(animationSpec = tween(520), targetAlpha = 1f)
+                    fadeIn(animationSpec = tween(PLAYER_COLLAPSE_DURATION_MILLIS), initialAlpha = 1f) togetherWith
+                        fadeOut(animationSpec = tween(PLAYER_COLLAPSE_DURATION_MILLIS), targetAlpha = 1f)
                 },
             ) { key ->
                 val playerTransition = LocalNavAnimatedContentScope.current.transition
                 val playerTransitionProgress = playerTransition.animateFloat(
                     transitionSpec = {
                         if (targetState == EnterExitState.Visible) {
-                            tween(560, easing = PlayerExpandEasing)
+                            tween(PLAYER_EXPAND_DURATION_MILLIS, easing = PlayerExpandEasing)
                         } else {
-                            tween(520, easing = LinearOutSlowInEasing)
+                            tween(PLAYER_COLLAPSE_DURATION_MILLIS, easing = LinearOutSlowInEasing)
                         }
                     },
                     label = "Player container reveal",

@@ -6,6 +6,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,6 +33,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -288,7 +291,8 @@ private fun LyricLineContent(
             }
         }
     }
-    Column(
+    val interactionSource = remember { MutableInteractionSource() }
+    Box(
         Modifier.fillMaxWidth()
             .then(if (active) Modifier.testTag("player-active-lyric") else Modifier)
             .graphicsLayer {
@@ -300,39 +304,49 @@ private fun LyricLineContent(
                     TransformOrigin(0f, 0.5f)
                 }
             }
-            .clip(CircleShape)
-            .clickable { onSeek(line.timeMillis) }
-            .padding(vertical = 6.dp),
-        horizontalAlignment = if (preferences.textAlignment ==
-            LyricsTextAlignment.Center
-        ) {
-            Alignment.CenterHorizontally
-        } else {
-            Alignment.Start
-        },
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+            ) { onSeek(line.timeMillis) },
     ) {
-        Text(
-            annotated,
-            Modifier.fillMaxWidth(),
-            textAlign = alignment,
-            fontSize = activeSize,
-            lineHeight = activeSize * 1.35f,
-            fontWeight = FontWeight.Bold,
-        )
-        line.supplemental(preferences).forEachIndexed { index, supplemental ->
+        Column(
+            Modifier.fillMaxWidth().padding(vertical = 6.dp),
+            horizontalAlignment = if (preferences.textAlignment ==
+                LyricsTextAlignment.Center
+            ) {
+                Alignment.CenterHorizontally
+            } else {
+                Alignment.Start
+            },
+        ) {
             Text(
-                supplemental.text,
-                Modifier.fillMaxWidth().padding(top = if (index == 0) 5.dp else 2.dp),
-                color = lerp(
-                    palette.contentMuted,
-                    palette.contentSecondary,
-                    emphasis * if (supplemental.isTransliteration) 0.72f else 1f,
-                ),
+                annotated,
+                Modifier.fillMaxWidth(),
                 textAlign = alignment,
-                fontSize = activeSize * if (supplemental.isTransliteration) 0.60f else 0.68f,
-                lineHeight = activeSize * if (supplemental.isTransliteration) 0.82f else 0.9f,
+                fontSize = activeSize,
+                lineHeight = activeSize * 1.35f,
+                fontWeight = FontWeight.Bold,
             )
+            line.supplemental(preferences).forEachIndexed { index, supplemental ->
+                Text(
+                    supplemental.text,
+                    Modifier.fillMaxWidth().padding(top = if (index == 0) 5.dp else 2.dp),
+                    color = lerp(
+                        palette.contentMuted,
+                        palette.contentSecondary,
+                        emphasis * if (supplemental.isTransliteration) 0.72f else 1f,
+                    ),
+                    textAlign = alignment,
+                    fontSize = activeSize * if (supplemental.isTransliteration) 0.60f else 0.68f,
+                    lineHeight = activeSize * if (supplemental.isTransliteration) 0.82f else 0.9f,
+                )
+            }
         }
+        Box(
+            Modifier.matchParentSize()
+                .clip(CircleShape)
+                .indication(interactionSource, ripple()),
+        )
     }
 }
 

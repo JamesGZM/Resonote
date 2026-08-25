@@ -189,7 +189,7 @@ internal fun ResonoteApp(
                 AnimatedVisibility(
                     visible = miniPlayerVisible,
                     modifier = Modifier.fillMaxSize(),
-                    enter = fadeIn(animationSpec = tween(160, delayMillis = 360)),
+                    enter = fadeIn(animationSpec = tween(100, delayMillis = 160)),
                     exit = fadeOut(animationSpec = tween(120)),
                 ) {
                     Box(Modifier.fillMaxSize()) {
