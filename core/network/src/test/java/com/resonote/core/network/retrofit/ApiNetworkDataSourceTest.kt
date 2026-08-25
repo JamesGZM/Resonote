@@ -53,6 +53,7 @@ import com.resonote.core.network.session.ApiSessionStore
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
@@ -554,10 +555,12 @@ class ApiNetworkDataSourceTest {
             ),
         )
 
-        val source = dataSource(anonymousSession).resolveSongSource("ABCDEF", "12", "34")
+        val dataSource = dataSource(anonymousSession)
+        val source = dataSource.resolveSongSource("ABCDEF", "12", "34")
 
         assertThat(source.uri).isEqualTo("http://fs.youthandroid2.kugou.com/song.mp3?token=value")
         assertThat(source.isPreview).isTrue()
+        assertThat(dataSource.sessions.authenticationState.first().gateReason).isNull()
         val request = gatewayServer.takeRequest()
         assertThat(request.requestUrl?.queryParameter("IsFreePart")).isEqualTo("1")
         assertThat(request.requestUrl?.queryParameter("ppage_id")).isEqualTo("356753938,823673182,967485191")
@@ -2177,6 +2180,7 @@ class ApiNetworkDataSourceTest {
             library,
             vip,
             store,
+            sessions,
         ) { store.clearCount }
     }
 
@@ -2238,6 +2242,7 @@ private class TestNetworkDataSource(
     library: RealLibraryNetworkDataSource,
     vip: RealVipNetworkDataSource,
     val store: ApiSessionStore,
+    val sessions: ApiSessionManager,
     private val clearCount: () -> Int,
 ) : HomeNetworkDataSource by home,
     CatalogNetworkDataSource by catalog,

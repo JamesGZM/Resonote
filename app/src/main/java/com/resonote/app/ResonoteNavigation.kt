@@ -95,7 +95,7 @@ internal fun ResonoteNavDisplay(
     NavDisplay(
         backStack = backStack,
         onBack = {
-            backStack.lastOrNull()?.let(backStack::popIfCurrent)
+            backStack.popCurrentDestination(viewModel::acknowledgeAuthenticationGate)
         },
         entryDecorators = listOf(
             rememberSaveableStateHolderNavEntryDecorator(),
@@ -540,4 +540,11 @@ internal fun MutableList<NavKey>.popIfCurrent(key: NavKey): Boolean {
     if (key == TabsShellNavKey || lastOrNull() != key) return false
     removeAt(lastIndex)
     return true
+}
+
+internal fun MutableList<NavKey>.popCurrentDestination(onAuthenticationGateDismissed: () -> Unit): Boolean {
+    val current = lastOrNull() ?: return false
+    val popped = popIfCurrent(current)
+    if (popped && current is LoginGateNavKey) onAuthenticationGateDismissed()
+    return popped
 }
