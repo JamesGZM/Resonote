@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -41,11 +40,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.BlurredEdgeTreatment
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
@@ -83,7 +79,6 @@ internal fun PlayerPager(
     initialPage: Int,
     onPageChanged: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    reduceEffects: Boolean = false,
 ) {
     val pagerState = rememberPagerState(initialPage = initialPage.coerceIn(0, 1), pageCount = { 2 })
     LaunchedEffect(pagerState.currentPage) { onPageChanged(pagerState.currentPage) }
@@ -93,7 +88,7 @@ internal fun PlayerPager(
         verticalAlignment = Alignment.CenterVertically,
     ) { page ->
         if (page == 0) {
-            CoverPage(song, palette, reduceEffects)
+            CoverPage(song)
         } else {
             LyricsPage(lyrics, preferences, positionMillis, palette, onSeek, onRetryLyrics)
         }
@@ -119,49 +114,13 @@ internal fun PlayerPageIndicator(currentPage: Int, palette: PlayerPalette) {
 }
 
 @Composable
-private fun CoverPage(song: PlaybackMetadata, palette: PlayerPalette, reduceEffects: Boolean) {
+private fun CoverPage(song: PlaybackMetadata) {
     val shape = RoundedCornerShape(22.dp)
     val artworkSize = Modifier.widthIn(max = 342.dp).fillMaxWidth().aspectRatio(1f)
     Box(
         Modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
-        if (!reduceEffects) {
-            Box(
-                artworkSize
-                    .graphicsLayer {
-                        scaleX = 0.99f
-                        scaleY = 0.99f
-                        alpha = 0.24f
-                    }
-                    .offset(y = 5.dp)
-                    .blur(20.dp, BlurredEdgeTreatment.Unbounded)
-                    .background(Color.Black, shape),
-            )
-            if (song.artworkUri.isNullOrBlank()) {
-                Box(
-                    artworkSize
-                        .graphicsLayer {
-                            scaleX = 1.018f
-                            scaleY = 1.018f
-                            alpha = 0.12f
-                        }
-                        .blur(22.dp, BlurredEdgeTreatment.Unbounded)
-                        .background(palette.accent, shape),
-                )
-            } else {
-                AsyncImage(
-                    song.artworkUri,
-                    null,
-                    artworkSize.graphicsLayer {
-                        scaleX = 1.018f
-                        scaleY = 1.018f
-                        alpha = 0.12f
-                    }.blur(22.dp, BlurredEdgeTreatment.Unbounded).clip(shape),
-                    contentScale = ContentScale.Crop,
-                )
-            }
-        }
         ResonoteArtwork(
             state = if (song.artworkUri.isNullOrBlank()) ResonoteArtworkState.MISSING else ResonoteArtworkState.LOADED,
             contentDescription = stringResource(R.string.feature_player_impl_artwork, song.title),

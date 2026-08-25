@@ -286,7 +286,6 @@ fun PlayerScreen(
                             currentPage,
                             { currentPage = it },
                             Modifier.height(pagerHeight),
-                            reduceEffects = containerTransitionRunning,
                         )
                         PlayerPageIndicator(currentPage, palette)
                         PlayerProgress(
