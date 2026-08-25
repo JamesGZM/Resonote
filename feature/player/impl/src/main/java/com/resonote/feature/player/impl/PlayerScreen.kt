@@ -200,6 +200,7 @@ fun PlayerScreen(
     ) { padding ->
         Box(
             Modifier.fillMaxSize().padding(padding)
+                .graphicsLayer()
                 .playerContainerReveal(containerTransitionOrigin, containerTransitionProgress)
                 .background(palette.background),
         ) {
