@@ -57,12 +57,8 @@
     <string name="feature_settings_impl_lyrics_section">Lyrics</string>
     <string name="feature_settings_impl_lyrics_summary">Lyrics display and upcoming personalization</string>
     <string name="feature_settings_impl_lyrics_settings">Lyrics settings</string>
-    <string name="feature_settings_impl_desktop_lyrics_section">Desktop lyrics</string>
     <string name="feature_settings_impl_desktop_lyrics_settings">Desktop lyrics</string>
     <string name="feature_settings_impl_desktop_lyrics_controller_body">Floating lyrics with centered playback controls and position lock</string>
-    <string name="feature_settings_impl_desktop_lyrics_appearance">Appearance</string>
-    <string name="feature_settings_impl_desktop_lyrics_behavior">Controller behavior</string>
-    <string name="feature_settings_impl_in_player_lyrics_section">In-player lyrics</string>
     <string name="feature_settings_impl_desktop_lyrics">Show over other apps</string>
     <string name="feature_settings_impl_desktop_lyrics_body">Keep synchronized lyrics visible while using other apps</string>
     <string name="feature_settings_impl_desktop_lyrics_permission_body">Allow display over other apps to turn on desktop lyrics</string>

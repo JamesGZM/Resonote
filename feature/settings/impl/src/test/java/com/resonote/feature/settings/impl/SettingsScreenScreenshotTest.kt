@@ -133,6 +133,7 @@ class SettingsScreenScreenshotTest {
 
     @Test
     fun lyricsSettingsCompactLinksToDesktopLyricsSettings() {
+        var desktopLyricsClicks = 0
         val repository = object : LyricsPreferencesRepository {
             override val preferences = MutableStateFlow(LyricsPreferences())
 
@@ -152,13 +153,15 @@ class SettingsScreenScreenshotTest {
                 ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
                     LyricsSettingsRoute(
                         onBack = {},
+                        onDesktopLyricsClick = { desktopLyricsClicks++ },
                         viewModel = viewModel,
                     )
                 }
             }
         }
 
-        composeRule.onNodeWithTag("desktop-lyrics-settings").assertIsDisplayed()
+        composeRule.onNodeWithTag("desktop-lyrics-settings").assertIsDisplayed().performClick()
+        assertThat(desktopLyricsClicks).isEqualTo(1)
         capture("lyrics")
     }
 
@@ -190,7 +193,7 @@ class SettingsScreenScreenshotTest {
         }
 
         composeRule.onNodeWithTag("desktop-lyrics-switch").assertIsDisplayed()
-        composeRule.onNodeWithText("Controller behavior").assertIsDisplayed()
+        composeRule.onNodeWithText("Controller behavior").assertDoesNotExist()
         capture("desktop-lyrics")
     }
 

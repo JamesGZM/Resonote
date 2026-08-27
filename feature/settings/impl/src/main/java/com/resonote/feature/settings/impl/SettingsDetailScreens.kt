@@ -311,7 +311,6 @@ fun DesktopLyricsSettingsRoute(
             modifier = Modifier.fillMaxSize().padding(padding).widthIn(max = 720.dp),
             contentPadding = PaddingValues(bottom = bottomContentPadding),
         ) {
-            item { SettingsSectionLabel(stringResource(R.string.feature_settings_impl_desktop_lyrics_section)) }
             item {
                 SettingsSwitchRow(
                     title = stringResource(R.string.feature_settings_impl_desktop_lyrics),
@@ -336,7 +335,7 @@ fun DesktopLyricsSettingsRoute(
                     switchTestTag = "desktop-lyrics-switch",
                 )
             }
-            item { SettingsSectionLabel(stringResource(R.string.feature_settings_impl_desktop_lyrics_appearance)) }
+            item { SettingsDivider() }
             item {
                 SettingsValueRow(
                     stringResource(R.string.feature_settings_impl_desktop_lyrics_display),
@@ -367,7 +366,7 @@ fun DesktopLyricsSettingsRoute(
                     ),
                 )
             }
-            item { SettingsSectionLabel(stringResource(R.string.feature_settings_impl_desktop_lyrics_behavior)) }
+            item { SettingsDivider() }
             item {
                 SettingsValueRow(
                     stringResource(R.string.feature_settings_impl_desktop_lyrics_controls_timeout),
@@ -453,7 +452,6 @@ fun LyricsSettingsRoute(
             modifier = Modifier.fillMaxSize().padding(padding).widthIn(max = 720.dp),
             contentPadding = PaddingValues(bottom = bottomContentPadding),
         ) {
-            item { SettingsSectionLabel(stringResource(R.string.feature_settings_impl_desktop_lyrics_section)) }
             item {
                 SettingsValueRow(
                     stringResource(R.string.feature_settings_impl_desktop_lyrics_settings),
@@ -469,7 +467,7 @@ fun LyricsSettingsRoute(
                     modifier = Modifier.testTag("desktop-lyrics-settings"),
                 )
             }
-            item { SettingsSectionLabel(stringResource(R.string.feature_settings_impl_in_player_lyrics_section)) }
+            item { SettingsDivider() }
             item {
                 SettingsValueRow(
                     stringResource(R.string.feature_settings_impl_lyrics_supplemental),

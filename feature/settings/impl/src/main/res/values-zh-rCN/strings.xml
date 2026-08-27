@@ -57,12 +57,8 @@
     <string name="feature_settings_impl_lyrics_section">歌词</string>
     <string name="feature_settings_impl_lyrics_summary">歌词显示与后续个性化选项</string>
     <string name="feature_settings_impl_lyrics_settings">歌词设置</string>
-    <string name="feature_settings_impl_desktop_lyrics_section">桌面歌词</string>
-    <string name="feature_settings_impl_desktop_lyrics_settings">桌面歌词设置</string>
+    <string name="feature_settings_impl_desktop_lyrics_settings">桌面歌词</string>
     <string name="feature_settings_impl_desktop_lyrics_controller_body">包含居中播放控制与位置锁定的悬浮歌词控制器</string>
-    <string name="feature_settings_impl_desktop_lyrics_appearance">外观</string>
-    <string name="feature_settings_impl_desktop_lyrics_behavior">控制器行为</string>
-    <string name="feature_settings_impl_in_player_lyrics_section">播放器内歌词</string>
     <string name="feature_settings_impl_desktop_lyrics">显示在其他应用上层</string>
     <string name="feature_settings_impl_desktop_lyrics_body">使用其他应用时继续显示同步歌词</string>
     <string name="feature_settings_impl_desktop_lyrics_permission_body">允许显示在其他应用上层后即可开启桌面歌词</string>
