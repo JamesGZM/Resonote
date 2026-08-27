@@ -56,6 +56,7 @@ import com.resonote.feature.search.api.SearchNavKey
 import com.resonote.feature.search.impl.SearchRoute
 import com.resonote.feature.settings.api.AboutSettingsNavKey
 import com.resonote.feature.settings.api.DesktopLyricsSettingsNavKey
+import com.resonote.feature.settings.api.EqualizerSettingsNavKey
 import com.resonote.feature.settings.api.LicenseSettingsNavKey
 import com.resonote.feature.settings.api.LyricsSettingsNavKey
 import com.resonote.feature.settings.api.OpenSourceLibrariesNavKey
@@ -65,6 +66,7 @@ import com.resonote.feature.settings.api.PrivacySettingsNavKey
 import com.resonote.feature.settings.api.SettingsNavKey
 import com.resonote.feature.settings.impl.AboutSettingsRoute
 import com.resonote.feature.settings.impl.DesktopLyricsSettingsRoute
+import com.resonote.feature.settings.impl.EqualizerSettingsRoute
 import com.resonote.feature.settings.impl.LicenseSettingsRoute
 import com.resonote.feature.settings.impl.LyricsSettingsRoute
 import com.resonote.feature.settings.impl.OpenSourceLibrariesRoute
@@ -330,6 +332,14 @@ internal fun ResonoteNavDisplay(
             }
             entry<PlaybackSettingsNavKey> { key ->
                 PlaybackSettingsRoute(
+                    onBack = { backStack.popIfCurrent(key) },
+                    onEqualizerClick = { backStack.add(EqualizerSettingsNavKey) },
+                    bottomContentPadding = standaloneBottomContentPadding,
+                )
+            }
+            entry<EqualizerSettingsNavKey> { key ->
+                EqualizerSettingsRoute(
+                    audioSessionId = playbackState.audioSessionId,
                     onBack = { backStack.popIfCurrent(key) },
                     bottomContentPadding = standaloneBottomContentPadding,
                 )

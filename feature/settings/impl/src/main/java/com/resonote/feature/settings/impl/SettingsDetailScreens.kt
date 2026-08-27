@@ -5,6 +5,7 @@ package com.resonote.feature.settings.impl
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.audiofx.AudioEffect
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Equalizer
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -62,6 +64,7 @@ import kotlin.math.roundToInt
 @Composable
 fun PlaybackSettingsRoute(
     onBack: () -> Unit,
+    onEqualizerClick: () -> Unit = {},
     bottomContentPadding: Dp = 32.dp,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
@@ -88,6 +91,7 @@ fun PlaybackSettingsRoute(
         onCrossfadeChange = viewModel::setCrossfadeDuration,
         onLoudnessChange = viewModel::setLoudnessNormalizationEnabled,
         onAudioFocusChange = viewModel::setAudioFocusPolicy,
+        onEqualizerClick = onEqualizerClick,
     )
 }
 
@@ -107,6 +111,7 @@ internal fun PlaybackSettingsScreen(
     onCrossfadeChange: (CrossfadeDuration) -> Unit = {},
     onLoudnessChange: (Boolean) -> Unit = {},
     onAudioFocusChange: (AudioFocusPolicy) -> Unit = {},
+    onEqualizerClick: () -> Unit = {},
 ) {
     var openSheet by remember { mutableStateOf<PlaybackSettingsSheet?>(null) }
     val ready = state as? SettingsUiState.Ready
@@ -155,6 +160,16 @@ internal fun PlaybackSettingsScreen(
                             state.gaplessEnabled,
                             onGaplessChange,
                             enabled = state.savingKey == null,
+                        )
+                    }
+                    item { SettingsDivider() }
+                    item {
+                        SettingsNavigationRow(
+                            title = stringResource(R.string.feature_settings_impl_equalizer),
+                            supportingText = stringResource(R.string.feature_settings_impl_equalizer_summary),
+                            icon = Icons.Rounded.Equalizer,
+                            onClick = onEqualizerClick,
+                            modifier = Modifier.testTag("settings-equalizer"),
                         )
                     }
                     item { SettingsDivider() }
@@ -253,6 +268,89 @@ internal fun PlaybackSettingsScreen(
                 },
             ) { openSheet = null }
             null -> Unit
+        }
+    }
+}
+
+@Composable
+fun EqualizerSettingsRoute(audioSessionId: Int?, onBack: () -> Unit, bottomContentPadding: Dp = 32.dp) {
+    val context = LocalContext.current
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {}
+    val intent = remember(audioSessionId, context.packageName) {
+        Intent(AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL).apply {
+            putExtra(AudioEffect.EXTRA_PACKAGE_NAME, context.packageName)
+            putExtra(AudioEffect.EXTRA_CONTENT_TYPE, AudioEffect.CONTENT_TYPE_MUSIC)
+            audioSessionId?.let { putExtra(AudioEffect.EXTRA_AUDIO_SESSION, it) }
+        }
+    }
+    val controlPanelAvailable = remember(intent, context.packageManager) {
+        intent.resolveActivity(context.packageManager) != null
+    }
+
+    EqualizerSettingsScreen(
+        audioSessionAvailable = audioSessionId != null,
+        controlPanelAvailable = controlPanelAvailable,
+        onBack = onBack,
+        onOpenEqualizer = { launcher.launch(intent) },
+        bottomContentPadding = bottomContentPadding,
+    )
+}
+
+@Composable
+internal fun EqualizerSettingsScreen(
+    audioSessionAvailable: Boolean,
+    controlPanelAvailable: Boolean,
+    onBack: () -> Unit,
+    onOpenEqualizer: () -> Unit,
+    modifier: Modifier = Modifier,
+    bottomContentPadding: Dp = 32.dp,
+) {
+    val ready = audioSessionAvailable && controlPanelAvailable
+    SettingsPageScaffold(
+        title = stringResource(R.string.feature_settings_impl_equalizer),
+        onBack = onBack,
+        modifier = modifier,
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(padding).widthIn(max = 720.dp),
+            contentPadding = PaddingValues(bottom = bottomContentPadding),
+        ) {
+            item { SettingsSectionLabel(stringResource(R.string.feature_settings_impl_device_audio_effects)) }
+            item {
+                SettingsInfoRow(
+                    title = stringResource(R.string.feature_settings_impl_playback_session),
+                    value = stringResource(
+                        if (audioSessionAvailable) {
+                            R.string.feature_settings_impl_connected
+                        } else {
+                            R.string.feature_settings_impl_waiting
+                        },
+                    ),
+                    supportingText = stringResource(
+                        if (audioSessionAvailable) {
+                            R.string.feature_settings_impl_equalizer_session_connected_body
+                        } else {
+                            R.string.feature_settings_impl_equalizer_session_waiting_body
+                        },
+                    ),
+                )
+            }
+            item { SettingsDivider() }
+            item {
+                SettingsActionRow(
+                    title = stringResource(R.string.feature_settings_impl_open_device_equalizer),
+                    supportingText = stringResource(
+                        when {
+                            !controlPanelAvailable -> R.string.feature_settings_impl_equalizer_unavailable
+                            !audioSessionAvailable -> R.string.feature_settings_impl_equalizer_start_playback
+                            else -> R.string.feature_settings_impl_equalizer_device_body
+                        },
+                    ),
+                    onClick = onOpenEqualizer,
+                    enabled = ready,
+                    modifier = Modifier.testTag("open-device-equalizer"),
+                )
+            }
         }
     }
 }

@@ -134,6 +134,7 @@ data class PlaybackState(
     val bufferedPositionMillis: Long = 0,
     val mode: PlaybackMode = PlaybackMode.ListLoop,
     val playbackSpeed: PlaybackSpeed = PlaybackSpeed.Normal,
+    val audioSessionId: Int? = null,
     val issue: PlaybackIssue? = null,
 ) {
     val currentItem: PlaybackItem?

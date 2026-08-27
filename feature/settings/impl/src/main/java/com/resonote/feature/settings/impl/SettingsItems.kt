@@ -310,10 +310,11 @@ internal fun SettingsActionRow(
     supportingText: String? = null,
     loading: Boolean = false,
     destructive: Boolean = false,
+    enabled: Boolean = true,
 ) {
     Surface(
         onClick = onClick,
-        enabled = !loading,
+        enabled = enabled && !loading,
         modifier = modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.background,
     ) {

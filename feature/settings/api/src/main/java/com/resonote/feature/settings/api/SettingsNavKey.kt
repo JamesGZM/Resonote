@@ -10,6 +10,9 @@ data object SettingsNavKey : NavKey
 data object PlaybackSettingsNavKey : NavKey
 
 @Serializable
+data object EqualizerSettingsNavKey : NavKey
+
+@Serializable
 data object LyricsSettingsNavKey : NavKey
 
 @Serializable

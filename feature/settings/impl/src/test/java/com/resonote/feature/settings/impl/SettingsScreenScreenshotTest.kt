@@ -83,7 +83,38 @@ class SettingsScreenScreenshotTest {
         setPlaybackScreen()
 
         composeRule.onNodeWithTag("settings-playback-speed").assertIsDisplayed()
+        composeRule.onNodeWithTag("settings-equalizer").assertExists()
         capture("playback")
+    }
+
+    @Test
+    fun playbackSettingsLinksToEqualizer() {
+        var equalizerClicks = 0
+        setPlaybackScreen(onEqualizerClick = { equalizerClicks++ })
+
+        composeRule.onNodeWithTag("settings-equalizer").performClick()
+
+        assertThat(equalizerClicks).isEqualTo(1)
+    }
+
+    @Test
+    fun equalizerOpensAvailableDevicePanel() {
+        var openClicks = 0
+        composeRule.setContent {
+            ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                EqualizerSettingsScreen(
+                    audioSessionAvailable = true,
+                    controlPanelAvailable = true,
+                    onBack = {},
+                    onOpenEqualizer = { openClicks++ },
+                )
+            }
+        }
+
+        capture("equalizer")
+        composeRule.onNodeWithTag("open-device-equalizer").performClick()
+
+        assertThat(openClicks).isEqualTo(1)
     }
 
     @Test
@@ -329,6 +360,7 @@ class SettingsScreenScreenshotTest {
     private fun setPlaybackScreen(
         onPlaybackSpeedChange: (PlaybackSpeed) -> Unit = {},
         onOnlinePlaybackQualityChange: (OnlinePlaybackQuality) -> Unit = {},
+        onEqualizerClick: () -> Unit = {},
     ) {
         composeRule.setContent {
             DeviceConfigurationOverride(
@@ -341,6 +373,7 @@ class SettingsScreenScreenshotTest {
                         onRetry = {},
                         onPlaybackSpeedChange = onPlaybackSpeedChange,
                         onOnlinePlaybackQualityChange = onOnlinePlaybackQualityChange,
+                        onEqualizerClick = onEqualizerClick,
                     )
                 }
             }

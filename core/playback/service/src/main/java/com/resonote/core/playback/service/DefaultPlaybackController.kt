@@ -115,6 +115,7 @@ internal class DefaultPlaybackController internal constructor(
                     .onSuccess { connectedController ->
                         controller = connectedController
                         connectedController.addListener(this)
+                        publishAudioSessionId(connectedController.audioSessionId)
                         pendingControllerAction?.also { action ->
                             pendingControllerAction = null
                             action(connectedController)
@@ -226,6 +227,7 @@ internal class DefaultPlaybackController internal constructor(
                 mutableState.value = PlaybackState(
                     mode = mutableState.value.mode,
                     playbackSpeed = mutableState.value.playbackSpeed,
+                    audioSessionId = mutableState.value.audioSessionId,
                 )
                 requestClearSession()
             } else {
@@ -434,6 +436,7 @@ internal class DefaultPlaybackController internal constructor(
             mutableState.value = PlaybackState(
                 mode = mutableState.value.mode,
                 playbackSpeed = mutableState.value.playbackSpeed,
+                audioSessionId = mutableState.value.audioSessionId,
             )
             requestClearSession()
         }
@@ -448,6 +451,8 @@ internal class DefaultPlaybackController internal constructor(
             handleCompletionAction(playbackEndedCompletionAction(mutableState.value.mode), player)
         }
     }
+
+    override fun onAudioSessionIdChanged(audioSessionId: Int) = publishAudioSessionId(audioSessionId)
 
     override fun onPlayerError(error: PlaybackException) {
         preloadCoordinator.invalidate()
@@ -741,6 +746,10 @@ internal class DefaultPlaybackController internal constructor(
         } else {
             action(connectedController)
         }
+    }
+
+    private fun publishAudioSessionId(audioSessionId: Int) {
+        mutableState.value = mutableState.value.copy(audioSessionId = audioSessionId.takeIf { it > 0 })
     }
 
     private fun syncPlayerState(player: Player) {
