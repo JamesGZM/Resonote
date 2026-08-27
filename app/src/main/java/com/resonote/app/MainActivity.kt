@@ -11,10 +11,14 @@ import androidx.compose.runtime.getValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.resonote.core.designsystem.theme.ResonoteTheme
+import com.resonote.core.playback.DesktopLyricsController
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
+    @Inject lateinit var desktopLyricsController: DesktopLyricsController
+
     private val viewModel: MainActivityViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,6 +40,7 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         if (savedInstanceState == null) {
             viewModel.handleExternalImportIntent(intent, finishTaskOnBack = true)
+            viewModel.handleDesktopLyricsIntent(intent)
         }
         setContent {
             val themePreferences by viewModel.themePreferences.collectAsStateWithLifecycle()
@@ -52,6 +57,12 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         viewModel.handleExternalImportIntent(intent, finishTaskOnBack = false)
+        viewModel.handleDesktopLyricsIntent(intent)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        desktopLyricsController.restoreIfEnabled()
     }
 }
 

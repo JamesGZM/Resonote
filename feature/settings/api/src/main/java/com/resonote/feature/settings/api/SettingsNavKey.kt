@@ -13,6 +13,9 @@ data object PlaybackSettingsNavKey : NavKey
 data object LyricsSettingsNavKey : NavKey
 
 @Serializable
+data object DesktopLyricsSettingsNavKey : NavKey
+
+@Serializable
 data object PermissionsSettingsNavKey : NavKey
 
 @Serializable

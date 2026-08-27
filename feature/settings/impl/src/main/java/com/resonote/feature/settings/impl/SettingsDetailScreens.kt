@@ -4,8 +4,12 @@ package com.resonote.feature.settings.impl
 
 import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -42,6 +46,8 @@ import com.resonote.core.designsystem.component.LocalResonoteSnackbarController
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
 import com.resonote.core.model.AudioFocusPolicy
 import com.resonote.core.model.CrossfadeDuration
+import com.resonote.core.model.DesktopLyricsControlsTimeout
+import com.resonote.core.model.DesktopLyricsDisplayMode
 import com.resonote.core.model.LyricsBackgroundMode
 import com.resonote.core.model.LyricsDisplayMode
 import com.resonote.core.model.LyricsFontSize
@@ -51,6 +57,7 @@ import com.resonote.core.model.LyricsTextAlignment
 import com.resonote.core.model.OnlinePlaybackQuality
 import com.resonote.core.model.PlaybackMode
 import com.resonote.core.model.PlaybackSpeed
+import kotlin.math.roundToInt
 
 @Composable
 fun PlaybackSettingsRoute(
@@ -250,11 +257,189 @@ internal fun PlaybackSettingsScreen(
     }
 }
 
-private enum class LyricsSettingsSheet { Supplemental, Display, Highlight, Alignment, FontSize, Background }
+private enum class LyricsSettingsSheet {
+    DesktopDisplay,
+    DesktopFontSize,
+    DesktopControlsTimeout,
+    Supplemental,
+    Display,
+    Highlight,
+    Alignment,
+    FontSize,
+    Background,
+}
+
+@Composable
+fun DesktopLyricsSettingsRoute(
+    onBack: () -> Unit,
+    bottomContentPadding: Dp = 32.dp,
+    viewModel: LyricsSettingsViewModel = hiltViewModel(),
+) {
+    val context = LocalContext.current
+    val preferences by viewModel.preferences.collectAsStateWithLifecycle()
+    var openSheet by remember { mutableStateOf<LyricsSettingsSheet?>(null) }
+    var permissionRevision by remember { mutableStateOf(0) }
+    var enableAfterPermission by remember { mutableStateOf(false) }
+    var surfaceOpacity by remember(preferences.desktopLyricsSurfaceOpacity) {
+        mutableStateOf(preferences.desktopLyricsSurfaceOpacity.toFloat())
+    }
+    val overlayPermissionGranted = remember(permissionRevision) { Settings.canDrawOverlays(context) }
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) {}
+    val enableDesktopLyrics = {
+        viewModel.setDesktopLyricsEnabled(true)
+        if (
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        permissionRevision++
+        val shouldEnable = enableAfterPermission && Settings.canDrawOverlays(context)
+        enableAfterPermission = false
+        if (shouldEnable) enableDesktopLyrics()
+    }
+    SettingsPageScaffold(
+        title = stringResource(R.string.feature_settings_impl_desktop_lyrics_settings),
+        onBack = onBack,
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(padding).widthIn(max = 720.dp),
+            contentPadding = PaddingValues(bottom = bottomContentPadding),
+        ) {
+            item { SettingsSectionLabel(stringResource(R.string.feature_settings_impl_desktop_lyrics_section)) }
+            item {
+                SettingsSwitchRow(
+                    title = stringResource(R.string.feature_settings_impl_desktop_lyrics),
+                    checked = preferences.desktopLyricsEnabled && overlayPermissionGranted,
+                    onCheckedChange = { enabled ->
+                        when {
+                            !enabled -> viewModel.setDesktopLyricsEnabled(false)
+                            overlayPermissionGranted -> enableDesktopLyrics()
+                            else -> {
+                                enableAfterPermission = true
+                                openOverlayPermissionSettings(context)
+                            }
+                        }
+                    },
+                    supportingText = stringResource(
+                        if (overlayPermissionGranted) {
+                            R.string.feature_settings_impl_desktop_lyrics_body
+                        } else {
+                            R.string.feature_settings_impl_desktop_lyrics_permission_body
+                        },
+                    ),
+                    switchTestTag = "desktop-lyrics-switch",
+                )
+            }
+            item { SettingsSectionLabel(stringResource(R.string.feature_settings_impl_desktop_lyrics_appearance)) }
+            item {
+                SettingsValueRow(
+                    stringResource(R.string.feature_settings_impl_desktop_lyrics_display),
+                    preferences.desktopLyricsDisplayMode.label(),
+                    { openSheet = LyricsSettingsSheet.DesktopDisplay },
+                )
+            }
+            item { SettingsDivider() }
+            item {
+                SettingsValueRow(
+                    stringResource(R.string.feature_settings_impl_desktop_lyrics_font_size),
+                    preferences.desktopLyricsFontSize.label(),
+                    { openSheet = LyricsSettingsSheet.DesktopFontSize },
+                )
+            }
+            item { SettingsDivider() }
+            item {
+                SettingsSliderRow(
+                    title = stringResource(R.string.feature_settings_impl_desktop_lyrics_surface_opacity),
+                    valueLabel = "${surfaceOpacity.roundToInt()}%",
+                    value = surfaceOpacity,
+                    onValueChange = { surfaceOpacity = it },
+                    onValueChangeFinished = {
+                        viewModel.setDesktopLyricsSurfaceOpacity(surfaceOpacity.roundToInt())
+                    },
+                    supportingText = stringResource(
+                        R.string.feature_settings_impl_desktop_lyrics_surface_opacity_body,
+                    ),
+                )
+            }
+            item { SettingsSectionLabel(stringResource(R.string.feature_settings_impl_desktop_lyrics_behavior)) }
+            item {
+                SettingsValueRow(
+                    stringResource(R.string.feature_settings_impl_desktop_lyrics_controls_timeout),
+                    preferences.desktopLyricsControlsTimeout.label(),
+                    { openSheet = LyricsSettingsSheet.DesktopControlsTimeout },
+                    supportingText = stringResource(
+                        R.string.feature_settings_impl_desktop_lyrics_controls_timeout_body,
+                    ),
+                )
+            }
+            item { SettingsDivider() }
+            item {
+                SettingsSwitchRow(
+                    stringResource(R.string.feature_settings_impl_desktop_lyrics_lock),
+                    preferences.desktopLyricsLocked,
+                    viewModel::setDesktopLyricsLocked,
+                    supportingText = stringResource(R.string.feature_settings_impl_desktop_lyrics_lock_body),
+                )
+            }
+            item { SettingsDivider() }
+            item {
+                SettingsValueRow(
+                    stringResource(R.string.feature_settings_impl_desktop_lyrics_position),
+                    stringResource(R.string.feature_settings_impl_desktop_lyrics_reset_position),
+                    viewModel::resetDesktopLyricsPosition,
+                    supportingText = stringResource(R.string.feature_settings_impl_desktop_lyrics_position_body),
+                )
+            }
+        }
+    }
+    when (openSheet) {
+        LyricsSettingsSheet.DesktopDisplay -> choiceSheet(
+            stringResource(R.string.feature_settings_impl_desktop_lyrics_display),
+            preferences.desktopLyricsDisplayMode,
+            DesktopLyricsDisplayMode.entries,
+            { it.label() },
+            {
+                openSheet = null
+                viewModel.setDesktopLyricsDisplayMode(it)
+            },
+            { openSheet = null },
+        )
+        LyricsSettingsSheet.DesktopFontSize -> choiceSheet(
+            stringResource(R.string.feature_settings_impl_desktop_lyrics_font_size),
+            preferences.desktopLyricsFontSize,
+            LyricsFontSize.entries,
+            { it.label() },
+            {
+                openSheet = null
+                viewModel.setDesktopLyricsFontSize(it)
+            },
+            { openSheet = null },
+        )
+        LyricsSettingsSheet.DesktopControlsTimeout -> choiceSheet(
+            stringResource(R.string.feature_settings_impl_desktop_lyrics_controls_timeout),
+            preferences.desktopLyricsControlsTimeout,
+            DesktopLyricsControlsTimeout.entries,
+            { it.label() },
+            {
+                openSheet = null
+                viewModel.setDesktopLyricsControlsTimeout(it)
+            },
+            { openSheet = null },
+        )
+        else -> Unit
+    }
+}
 
 @Composable
 fun LyricsSettingsRoute(
     onBack: () -> Unit,
+    onDesktopLyricsClick: () -> Unit = {},
     bottomContentPadding: Dp = 32.dp,
     viewModel: LyricsSettingsViewModel = hiltViewModel(),
 ) {
@@ -268,6 +453,23 @@ fun LyricsSettingsRoute(
             modifier = Modifier.fillMaxSize().padding(padding).widthIn(max = 720.dp),
             contentPadding = PaddingValues(bottom = bottomContentPadding),
         ) {
+            item { SettingsSectionLabel(stringResource(R.string.feature_settings_impl_desktop_lyrics_section)) }
+            item {
+                SettingsValueRow(
+                    stringResource(R.string.feature_settings_impl_desktop_lyrics_settings),
+                    stringResource(
+                        if (preferences.desktopLyricsEnabled) {
+                            R.string.feature_settings_impl_on
+                        } else {
+                            R.string.feature_settings_impl_off
+                        },
+                    ),
+                    onDesktopLyricsClick,
+                    supportingText = stringResource(R.string.feature_settings_impl_desktop_lyrics_controller_body),
+                    modifier = Modifier.testTag("desktop-lyrics-settings"),
+                )
+            }
+            item { SettingsSectionLabel(stringResource(R.string.feature_settings_impl_in_player_lyrics_section)) }
             item {
                 SettingsValueRow(
                     stringResource(R.string.feature_settings_impl_lyrics_supplemental),
@@ -343,6 +545,10 @@ fun LyricsSettingsRoute(
         }
     }
     when (openSheet) {
+        LyricsSettingsSheet.DesktopDisplay,
+        LyricsSettingsSheet.DesktopFontSize,
+        LyricsSettingsSheet.DesktopControlsTimeout,
+        -> Unit
         LyricsSettingsSheet.Supplemental -> LyricsSupplementalTextSheet(
             translationEnabled = preferences.translationEnabled,
             transliterationEnabled = preferences.transliterationEnabled,
@@ -435,6 +641,24 @@ fun LyricsSettingsRoute(
 }
 
 @Composable
+private fun DesktopLyricsDisplayMode.label() = stringResource(
+    if (this == DesktopLyricsDisplayMode.SingleLine) {
+        R.string.feature_settings_impl_desktop_lyrics_single_line
+    } else {
+        R.string.feature_settings_impl_desktop_lyrics_two_lines
+    },
+)
+
+@Composable
+private fun DesktopLyricsControlsTimeout.label() = stringResource(
+    when (this) {
+        DesktopLyricsControlsTimeout.ThreeSeconds -> R.string.feature_settings_impl_desktop_lyrics_timeout_3
+        DesktopLyricsControlsTimeout.FiveSeconds -> R.string.feature_settings_impl_desktop_lyrics_timeout_5
+        DesktopLyricsControlsTimeout.EightSeconds -> R.string.feature_settings_impl_desktop_lyrics_timeout_8
+    },
+)
+
+@Composable
 private fun LyricsPreferences.supplementalTextLabel() = stringResource(
     when {
         translationEnabled && transliterationEnabled ->
@@ -503,11 +727,13 @@ fun PermissionsSettingsRoute(onBack: () -> Unit, bottomContentPadding: Dp = 32.d
         ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) ==
             android.content.pm.PackageManager.PERMISSION_GRANTED
     }
+    val overlayGranted = remember(permissionRevision) { Settings.canDrawOverlays(context) }
 
     PermissionsSettingsScreen(
         onBack = onBack,
         notificationsEnabled = notificationsEnabled,
         microphoneGranted = microphoneGranted,
+        overlayGranted = overlayGranted,
         bottomContentPadding = bottomContentPadding,
         onNotificationsClick = {
             context.startActivity(
@@ -520,6 +746,7 @@ fun PermissionsSettingsRoute(onBack: () -> Unit, bottomContentPadding: Dp = 32.d
                 Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}")),
             )
         },
+        onOverlayClick = { openOverlayPermissionSettings(context) },
     )
 }
 
@@ -528,9 +755,11 @@ internal fun PermissionsSettingsScreen(
     onBack: () -> Unit,
     notificationsEnabled: Boolean,
     microphoneGranted: Boolean,
+    overlayGranted: Boolean,
     bottomContentPadding: Dp = 32.dp,
     onNotificationsClick: () -> Unit = {},
     onMicrophoneClick: () -> Unit = {},
+    onOverlayClick: () -> Unit = {},
 ) {
     SettingsPageScaffold(
         title = stringResource(R.string.feature_settings_impl_permissions_section),
@@ -555,7 +784,27 @@ internal fun PermissionsSettingsScreen(
                     onMicrophoneClick,
                 )
             }
+            item { SettingsDivider() }
+            item {
+                SettingsValueRow(
+                    stringResource(R.string.feature_settings_impl_display_over_other_apps),
+                    permissionLabel(overlayGranted),
+                    onOverlayClick,
+                )
+            }
         }
+    }
+}
+
+private fun openOverlayPermissionSettings(context: android.content.Context) {
+    val overlayIntent = Intent(
+        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+        Uri.parse("package:${context.packageName}"),
+    )
+    runCatching { context.startActivity(overlayIntent) }.getOrElse {
+        context.startActivity(
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}")),
+        )
     }
 }
 

@@ -1,0 +1,14 @@
+<resources>
+    <string name="core_playback_service_desktop_lyrics_waiting">播放歌曲后显示桌面歌词</string>
+    <string name="core_playback_service_desktop_lyrics_loading">正在加载歌词…</string>
+    <string name="core_playback_service_desktop_lyrics_empty">暂无歌词</string>
+    <string name="core_playback_service_desktop_lyrics_unavailable">当前歌曲暂无同步歌词</string>
+    <string name="core_playback_service_desktop_lyrics_failed">歌词加载失败</string>
+    <string name="core_playback_service_desktop_lyrics_notification_channel">桌面歌词</string>
+    <string name="core_playback_service_desktop_lyrics_notification_title">桌面歌词正在运行</string>
+    <string name="core_playback_service_desktop_lyrics_notification_locked">位置已锁定 · 控制仍可用</string>
+    <string name="core_playback_service_desktop_lyrics_notification_adjust">拖动歌词可调整位置</string>
+    <string name="core_playback_service_desktop_lyrics_lock">锁定</string>
+    <string name="core_playback_service_desktop_lyrics_unlock">解锁</string>
+    <string name="core_playback_service_desktop_lyrics_hide">关闭</string>
+</resources>

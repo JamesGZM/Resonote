@@ -1,5 +1,6 @@
 package com.resonote.core.playback.service
 
+import com.resonote.core.playback.DesktopLyricsController
 import com.resonote.core.playback.PlaybackCacheController
 import com.resonote.core.playback.PlaybackController
 import dagger.Binds
@@ -11,6 +12,10 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 internal abstract class PlaybackModule {
+    @Binds
+    @Singleton
+    abstract fun bindDesktopLyricsController(implementation: DefaultDesktopLyricsController): DesktopLyricsController
+
     @Binds
     abstract fun bindPlaybackCacheController(implementation: DefaultPlaybackCacheController): PlaybackCacheController
 

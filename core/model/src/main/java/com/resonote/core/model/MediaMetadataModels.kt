@@ -76,6 +76,10 @@ enum class LyricsHighlightMode { Word, Line }
 enum class LyricsTextAlignment { Center, Start }
 enum class LyricsFontSize { Small, Medium, Large }
 enum class LyricsBackgroundMode { Palette, Artwork, Off }
+enum class DesktopLyricsDisplayMode { SingleLine, TwoLines }
+enum class DesktopLyricsControlsTimeout(val seconds: Int) { ThreeSeconds(3), FiveSeconds(5), EightSeconds(8) }
+
+data class DesktopLyricsPosition(val x: Int, val y: Int)
 
 data class LyricsPreferences(
     val translationEnabled: Boolean = true,
@@ -85,5 +89,13 @@ data class LyricsPreferences(
     val textAlignment: LyricsTextAlignment = LyricsTextAlignment.Center,
     val fontSize: LyricsFontSize = LyricsFontSize.Medium,
     val backgroundMode: LyricsBackgroundMode = LyricsBackgroundMode.Artwork,
+    val desktopLyricsEnabled: Boolean = false,
+    val desktopLyricsDisplayMode: DesktopLyricsDisplayMode = DesktopLyricsDisplayMode.TwoLines,
+    val desktopLyricsFontSize: LyricsFontSize = LyricsFontSize.Medium,
+    val desktopLyricsSurfaceOpacity: Int = 0,
+    val desktopLyricsAutoHideWhenPaused: Boolean = false,
+    val desktopLyricsControlsTimeout: DesktopLyricsControlsTimeout = DesktopLyricsControlsTimeout.FiveSeconds,
+    val desktopLyricsLocked: Boolean = false,
+    val desktopLyricsPosition: DesktopLyricsPosition? = null,
 )
 data class RecognitionMatch(val confidence: Double, val song: OnlineSong)

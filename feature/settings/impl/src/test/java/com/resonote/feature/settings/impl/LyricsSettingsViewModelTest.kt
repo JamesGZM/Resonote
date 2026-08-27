@@ -2,7 +2,9 @@ package com.resonote.feature.settings.impl
 
 import com.google.common.truth.Truth.assertThat
 import com.resonote.core.data.LyricsPreferencesRepository
+import com.resonote.core.model.DesktopLyricsControlsTimeout
 import com.resonote.core.model.LyricsPreferences
+import com.resonote.core.playback.DesktopLyricsController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,6 +40,82 @@ class LyricsSettingsViewModelTest {
             LyricsPreferences(translationEnabled = false, transliterationEnabled = false),
         )
     }
+
+    @Test
+    fun enablingDesktopLyricsPersistsBeforeShowingService() = runTest(dispatcher) {
+        val repository = FakeLyricsPreferencesRepository()
+        val controller = FakeDesktopLyricsController(repository)
+        val viewModel = LyricsSettingsViewModel(repository, controller)
+
+        viewModel.setDesktopLyricsEnabled(true)
+        advanceUntilIdle()
+
+        assertThat(repository.preferences.value.desktopLyricsEnabled).isTrue()
+        assertThat(controller.enabledWhenShown).isTrue()
+    }
+
+    @Test
+    fun resettingDesktopLyricsPositionPersistsAndNotifiesService() = runTest(dispatcher) {
+        val repository = FakeLyricsPreferencesRepository()
+        val controller = FakeDesktopLyricsController(repository)
+        val viewModel = LyricsSettingsViewModel(repository, controller)
+
+        viewModel.resetDesktopLyricsPosition()
+        advanceUntilIdle()
+
+        assertThat(repository.preferences.value.desktopLyricsPosition).isNull()
+        assertThat(controller.resetCalls).isEqualTo(1)
+    }
+
+    @Test
+    fun changingControllerTimeoutPersistsAndRefreshesService() = runTest(dispatcher) {
+        val repository = FakeLyricsPreferencesRepository()
+        val controller = FakeDesktopLyricsController(repository)
+        val viewModel = LyricsSettingsViewModel(repository, controller)
+
+        viewModel.setDesktopLyricsControlsTimeout(DesktopLyricsControlsTimeout.EightSeconds)
+        advanceUntilIdle()
+
+        assertThat(repository.preferences.value.desktopLyricsControlsTimeout)
+            .isEqualTo(DesktopLyricsControlsTimeout.EightSeconds)
+        assertThat(controller.refreshCalls).isEqualTo(1)
+    }
+
+    @Test
+    fun changingSurfaceOpacityPersistsAndRefreshesService() = runTest(dispatcher) {
+        val repository = FakeLyricsPreferencesRepository()
+        val controller = FakeDesktopLyricsController(repository)
+        val viewModel = LyricsSettingsViewModel(repository, controller)
+
+        viewModel.setDesktopLyricsSurfaceOpacity(70)
+        advanceUntilIdle()
+
+        assertThat(repository.preferences.value.desktopLyricsSurfaceOpacity).isEqualTo(70)
+        assertThat(controller.refreshCalls).isEqualTo(1)
+    }
+}
+
+private class FakeDesktopLyricsController(private val repository: FakeLyricsPreferencesRepository) :
+    DesktopLyricsController {
+    var enabledWhenShown = false
+    var resetCalls = 0
+    var refreshCalls = 0
+
+    override fun show() {
+        enabledWhenShown = repository.preferences.value.desktopLyricsEnabled
+    }
+
+    override fun hide() = Unit
+
+    override fun refresh() {
+        refreshCalls++
+    }
+
+    override fun resetPosition() {
+        resetCalls++
+    }
+
+    override fun restoreIfEnabled() = Unit
 }
 
 private class FakeLyricsPreferencesRepository : LyricsPreferencesRepository {

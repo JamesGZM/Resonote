@@ -8,6 +8,7 @@ import com.resonote.core.data.LocalMediaRepository
 import com.resonote.core.data.ThemePreferencesRepository
 import com.resonote.core.model.AuthState
 import com.resonote.core.model.ThemePreferences
+import com.resonote.core.playback.DesktopLyricsNavigation
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -27,6 +28,8 @@ internal class MainActivityViewModel @Inject constructor(
     private val mutableExternalImportRequests = MutableStateFlow<List<ExternalLocalImportRequest>>(emptyList())
     val externalImportRequests: StateFlow<List<ExternalLocalImportRequest>> =
         mutableExternalImportRequests.asStateFlow()
+    private val mutableDesktopLyricsSettingsRequests = MutableStateFlow(0L)
+    val desktopLyricsSettingsRequests: StateFlow<Long> = mutableDesktopLyricsSettingsRequests.asStateFlow()
 
     private var nextExternalImportRequestId = 0L
 
@@ -66,6 +69,12 @@ internal class MainActivityViewModel @Inject constructor(
 
     fun acknowledgeExternalImportRequest(id: Long) {
         mutableExternalImportRequests.update { requests -> requests.filterNot { it.id == id } }
+    }
+
+    fun handleDesktopLyricsIntent(intent: Intent): Boolean {
+        if (intent.action != DesktopLyricsNavigation.ACTION_OPEN_SETTINGS) return false
+        mutableDesktopLyricsSettingsRequests.update { it + 1 }
+        return true
     }
 }
 

@@ -1,0 +1,14 @@
+<resources>
+    <string name="core_playback_service_desktop_lyrics_waiting">Play a song to show desktop lyrics</string>
+    <string name="core_playback_service_desktop_lyrics_loading">Loading lyrics…</string>
+    <string name="core_playback_service_desktop_lyrics_empty">No lyrics available</string>
+    <string name="core_playback_service_desktop_lyrics_unavailable">Synced lyrics are unavailable for this song</string>
+    <string name="core_playback_service_desktop_lyrics_failed">Could not load lyrics</string>
+    <string name="core_playback_service_desktop_lyrics_notification_channel">Desktop lyrics</string>
+    <string name="core_playback_service_desktop_lyrics_notification_title">Desktop lyrics are active</string>
+    <string name="core_playback_service_desktop_lyrics_notification_locked">Position locked · controls remain available</string>
+    <string name="core_playback_service_desktop_lyrics_notification_adjust">Drag the lyrics to adjust their position</string>
+    <string name="core_playback_service_desktop_lyrics_lock">Lock</string>
+    <string name="core_playback_service_desktop_lyrics_unlock">Unlock</string>
+    <string name="core_playback_service_desktop_lyrics_hide">Turn off</string>
+</resources>

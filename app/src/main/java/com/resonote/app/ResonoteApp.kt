@@ -45,6 +45,7 @@ import com.resonote.feature.player.impl.PlayerPaletteViewModel
 import com.resonote.feature.player.impl.PlayerViewModel
 import com.resonote.feature.recognition.api.RecognitionNavKey
 import com.resonote.feature.search.api.SearchNavKey
+import com.resonote.feature.settings.api.DesktopLyricsSettingsNavKey
 import com.resonote.feature.video.api.VideoNavKey
 import com.resonote.feature.vip.impl.DailyVipViewModel
 
@@ -68,6 +69,7 @@ internal fun ResonoteApp(
     val authState by viewModel.authState.collectAsStateWithLifecycle()
     val externalImportRequests by viewModel.externalImportRequests.collectAsStateWithLifecycle()
     val externalImportRequest = externalImportRequests.firstOrNull()
+    val desktopLyricsSettingsRequests by viewModel.desktopLyricsSettingsRequests.collectAsStateWithLifecycle()
     val myViewModel: MyViewModel = hiltViewModel()
     val dailyVipViewModel: DailyVipViewModel = hiltViewModel()
     val myState by myViewModel.uiState.collectAsStateWithLifecycle()
@@ -152,6 +154,15 @@ internal fun ResonoteApp(
         val request = externalImportRequest ?: return@LaunchedEffect
         if (backStack.lastOrNull() !is LocalMusicNavKey) {
             backStack.add(LocalMusicNavKey(finishTaskOnBack = request.finishTaskOnBack))
+        }
+    }
+
+    LaunchedEffect(desktopLyricsSettingsRequests) {
+        if (
+            desktopLyricsSettingsRequests > 0 &&
+            backStack.lastOrNull() !is DesktopLyricsSettingsNavKey
+        ) {
+            backStack.add(DesktopLyricsSettingsNavKey)
         }
     }
 

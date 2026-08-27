@@ -16,6 +16,7 @@ dependencies {
     implementation(projects.core.model)
     implementation(projects.core.playback.api)
     implementation(projects.feature.settings.api)
+    implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)

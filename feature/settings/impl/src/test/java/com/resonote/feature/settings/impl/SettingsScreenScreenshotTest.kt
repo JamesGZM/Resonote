@@ -14,12 +14,15 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.google.common.truth.Truth.assertThat
+import com.resonote.core.data.LyricsPreferencesRepository
 import com.resonote.core.designsystem.theme.ResonoteTheme
 import com.resonote.core.designsystem.theme.ResonoteThemeMode
 import com.resonote.core.model.AppRelease
+import com.resonote.core.model.LyricsPreferences
 import com.resonote.core.model.OnlinePlaybackQuality
 import com.resonote.core.model.PlaybackSpeed
 import com.resonote.core.screenshottesting.DefaultRoborazziOptions
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -126,6 +129,69 @@ class SettingsScreenScreenshotTest {
 
         assertThat(translationEnabled).isFalse()
         assertThat(transliterationEnabled).isFalse()
+    }
+
+    @Test
+    fun lyricsSettingsCompactLinksToDesktopLyricsSettings() {
+        val repository = object : LyricsPreferencesRepository {
+            override val preferences = MutableStateFlow(LyricsPreferences())
+
+            override suspend fun setPreferences(value: LyricsPreferences) {
+                preferences.value = value
+            }
+
+            override suspend fun reset() {
+                preferences.value = LyricsPreferences()
+            }
+        }
+        val viewModel = LyricsSettingsViewModel(repository)
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                override = DeviceConfigurationOverride.ForcedSize(DpSize(390.dp, 844.dp)),
+            ) {
+                ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                    LyricsSettingsRoute(
+                        onBack = {},
+                        viewModel = viewModel,
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithTag("desktop-lyrics-settings").assertIsDisplayed()
+        capture("lyrics")
+    }
+
+    @Test
+    fun desktopLyricsSettingsCompactShowsControllerBehavior() {
+        val repository = object : LyricsPreferencesRepository {
+            override val preferences = MutableStateFlow(LyricsPreferences())
+
+            override suspend fun setPreferences(value: LyricsPreferences) {
+                preferences.value = value
+            }
+
+            override suspend fun reset() {
+                preferences.value = LyricsPreferences()
+            }
+        }
+        val viewModel = LyricsSettingsViewModel(repository)
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                override = DeviceConfigurationOverride.ForcedSize(DpSize(390.dp, 844.dp)),
+            ) {
+                ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                    DesktopLyricsSettingsRoute(
+                        onBack = {},
+                        viewModel = viewModel,
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithTag("desktop-lyrics-switch").assertIsDisplayed()
+        composeRule.onNodeWithText("Controller behavior").assertIsDisplayed()
+        capture("desktop-lyrics")
     }
 
     @Test

@@ -2,6 +2,9 @@ package com.resonote.core.data
 
 import com.google.common.truth.Truth.assertThat
 import com.resonote.core.datastore.LyricsPreferencesStorage
+import com.resonote.core.model.DesktopLyricsControlsTimeout
+import com.resonote.core.model.DesktopLyricsDisplayMode
+import com.resonote.core.model.DesktopLyricsPosition
 import com.resonote.core.model.LyricsBackgroundMode
 import com.resonote.core.model.LyricsDisplayMode
 import com.resonote.core.model.LyricsFontSize
@@ -37,6 +40,14 @@ class LyricsPreferencesRepositoryTest {
             textAlignment = LyricsTextAlignment.Start,
             fontSize = LyricsFontSize.Large,
             backgroundMode = LyricsBackgroundMode.Off,
+            desktopLyricsEnabled = true,
+            desktopLyricsDisplayMode = DesktopLyricsDisplayMode.SingleLine,
+            desktopLyricsFontSize = LyricsFontSize.Small,
+            desktopLyricsSurfaceOpacity = 70,
+            desktopLyricsAutoHideWhenPaused = false,
+            desktopLyricsControlsTimeout = DesktopLyricsControlsTimeout.ThreeSeconds,
+            desktopLyricsLocked = true,
+            desktopLyricsPosition = DesktopLyricsPosition(-120, 480),
         )
 
         repository.setPreferences(selected)

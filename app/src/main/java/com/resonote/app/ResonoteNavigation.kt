@@ -55,6 +55,7 @@ import com.resonote.feature.risk.impl.RiskVerificationRoute
 import com.resonote.feature.search.api.SearchNavKey
 import com.resonote.feature.search.impl.SearchRoute
 import com.resonote.feature.settings.api.AboutSettingsNavKey
+import com.resonote.feature.settings.api.DesktopLyricsSettingsNavKey
 import com.resonote.feature.settings.api.LicenseSettingsNavKey
 import com.resonote.feature.settings.api.LyricsSettingsNavKey
 import com.resonote.feature.settings.api.OpenSourceLibrariesNavKey
@@ -63,6 +64,7 @@ import com.resonote.feature.settings.api.PlaybackSettingsNavKey
 import com.resonote.feature.settings.api.PrivacySettingsNavKey
 import com.resonote.feature.settings.api.SettingsNavKey
 import com.resonote.feature.settings.impl.AboutSettingsRoute
+import com.resonote.feature.settings.impl.DesktopLyricsSettingsRoute
 import com.resonote.feature.settings.impl.LicenseSettingsRoute
 import com.resonote.feature.settings.impl.LyricsSettingsRoute
 import com.resonote.feature.settings.impl.OpenSourceLibrariesRoute
@@ -334,6 +336,13 @@ internal fun ResonoteNavDisplay(
             }
             entry<LyricsSettingsNavKey> { key ->
                 LyricsSettingsRoute(
+                    onBack = { backStack.popIfCurrent(key) },
+                    onDesktopLyricsClick = { backStack.add(DesktopLyricsSettingsNavKey) },
+                    bottomContentPadding = standaloneBottomContentPadding,
+                )
+            }
+            entry<DesktopLyricsSettingsNavKey> { key ->
+                DesktopLyricsSettingsRoute(
                     onBack = { backStack.popIfCurrent(key) },
                     bottomContentPadding = standaloneBottomContentPadding,
                 )

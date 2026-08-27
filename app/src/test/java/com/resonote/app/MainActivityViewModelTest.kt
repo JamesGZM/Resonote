@@ -26,6 +26,7 @@ import com.resonote.core.model.ThemePreferences
 import com.resonote.core.navigation.LoginContinuation
 import com.resonote.core.navigation.LoginGateNavKey
 import com.resonote.core.navigation.TabsShellNavKey
+import com.resonote.core.playback.DesktopLyricsNavigation
 import com.resonote.feature.cloud.api.CloudNavKey
 import com.resonote.feature.local.api.LocalMusicNavKey
 import kotlinx.coroutines.Dispatchers
@@ -186,6 +187,23 @@ class MainActivityViewModelTest {
         assertThat(viewModel.externalImportRequests.value).containsExactly(
             ExternalLocalImportRequest(2, listOf("content://provider/foreground"), finishTaskOnBack = false),
         )
+    }
+
+    @Test
+    fun desktopLyricsSettingsIntentIsCountedOnlyForItsContractAction() {
+        val viewModel = MainActivityViewModel(
+            FakeAuthRepository(),
+            FakeLocalMediaRepository(),
+            FakeThemePreferencesRepository(),
+        )
+
+        assertThat(viewModel.handleDesktopLyricsIntent(Intent(Intent.ACTION_MAIN))).isFalse()
+        assertThat(viewModel.desktopLyricsSettingsRequests.value).isEqualTo(0)
+
+        assertThat(
+            viewModel.handleDesktopLyricsIntent(Intent(DesktopLyricsNavigation.ACTION_OPEN_SETTINGS)),
+        ).isTrue()
+        assertThat(viewModel.desktopLyricsSettingsRequests.value).isEqualTo(1)
     }
 
     @Test

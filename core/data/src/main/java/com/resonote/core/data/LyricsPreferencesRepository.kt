@@ -1,6 +1,9 @@
 package com.resonote.core.data
 
 import com.resonote.core.datastore.LyricsPreferencesStorage
+import com.resonote.core.model.DesktopLyricsControlsTimeout
+import com.resonote.core.model.DesktopLyricsDisplayMode
+import com.resonote.core.model.DesktopLyricsPosition
 import com.resonote.core.model.LyricsBackgroundMode
 import com.resonote.core.model.LyricsDisplayMode
 import com.resonote.core.model.LyricsFontSize
@@ -31,6 +34,26 @@ internal class DefaultLyricsPreferencesRepository @Inject constructor(private va
             textAlignment = stored.enumOrDefault(LyricsTextAlignment.Center) { textAlignment },
             fontSize = stored.enumOrDefault(LyricsFontSize.Medium) { fontSize },
             backgroundMode = stored.enumOrDefault(LyricsBackgroundMode.Artwork) { backgroundMode },
+            desktopLyricsEnabled = stored.desktopLyricsEnabled,
+            desktopLyricsDisplayMode = stored.enumOrDefault(DesktopLyricsDisplayMode.TwoLines) {
+                desktopLyricsDisplayMode
+            },
+            desktopLyricsFontSize = stored.enumOrDefault(LyricsFontSize.Medium) { desktopLyricsFontSize },
+            desktopLyricsSurfaceOpacity = if (stored.desktopLyricsSurfaceOpacitySet) {
+                stored.desktopLyricsSurfaceOpacity.coerceIn(0, 100)
+            } else {
+                0
+            },
+            desktopLyricsAutoHideWhenPaused = false,
+            desktopLyricsControlsTimeout = stored.enumOrDefault(DesktopLyricsControlsTimeout.FiveSeconds) {
+                desktopLyricsControlsTimeout
+            },
+            desktopLyricsLocked = stored.desktopLyricsLocked,
+            desktopLyricsPosition = if (stored.desktopLyricsPositionSet) {
+                DesktopLyricsPosition(stored.desktopLyricsPositionX, stored.desktopLyricsPositionY)
+            } else {
+                null
+            },
         )
     }
 
@@ -44,6 +67,18 @@ internal class DefaultLyricsPreferencesRepository @Inject constructor(private va
             translationEnabled = value.translationEnabled,
             transliterationEnabled = value.transliterationEnabled,
             supplementalTextFlagsSet = true,
+            desktopLyricsEnabled = value.desktopLyricsEnabled,
+            desktopLyricsDisplayMode = value.desktopLyricsDisplayMode.name,
+            desktopLyricsFontSize = value.desktopLyricsFontSize.name,
+            desktopLyricsSurfaceOpacity = value.desktopLyricsSurfaceOpacity.coerceIn(0, 100),
+            desktopLyricsSurfaceOpacitySet = true,
+            desktopLyricsAutoHideWhenPaused = value.desktopLyricsAutoHideWhenPaused,
+            desktopLyricsControlsTimeout = value.desktopLyricsControlsTimeout.name,
+            desktopLyricsLocked = value.desktopLyricsLocked,
+            desktopLyricsPositionX = value.desktopLyricsPosition?.x ?: 0,
+            desktopLyricsPositionY = value.desktopLyricsPosition?.y ?: 0,
+            desktopLyricsPositionSet = value.desktopLyricsPosition != null,
+            desktopLyricsFlagsSet = true,
         ),
     )
 

@@ -16,6 +16,7 @@ import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -255,6 +256,47 @@ internal fun SettingsSwitchRow(
             onCheckedChange = onCheckedChange,
             modifier = if (switchTestTag == null) Modifier else Modifier.testTag(switchTestTag),
             enabled = enabled,
+        )
+    }
+}
+
+@Composable
+internal fun SettingsSliderRow(
+    title: String,
+    valueLabel: String,
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    onValueChangeFinished: () -> Unit,
+    modifier: Modifier = Modifier,
+    supportingText: String? = null,
+) {
+    Column(modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+                supportingText?.let {
+                    Text(
+                        it,
+                        modifier = Modifier.padding(top = 2.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            }
+            Spacer(Modifier.width(12.dp))
+            Text(
+                valueLabel,
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+        Slider(
+            value = value,
+            onValueChange = onValueChange,
+            onValueChangeFinished = onValueChangeFinished,
+            valueRange = 0f..100f,
+            steps = 9,
         )
     }
 }
