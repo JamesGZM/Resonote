@@ -1,7 +1,10 @@
 package com.resonote.core.karaoke.service
 
 import android.content.Context
+import androidx.annotation.OptIn
 import androidx.media3.common.Player
+import androidx.media3.common.util.ExperimentalApi
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.transformer.CompositionPlayer
 import com.resonote.core.data.KaraokeRepository
 import com.resonote.core.karaoke.KaraokePreviewController
@@ -19,6 +22,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
+@OptIn(UnstableApi::class, ExperimentalApi::class)
 internal class Media3KaraokePreviewController @Inject constructor(
     @ApplicationContext context: Context,
     private val repository: KaraokeRepository,

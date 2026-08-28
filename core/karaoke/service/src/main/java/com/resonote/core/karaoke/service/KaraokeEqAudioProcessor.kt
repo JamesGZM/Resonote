@@ -1,8 +1,11 @@
 package com.resonote.core.karaoke.service
 
+import android.annotation.SuppressLint
+import androidx.annotation.OptIn
 import androidx.media3.common.C
 import androidx.media3.common.audio.AudioProcessor
 import androidx.media3.common.audio.BaseAudioProcessor
+import androidx.media3.common.util.UnstableApi
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.math.PI
@@ -10,6 +13,7 @@ import kotlin.math.exp
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
+@OptIn(UnstableApi::class)
 internal class KaraokeEqAudioProcessor(private val lowDb: Float, private val midDb: Float, private val highDb: Float) :
     BaseAudioProcessor() {
     private var lowState = DoubleArray(0)
@@ -23,6 +27,7 @@ internal class KaraokeEqAudioProcessor(private val lowDb: Float, private val mid
         return inputAudioFormat
     }
 
+    @SuppressLint("MissingSuperCall")
     override fun isActive(): Boolean = lowDb != 0f || midDb != 0f || highDb != 0f
 
     override fun onFlush() {

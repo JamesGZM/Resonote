@@ -1,10 +1,12 @@
 package com.resonote.core.karaoke.service
 
+import androidx.annotation.OptIn
 import androidx.core.net.toUri
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.audio.DefaultGainProvider
 import androidx.media3.common.audio.GainProcessor
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.transformer.Composition
 import androidx.media3.transformer.EditedMediaItem
 import androidx.media3.transformer.EditedMediaItemSequence
@@ -13,6 +15,7 @@ import com.resonote.core.data.KaraokeRenderInput
 import java.io.File
 import kotlin.math.pow
 
+@OptIn(UnstableApi::class)
 internal object KaraokeCompositionFactory {
     fun create(input: KaraokeRenderInput): Composition {
         val sequences = mutableListOf<EditedMediaItemSequence>()
