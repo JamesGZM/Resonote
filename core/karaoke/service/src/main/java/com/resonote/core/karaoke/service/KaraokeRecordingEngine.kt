@@ -6,6 +6,7 @@ import android.media.MediaRecorder
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -18,8 +19,10 @@ internal data class KaraokeCaptureSummary(val durationMillis: Long, val peakAmpl
 
 internal class KaraokeRecordingEngine @Inject constructor() {
     private val recording = AtomicBoolean(false)
-    private val lock = Any()
-    private var activeRecorder: AudioRecord? = null
+
+    fun arm() {
+        recording.set(true)
+    }
 
     suspend fun record(path: String): KaraokeCaptureSummary? = withContext(Dispatchers.IO) {
         val minimumBuffer = AudioRecord.getMinBufferSize(
@@ -27,7 +30,10 @@ internal class KaraokeRecordingEngine @Inject constructor() {
             AudioFormat.CHANNEL_IN_MONO,
             AudioFormat.ENCODING_PCM_16BIT,
         )
-        if (minimumBuffer <= 0) return@withContext null
+        if (minimumBuffer <= 0) {
+            recording.set(false)
+            return@withContext null
+        }
         val recorder = try {
             AudioRecord.Builder()
                 .setAudioSource(MediaRecorder.AudioSource.MIC)
@@ -41,15 +47,19 @@ internal class KaraokeRecordingEngine @Inject constructor() {
                 .setBufferSizeInBytes(minimumBuffer.coerceAtLeast(SAMPLE_RATE_HZ))
                 .build()
         } catch (_: IllegalArgumentException) {
+            recording.set(false)
             return@withContext null
         } catch (_: SecurityException) {
+            recording.set(false)
             return@withContext null
         }
         val buffer = ByteArray(minimumBuffer.coerceAtLeast(4_096))
         var totalBytes = 0L
         var peak = 0
-        synchronized(lock) { activeRecorder = recorder }
-        recording.set(true)
+        if (!recording.get()) {
+            recorder.release()
+            return@withContext null
+        }
         try {
             recorder.startRecording()
             if (recorder.recordingState != AudioRecord.RECORDSTATE_RECORDING) return@withContext null
@@ -57,8 +67,12 @@ internal class KaraokeRecordingEngine @Inject constructor() {
                 output.write(wavHeader(0))
                 while (recording.get()) {
                     currentCoroutineContext().ensureActive()
-                    val count = recorder.read(buffer, 0, buffer.size, AudioRecord.READ_BLOCKING)
-                    if (count <= 0) {
+                    val count = recorder.read(buffer, 0, buffer.size, AudioRecord.READ_NON_BLOCKING)
+                    if (count == 0) {
+                        delay(READ_RETRY_DELAY_MILLIS)
+                        continue
+                    }
+                    if (count < 0) {
                         if (!recording.get()) break
                         return@withContext null
                     }
@@ -81,7 +95,6 @@ internal class KaraokeRecordingEngine @Inject constructor() {
             null
         } finally {
             recording.set(false)
-            synchronized(lock) { activeRecorder = null }
             runCatching { if (recorder.recordingState == AudioRecord.RECORDSTATE_RECORDING) recorder.stop() }
             recorder.release()
             buffer.fill(0)
@@ -90,9 +103,6 @@ internal class KaraokeRecordingEngine @Inject constructor() {
 
     fun stop() {
         recording.set(false)
-        synchronized(lock) { activeRecorder }.let { recorder ->
-            runCatching { if (recorder?.recordingState == AudioRecord.RECORDSTATE_RECORDING) recorder.stop() }
-        }
     }
 
     private fun wavHeader(dataSize: Long): ByteArray = java.nio.ByteBuffer.allocate(WAV_HEADER_BYTES)
@@ -123,5 +133,6 @@ internal class KaraokeRecordingEngine @Inject constructor() {
         const val SAMPLE_RATE_HZ = 48_000
         const val BYTES_PER_SECOND = SAMPLE_RATE_HZ * Short.SIZE_BYTES
         const val WAV_HEADER_BYTES = 44
+        const val READ_RETRY_DELAY_MILLIS = 5L
     }
 }

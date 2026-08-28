@@ -141,15 +141,10 @@ private fun KaraokeControls(
     onSkipIntro: (Long) -> Unit,
     onOpenQueue: () -> Unit,
 ) {
-    val firstLyricMillis = (lyrics as? LyricsUiState.Content)?.document?.lines
-        ?.firstOrNull { it.text.isNotBlank() && it.timeMillis > 0L }
-        ?.timeMillis
-    val introTarget = firstLyricMillis?.minus(INTRO_LEAD_IN_MILLIS)?.coerceAtLeast(0L)
-    val canSkipIntro = state.status !is KaraokeSessionStatus.Preparing &&
-        state.status !is KaraokeSessionStatus.Failed &&
-        !state.savingInProgress &&
-        introTarget != null &&
+    val introTarget = karaokeIntroTargetMillis(lyrics)
+    val showSkipIntro = introTarget != null &&
         positionMillis < introTarget
+    val skipIntroEnabled = !state.savingInProgress && !state.sourceChangeInProgress
 
     Column {
         Row(
@@ -158,8 +153,12 @@ private fun KaraokeControls(
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             ControlSlot {
-                if (canSkipIntro) {
-                    IconButton(onClick = { onSkipIntro(checkNotNull(introTarget)) }, Modifier.size(48.dp)) {
+                if (showSkipIntro) {
+                    IconButton(
+                        onClick = { onSkipIntro(checkNotNull(introTarget)) },
+                        modifier = Modifier.size(48.dp),
+                        enabled = skipIntroEnabled,
+                    ) {
                         Icon(
                             Icons.Rounded.FastForward,
                             stringResource(R.string.feature_player_impl_karaoke_skip_intro),
@@ -347,3 +346,35 @@ private fun ControlSlot(content: @Composable () -> Unit) {
 }
 
 private const val INTRO_LEAD_IN_MILLIS = 2_000L
+
+internal fun karaokeIntroTargetMillis(lyrics: LyricsUiState): Long? =
+    (lyrics as? LyricsUiState.Content)?.document?.lines
+        ?.firstOrNull { line ->
+            line.timeMillis > 0L &&
+                line.text.isNotBlank() &&
+                !line.isKaraokeHeaderLine()
+        }
+        ?.timeMillis
+        ?.let { firstVocalMillis ->
+            (firstVocalMillis - INTRO_LEAD_IN_MILLIS)
+                .takeIf { it > 0L }
+                ?: firstVocalMillis
+        }
+
+private fun com.resonote.core.model.LyricLine.isKaraokeHeaderLine(): Boolean {
+    val trimmed = text.trim()
+    val durationMillis = (endTimeMillis - timeMillis).coerceAtLeast(0L)
+    return KARAOKE_CREDIT_PREFIX.containsMatchIn(trimmed) ||
+        (
+            timeMillis < KARAOKE_COMPRESSED_HEADER_WINDOW_MILLIS &&
+                durationMillis < KARAOKE_COMPRESSED_HEADER_MAX_DURATION_MILLIS
+            )
+}
+
+private val KARAOKE_CREDIT_PREFIX = Regex(
+    pattern = "^(?:作?词|作?曲|词曲|编曲|原唱|演唱|歌手|制作(?:人)?|混音|录音|和声|母带|吉他|贝斯|监制|统筹|推广|出品(?:人)?|联合出品|OP|SP)\\s*[:：]",
+    option = RegexOption.IGNORE_CASE,
+)
+
+private const val KARAOKE_COMPRESSED_HEADER_WINDOW_MILLIS = 5_000L
+private const val KARAOKE_COMPRESSED_HEADER_MAX_DURATION_MILLIS = 500L

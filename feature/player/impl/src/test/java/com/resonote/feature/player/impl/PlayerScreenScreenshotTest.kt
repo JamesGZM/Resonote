@@ -116,6 +116,52 @@ class PlayerScreenScreenshotTest {
     }
 
     @Test
+    fun player_karaokePreparingShowsSkipAction() {
+        setPlayerContent(
+            initialState = screenshotState().copy(
+                playback = screenshotState().playback.copy(positionMillis = 0),
+                karaoke = KaraokeSessionState(
+                    enabled = true,
+                    status = KaraokeSessionStatus.Preparing,
+                ),
+            ),
+        )
+
+        composeRule.onNodeWithContentDescription("Skip intro").assertIsDisplayed()
+    }
+
+    @Test
+    fun karaokeIntroTargetSkipsCreditLines() {
+        val lyrics = LyricsUiState.Content(
+            LyricsDocument(
+                listOf(
+                    LyricLine(1_000, "词：虎二"),
+                    LyricLine(2_000, "曲：虎二"),
+                    LyricLine(3_000, "原唱：虎二"),
+                    LyricLine(18_000, "第一句实际演唱歌词"),
+                ),
+            ),
+        )
+
+        assertEquals(16_000L, karaokeIntroTargetMillis(lyrics))
+    }
+
+    @Test
+    fun karaokeIntroTargetKeepsShortIntroActionVisible() {
+        val lyrics = LyricsUiState.Content(
+            LyricsDocument(
+                listOf(
+                    lyricLine(218, 265, "制作：DJ 阿卓"),
+                    lyricLine(315, 387, "统筹：小西/叶杨朔"),
+                    lyricLine(598, 4_278, "我明明还是会突然想起你"),
+                ),
+            ),
+        )
+
+        assertEquals(598L, karaokeIntroTargetMillis(lyrics))
+    }
+
+    @Test
     fun player_compactKaraokeRecording() {
         setPlayerContent(
             initialState = screenshotState().copy(
@@ -404,6 +450,10 @@ class PlayerScreenScreenshotTest {
             durationMillis = 248_000,
             quality = AudioQuality.Lossless,
             vip = false,
+        )
+
+        fun lyricLine(startMillis: Long, endMillis: Long, text: String) = LyricLine(
+            syllables = listOf(LyricSyllable(text, startMillis, endMillis)),
         )
     }
 }

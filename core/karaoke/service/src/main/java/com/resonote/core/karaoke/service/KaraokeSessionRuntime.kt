@@ -3,6 +3,7 @@ package com.resonote.core.karaoke.service
 import com.resonote.core.data.CloudRepository
 import com.resonote.core.data.KaraokePreparationFailure
 import com.resonote.core.data.KaraokePreparationRequest
+import com.resonote.core.data.KaraokeRecordingCommitResult
 import com.resonote.core.data.KaraokeRecordingFileResult
 import com.resonote.core.data.KaraokeRepository
 import com.resonote.core.data.LocalMediaRepository
@@ -207,10 +208,10 @@ internal class KaraokeSessionRuntime @Inject constructor(
     }
 
     private fun changeSong(changePlaybackItem: () -> Unit) {
+        preparingJob?.cancel()
         mutableState.value = mutableState.value.copy(savingInProgress = true)
         scope.launch {
             commandMutex.withLock {
-                preparingJob?.cancel()
                 stopCapture()
                 cleanupEmptyProject()
                 preparedProject = null
@@ -304,7 +305,7 @@ internal class KaraokeSessionRuntime @Inject constructor(
             sourceMode = mutableState.value.selectedSourceMode,
             expectedDurationMillis = (project.project.durationMillis - startPosition).coerceAtLeast(0L),
         )
-        if (resumePlaybackAfterCountdown && playback.state.value.status == PlaybackStatus.Paused) {
+        if (playback.state.value.status.shouldStartAfterKaraokeCountdown()) {
             playback.togglePlayPause()
         }
         resumePlaybackAfterCountdown = false
@@ -330,37 +331,25 @@ internal class KaraokeSessionRuntime @Inject constructor(
     }
 
     private suspend fun switchSource(target: KaraokeSourceMode) {
-        val project = preparedProject ?: return
+        preparedProject ?: return
         val projectId = activeProjectId ?: return
         val originalItem = originalItems[activeItemKey] ?: return
         val previous = mutableState.value.selectedSourceMode
-        val previousStatus = mutableState.value.status
-        val wasRecording = previousStatus is KaraokeSessionStatus.Recording
-        val wasPlaying = playback.state.value.status == PlaybackStatus.Playing
+        val wasRecording = mutableState.value.status is KaraokeSessionStatus.Recording
         val position = playback.state.value.positionMillis
         mutableState.value = mutableState.value.copy(sourceChangeInProgress = true, failure = null)
         playback.pause()
-        if (wasRecording) stopCapture()
+        val captureCommit = if (wasRecording) stopCapture() else KaraokeRecordingCommitResult.Saved
+        mutableState.value = mutableState.value.copy(
+            continuousRecordingArmed = false,
+            status = KaraokeSessionStatus.Off,
+        )
         val applied = applyPlaybackSource(originalItem, target, position, playWhenReady = false)
         val persisted = applied && repository.selectBackingSource(projectId, target, position)
         if (!persisted) {
             applyPlaybackSource(originalItem, previous, position, playWhenReady = false)
-            mutableState.value = mutableState.value.copy(
-                sourceChangeInProgress = false,
-                failure = KaraokeSessionFailure.SourceUnavailable,
-                status = previousStatus,
-            )
-        } else {
-            mutableState.value = mutableState.value.copy(
-                selectedSourceMode = target,
-                sourceChangeInProgress = false,
-                status = previousStatus,
-            )
         }
-        if (wasRecording) {
-            startCapture(target.takeIf { persisted } ?: previous, project.project.durationMillis - position)
-        }
-        if (wasPlaying && playback.state.value.status == PlaybackStatus.Paused) playback.togglePlayPause()
+        mutableState.value = mutableState.value.completeSourceSwitch(target, persisted, captureCommit)
     }
 
     private suspend fun applyPlaybackSource(
@@ -416,6 +405,7 @@ internal class KaraokeSessionRuntime @Inject constructor(
             is KaraokeRecordingFileResult.Ready -> {
                 val timelineStart = playback.state.value.positionMillis
                 val completion = CompletableDeferred<KaraokeCaptureSummary?>()
+                recordingEngine.arm()
                 val captureJob = scope.launch(Dispatchers.IO) {
                     completion.complete(recordingEngine.record(result.path))
                 }
@@ -475,16 +465,16 @@ internal class KaraokeSessionRuntime @Inject constructor(
         }
     }
 
-    private suspend fun stopCapture() {
-        val segment = activeSegment ?: return
+    private suspend fun stopCapture(): KaraokeRecordingCommitResult {
+        val segment = activeSegment ?: return KaraokeRecordingCommitResult.Discarded
         activeSegment = null
         elapsedJob?.cancel()
         recordingEngine.stop()
         segment.captureJob.join()
         val summary = segment.completion.await()
-        val saved = if (summary == null) {
+        val commitResult = if (summary == null) {
             File(segment.path).delete()
-            true
+            KaraokeRecordingCommitResult.Discarded
         } else {
             repository.commitRecordingSegment(
                 projectId = segment.projectId,
@@ -495,7 +485,10 @@ internal class KaraokeSessionRuntime @Inject constructor(
                 peakAmplitude = summary.peakAmplitude,
             )
         }
-        if (!saved) mutableState.value = mutableState.value.copy(failure = KaraokeSessionFailure.StorageUnavailable)
+        if (commitResult == KaraokeRecordingCommitResult.Failed) {
+            mutableState.value = mutableState.value.copy(failure = KaraokeSessionFailure.StorageUnavailable)
+        }
+        return commitResult
     }
 
     private suspend fun cleanupEmptyProject() {
@@ -561,3 +554,21 @@ internal class KaraokeSessionRuntime @Inject constructor(
         const val SOURCE_SWITCH_TIMEOUT_MILLIS = 8_000L
     }
 }
+
+internal fun KaraokeSessionState.completeSourceSwitch(
+    target: KaraokeSourceMode,
+    persisted: Boolean,
+    captureCommit: KaraokeRecordingCommitResult,
+) = copy(
+    continuousRecordingArmed = false,
+    status = KaraokeSessionStatus.Off,
+    selectedSourceMode = target.takeIf { persisted } ?: selectedSourceMode,
+    sourceChangeInProgress = false,
+    failure = when {
+        !persisted -> KaraokeSessionFailure.SourceUnavailable
+        captureCommit == KaraokeRecordingCommitResult.Failed -> KaraokeSessionFailure.StorageUnavailable
+        else -> null
+    },
+)
+
+internal fun PlaybackStatus.shouldStartAfterKaraokeCountdown() = this == PlaybackStatus.Paused

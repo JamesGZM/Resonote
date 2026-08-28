@@ -8,6 +8,7 @@ import com.resonote.core.data.LyricsPreferencesRepository
 import com.resonote.core.data.LyricsRepository
 import com.resonote.core.karaoke.KaraokeController
 import com.resonote.core.karaoke.KaraokeSessionState
+import com.resonote.core.karaoke.KaraokeSessionStatus
 import com.resonote.core.model.AuthState
 import com.resonote.core.model.CollectionLoadResult
 import com.resonote.core.model.ContentFailure
@@ -232,7 +233,18 @@ class PlayerViewModel @Inject constructor(
 
     fun nextKaraoke() = karaokeController.next()
 
-    fun seekKaraokeTo(positionMillis: Long) = karaokeController.seekTo(positionMillis)
+    fun seekKaraokeTo(positionMillis: Long) {
+        when (karaokeController.state.value.status) {
+            is KaraokeSessionStatus.Countdown,
+            is KaraokeSessionStatus.Paused,
+            is KaraokeSessionStatus.Recording,
+            -> karaokeController.seekTo(positionMillis)
+            KaraokeSessionStatus.Off,
+            KaraokeSessionStatus.Preparing,
+            is KaraokeSessionStatus.Failed,
+            -> playbackController.seekTo(positionMillis)
+        }
+    }
 
     fun stopKaraoke() = karaokeController.stopAndSave()
 

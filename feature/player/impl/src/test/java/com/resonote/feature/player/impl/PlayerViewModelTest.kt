@@ -4,9 +4,11 @@ import com.google.common.truth.Truth.assertThat
 import com.resonote.core.data.LyricsRepository
 import com.resonote.core.karaoke.KaraokeController
 import com.resonote.core.karaoke.KaraokeSessionState
+import com.resonote.core.karaoke.KaraokeSessionStatus
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.CollectionLoadResult
 import com.resonote.core.model.ContentFailure
+import com.resonote.core.model.KaraokeProjectId
 import com.resonote.core.model.KaraokeSourceMode
 import com.resonote.core.model.LocalMedia
 import com.resonote.core.model.LocalMediaId
@@ -122,9 +124,40 @@ class PlayerViewModelTest {
     }
 
     @Test
-    fun skippingKaraokeIntroDelegatesToKaraokeTimeline() {
+    fun skippingKaraokeIntroBeforeRecordingSeeksPlaybackImmediately() {
         val controller = FakePlaybackController(song("first"))
-        val karaokeController = FakeKaraokeController()
+        val karaokeController = FakeKaraokeController().apply {
+            state.value = KaraokeSessionState(
+                enabled = true,
+                status = KaraokeSessionStatus.Preparing,
+            )
+        }
+        val viewModel = PlayerViewModel(
+            controller,
+            FakeLyricsRepository(CollectionLoadResult.Available(LyricsDocument(emptyList()))),
+            karaokeController,
+        )
+
+        viewModel.seekKaraokeTo(36_000)
+
+        assertThat(controller.seekPosition).isEqualTo(36_000)
+        assertThat(karaokeController.seekPosition).isEqualTo(-1)
+    }
+
+    @Test
+    fun skippingKaraokeIntroWhileRecordingDelegatesToKaraokeTimeline() {
+        val controller = FakePlaybackController(song("first"))
+        val karaokeController = FakeKaraokeController().apply {
+            state.value = KaraokeSessionState(
+                enabled = true,
+                continuousRecordingArmed = true,
+                status = KaraokeSessionStatus.Recording(
+                    KaraokeProjectId("project"),
+                    elapsedMillis = 1_000,
+                    hasOfficialAccompaniment = true,
+                ),
+            )
+        }
         val viewModel = PlayerViewModel(
             controller,
             FakeLyricsRepository(CollectionLoadResult.Available(LyricsDocument(emptyList()))),

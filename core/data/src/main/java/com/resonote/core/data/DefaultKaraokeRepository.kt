@@ -230,14 +230,14 @@ internal class DefaultKaraokeRepository @Inject constructor(
         timelineStartMillis: Long,
         durationMillis: Long,
         peakAmplitude: Int,
-    ): Boolean = mutationMutex.withLock {
+    ): KaraokeRecordingCommitResult = mutationMutex.withLock {
         val file = File(path)
         val valid = durationMillis >= MIN_VALID_TAKE_MILLIS && peakAmplitude >= MIN_NON_SILENT_PEAK && file.length() > 0
         if (!valid) {
             file.delete()
-            return@withLock false
+            return@withLock KaraokeRecordingCommitResult.Discarded
         }
-        val project = dao.findProject(projectId.value) ?: return@withLock false
+        val project = dao.findProject(projectId.value) ?: return@withLock KaraokeRecordingCommitResult.Failed
         val now = System.currentTimeMillis()
         val assetId = UUID.randomUUID().toString()
         try {
@@ -272,11 +272,11 @@ internal class DefaultKaraokeRepository @Inject constructor(
                     updatedAtEpochMillis = now,
                 ),
             )
-            true
+            KaraokeRecordingCommitResult.Saved
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Exception) {
-            false
+            KaraokeRecordingCommitResult.Failed
         }
     }
 

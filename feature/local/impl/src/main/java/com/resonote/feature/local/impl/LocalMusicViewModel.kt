@@ -418,7 +418,7 @@ private object EmptyKaraokeRepository : KaraokeRepository {
         timelineStartMillis: Long,
         durationMillis: Long,
         peakAmplitude: Int,
-    ) = false
+    ) = com.resonote.core.data.KaraokeRecordingCommitResult.Failed
     override suspend fun updateMix(projectId: KaraokeProjectId, settings: KaraokeMixSettings) = false
     override suspend fun renderInput(projectId: KaraokeProjectId) = null
     override suspend fun updateExportStatus(

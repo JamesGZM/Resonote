@@ -54,6 +54,12 @@ sealed interface KaraokeRecordingFileResult {
     data object Failed : KaraokeRecordingFileResult
 }
 
+enum class KaraokeRecordingCommitResult {
+    Saved,
+    Discarded,
+    Failed,
+}
+
 data class KaraokeRenderInput(
     val project: KaraokeProject,
     val backingSegments: List<KaraokeRenderBackingSegment>,
@@ -91,7 +97,7 @@ interface KaraokeRepository {
         timelineStartMillis: Long,
         durationMillis: Long,
         peakAmplitude: Int,
-    ): Boolean
+    ): KaraokeRecordingCommitResult
 
     suspend fun updateMix(projectId: KaraokeProjectId, settings: KaraokeMixSettings): Boolean
 

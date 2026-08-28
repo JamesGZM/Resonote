@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
+import java.io.File
 
 class DefaultKaraokeRepositoryTest {
     @Test
@@ -55,8 +56,81 @@ class DefaultKaraokeRepositoryTest {
         assertThat(store.removedProjectIds).isEmpty()
     }
 
+    @Test
+    fun commitRecordingSegmentReportsDiscardedForShortTake() = runTest {
+        val repository = DefaultKaraokeRepository(
+            dao = FakeKaraokeDao(),
+            network = FakeKaraokeNetworkDataSource,
+            playbackRepository = FakeSongPlaybackRepository,
+            store = FakeKaraokeAssetStore(),
+        )
+        val project = prepareProject(repository)
+        val recording = recordingFile()
+
+        val result = repository.commitRecordingSegment(
+            projectId = project.project.id,
+            segmentId = "short-segment",
+            path = recording.absolutePath,
+            timelineStartMillis = 0,
+            durationMillis = 500,
+            peakAmplitude = 1_000,
+        )
+
+        assertThat(result).isEqualTo(KaraokeRecordingCommitResult.Discarded)
+        assertThat(recording.exists()).isFalse()
+    }
+
+    @Test
+    fun commitRecordingSegmentReportsFailedForPersistenceError() = runTest {
+        val dao = FakeKaraokeDao()
+        val repository = DefaultKaraokeRepository(
+            dao = dao,
+            network = FakeKaraokeNetworkDataSource,
+            playbackRepository = FakeSongPlaybackRepository,
+            store = FakeKaraokeAssetStore(),
+        )
+        val project = prepareProject(repository)
+        val recording = recordingFile()
+        dao.failSegmentInsert = true
+
+        val result = repository.commitRecordingSegment(
+            projectId = project.project.id,
+            segmentId = "failed-segment",
+            path = recording.absolutePath,
+            timelineStartMillis = 0,
+            durationMillis = 2_000,
+            peakAmplitude = 1_000,
+        )
+
+        assertThat(result).isEqualTo(KaraokeRecordingCommitResult.Failed)
+        recording.delete()
+    }
+
+    private suspend fun prepareProject(repository: DefaultKaraokeRepository): PreparedKaraokeProject {
+        val result = repository.prepareProject(
+            KaraokePreparationRequest(
+                songHash = "original-hash",
+                songTitle = "Song",
+                artist = "Artist",
+                artworkUri = null,
+                durationMillis = 60_000,
+                albumAudioId = "1",
+                originalSource = ResolvedSongSource("https://original", 60_000, "mp3"),
+                accompanimentLookupEnabled = false,
+                timelineStartMillis = 0,
+            ),
+        )
+        return (result as PrepareKaraokeResult.Ready).value
+    }
+
+    private fun recordingFile() = File.createTempFile("resonote-karaoke-recording", ".wav").apply {
+        writeBytes(byteArrayOf(1, 2, 3, 4))
+        deleteOnExit()
+    }
+
     private class FakeKaraokeDao : KaraokeDao {
         val assets = mutableListOf<KaraokeAudioAssetEntity>()
+        var failSegmentInsert = false
         private val projects = mutableMapOf<String, KaraokeProjectEntity>()
         private val backingSegments = mutableListOf<KaraokeBackingSegmentEntity>()
 
@@ -79,7 +153,9 @@ class DefaultKaraokeRepositoryTest {
             assets += asset
         }
 
-        override suspend fun insertSegment(segment: KaraokeRecordingSegmentEntity) = Unit
+        override suspend fun insertSegment(segment: KaraokeRecordingSegmentEntity) {
+            if (failSegmentInsert) error("segment insert failed")
+        }
 
         override suspend fun insertBackingSegment(segment: KaraokeBackingSegmentEntity) {
             backingSegments += segment
