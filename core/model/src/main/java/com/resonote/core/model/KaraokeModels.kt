@@ -33,7 +33,21 @@ data class KaraokeMixSettings(
     val vocalMidEqDb: Float = 0f,
     val vocalHighEqDb: Float = 0f,
     val vocalOffsetMillis: Int = 0,
-)
+) {
+    val equalizerPreset: EqualizerPreset
+        get() = EqualizerPreset.from(
+            enabled = vocalLowEqDb != 0f || vocalMidEqDb != 0f || vocalHighEqDb != 0f,
+            lowDb = vocalLowEqDb.toInt(),
+            midDb = vocalMidEqDb.toInt(),
+            highDb = vocalHighEqDb.toInt(),
+        ).let { if (it == EqualizerPreset.Off) EqualizerPreset.Flat else it }
+
+    fun withEqualizerPreset(preset: EqualizerPreset): KaraokeMixSettings = copy(
+        vocalLowEqDb = if (preset == EqualizerPreset.Custom) vocalLowEqDb else preset.lowDb.toFloat(),
+        vocalMidEqDb = if (preset == EqualizerPreset.Custom) vocalMidEqDb else preset.midDb.toFloat(),
+        vocalHighEqDb = if (preset == EqualizerPreset.Custom) vocalHighEqDb else preset.highDb.toFloat(),
+    )
+}
 
 data class KaraokeProject(
     val id: KaraokeProjectId,

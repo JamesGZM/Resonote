@@ -46,6 +46,7 @@ class LocalMusicViewModel @Inject constructor(
 
     private var importJob: Job? = null
     private var scanJob: Job? = null
+    private var karaokeProjectsJob: Job? = null
     private var pendingUris = ArrayDeque<String>()
     private var pendingDuplicateUri: String? = null
     private var batchTotal = 0
@@ -60,21 +61,38 @@ class LocalMusicViewModel @Inject constructor(
                 .catch { mutableUiState.update { state -> state.copy(isLoading = false) } }
                 .collect { media -> mutableUiState.update { it.copy(media = media, isLoading = false) } }
         }
-        viewModelScope.launch {
-            karaokeRepository.observeProjects().collect { projects ->
-                mutableUiState.update { state ->
-                    state.copy(
-                        karaokeProjects = projects,
-                        selectedProjectIds = state.selectedProjectIds.intersect(projects.map { it.id }.toSet()),
-                        editingProject = state.editingProject?.let { editing ->
-                            projects.firstOrNull { it.id == editing.id }
-                        },
-                    )
-                }
-            }
-        }
+        observeKaraokeProjects()
         viewModelScope.launch {
             karaokePreviewController.state.collect { preview -> mutableUiState.update { it.copy(preview = preview) } }
+        }
+    }
+
+    fun retryKaraokeProjects() = observeKaraokeProjects(force = true)
+
+    private fun observeKaraokeProjects(force: Boolean = false) {
+        if (!force && karaokeProjectsJob?.isActive == true) return
+        karaokeProjectsJob?.cancel()
+        mutableUiState.update { it.copy(karaokeProjectsLoading = true, karaokeProjectsLoadFailed = false) }
+        karaokeProjectsJob = viewModelScope.launch {
+            karaokeRepository.observeProjects()
+                .catch {
+                    mutableUiState.update {
+                        it.copy(karaokeProjectsLoading = false, karaokeProjectsLoadFailed = true)
+                    }
+                }
+                .collect { projects ->
+                    mutableUiState.update { state ->
+                        state.copy(
+                            karaokeProjects = projects,
+                            karaokeProjectsLoading = false,
+                            karaokeProjectsLoadFailed = false,
+                            selectedProjectIds = state.selectedProjectIds.intersect(projects.map { it.id }.toSet()),
+                            editingProject = state.editingProject?.let { editing ->
+                                projects.firstOrNull { it.id == editing.id }
+                            },
+                        )
+                    }
+                }
         }
     }
 
@@ -94,7 +112,7 @@ class LocalMusicViewModel @Inject constructor(
 
     fun selectAllProjects() {
         mutableUiState.update { state ->
-            val all = state.karaokeProjects.mapTo(linkedSetOf()) { it.id }
+            val all = state.visibleKaraokeProjects.mapTo(linkedSetOf()) { it.id }
             state.copy(selectedProjectIds = if (state.selectedProjectIds == all) emptySet() else all)
         }
     }
@@ -119,6 +137,11 @@ class LocalMusicViewModel @Inject constructor(
     }
 
     fun togglePreview(id: KaraokeProjectId) = karaokePreviewController.toggle(id)
+
+    fun previewProjectMix(settings: KaraokeMixSettings) {
+        val project = mutableUiState.value.editingProject ?: return
+        karaokePreviewController.toggle(project.id, settings)
+    }
 
     fun editProject(id: KaraokeProjectId) {
         mutableUiState.update { state ->
@@ -412,6 +435,6 @@ private object EmptyKaraokeExportController : KaraokeExportController {
 
 private object EmptyKaraokePreviewController : KaraokePreviewController {
     override val state = MutableStateFlow(KaraokePreviewState())
-    override fun toggle(projectId: KaraokeProjectId) = Unit
+    override fun toggle(projectId: KaraokeProjectId, mixSettings: KaraokeMixSettings?) = Unit
     override fun stop() = Unit
 }

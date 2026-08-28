@@ -61,6 +61,8 @@ interface KaraokeController {
 
     fun next()
 
+    fun seekTo(positionMillis: Long)
+
     fun stopAndSave()
 
     fun acknowledgeFailure()

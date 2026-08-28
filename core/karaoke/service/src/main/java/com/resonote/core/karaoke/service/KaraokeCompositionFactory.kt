@@ -30,6 +30,7 @@ internal object KaraokeCompositionFactory {
             backingBuilder.addItem(
                 EditedMediaItem.Builder(mediaItem)
                     .setRemoveVideo(true)
+                    .setDurationUs(clip.sourceDurationMillis * 1_000L)
                     .setEffects(
                         Effects(
                             listOf(gainProcessor(input.project.mixSettings.accompanimentGainDb)),
@@ -67,6 +68,7 @@ internal object KaraokeCompositionFactory {
             builder.addItem(
                 EditedMediaItem.Builder(mediaItem)
                     .setRemoveVideo(true)
+                    .setDurationUs(renderSegment.segment.durationMillis * 1_000L)
                     .setEffects(vocalEffects)
                     .build(),
             )
@@ -78,7 +80,12 @@ internal object KaraokeCompositionFactory {
     private fun gainProcessor(db: Float) = GainProcessor(DefaultGainProvider.Builder(10f.pow(db / 20f)).build())
 }
 
-internal data class KaraokeBackingClip(val path: String, val startMillis: Long, val endMillis: Long)
+internal data class KaraokeBackingClip(
+    val path: String,
+    val sourceDurationMillis: Long,
+    val startMillis: Long,
+    val endMillis: Long,
+)
 
 internal fun backingClips(input: KaraokeRenderInput): List<KaraokeBackingClip> =
     input.backingSegments.mapIndexedNotNull { index, backing ->
@@ -88,6 +95,6 @@ internal fun backingClips(input: KaraokeRenderInput): List<KaraokeBackingClip> =
         if (end <= start) {
             null
         } else {
-            KaraokeBackingClip(backing.path, start, end)
+            KaraokeBackingClip(backing.path, backing.durationMillis, start, end)
         }
     }

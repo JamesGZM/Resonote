@@ -16,6 +16,7 @@
     <string name="feature_player_impl_added_next">将作为下一首播放</string>
     <string name="feature_player_impl_added_queue">已加入队尾</string>
     <string name="feature_player_impl_lyrics_settings">歌词设置</string>
+    <string name="feature_player_impl_equalizer_settings">均衡器</string>
     <string name="feature_player_impl_like">喜欢</string>
     <string name="feature_player_impl_like_failed">无法更新“我喜欢”</string>
     <string name="feature_player_impl_like_unsupported">云盘和本地歌曲不能添加到“我喜欢”</string>

@@ -2,9 +2,13 @@
 
 package com.resonote.core.playback.service
 
+import android.content.Context
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
+import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.audio.AudioSink
+import androidx.media3.exoplayer.audio.DefaultAudioSink
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
@@ -51,7 +55,18 @@ class ResonotePlaybackService : MediaSessionService() {
             .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
             .setUsage(C.USAGE_MEDIA)
             .build()
-        val exoPlayer = ExoPlayer.Builder(this)
+        val equalizer = ResonoteEqualizerAudioProcessor()
+        val renderersFactory = object : DefaultRenderersFactory(this) {
+            override fun buildAudioSink(
+                context: Context,
+                enableFloatOutput: Boolean,
+                enableAudioOutputPlaybackParameters: Boolean,
+            ): AudioSink = DefaultAudioSink.Builder(context)
+                .setEnableAudioOutputPlaybackParameters(enableAudioOutputPlaybackParameters)
+                .setAudioProcessors(arrayOf(equalizer))
+                .build()
+        }
+        val exoPlayer = ExoPlayer.Builder(this, renderersFactory)
             .setMediaSourceFactory(DefaultMediaSourceFactory(mediaCache.playbackDataSourceFactory))
             .build()
             .apply {
@@ -62,6 +77,12 @@ class ResonotePlaybackService : MediaSessionService() {
         mediaSession = MediaSession.Builder(this, player).build()
         serviceScope.launch {
             playbackPreferencesRepository.preferences.collect { preferences ->
+                equalizer.update(
+                    enabled = preferences.equalizerEnabled,
+                    lowDb = preferences.equalizerLowDb,
+                    midDb = preferences.equalizerMidDb,
+                    highDb = preferences.equalizerHighDb,
+                )
                 exoPlayer.setAudioAttributes(
                     audioAttributes,
                     preferences.audioFocusPolicy != AudioFocusPolicy.AllowAll,

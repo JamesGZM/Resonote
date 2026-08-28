@@ -36,6 +36,8 @@ class ProtoPlaybackPreferencesStorageTest {
                 setCrossfadeDuration("FiveSeconds")
                 setLoudnessNormalizationEnabled(true)
                 setAudioFocusPolicy("AllowMedia")
+                setEqualizerEnabled(true)
+                setEqualizerGains(6, -3, 9)
             }
         } finally {
             firstScope.cancel()
@@ -56,6 +58,14 @@ class ProtoPlaybackPreferencesStorageTest {
             assertThat(storage.crossfadeDuration.first()).isEqualTo("FiveSeconds")
             assertThat(storage.loudnessNormalizationEnabled.first()).isTrue()
             assertThat(storage.audioFocusPolicy.first()).isEqualTo("AllowMedia")
+            assertThat(storage.equalizerEnabled.first()).isTrue()
+            assertThat(storage.equalizerLowDb.first()).isEqualTo(6)
+            assertThat(storage.equalizerMidDb.first()).isEqualTo(-3)
+            assertThat(storage.equalizerHighDb.first()).isEqualTo(9)
+            assertThat(storage.equalizerCustom.first()).isTrue()
+
+            storage.setEqualizerPreset(true, 5, -2, 4)
+            assertThat(storage.equalizerCustom.first()).isFalse()
         } finally {
             secondScope.cancel()
         }

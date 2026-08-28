@@ -76,7 +76,7 @@ internal class DefaultKaraokeRepository @Inject constructor(
             val preparedSources = linkedMapOf<KaraokeSourceMode, PreparedKaraokeSource>()
             val assets = mutableListOf<KaraokeAudioAssetEntity>()
             val now = System.currentTimeMillis()
-            candidates.forEach { (mode, sourceAndHash) ->
+            candidates.forEach candidate@{ (mode, sourceAndHash) ->
                 val (source, sourceHash) = sourceAndHash
                 val assetId = UUID.randomUUID().toString()
                 val stored = when (
@@ -84,6 +84,7 @@ internal class DefaultKaraokeRepository @Inject constructor(
                 ) {
                     is KaraokeStoreResult.Success -> persisted.value
                     is KaraokeStoreResult.Failure -> {
+                        if (mode == KaraokeSourceMode.Accompaniment) return@candidate
                         store.removeProject(projectId)
                         return@withLock PrepareKaraokeResult.Failed(persisted.reason.toPreparationFailure())
                     }
@@ -307,6 +308,7 @@ internal class DefaultKaraokeRepository @Inject constructor(
             val asset = paths[segment.assetId] ?: return@mapNotNull null
             KaraokeRenderBackingSegment(
                 path = asset.storagePath,
+                durationMillis = asset.durationMillis,
                 segment = KaraokeBackingSegment(
                     id = segment.id,
                     projectId = projectId,

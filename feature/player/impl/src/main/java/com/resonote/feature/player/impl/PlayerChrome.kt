@@ -16,6 +16,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
+import androidx.compose.material.icons.rounded.Equalizer
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.LibraryAdd
@@ -50,6 +51,7 @@ import com.resonote.core.playback.PlaybackMetadata
 internal fun PlayerTopBar(
     song: PlaybackMetadata,
     qualityLabel: String?,
+    karaokeEnabled: Boolean,
     onBack: () -> Unit,
     onMore: () -> Unit,
     palette: PlayerPalette,
@@ -76,6 +78,10 @@ internal fun PlayerTopBar(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                if (karaokeEnabled) {
+                    PlayerTitleTag(label = "K", palette = palette)
+                    Spacer(Modifier.width(6.dp))
+                }
                 Text(
                     song.title,
                     Modifier.weight(1f, fill = false),
@@ -88,19 +94,7 @@ internal fun PlayerTopBar(
                 )
                 qualityLabel?.let { label ->
                     Spacer(Modifier.width(6.dp))
-                    Surface(
-                        color = palette.accent.copy(alpha = 0.18f),
-                        contentColor = palette.accent,
-                        shape = RoundedCornerShape(5.dp),
-                    ) {
-                        Text(
-                            label,
-                            Modifier.padding(horizontal = 5.dp, vertical = 1.dp),
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 1,
-                        )
-                    }
+                    PlayerTitleTag(label = label, palette = palette)
                 }
             }
             Text(
@@ -122,6 +116,23 @@ internal fun PlayerTopBar(
     }
 }
 
+@Composable
+private fun PlayerTitleTag(label: String, palette: PlayerPalette) {
+    Surface(
+        color = palette.accent.copy(alpha = 0.18f),
+        contentColor = palette.accent,
+        shape = RoundedCornerShape(5.dp),
+    ) {
+        Text(
+            label,
+            Modifier.padding(horizontal = 5.dp, vertical = 1.dp),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun PlayerActionsSheet(
@@ -130,6 +141,7 @@ internal fun PlayerActionsSheet(
     onAppendToQueue: (() -> Unit)?,
     onAddToPlaylist: (() -> Unit)?,
     onShowInfo: (() -> Unit)?,
+    onEqualizerSettings: () -> Unit,
     onLyricsSettings: () -> Unit,
     karaokeEnabled: Boolean,
     onKaraokeModeChange: (Boolean) -> Unit,
@@ -189,6 +201,10 @@ internal fun PlayerActionsSheet(
                 onDismiss()
                 it()
             }
+        }
+        PlayerActionRow(Icons.Rounded.Equalizer, stringResource(R.string.feature_player_impl_equalizer_settings)) {
+            onDismiss()
+            onEqualizerSettings()
         }
         PlayerActionRow(Icons.Rounded.Lyrics, stringResource(R.string.feature_player_impl_lyrics_settings)) {
             onDismiss()

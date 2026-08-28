@@ -18,6 +18,7 @@ import com.resonote.core.data.LyricsPreferencesRepository
 import com.resonote.core.designsystem.theme.ResonoteTheme
 import com.resonote.core.designsystem.theme.ResonoteThemeMode
 import com.resonote.core.model.AppRelease
+import com.resonote.core.model.EqualizerPreset
 import com.resonote.core.model.LyricsPreferences
 import com.resonote.core.model.OnlinePlaybackQuality
 import com.resonote.core.model.PlaybackSpeed
@@ -88,33 +89,29 @@ class SettingsScreenScreenshotTest {
     }
 
     @Test
-    fun playbackSettingsLinksToEqualizer() {
-        var equalizerClicks = 0
-        setPlaybackScreen(onEqualizerClick = { equalizerClicks++ })
+    fun playbackSettingsOpensEqualizerPresets() {
+        var clicks = 0
+        setPlaybackScreen(onEqualizerClick = { clicks++ })
 
         composeRule.onNodeWithTag("settings-equalizer").performClick()
 
-        assertThat(equalizerClicks).isEqualTo(1)
+        assertThat(clicks).isEqualTo(1)
     }
 
     @Test
-    fun equalizerOpensAvailableDevicePanel() {
-        var openClicks = 0
-        composeRule.setContent {
-            ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
-                EqualizerSettingsScreen(
-                    audioSessionAvailable = true,
-                    controlPanelAvailable = true,
-                    onBack = {},
-                    onOpenEqualizer = { openClicks++ },
-                )
-            }
-        }
-
+    fun equalizerPresetPage() {
+        setEqualizerScreen()
         capture("equalizer")
-        composeRule.onNodeWithTag("open-device-equalizer").performClick()
+    }
 
-        assertThat(openClicks).isEqualTo(1)
+    @Test
+    fun equalizerPresetPageDispatchesSelection() {
+        var selected: EqualizerPreset? = null
+        setEqualizerScreen(onPresetChange = { selected = it })
+
+        composeRule.onNodeWithText("Rock").performClick()
+
+        assertThat(selected).isEqualTo(EqualizerPreset.Rock)
     }
 
     @Test
@@ -374,6 +371,27 @@ class SettingsScreenScreenshotTest {
                         onPlaybackSpeedChange = onPlaybackSpeedChange,
                         onOnlinePlaybackQualityChange = onOnlinePlaybackQualityChange,
                         onEqualizerClick = onEqualizerClick,
+                    )
+                }
+            }
+        }
+    }
+
+    private fun setEqualizerScreen(
+        onPresetChange: (EqualizerPreset) -> Unit = {},
+        onGainsChange: (Int, Int, Int) -> Unit = { _, _, _ -> },
+    ) {
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                override = DeviceConfigurationOverride.ForcedSize(DpSize(390.dp, 844.dp)),
+            ) {
+                ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                    EqualizerSettingsScreen(
+                        state = SettingsUiState.Ready(PlaybackSpeed.Normal),
+                        onBack = {},
+                        onRetry = {},
+                        onPresetChange = onPresetChange,
+                        onGainsChange = onGainsChange,
                     )
                 }
             }

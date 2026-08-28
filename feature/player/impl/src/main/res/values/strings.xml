@@ -16,6 +16,7 @@
     <string name="feature_player_impl_added_next">Playing next</string>
     <string name="feature_player_impl_added_queue">Added to queue</string>
     <string name="feature_player_impl_lyrics_settings">Lyrics settings</string>
+    <string name="feature_player_impl_equalizer_settings">Equalizer</string>
     <string name="feature_player_impl_like">Like</string>
     <string name="feature_player_impl_like_failed">Could not update “My Likes”</string>
     <string name="feature_player_impl_like_unsupported">Cloud and local songs cannot be added to “My Likes”</string>

@@ -269,6 +269,9 @@ internal fun SettingsSliderRow(
     onValueChangeFinished: () -> Unit,
     modifier: Modifier = Modifier,
     supportingText: String? = null,
+    enabled: Boolean = true,
+    valueRange: ClosedFloatingPointRange<Float> = 0f..100f,
+    steps: Int = 9,
 ) {
     Column(modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -295,8 +298,9 @@ internal fun SettingsSliderRow(
             value = value,
             onValueChange = onValueChange,
             onValueChangeFinished = onValueChangeFinished,
-            valueRange = 0f..100f,
-            steps = 9,
+            enabled = enabled,
+            valueRange = valueRange,
+            steps = steps,
         )
     }
 }

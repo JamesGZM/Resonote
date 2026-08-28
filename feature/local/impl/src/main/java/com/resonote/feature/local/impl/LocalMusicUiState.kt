@@ -18,6 +18,8 @@ data class LocalMusicUiState(
     val deleteFailed: Boolean = false,
     val selectedTab: LocalMusicTab = LocalMusicTab.Songs,
     val karaokeProjects: List<KaraokeProject> = emptyList(),
+    val karaokeProjectsLoading: Boolean = true,
+    val karaokeProjectsLoadFailed: Boolean = false,
     val selectedProjectIds: Set<KaraokeProjectId> = emptySet(),
     val editingProject: KaraokeProject? = null,
     val preview: KaraokePreviewState = KaraokePreviewState(),
@@ -52,6 +54,19 @@ data class LocalMusicUiState(
                     }
                 }
                 LocalMusicSort.Duration -> filtered.sortedByDescending(LocalMedia::durationMillis)
+            }
+        }
+
+    val visibleKaraokeProjects: List<KaraokeProject>
+        get() {
+            val normalizedQuery = query.trim()
+            return if (normalizedQuery.isEmpty()) {
+                karaokeProjects
+            } else {
+                karaokeProjects.filter { project ->
+                    project.songTitle.contains(normalizedQuery, ignoreCase = true) ||
+                        project.artist.orEmpty().contains(normalizedQuery, ignoreCase = true)
+                }
             }
         }
 }

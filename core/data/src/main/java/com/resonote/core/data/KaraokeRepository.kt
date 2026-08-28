@@ -60,7 +60,7 @@ data class KaraokeRenderInput(
     val segments: List<KaraokeRenderSegment>,
 )
 
-data class KaraokeRenderBackingSegment(val path: String, val segment: KaraokeBackingSegment)
+data class KaraokeRenderBackingSegment(val path: String, val durationMillis: Long, val segment: KaraokeBackingSegment)
 
 data class KaraokeRenderSegment(val path: String, val segment: KaraokeRecordingSegment)
 

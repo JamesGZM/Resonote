@@ -37,6 +37,7 @@ internal class DefaultKaraokeController @Inject constructor(
     override fun resume() = runtime.resume()
     override fun previous() = runtime.previous()
     override fun next() = runtime.next()
+    override fun seekTo(positionMillis: Long) = runtime.seekTo(positionMillis)
     override fun stopAndSave() {
         runtime.stopAndSave()
         context.stopService(Intent(context, KaraokeRecordingService::class.java))

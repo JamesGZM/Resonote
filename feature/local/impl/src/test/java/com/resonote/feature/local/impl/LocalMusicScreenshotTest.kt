@@ -1,11 +1,19 @@
 package com.resonote.feature.local.impl
 
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -19,6 +27,7 @@ import com.resonote.core.model.KaraokeSourceMode
 import com.resonote.core.model.LocalMedia
 import com.resonote.core.model.LocalMediaId
 import com.resonote.core.screenshottesting.DefaultRoborazziOptions
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -68,6 +77,7 @@ class LocalMusicScreenshotTest {
             LocalMusicUiState(
                 isLoading = false,
                 selectedTab = LocalMusicTab.KaraokeWorks,
+                karaokeProjectsLoading = false,
                 karaokeProjects = listOf(
                     KaraokeProject(
                         id = KaraokeProjectId("work"),
@@ -88,6 +98,75 @@ class LocalMusicScreenshotTest {
             ),
         )
         capture("karaoke_works")
+    }
+
+    @Test
+    fun localMusic_karaokeEmptyUsesSharedContentState() {
+        setScreen(
+            LocalMusicUiState(
+                isLoading = false,
+                selectedTab = LocalMusicTab.KaraokeWorks,
+                karaokeProjectsLoading = false,
+            ),
+        )
+
+        composeRule.onNodeWithTag("resonote-empty-state").assertIsDisplayed()
+        capture("karaoke_empty")
+    }
+
+    @Test
+    fun karaokeMixEditor_keepsActionsAboveBottomContent() {
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                override = DeviceConfigurationOverride.ForcedSize(DpSize(390.dp, 844.dp)),
+            ) {
+                ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                    KaraokeMixEditorScreen(
+                        project = karaokeProject(),
+                        previewing = false,
+                        onBack = {},
+                        onPreview = {},
+                        onSave = {},
+                        bottomContentPadding = 80.dp,
+                    )
+                }
+            }
+        }
+        composeRule.onNodeWithText("保存混音").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("试听效果").assertIsDisplayed()
+        capture("karaoke_mix_editor")
+    }
+
+    @Test
+    fun karaokeMixEditor_presetUpdatesBandsAndDraggingCreatesCustomMix() {
+        var savedSettings: KaraokeMixSettings? = null
+        composeRule.setContent {
+            ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                KaraokeMixEditorScreen(
+                    project = karaokeProject(),
+                    previewing = false,
+                    onBack = {},
+                    onPreview = {},
+                    onSave = { savedSettings = it },
+                    bottomContentPadding = 0.dp,
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("karaoke-eq-preset-Rock").performClick()
+        composeRule.onNodeWithTag("karaoke-eq-low").performSemanticsAction(SemanticsActions.SetProgress) {
+            it(1f)
+        }
+        composeRule.onAllNodesWithText("自定义").assertCountEquals(2)
+        composeRule.onNodeWithTag("karaoke-eq-high").performScrollTo()
+        capture("karaoke_mix_editor_equalizer")
+        composeRule.onNodeWithText("保存混音").performClick()
+
+        composeRule.runOnIdle {
+            assertEquals(1f, savedSettings?.vocalLowEqDb ?: Float.NaN, 0f)
+            assertEquals(-2f, savedSettings?.vocalMidEqDb ?: Float.NaN, 0f)
+            assertEquals(4f, savedSettings?.vocalHighEqDb ?: Float.NaN, 0f)
+        }
     }
 
     private fun setScreen(state: LocalMusicUiState, playingMediaId: String? = null) {
@@ -144,5 +223,21 @@ class LocalMusicScreenshotTest {
         bitDepth = bitDepth,
         bitrateBitsPerSecond = 1_411_000,
         importedAtEpochMillis = 1_723_456_789,
+    )
+
+    private fun karaokeProject() = KaraokeProject(
+        id = KaraokeProjectId("work"),
+        songHash = "hash",
+        songTitle = "潮汐记忆",
+        artist = "林澈",
+        artworkUri = null,
+        sourceMode = KaraokeSourceMode.Accompaniment,
+        trimStartMillis = 0,
+        status = KaraokeProjectStatus.Edited,
+        mixSettings = KaraokeMixSettings(),
+        durationMillis = 218_000,
+        createdAtEpochMillis = 1_723_456_789,
+        updatedAtEpochMillis = 1_723_456_789,
+        exportedContentUri = null,
     )
 }

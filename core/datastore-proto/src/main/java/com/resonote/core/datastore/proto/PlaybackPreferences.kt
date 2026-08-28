@@ -15,6 +15,11 @@ data class PlaybackPreferences(
     val loudnessNormalizationEnabled: Boolean = false,
     val audioFocusPolicy: String = "",
     val gaplessConfigured: Boolean = false,
+    val equalizerEnabled: Boolean = false,
+    val equalizerLowDb: Int = 0,
+    val equalizerMidDb: Int = 0,
+    val equalizerHighDb: Int = 0,
+    val equalizerCustom: Boolean = false,
 ) {
     fun writeTo(output: OutputStream) {
         CodedOutputStream.newInstance(output).apply {
@@ -26,6 +31,11 @@ data class PlaybackPreferences(
             if (loudnessNormalizationEnabled) writeBool(6, true)
             if (audioFocusPolicy.isNotEmpty()) writeString(7, audioFocusPolicy)
             if (gaplessConfigured) writeBool(8, true)
+            if (equalizerEnabled) writeBool(9, true)
+            if (equalizerLowDb != 0) writeSInt32(10, equalizerLowDb)
+            if (equalizerMidDb != 0) writeSInt32(11, equalizerMidDb)
+            if (equalizerHighDb != 0) writeSInt32(12, equalizerHighDb)
+            if (equalizerCustom) writeBool(13, true)
             flush()
         }
     }
@@ -43,6 +53,11 @@ data class PlaybackPreferences(
             var loudnessNormalizationEnabled = false
             var audioFocusPolicy = ""
             var gaplessConfigured = false
+            var equalizerEnabled = false
+            var equalizerLowDb = 0
+            var equalizerMidDb = 0
+            var equalizerHighDb = 0
+            var equalizerCustom = false
             while (!coded.isAtEnd) {
                 when (val tag = coded.readTag()) {
                     0 -> break
@@ -54,6 +69,11 @@ data class PlaybackPreferences(
                     48 -> loudnessNormalizationEnabled = coded.readBool()
                     58 -> audioFocusPolicy = coded.readStringRequireUtf8()
                     64 -> gaplessConfigured = coded.readBool()
+                    72 -> equalizerEnabled = coded.readBool()
+                    80 -> equalizerLowDb = coded.readSInt32()
+                    88 -> equalizerMidDb = coded.readSInt32()
+                    96 -> equalizerHighDb = coded.readSInt32()
+                    104 -> equalizerCustom = coded.readBool()
                     else -> coded.skipField(tag)
                 }
             }
@@ -66,6 +86,11 @@ data class PlaybackPreferences(
                 loudnessNormalizationEnabled,
                 audioFocusPolicy,
                 gaplessConfigured,
+                equalizerEnabled,
+                equalizerLowDb,
+                equalizerMidDb,
+                equalizerHighDb,
+                equalizerCustom,
             )
         }
     }

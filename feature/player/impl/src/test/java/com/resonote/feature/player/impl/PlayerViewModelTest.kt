@@ -2,9 +2,12 @@ package com.resonote.feature.player.impl
 
 import com.google.common.truth.Truth.assertThat
 import com.resonote.core.data.LyricsRepository
+import com.resonote.core.karaoke.KaraokeController
+import com.resonote.core.karaoke.KaraokeSessionState
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.CollectionLoadResult
 import com.resonote.core.model.ContentFailure
+import com.resonote.core.model.KaraokeSourceMode
 import com.resonote.core.model.LocalMedia
 import com.resonote.core.model.LocalMediaId
 import com.resonote.core.model.LyricLine
@@ -103,6 +106,38 @@ class PlayerViewModelTest {
     }
 
     @Test
+    fun enablingKaraokeSeeksCurrentSongToStart() {
+        val controller = FakePlaybackController(song("first"))
+        val karaokeController = FakeKaraokeController()
+        val viewModel = PlayerViewModel(
+            controller,
+            FakeLyricsRepository(CollectionLoadResult.Available(LyricsDocument(emptyList()))),
+            karaokeController,
+        )
+
+        viewModel.enableKaraokeMode()
+
+        assertThat(controller.seekPosition).isEqualTo(0)
+        assertThat(karaokeController.enabledItem).isEqualTo(controller.state.value.currentItem)
+    }
+
+    @Test
+    fun skippingKaraokeIntroDelegatesToKaraokeTimeline() {
+        val controller = FakePlaybackController(song("first"))
+        val karaokeController = FakeKaraokeController()
+        val viewModel = PlayerViewModel(
+            controller,
+            FakeLyricsRepository(CollectionLoadResult.Available(LyricsDocument(emptyList()))),
+            karaokeController,
+        )
+
+        viewModel.seekKaraokeTo(36_000)
+
+        assertThat(karaokeController.seekPosition).isEqualTo(36_000)
+        assertThat(controller.seekPosition).isEqualTo(-1)
+    }
+
+    @Test
     fun localMediaDoesNotRequestOnlineLyrics() = runTest(dispatcher) {
         val controller = FakePlaybackController(PlaybackItem(localMedia()))
         val repository = FakeLyricsRepository(CollectionLoadResult.Available(LyricsDocument(emptyList())))
@@ -176,6 +211,29 @@ class PlayerViewModelTest {
         }
         override fun refreshCurrentOnlineSource(force: Boolean) = Unit
         override fun clear() = Unit
+    }
+
+    private class FakeKaraokeController : KaraokeController {
+        override val state = MutableStateFlow(KaraokeSessionState())
+        var enabledItem: PlaybackItem? = null
+        var seekPosition = -1L
+
+        override fun enable(item: PlaybackItem) {
+            enabledItem = item
+        }
+
+        override fun disable() = Unit
+        override fun start() = Unit
+        override fun selectSource(sourceMode: KaraokeSourceMode) = Unit
+        override fun pause() = Unit
+        override fun resume() = Unit
+        override fun previous() = Unit
+        override fun next() = Unit
+        override fun seekTo(positionMillis: Long) {
+            seekPosition = positionMillis
+        }
+        override fun stopAndSave() = Unit
+        override fun acknowledgeFailure() = Unit
     }
 
     private companion object {

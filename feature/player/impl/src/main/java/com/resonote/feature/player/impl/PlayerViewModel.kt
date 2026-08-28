@@ -79,13 +79,14 @@ class PlayerViewModel @Inject constructor(
     constructor(
         playbackController: PlaybackController,
         lyricsRepository: LyricsRepository,
+        karaokeController: KaraokeController = TestKaraokeController,
     ) : this(
         playbackController,
         lyricsRepository,
         TestLyricsPreferencesRepository,
         TestLikedSongsRepository,
         TestAuthRepository,
-        TestKaraokeController,
+        karaokeController,
     )
     private val lyricsState = MutableStateFlow<LyricsUiState>(LyricsUiState.Idle)
     private val likeState = MutableStateFlow<LikeUiState>(LikeUiState.Unsupported)
@@ -213,7 +214,10 @@ class PlayerViewModel @Inject constructor(
     fun clearQueue() = playbackController.clear()
 
     fun enableKaraokeMode() {
-        playbackController.state.value.currentItem?.let(karaokeController::enable)
+        playbackController.state.value.currentItem?.let { item ->
+            playbackController.seekTo(0)
+            karaokeController.enable(item)
+        }
     }
 
     fun disableKaraokeMode() = karaokeController.disable()
@@ -227,6 +231,8 @@ class PlayerViewModel @Inject constructor(
     fun previousKaraoke() = karaokeController.previous()
 
     fun nextKaraoke() = karaokeController.next()
+
+    fun seekKaraokeTo(positionMillis: Long) = karaokeController.seekTo(positionMillis)
 
     fun stopKaraoke() = karaokeController.stopAndSave()
 
@@ -291,6 +297,7 @@ private object TestKaraokeController : KaraokeController {
     override fun resume() = Unit
     override fun previous() = Unit
     override fun next() = Unit
+    override fun seekTo(positionMillis: Long) = Unit
     override fun stopAndSave() = Unit
     override fun acknowledgeFailure() = Unit
 }

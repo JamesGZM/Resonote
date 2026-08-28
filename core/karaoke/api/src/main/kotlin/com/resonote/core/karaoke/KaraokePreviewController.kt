@@ -1,5 +1,6 @@
 package com.resonote.core.karaoke
 
+import com.resonote.core.model.KaraokeMixSettings
 import com.resonote.core.model.KaraokeProjectId
 import kotlinx.coroutines.flow.StateFlow
 
@@ -8,7 +9,7 @@ data class KaraokePreviewState(val projectId: KaraokeProjectId? = null, val isPl
 interface KaraokePreviewController {
     val state: StateFlow<KaraokePreviewState>
 
-    fun toggle(projectId: KaraokeProjectId)
+    fun toggle(projectId: KaraokeProjectId, mixSettings: KaraokeMixSettings? = null)
 
     fun stop()
 }

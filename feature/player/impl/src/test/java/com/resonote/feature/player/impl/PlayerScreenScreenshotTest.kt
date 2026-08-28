@@ -119,6 +119,7 @@ class PlayerScreenScreenshotTest {
     fun player_compactKaraokeRecording() {
         setPlayerContent(
             initialState = screenshotState().copy(
+                playback = screenshotState().playback.copy(positionMillis = 10_000),
                 karaoke = KaraokeSessionState(
                     enabled = true,
                     continuousRecordingArmed = true,
@@ -137,10 +138,33 @@ class PlayerScreenScreenshotTest {
 
         composeRule.onNodeWithContentDescription("Pause").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Finish and save").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Skip intro").assertIsDisplayed()
         captureScreenRoboImage(
             filePath = "src/test/screenshots/Player/PlayerCompact_karaoke_recording.png",
             roborazziOptions = DefaultRoborazziOptions,
         )
+    }
+
+    @Test
+    fun player_karaokeRecordingPastIntroHidesSkipAction() {
+        setPlayerContent(
+            initialState = screenshotState().copy(
+                playback = screenshotState().playback.copy(positionMillis = 40_000),
+                karaoke = KaraokeSessionState(
+                    enabled = true,
+                    continuousRecordingArmed = true,
+                    status = KaraokeSessionStatus.Recording(
+                        KaraokeProjectId("project"),
+                        elapsedMillis = 40_000,
+                        hasOfficialAccompaniment = true,
+                    ),
+                    availableSourceModes = setOf(KaraokeSourceMode.Accompaniment, KaraokeSourceMode.Original),
+                    selectedSourceMode = KaraokeSourceMode.Accompaniment,
+                ),
+            ),
+        )
+
+        composeRule.onNodeWithContentDescription("Skip intro").assertDoesNotExist()
     }
 
     @Test
@@ -266,10 +290,14 @@ class PlayerScreenScreenshotTest {
 
     @Test
     fun playerActionsDoNotExposeShare() {
-        setPlayerContent()
+        var equalizerClicks = 0
+        setPlayerContent(onEqualizerSettingsClick = { equalizerClicks++ })
 
         composeRule.onNodeWithContentDescription("More options").performClick()
 
+        composeRule.onNodeWithText("Equalizer").assertIsDisplayed().performClick()
+        assertEquals(1, equalizerClicks)
+        composeRule.onNodeWithContentDescription("More options").performClick()
         composeRule.onNodeWithText("Lyrics settings").assertIsDisplayed()
         composeRule.onNodeWithText("Share").assertDoesNotExist()
     }
@@ -285,6 +313,7 @@ class PlayerScreenScreenshotTest {
         onAppendToQueueClick: (() -> Unit)? = null,
         onAddToPlaylistClick: (() -> Unit)? = null,
         onSongInfoClick: (() -> Unit)? = null,
+        onEqualizerSettingsClick: () -> Unit = {},
         initialPage: Int = 0,
     ) {
         composeRule.setContent {
@@ -318,6 +347,7 @@ class PlayerScreenScreenshotTest {
                         onAppendToQueueClick = onAppendToQueueClick,
                         onAddToPlaylistClick = onAddToPlaylistClick,
                         onSongInfoClick = onSongInfoClick,
+                        onEqualizerSettingsClick = onEqualizerSettingsClick,
                         paletteSeed = PlayerPaletteSeed(
                             mediaId = "current",
                             artworkUri = "test-artwork",

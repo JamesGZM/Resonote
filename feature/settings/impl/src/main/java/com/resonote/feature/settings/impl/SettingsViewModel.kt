@@ -9,6 +9,7 @@ import com.resonote.core.data.ThemePreferencesRepository
 import com.resonote.core.model.AudioFocusPolicy
 import com.resonote.core.model.AuthState
 import com.resonote.core.model.CrossfadeDuration
+import com.resonote.core.model.EqualizerPreset
 import com.resonote.core.model.OnlinePlaybackQuality
 import com.resonote.core.model.PlaybackMode
 import com.resonote.core.model.PlaybackSpeed
@@ -35,6 +36,7 @@ enum class SettingsSaveKey {
     Speed,
     Loudness,
     AudioFocus,
+    Equalizer,
     Reset,
     Logout,
 }
@@ -52,6 +54,11 @@ sealed interface SettingsUiState {
         val crossfadeDuration: CrossfadeDuration = CrossfadeDuration.Off,
         val loudnessNormalizationEnabled: Boolean = false,
         val audioFocusPolicy: AudioFocusPolicy = AudioFocusPolicy.Disallow,
+        val equalizerEnabled: Boolean = false,
+        val equalizerLowDb: Int = 0,
+        val equalizerMidDb: Int = 0,
+        val equalizerHighDb: Int = 0,
+        val equalizerCustom: Boolean = false,
         val cacheBytes: Long? = null,
         val isAuthenticated: Boolean = false,
         val savingKey: SettingsSaveKey? = null,
@@ -59,6 +66,14 @@ sealed interface SettingsUiState {
         val saveFailed: Boolean = false,
     ) : SettingsUiState {
         val isSaving: Boolean get() = savingKey != null
+        val equalizerPreset: EqualizerPreset
+            get() = EqualizerPreset.from(
+                equalizerEnabled,
+                equalizerLowDb,
+                equalizerMidDb,
+                equalizerHighDb,
+                equalizerCustom,
+            )
     }
 }
 
@@ -100,6 +115,12 @@ class SettingsViewModel @Inject constructor(
         save(SettingsSaveKey.Loudness) { playbackPreferencesRepository.setLoudnessNormalizationEnabled(value) }
     fun setAudioFocusPolicy(value: AudioFocusPolicy) =
         save(SettingsSaveKey.AudioFocus) { playbackPreferencesRepository.setAudioFocusPolicy(value) }
+    fun setEqualizerEnabled(value: Boolean) =
+        save(SettingsSaveKey.Equalizer) { playbackPreferencesRepository.setEqualizerEnabled(value) }
+    fun setEqualizerGains(lowDb: Int, midDb: Int, highDb: Int) =
+        save(SettingsSaveKey.Equalizer) { playbackPreferencesRepository.setEqualizerGains(lowDb, midDb, highDb) }
+    fun setEqualizerPreset(value: EqualizerPreset) =
+        save(SettingsSaveKey.Equalizer) { playbackPreferencesRepository.setEqualizerPreset(value) }
     fun setThemeMode(value: ThemeMode) = save(SettingsSaveKey.Theme) { themePreferencesRepository.setThemeMode(value) }
     fun setDynamicColorEnabled(value: Boolean) =
         save(SettingsSaveKey.DynamicColor) { themePreferencesRepository.setDynamicColorEnabled(value) }
@@ -151,6 +172,11 @@ class SettingsViewModel @Inject constructor(
                         crossfadeDuration = playback.crossfadeDuration,
                         loudnessNormalizationEnabled = playback.loudnessNormalizationEnabled,
                         audioFocusPolicy = playback.audioFocusPolicy,
+                        equalizerEnabled = playback.equalizerEnabled,
+                        equalizerLowDb = playback.equalizerLowDb,
+                        equalizerMidDb = playback.equalizerMidDb,
+                        equalizerHighDb = playback.equalizerHighDb,
+                        equalizerCustom = playback.equalizerCustom,
                         cacheBytes = current?.cacheBytes ?: latestCacheBytes,
                         isAuthenticated = authState is AuthState.Authenticated,
                         savingKey = current?.savingKey,

@@ -3,6 +3,7 @@ package com.resonote.core.data
 import com.resonote.core.datastore.PlaybackPreferencesStorage
 import com.resonote.core.model.AudioFocusPolicy
 import com.resonote.core.model.CrossfadeDuration
+import com.resonote.core.model.EqualizerPreset
 import com.resonote.core.model.OnlinePlaybackQuality
 import com.resonote.core.model.PlaybackMode
 import com.resonote.core.model.PlaybackPreferences
@@ -41,6 +42,16 @@ internal class DefaultPlaybackPreferencesRepository @Inject constructor(
         preferences.copy(loudnessNormalizationEnabled = enabled)
     }.combine(audioFocusPolicy) { preferences, policy ->
         preferences.copy(audioFocusPolicy = policy)
+    }.combine(storage.equalizerEnabled) { preferences, enabled ->
+        preferences.copy(equalizerEnabled = enabled)
+    }.combine(storage.equalizerLowDb) { preferences, gain ->
+        preferences.copy(equalizerLowDb = gain.coerceIn(-12, 12))
+    }.combine(storage.equalizerMidDb) { preferences, gain ->
+        preferences.copy(equalizerMidDb = gain.coerceIn(-12, 12))
+    }.combine(storage.equalizerHighDb) { preferences, gain ->
+        preferences.copy(equalizerHighDb = gain.coerceIn(-12, 12))
+    }.combine(storage.equalizerCustom) { preferences, custom ->
+        preferences.copy(equalizerCustom = custom)
     }
 
     override suspend fun setPlaybackSpeed(speed: PlaybackSpeed) {
@@ -61,6 +72,19 @@ internal class DefaultPlaybackPreferencesRepository @Inject constructor(
         storage.setLoudnessNormalizationEnabled(enabled)
 
     override suspend fun setAudioFocusPolicy(policy: AudioFocusPolicy) = storage.setAudioFocusPolicy(policy.name)
+
+    override suspend fun setEqualizerEnabled(enabled: Boolean) = storage.setEqualizerEnabled(enabled)
+
+    override suspend fun setEqualizerGains(lowDb: Int, midDb: Int, highDb: Int) =
+        storage.setEqualizerGains(lowDb, midDb, highDb)
+
+    override suspend fun setEqualizerPreset(preset: EqualizerPreset) {
+        if (preset == EqualizerPreset.Custom) {
+            storage.setEqualizerEnabled(true)
+        } else {
+            storage.setEqualizerPreset(preset.enabled, preset.lowDb, preset.midDb, preset.highDb)
+        }
+    }
 
     override suspend fun reset() = storage.reset()
 }

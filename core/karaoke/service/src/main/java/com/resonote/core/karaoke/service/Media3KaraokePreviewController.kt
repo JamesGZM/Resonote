@@ -6,6 +6,7 @@ import androidx.media3.transformer.CompositionPlayer
 import com.resonote.core.data.KaraokeRepository
 import com.resonote.core.karaoke.KaraokePreviewController
 import com.resonote.core.karaoke.KaraokePreviewState
+import com.resonote.core.model.KaraokeMixSettings
 import com.resonote.core.model.KaraokeProjectId
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
@@ -25,6 +26,7 @@ internal class Media3KaraokePreviewController @Inject constructor(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val mutableState = MutableStateFlow(KaraokePreviewState())
     override val state = mutableState.asStateFlow()
+    private var activeMixSettings: KaraokeMixSettings? = null
     private val player = CompositionPlayer.Builder(context).build().apply {
         addListener(
             object : Player.Listener {
@@ -39,22 +41,34 @@ internal class Media3KaraokePreviewController @Inject constructor(
         )
     }
 
-    override fun toggle(projectId: KaraokeProjectId) {
-        if (mutableState.value.projectId == projectId) {
+    override fun toggle(projectId: KaraokeProjectId, mixSettings: KaraokeMixSettings?) {
+        if (mutableState.value.projectId == projectId && activeMixSettings == mixSettings) {
             if (player.isPlaying) player.pause() else player.play()
             return
         }
         scope.launch {
-            val input = repository.renderInput(projectId) ?: return@launch
-            player.setComposition(KaraokeCompositionFactory.create(input))
-            mutableState.value = KaraokePreviewState(projectId)
-            player.prepare()
-            player.play()
+            val storedInput = repository.renderInput(projectId) ?: return@launch
+            val input = mixSettings?.let { storedInput.copy(project = storedInput.project.copy(mixSettings = it)) }
+                ?: storedInput
+            val composition = runCatching { KaraokeCompositionFactory.create(input) }.getOrNull() ?: return@launch
+            val started = runCatching {
+                player.setComposition(composition)
+                activeMixSettings = mixSettings
+                mutableState.value = KaraokePreviewState(projectId)
+                player.prepare()
+                player.play()
+            }.isSuccess
+            if (!started) {
+                runCatching { player.stop() }
+                activeMixSettings = null
+                mutableState.value = KaraokePreviewState()
+            }
         }
     }
 
     override fun stop() {
         player.stop()
+        activeMixSettings = null
         mutableState.value = KaraokePreviewState()
     }
 }

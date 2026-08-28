@@ -2,6 +2,7 @@ package com.resonote.core.data
 
 import com.resonote.core.model.AudioFocusPolicy
 import com.resonote.core.model.CrossfadeDuration
+import com.resonote.core.model.EqualizerPreset
 import com.resonote.core.model.OnlinePlaybackQuality
 import com.resonote.core.model.PlaybackMode
 import com.resonote.core.model.PlaybackPreferences
@@ -24,5 +25,15 @@ interface PlaybackPreferencesRepository {
     suspend fun setCrossfadeDuration(duration: CrossfadeDuration) = Unit
     suspend fun setLoudnessNormalizationEnabled(enabled: Boolean) = Unit
     suspend fun setAudioFocusPolicy(policy: AudioFocusPolicy) = Unit
+    suspend fun setEqualizerEnabled(enabled: Boolean) = Unit
+    suspend fun setEqualizerGains(lowDb: Int, midDb: Int, highDb: Int) = Unit
+    suspend fun setEqualizerPreset(preset: EqualizerPreset) {
+        if (preset == EqualizerPreset.Custom) {
+            setEqualizerEnabled(true)
+            return
+        }
+        setEqualizerEnabled(preset.enabled)
+        setEqualizerGains(preset.lowDb, preset.midDb, preset.highDb)
+    }
     suspend fun reset() = Unit
 }

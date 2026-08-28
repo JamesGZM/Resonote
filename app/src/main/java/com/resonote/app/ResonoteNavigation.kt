@@ -313,6 +313,7 @@ internal fun ResonoteNavDisplay(
                             backStack.add(LoginGateNavKey(sessionExpired = false))
                         }
                     },
+                    onEqualizerSettingsClick = { backStack.add(EqualizerSettingsNavKey) },
                     onLyricsSettingsClick = { backStack.add(LyricsSettingsNavKey) },
                     paletteSeed = playerPaletteSeed,
                     containerTransitionRunning = playerTransition.currentState != playerTransition.targetState,
@@ -339,7 +340,6 @@ internal fun ResonoteNavDisplay(
             }
             entry<EqualizerSettingsNavKey> { key ->
                 EqualizerSettingsRoute(
-                    audioSessionId = playbackState.audioSessionId,
                     onBack = { backStack.popIfCurrent(key) },
                     bottomContentPadding = standaloneBottomContentPadding,
                 )

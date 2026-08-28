@@ -12,4 +12,9 @@ message PlaybackPreferences {
   bool loudness_normalization_enabled = 6;
   string audio_focus_policy = 7;
   bool gapless_configured = 8;
+  bool equalizer_enabled = 9;
+  sint32 equalizer_low_db = 10;
+  sint32 equalizer_mid_db = 11;
+  sint32 equalizer_high_db = 12;
+  bool equalizer_custom = 13;
 }

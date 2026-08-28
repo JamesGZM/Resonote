@@ -145,8 +145,9 @@ private fun KaraokeControls(
         ?.firstOrNull { it.text.isNotBlank() && it.timeMillis > 0L }
         ?.timeMillis
     val introTarget = firstLyricMillis?.minus(INTRO_LEAD_IN_MILLIS)?.coerceAtLeast(0L)
-    val canSkipIntro = !state.continuousRecordingArmed &&
-        state.status !is KaraokeSessionStatus.Preparing &&
+    val canSkipIntro = state.status !is KaraokeSessionStatus.Preparing &&
+        state.status !is KaraokeSessionStatus.Failed &&
+        !state.savingInProgress &&
         introTarget != null &&
         positionMillis < introTarget
 
@@ -167,7 +168,8 @@ private fun KaraokeControls(
                     }
                 }
             }
-            IconButton(onClick = onPrevious, Modifier.size(54.dp), enabled = !state.savingInProgress) {
+            val transportEnabled = !state.savingInProgress && state.status !is KaraokeSessionStatus.Countdown
+            IconButton(onClick = onPrevious, Modifier.size(54.dp), enabled = transportEnabled) {
                 Icon(
                     Icons.Rounded.SkipPrevious,
                     stringResource(R.string.feature_player_impl_previous),
@@ -175,8 +177,8 @@ private fun KaraokeControls(
                     palette.contentPrimary,
                 )
             }
-            KaraokePrimaryAction(state, palette, onStart, onPause, onResume)
-            IconButton(onClick = onNext, Modifier.size(54.dp), enabled = !state.savingInProgress) {
+            KaraokePrimaryAction(state, palette, onStart, onPause, onResume, onStop)
+            IconButton(onClick = onNext, Modifier.size(54.dp), enabled = transportEnabled) {
                 Icon(
                     Icons.Rounded.SkipNext,
                     stringResource(R.string.feature_player_impl_next),
@@ -207,17 +209,19 @@ private fun KaraokePrimaryAction(
     onStart: () -> Unit,
     onPause: () -> Unit,
     onResume: () -> Unit,
+    onStop: () -> Unit,
 ) {
     val loading = state.status is KaraokeSessionStatus.Preparing || state.savingInProgress
     val status = state.status
     val onClick = when (status) {
         is KaraokeSessionStatus.Recording -> onPause
         is KaraokeSessionStatus.Paused -> onResume
+        is KaraokeSessionStatus.Countdown -> onStop
         else -> onStart
     }
     Surface(
         onClick = onClick,
-        enabled = !loading && status !is KaraokeSessionStatus.Countdown,
+        enabled = !loading,
         modifier = Modifier.size(72.dp),
         shape = CircleShape,
         color = palette.accent,

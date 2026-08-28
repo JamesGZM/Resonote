@@ -62,6 +62,8 @@ internal class KaraokeSessionRuntime @Inject constructor(
     private var activeSegment: ActiveSegment? = null
     private var elapsedJob: Job? = null
     private var preparingJob: Job? = null
+    private var countdownJob: Job? = null
+    private var resumePlaybackAfterCountdown = false
 
     init {
         scope.launch {
@@ -94,6 +96,7 @@ internal class KaraokeSessionRuntime @Inject constructor(
     }
 
     fun disable() {
+        cancelCountdown(resumePlayback = false)
         scope.launch {
             commandMutex.withLock {
                 mutableState.value = mutableState.value.copy(savingInProgress = true)
@@ -108,16 +111,19 @@ internal class KaraokeSessionRuntime @Inject constructor(
     }
 
     fun start() {
-        if (mutableState.value.status is KaraokeSessionStatus.Preparing) return
+        if (mutableState.value.savingInProgress || mutableState.value.status !is KaraokeSessionStatus.Off) return
         if (preparedProject == null) {
             playback.state.value.currentItem?.let { prepareSong(it, autoStart = false) }
             return
         }
         mutableState.value = mutableState.value.copy(continuousRecordingArmed = true, failure = null)
-        scope.launch { commandMutex.withLock { countdownAndStart() } }
+        val job = scope.launch { commandMutex.withLock { countdownAndStart() } }
+        countdownJob = job
+        job.invokeOnCompletion { if (countdownJob === job) countdownJob = null }
     }
 
     fun selectSource(sourceMode: KaraokeSourceMode) {
+        if (mutableState.value.status is KaraokeSessionStatus.Countdown || mutableState.value.savingInProgress) return
         if (sourceMode == KaraokeSourceMode.Mixed || sourceMode !in mutableState.value.availableSourceModes) return
         if (sourceMode == mutableState.value.selectedSourceMode || mutableState.value.sourceChangeInProgress) return
         scope.launch { commandMutex.withLock { switchSource(sourceMode) } }
@@ -129,11 +135,48 @@ internal class KaraokeSessionRuntime @Inject constructor(
         if (playback.state.value.status == PlaybackStatus.Paused) playback.togglePlayPause()
     }
 
-    fun previous() = changeSong { playback.previous() }
+    fun previous() {
+        if (mutableState.value.status is KaraokeSessionStatus.Countdown || mutableState.value.savingInProgress) return
+        changeSong { playback.previous() }
+    }
 
-    fun next() = changeSong { playback.next() }
+    fun next() {
+        if (mutableState.value.status is KaraokeSessionStatus.Countdown || mutableState.value.savingInProgress) return
+        changeSong { playback.next() }
+    }
+
+    fun seekTo(positionMillis: Long) {
+        val target = positionMillis.coerceAtLeast(0L)
+        if (mutableState.value.savingInProgress || mutableState.value.status is KaraokeSessionStatus.Preparing) return
+        if (mutableState.value.status is KaraokeSessionStatus.Countdown) {
+            cancelCountdown(resumePlayback = false)
+            playback.seekTo(target)
+            start()
+            return
+        }
+        scope.launch {
+            commandMutex.withLock {
+                val status = mutableState.value.status
+                val wasRecording = status is KaraokeSessionStatus.Recording
+                val project = preparedProject?.project
+                mutableState.value = mutableState.value.copy(sourceChangeInProgress = true)
+                if (wasRecording) stopCapture()
+                activeProjectId?.let { repository.setTrimStart(it, target) }
+                playback.seekTo(target)
+                if (wasRecording && project != null) {
+                    startCapture(
+                        mutableState.value.selectedSourceMode,
+                        (project.durationMillis - target).coerceAtLeast(0L),
+                    )
+                }
+                mutableState.value = mutableState.value.copy(sourceChangeInProgress = false)
+            }
+        }
+    }
 
     fun stopAndSave() {
+        if (cancelCountdown()) return
+        if (mutableState.value.savingInProgress) return
         scope.launch {
             commandMutex.withLock {
                 mutableState.value = mutableState.value.copy(savingInProgress = true)
@@ -251,6 +294,7 @@ internal class KaraokeSessionRuntime @Inject constructor(
         val projectId = activeProjectId ?: return
         val startPosition = playback.state.value.positionMillis
         repository.setTrimStart(projectId, startPosition)
+        resumePlaybackAfterCountdown = playback.state.value.status == PlaybackStatus.Playing
         playback.pause()
         for (remaining in COUNTDOWN_SECONDS downTo 1) {
             mutableState.value = mutableState.value.copy(status = KaraokeSessionStatus.Countdown(remaining))
@@ -260,7 +304,29 @@ internal class KaraokeSessionRuntime @Inject constructor(
             sourceMode = mutableState.value.selectedSourceMode,
             expectedDurationMillis = (project.project.durationMillis - startPosition).coerceAtLeast(0L),
         )
-        if (playback.state.value.status == PlaybackStatus.Paused) playback.togglePlayPause()
+        if (resumePlaybackAfterCountdown && playback.state.value.status == PlaybackStatus.Paused) {
+            playback.togglePlayPause()
+        }
+        resumePlaybackAfterCountdown = false
+    }
+
+    private fun cancelCountdown(resumePlayback: Boolean = true): Boolean {
+        val isCountingDown =
+            mutableState.value.status is KaraokeSessionStatus.Countdown || countdownJob?.isActive == true
+        if (!isCountingDown) return false
+        countdownJob?.cancel()
+        countdownJob = null
+        if (mutableState.value.status is KaraokeSessionStatus.Countdown) preparingJob?.cancel()
+        mutableState.value = mutableState.value.copy(
+            continuousRecordingArmed = false,
+            savingInProgress = false,
+            status = KaraokeSessionStatus.Off,
+        )
+        if (resumePlayback && resumePlaybackAfterCountdown && playback.state.value.status == PlaybackStatus.Paused) {
+            playback.togglePlayPause()
+        }
+        resumePlaybackAfterCountdown = false
+        return true
     }
 
     private suspend fun switchSource(target: KaraokeSourceMode) {
@@ -464,6 +530,9 @@ internal class KaraokeSessionRuntime @Inject constructor(
     }
 
     private fun reset(enabled: Boolean) {
+        countdownJob?.cancel()
+        countdownJob = null
+        resumePlaybackAfterCountdown = false
         preparedProject = null
         activeProjectId = null
         activeItemKey = null
