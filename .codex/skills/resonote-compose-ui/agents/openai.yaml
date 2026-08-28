@@ -1,0 +1,4 @@
+interface:
+  display_name: "Resonote Compose UI"
+  short_description: "按现行设计合同修改 Resonote Compose UI 界面"
+  default_prompt: "使用 $resonote-compose-ui 完成这个 Resonote 界面修改。"

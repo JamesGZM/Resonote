@@ -3,7 +3,7 @@
 - 状态：Accepted
 - 日期：2026-08-14
 - 决策者：Resonote 项目
-- 关联文档：[开发指南](../DEVELOPMENT.md)、[Design Validation](../../design/VALIDATION.md)
+- 关联文档：[开发指南](../DEVELOPMENT.md)
 - 关联实现：[Build workflow](../../.github/workflows/build.yml)、[Release workflow](../../.github/workflows/release.yml)、[DefaultRoborazziOptions](../../core/screenshot-testing/src/main/java/com/resonote/core/screenshottesting/ScreenshotHelper.kt)
 
 ## Context

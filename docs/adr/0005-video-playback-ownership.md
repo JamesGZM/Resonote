@@ -3,7 +3,7 @@
 - 状态：Accepted
 - 日期：2026-08-23
 - 决策者：Resonote 项目
-- 关联文档：[Resonote Architecture](../ARCHITECTURE.md)、[后台播放 ADR](0003-playback-foundation.md)
+- 关联文档：[Resonote Architecture](../ARCHITECTURE.md)
 
 ## Context
 

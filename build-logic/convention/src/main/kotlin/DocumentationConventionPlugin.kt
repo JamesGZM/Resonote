@@ -24,13 +24,13 @@ class DocumentationConventionPlugin : Plugin<Project> {
                 listOf(
                     "AGENTS.md",
                     "README.md",
-                    "design/AGENTS.md",
                     "design/COMPONENT_SYSTEM.md",
                     "design/FOUNDATION.md",
-                    "design/VALIDATION.md",
+                    "design/PRODUCT_REQUIREMENTS.md",
+                    "docs/README.md",
                     "docs/ARCHITECTURE.md",
                     "docs/DEVELOPMENT.md",
-                    "docs/api/AGENTS.md",
+                    "docs/api/PROTOCOL.md",
                     "docs/api/README.md",
                 ),
             )

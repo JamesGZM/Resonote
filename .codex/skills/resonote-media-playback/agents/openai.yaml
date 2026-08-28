@@ -1,0 +1,4 @@
+interface:
+  display_name: "Resonote 媒体播放"
+  short_description: "维护 Resonote 播放、桌面歌词与 K 歌媒体链路"
+  default_prompt: "使用 $resonote-media-playback 完成这个 Resonote 媒体链路变更。"

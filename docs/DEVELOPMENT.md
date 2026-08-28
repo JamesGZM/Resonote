@@ -1,10 +1,10 @@
 # Resonote 开发指南
 
-本文把参考项目中适合 Resonote 的工程方法固化为本项目规则。日常开发应直接遵循本文、[架构](ARCHITECTURE.md) 和各级 `AGENTS.md`，不要求反复打开 NiA。
+本文固化 Resonote 当前工程方法。日常开发直接遵循本文、[架构](ARCHITECTURE.md)、根 `AGENTS.md` 和适用的项目级 Skill，并以当前源码与测试确认实现细节。
 
 ## 1. 开始任务前
 
-1. 阅读目标目录最近的 `AGENTS.md`。
+1. 阅读根 `AGENTS.md` 和 `.codex/skills/` 中适用于当前任务的 Skill。
 2. 从 `settings.gradle.kts` 和目标模块的 `build.gradle.kts` 确认真实模块与依赖。
 3. 使用 `rg` 找到现有接口、实现和测试；不要根据文档猜测类型或路径。
 4. 确认行为事实源：产品合同、设计合同、Network 协议或持久化 Schema。
@@ -108,14 +108,3 @@ Feature -> Repository interface -> Repository implementation
 5. 已公开或已被外部消费的 Tag 不得移动。只有在 Release 未创建、无发布附件且已确认失败的情况下，才可删除同名 Tag 后在新的已验证 SHA 上重建。
 
 Roborazzi 与 Release 门禁的根因和取舍见 [ADR-0004](adr/0004-roborazzi-release-gate.md)。
-
-## 10. 何时查看参考仓库
-
-以下情况才需要回看固定参考：
-
-- 当前 Resonote 文档没有覆盖的新架构问题。
-- 计划升级 build-logic、Compose、Navigation 或测试组织方式。
-- 需要核对 PC/Mobile 对某个真实 API 字段或业务行为的消费证据。
-- ADR 审查或许可证来源追溯。
-
-参考优先级始终是：Resonote 当前源码与测试 → Resonote 现行合同 → Resonote 架构/开发指南 → 固定外部证据。外部结构不能直接覆盖已经成立的本地设计。

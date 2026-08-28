@@ -1,19 +1,28 @@
 # Resonote 工程规则
 
-本文件补充全局协作规则，作用于整个仓库；子目录的 `AGENTS.md` 可增加更具体的约束。
+本文件补充全局协作规则，作用于整个仓库；具体任务同时遵循 `.codex/skills/` 中适用的项目级 Skill。
 
 ## 事实来源
 
 1. 用户已在真机上人工调整并明确验收的现行产品行为。
 2. 当前 Resonote 源码、测试与现行合同。
-3. [Resonote 架构](docs/ARCHITECTURE.md) 与 [开发指南](docs/DEVELOPMENT.md)。
-4. `../nowinandroid`（固定观察点 `7d45eae4f872`）：仅用于未覆盖问题、升级调研与决策溯源。
-5. `../MoeKoeMusic`（固定观察点 `a86cfefb3093`）：PC 功能和实际 API 消费证据。
-6. `../MoeKoeMusic-Mobile`（固定观察点 `ab71195d4cf3`）：移动端行为、字段兼容与实际 API 消费证据。
+3. [Resonote 架构](docs/ARCHITECTURE.md)、[开发指南](docs/DEVELOPMENT.md)、[产品需求](design/PRODUCT_REQUIREMENTS.md)、设计规范与协议文档。
 
-日常开发直接遵循 Resonote 自有架构和开发指南，不要求重复阅读 NiA。参考仓库不能覆盖 Resonote 已验证的行为，也不能直接复制 GPL 项目的实现、样式或资产。升级固定观察点必须单独审查并更新相关 ADR 或文档证据。
+日常开发只以 Resonote 自有源码、测试和现行文档为依据，不从相邻仓库推导架构、产品或协议行为。Android 官方文档可以用于核对平台 API，但不能覆盖 Resonote 已验证的行为。
 
-当人工验收的真机行为与文档、旧截图或参考项目冲突时，不得以“规范对齐”为由回改实现。应保留已验收实现，将冲突明确报告给用户，得到确认后再更新合同、测试与视觉证据。
+当人工验收的真机行为与文档或旧截图冲突时，不得以“规范对齐”为由回改实现。应保留已验收实现，将冲突明确报告给用户，得到确认后再更新合同、测试与视觉证据。
+
+## 项目级 Skills
+
+项目级 Skills 位于 `.codex/skills/`，用于让 Codex 在高频、易错任务中自动加载更窄的 Resonote 规则。
+
+- 使用 `$resonote-feature-development`：新增或修改业务功能、页面流程、ViewModel/UI State、Repository 编排或 Navigation 3 入口。
+- 使用 `$resonote-compose-ui`：修改 Compose 页面、组件、主题、布局、资源文案、交互或 Roborazzi 基线。
+- 使用 `$resonote-network-data`：修改网络请求、特殊协议、Session、DTO、DataSource、Repository 映射或错误分类。
+- 使用 `$resonote-persistence`：修改 Room、DAO、Entity、Schema、Migration、Proto DataStore 或持久化兼容行为。
+- 使用 `$resonote-media-playback`：修改 Media3、Queue、MediaSession、桌面歌词、MV 或 K 歌媒体链路。
+- 使用 `$resonote-docs-maintenance`：维护 README、AGENTS、`docs/`、`design/`、ADR、文档结构或链接。
+- 使用 `$resonote-code-review`：审查全仓库、完整工作流、指定模块、Git 范围或本轮修改；只报告风险，等待确认后再修复。
 
 ## 架构与实现
 

@@ -1,6 +1,6 @@
 # Resonote 架构
 
-本文是 Resonote 当前架构的规范来源，可独立用于日常开发，不要求开发者先阅读外部参考项目。历史来源和选型依据保留在 [ADR-0001](adr/0001-now-in-android-reference-baseline.md) 与 [ADR-0002](adr/0002-moekoe-functional-reference.md)。
+本文是 Resonote 当前架构的规范来源。架构调整以当前模块、测试、产品合同和本文为依据，不依赖相邻项目的实现。
 
 ## 1. 架构目标
 
@@ -204,4 +204,4 @@ UI 语义与外观   -> Compose 测试 / Roborazzi
 4. 能否沿用现有 Repository/Controller，而不创建平行入口？
 5. 最小行为测试应放在哪个模块？
 
-日常实现以本文和 [开发指南](DEVELOPMENT.md) 为准。只有出现本文未覆盖的架构问题、评估升级或追溯决策来源时，才需要查看外部参考仓库。
+日常实现以本文和 [开发指南](DEVELOPMENT.md) 为准。本文未覆盖的新架构问题应从 Resonote 当前约束与真实消费者出发形成决策，并在需要时新增 ADR。

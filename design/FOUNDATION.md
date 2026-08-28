@@ -103,7 +103,7 @@ Brand Key Colors
 
 - 状态：**已冻结**。
 - 首页排行榜入口继续通过 Resonote Brand Extension 使用 Harmonic Violet；Light/Dark 保持原有 Violet 角色，Dynamic Color 下跟随平台 Secondary。该扩展只保护已验收首页入口，不派生主 App 的 Tonal Button、Chip 或状态容器。
-- 可复现生成入口：`design/theme-generator`。`npm ci && npm run check` 校验冻结种子与提交的 Tonal Palette 产物一致；运行时不依赖 Material Color Utilities。
+- 运行时主题实现以 [Color.kt](../core/designsystem/src/main/java/com/resonote/core/designsystem/theme/Color.kt) 与对应主题测试为事实来源；修改冻结种子或 Scheme 时同步本节与 Roborazzi 基线。
 - 辅助视觉证据：`design/approved/foundation/01a-brand-key-colors.png`
 
 #### 01B — Accent Tonal Palettes
@@ -487,7 +487,6 @@ Compact 竖屏页面设计稿画板：
 | Bottom gesture-safe evidence region | `34dp` | 设计稿底部必须包含完整手势安全区 |
 | Gesture indicator | `134 × 5dp` | 水平居中、距底部 `8dp`、使用 `shapeFull`；Dark/AMOLED 或图片背景使用白色，Light 使用 `onSurface` |
 
-- `design/approved/player/player-cover-page.png` 是上述系统区域与完整画板构成的评审参考；它不冻结 Player 的视觉、内容层级或组件实现。
 - 固定页面以 `390 × 844dp` 交付；滚动页面使用 `390 × Auto` 长画板，直到全部设计内容、页面底部固定区域与手势安全区完整结束。
 - 滚动长图只在顶部展示一次 Status Bar，只在末尾展示一次底部 App Chrome 与手势安全区，避免用重复系统栏污染页面评审。
 - 长图中的单次展示只是设计交付表达；运行时 Status Bar、Navigation Suite、Mini Player 等固定区域仍按各自产品合同固定在 Window。Compact Mini Player 按 09A 作为滚动内容上方的悬浮 Overlay，中间滚动状态允许内容从其后方经过；滚动容器通过末尾 Content Padding 保证最后一个可聚焦 Item 能完整滚动到 Mini Player 上方，并继续避让 Navigation Suite 与系统 Insets。
@@ -516,7 +515,7 @@ Edge-to-edge 与 Insets：
 - 手势排除区保持最小，只为确实冲突的局部交互申请，不屏蔽整条屏幕边缘。
 - Insets 变化必须参与动画和布局重算，不在旋转、分屏、键盘开合时跳帧或遗留空白。
 - Bottom Navigation 的 Insets 验证必须覆盖 Gesture、Two-button 与 Three-button Navigation；页面内容底边到 Navigation Bar 顶边不得出现第二份系统安全区空白。
-- 实现基线参考 NiA `NiaApp.kt` 的 `padding(padding).consumeWindowInsets(padding)`，当前固定参考提交为 `7d45eae4f8720a0c77f507712ba2437ff974b6ed`。
+- 接收 `Scaffold` `innerPadding` 的内容必须按 `padding(innerPadding).consumeWindowInsets(innerPadding)` 顺序应用，避免嵌套层级重复消费系统 Insets。
 - 依据：[Window Size Classes](https://developer.android.com/develop/ui/views/layout/use-window-size-classes)、[Edge-to-edge](https://developer.android.com/develop/ui/compose/system/setup-e2e)、[Window Insets](https://developer.android.com/develop/ui/compose/system/insets)。
 - 状态：**已冻结**。
 - 辅助视觉证据：`design/approved/foundation/03d-adaptive-layout-insets.png`

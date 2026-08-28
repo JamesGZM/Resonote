@@ -61,4 +61,4 @@
 - 新能力只有在 DataSource 与 Repository 已存在真实消费者后才加入本文。
 - Method、Path、Policy、DTO 映射以源码与测试为事实源；文档不生成生产注册表。
 - 验证状态必须区分 Fixture、匿名 Canary、真实账号验证，不能用静态源码阅读替代运行证据。
-- 固定参考为 `../MoeKoeMusic@a86cfefb3093` 与 `../MoeKoeMusic-Mobile@ab71195d4cf3`；未使用能力只在调研中记录。
+- 未使用能力只在独立调研中记录，不进入当前能力清单或生产实现。

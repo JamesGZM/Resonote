@@ -1,0 +1,4 @@
+interface:
+  display_name: "Resonote 文档维护"
+  short_description: "维护 Resonote 长期项目文档、入口与规范链接"
+  default_prompt: "使用 $resonote-docs-maintenance 更新 Resonote 项目文档。"

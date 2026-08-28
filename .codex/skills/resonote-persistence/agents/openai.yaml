@@ -1,0 +1,4 @@
+interface:
+  display_name: "Resonote 持久化"
+  short_description: "安全演进 Resonote Room 与 Proto 持久化结构"
+  default_prompt: "使用 $resonote-persistence 完成这个 Resonote 持久化变更。"

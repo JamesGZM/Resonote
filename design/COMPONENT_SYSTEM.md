@@ -226,7 +226,7 @@ Slot 与一致的调用约定；交互 Icon 使用 Resonote Icon Button 以保�
 - Controller 采用 latest-wins 调度：相同消息再次触发时合并为当前一条并从最新触发时刻重新计时；新的不同消息替换当前消息并取消旧任务。任何情况下最多保留一条请求，不保留可导致长时间连续展示的历史队列。需要持久恢复或逐条确认的事件不得用 Snackbar 队列承载。
 - 根 Host 使用 `WindowInsets.safeDrawing.exclude(WindowInsets.ime)`。Tab Bar 与 Mini Player 只能向根 Host 上报动态 Bottom Avoidance，不得通过嵌套 Host 解决位置问题。
 - Snackbar 与 Mini Player 卡片可见顶边保持 8dp 间距；动态 Bottom Avoidance 必须测量卡片本身边界，不得将 Mini Player 外边距重复计入。
-- 实现模式参考 NiA `NiaApp.kt` 的单一 Host、`LocalSnackbarHostState` 与 Safe Drawing 处理；当前固定参考提交为 `7d45eae4f8720a0c77f507712ba2437ff974b6ed`。
+- 单一 Host、App 级 Controller、Safe Drawing 与动态 Bottom Avoidance 是 Resonote 当前 Snackbar 实现合同。
 
 #### Dialog
 

@@ -9,6 +9,7 @@ captures/
 .DS_Store
 compose-metrics/
 compose-reports/
+node_modules/
 
 # Local Android release signing material. Only documentation and the placeholder
 # configuration are tracked; the keystore and populated properties stay local.
