@@ -3,9 +3,11 @@ package com.resonote.core.playback.service
 import android.content.ComponentName
 import android.content.Context
 import android.os.SystemClock
+import androidx.annotation.OptIn
 import androidx.core.content.ContextCompat
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.resonote.core.data.ListeningHistoryRepository
@@ -39,6 +41,7 @@ import javax.inject.Singleton
 import kotlin.random.Random
 
 @Singleton
+@OptIn(UnstableApi::class)
 internal class DefaultPlaybackController internal constructor(
     @param:ApplicationContext private val context: Context,
     private val sourceResolver: PlaybackSourceResolver,
