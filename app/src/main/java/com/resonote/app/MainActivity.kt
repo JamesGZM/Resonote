@@ -62,7 +62,14 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        desktopLyricsController.restoreIfEnabled()
+        desktopLyricsController.setAppForeground(true)
+    }
+
+    override fun onStop() {
+        if (!isChangingConfigurations) {
+            desktopLyricsController.setAppForeground(false)
+        }
+        super.onStop()
     }
 }
 

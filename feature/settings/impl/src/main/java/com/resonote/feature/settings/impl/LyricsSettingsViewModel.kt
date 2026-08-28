@@ -98,5 +98,5 @@ private object NoOpDesktopLyricsController : DesktopLyricsController {
     override fun hide() = Unit
     override fun refresh() = Unit
     override fun resetPosition() = Unit
-    override fun restoreIfEnabled() = Unit
+    override fun setAppForeground(foreground: Boolean) = Unit
 }

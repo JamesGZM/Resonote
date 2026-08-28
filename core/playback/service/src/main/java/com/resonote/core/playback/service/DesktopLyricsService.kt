@@ -57,6 +57,7 @@ class DesktopLyricsService : Service() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val lyricsState = MutableStateFlow<DesktopLyricsState>(DesktopLyricsState.Waiting)
+    private val appForeground = MutableStateFlow(true)
     private lateinit var window: DesktopLyricsWindow
     private lateinit var paletteLoader: DesktopLyricsPaletteLoader
     private var latestPreferences = LyricsPreferences()
@@ -90,7 +91,11 @@ class DesktopLyricsService : Service() {
             ACTION_HIDE -> disableAndStop()
             ACTION_TOGGLE_LOCK -> toggleLock()
             ACTION_RESET_POSITION -> persistPosition(window.resetPosition())
-            ACTION_SHOW, ACTION_REFRESH, null -> Unit
+            ACTION_APP_FOREGROUND -> appForeground.value = true
+            ACTION_APP_BACKGROUND -> appForeground.value = false
+            ACTION_SHOW -> appForeground.value = intent.getBooleanExtra(EXTRA_APP_FOREGROUND, false)
+            ACTION_REFRESH -> Unit
+            null -> appForeground.value = false
         }
         return START_STICKY
     }
@@ -140,45 +145,51 @@ class DesktopLyricsService : Service() {
                 playbackController.state,
                 lyricsState,
                 preferencesRepository.preferences,
-            ) { playback, lyrics, preferences -> Triple(playback, lyrics, preferences) }
-                .collectLatest { (playback, lyrics, preferences) ->
-                    latestPreferences = preferences
-                    if (!preferences.desktopLyricsEnabled) {
-                        stopSelf()
-                        return@collectLatest
-                    }
-                    if (!Settings.canDrawOverlays(this@DesktopLyricsService)) {
-                        preferencesRepository.setPreferences(preferences.copy(desktopLyricsEnabled = false))
-                        stopSelf()
-                        return@collectLatest
-                    }
-                    if (!window.show(preferences)) {
-                        preferencesRepository.setPreferences(preferences.copy(desktopLyricsEnabled = false))
-                        stopSelf()
-                        return@collectLatest
-                    }
-                    if (appliedPreferences != preferences) {
-                        appliedPreferences = preferences
-                        window.applyPreferences(preferences)
-                        updateNotification(preferences.desktopLyricsLocked)
-                    }
-                    window.updatePlayback(playback.isPlaying, playback.mode)
-                    if (lyrics is DesktopLyricsState.Content && playback.isPlaying) {
-                        val positionAnchor = playback.positionMillis
-                        val timeAnchor = SystemClock.elapsedRealtime()
-                        while (true) {
-                            val elapsed = SystemClock.elapsedRealtime() - timeAnchor
-                            val position = interpolatedDesktopLyricsPosition(
-                                positionAnchorMillis = positionAnchor,
-                                elapsedRealtimeMillis = elapsed,
-                                durationMillis = playback.durationMillis,
-                            )
-                            renderLyricsState(lyrics, preferences, position)
-                            delay(LYRICS_FRAME_INTERVAL_MILLIS)
-                        }
-                    }
-                    renderLyricsState(lyrics, preferences, playback.positionMillis, playback.currentItem == null)
+                appForeground,
+            ) { playback, lyrics, preferences, foreground ->
+                DesktopLyricsRenderInput(playback, lyrics, preferences, foreground)
+            }.collectLatest { (playback, lyrics, preferences, foreground) ->
+                latestPreferences = preferences
+                if (!preferences.desktopLyricsEnabled) {
+                    stopSelf()
+                    return@collectLatest
                 }
+                if (!Settings.canDrawOverlays(this@DesktopLyricsService)) {
+                    preferencesRepository.setPreferences(preferences.copy(desktopLyricsEnabled = false))
+                    stopSelf()
+                    return@collectLatest
+                }
+                if (!desktopLyricsWindowShouldBeVisible(preferences.desktopLyricsEnabled, foreground, true)) {
+                    window.hide()
+                    return@collectLatest
+                }
+                if (!window.show(preferences)) {
+                    preferencesRepository.setPreferences(preferences.copy(desktopLyricsEnabled = false))
+                    stopSelf()
+                    return@collectLatest
+                }
+                if (appliedPreferences != preferences) {
+                    appliedPreferences = preferences
+                    window.applyPreferences(preferences)
+                    updateNotification(preferences.desktopLyricsLocked)
+                }
+                window.updatePlayback(playback.isPlaying, playback.mode)
+                if (lyrics is DesktopLyricsState.Content && playback.isPlaying) {
+                    val positionAnchor = playback.positionMillis
+                    val timeAnchor = SystemClock.elapsedRealtime()
+                    while (true) {
+                        val elapsed = SystemClock.elapsedRealtime() - timeAnchor
+                        val position = interpolatedDesktopLyricsPosition(
+                            positionAnchorMillis = positionAnchor,
+                            elapsedRealtimeMillis = elapsed,
+                            durationMillis = playback.durationMillis,
+                        )
+                        renderLyricsState(lyrics, preferences, position)
+                        delay(LYRICS_FRAME_INTERVAL_MILLIS)
+                    }
+                }
+                renderLyricsState(lyrics, preferences, playback.positionMillis, playback.currentItem == null)
+            }
         }
     }
 
@@ -368,12 +379,28 @@ class DesktopLyricsService : Service() {
         const val ACTION_REFRESH = "com.resonote.desktoplyrics.REFRESH"
         const val ACTION_TOGGLE_LOCK = "com.resonote.desktoplyrics.TOGGLE_LOCK"
         const val ACTION_RESET_POSITION = "com.resonote.desktoplyrics.RESET_POSITION"
+        const val ACTION_APP_FOREGROUND = "com.resonote.desktoplyrics.APP_FOREGROUND"
+        const val ACTION_APP_BACKGROUND = "com.resonote.desktoplyrics.APP_BACKGROUND"
+        const val EXTRA_APP_FOREGROUND = "com.resonote.desktoplyrics.extra.APP_FOREGROUND"
         private const val NOTIFICATION_CHANNEL_ID = "desktop_lyrics"
         private const val NOTIFICATION_ID = 4702
         private const val PALETTE_CACHE_DELAY_MILLIS = 250L
         private const val LYRICS_FRAME_INTERVAL_MILLIS = 60L
     }
 }
+
+private data class DesktopLyricsRenderInput(
+    val playback: com.resonote.core.playback.PlaybackState,
+    val lyrics: DesktopLyricsState,
+    val preferences: LyricsPreferences,
+    val foreground: Boolean,
+)
+
+internal fun desktopLyricsWindowShouldBeVisible(
+    enabled: Boolean,
+    appForeground: Boolean,
+    overlayPermissionGranted: Boolean,
+): Boolean = enabled && !appForeground && overlayPermissionGranted
 
 internal fun interpolatedDesktopLyricsPosition(
     positionAnchorMillis: Long,

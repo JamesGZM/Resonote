@@ -9,5 +9,5 @@ interface DesktopLyricsController {
 
     fun resetPosition()
 
-    fun restoreIfEnabled()
+    fun setAppForeground(foreground: Boolean)
 }

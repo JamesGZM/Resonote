@@ -115,7 +115,7 @@ private class FakeDesktopLyricsController(private val repository: FakeLyricsPref
         resetCalls++
     }
 
-    override fun restoreIfEnabled() = Unit
+    override fun setAppForeground(foreground: Boolean) = Unit
 }
 
 private class FakeLyricsPreferencesRepository : LyricsPreferencesRepository {

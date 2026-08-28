@@ -115,23 +115,29 @@ class DesktopLyricsRendererTest {
     }
 
     @Test
-    fun lockedInteractionAlwaysRevealsOrKeepsUnlockControlVisible() {
+    fun lockedDesktopLyricsWindowPassesTouchesThrough() {
         assertThat(
-            desktopLyricsTapOutcome(
-                controlsWereVisible = false,
-                pressedControl = false,
-                releasedOnPressedControl = false,
-                isLocked = true,
-            ),
-        ).isEqualTo(DesktopLyricsTapOutcome.ShowControls)
+            desktopLyricsWindowFlags(locked = true) and
+                android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+        ).isNotEqualTo(0)
         assertThat(
-            desktopLyricsTapOutcome(
-                controlsWereVisible = true,
-                pressedControl = false,
-                releasedOnPressedControl = false,
-                isLocked = true,
-            ),
-        ).isEqualTo(DesktopLyricsTapOutcome.ShowControls)
+            desktopLyricsWindowFlags(locked = false) and
+                android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+        ).isEqualTo(0)
+        assertThat(desktopLyricsWindowAlpha(locked = true, maximumObscuringOpacity = 0.8f)).isEqualTo(0.8f)
+        assertThat(desktopLyricsWindowAlpha(locked = false, maximumObscuringOpacity = 0.8f)).isEqualTo(1f)
+    }
+
+    @Test
+    fun desktopLyricsWindowOnlyShowsOutsideTheAppWhenEnabledAndPermitted() {
+        assertThat(desktopLyricsWindowShouldBeVisible(true, appForeground = false, overlayPermissionGranted = true))
+            .isTrue()
+        assertThat(desktopLyricsWindowShouldBeVisible(true, appForeground = true, overlayPermissionGranted = true))
+            .isFalse()
+        assertThat(desktopLyricsWindowShouldBeVisible(false, appForeground = false, overlayPermissionGranted = true))
+            .isFalse()
+        assertThat(desktopLyricsWindowShouldBeVisible(true, appForeground = false, overlayPermissionGranted = false))
+            .isFalse()
     }
 
     @Test

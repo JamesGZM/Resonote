@@ -21,10 +21,17 @@ internal class DefaultDesktopLyricsController @Inject constructor(
     private val preferencesRepository: LyricsPreferencesRepository,
 ) : DesktopLyricsController {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private var appForeground = false
 
     override fun show() {
         if (!Settings.canDrawOverlays(context)) return
-        ContextCompat.startForegroundService(context, serviceIntent(DesktopLyricsService.ACTION_SHOW))
+        ContextCompat.startForegroundService(
+            context,
+            serviceIntent(DesktopLyricsService.ACTION_SHOW).putExtra(
+                DesktopLyricsService.EXTRA_APP_FOREGROUND,
+                appForeground,
+            ),
+        )
     }
 
     override fun hide() {
@@ -53,12 +60,22 @@ internal class DefaultDesktopLyricsController @Inject constructor(
         }
     }
 
-    override fun restoreIfEnabled() {
+    override fun setAppForeground(foreground: Boolean) {
+        appForeground = foreground
         scope.launch {
             val preferences = preferencesRepository.preferences.first()
             if (!preferences.desktopLyricsEnabled) return@launch
             if (Settings.canDrawOverlays(context)) {
-                show()
+                ContextCompat.startForegroundService(
+                    context,
+                    serviceIntent(
+                        if (foreground) {
+                            DesktopLyricsService.ACTION_APP_FOREGROUND
+                        } else {
+                            DesktopLyricsService.ACTION_APP_BACKGROUND
+                        },
+                    ),
+                )
             } else {
                 preferencesRepository.setPreferences(preferences.copy(desktopLyricsEnabled = false))
             }

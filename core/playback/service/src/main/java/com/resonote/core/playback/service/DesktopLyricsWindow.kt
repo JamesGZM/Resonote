@@ -13,6 +13,7 @@ import android.graphics.PixelFormat
 import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.Typeface
+import android.hardware.input.InputManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -73,6 +74,7 @@ internal class DesktopLyricsWindow(
             gravity = Gravity.TOP or Gravity.START
             x = position.x
             y = windowY(position.y)
+            alpha = windowAlpha()
         }
         return runCatching {
             view.preferences = preferences
@@ -100,6 +102,7 @@ internal class DesktopLyricsWindow(
         view.preferences = preferences
         val layoutParams = params ?: return
         layoutParams.flags = flags()
+        layoutParams.alpha = windowAlpha()
         layoutParams.width = contentWidth
         layoutParams.height = expandedHeight(preferences)
         preferences.desktopLyricsPosition?.let {
@@ -218,8 +221,17 @@ internal class DesktopLyricsWindow(
         onPositionChanged(DesktopLyricsPosition(layoutParams.x, anchorY(layoutParams.y)))
     }
 
-    private fun flags(): Int = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-        WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+    private fun flags(): Int = desktopLyricsWindowFlags(preferences.desktopLyricsLocked)
+
+    private fun windowAlpha(): Float = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        desktopLyricsWindowAlpha(
+            locked = preferences.desktopLyricsLocked,
+            maximumObscuringOpacity = context.getSystemService(InputManager::class.java)
+                .maximumObscuringOpacityForTouch,
+        )
+    } else {
+        1f
+    }
 
     private fun defaultPosition(): DesktopLyricsPosition {
         val (width, height) = displaySize()
@@ -264,6 +276,13 @@ internal class DesktopLyricsWindow(
 }
 
 internal enum class DesktopLyricsControl { Lock, Close, Settings, Previous, PlayPause, Next, Mode }
+
+internal fun desktopLyricsWindowFlags(locked: Boolean): Int = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+    if (locked) WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE else 0
+
+internal fun desktopLyricsWindowAlpha(locked: Boolean, maximumObscuringOpacity: Float): Float =
+    if (locked) maximumObscuringOpacity.coerceIn(0f, 1f) else 1f
 
 internal enum class DesktopLyricsTapOutcome { ShowControls, HideControls, InvokeControl, KeepControls }
 
@@ -348,7 +367,11 @@ private class DesktopLyricsControllerView(
     var preferences: LyricsPreferences = LyricsPreferences()
         set(value) {
             field = value
-            scheduleControlsCollapse()
+            if (value.desktopLyricsLocked) {
+                resetControlsVisibility()
+            } else {
+                scheduleControlsCollapse()
+            }
             onDesiredWidthChanged(desiredWidth())
             invalidate()
         }
@@ -508,11 +531,7 @@ private class DesktopLyricsControllerView(
     fun release() {
         lineTransitionAnimator.cancel()
         paletteAnimator.cancel()
-        controlsCollapsePending = false
-        controlsVisibilityAnimator.cancel()
-        handler.removeCallbacksAndMessages(null)
-        controlsVisible = false
-        controlsAlpha = 0f
+        resetControlsVisibility()
     }
 
     private fun desiredWidth(): Int {
@@ -573,6 +592,16 @@ private class DesktopLyricsControllerView(
 
     private fun finishControlsCollapse() {
         if (!controlsVisible) return
+        controlsCollapsePending = false
+        controlsVisible = false
+        controlsAlpha = 0f
+        requestLayout()
+        invalidate()
+    }
+
+    private fun resetControlsVisibility() {
+        handler.removeCallbacksAndMessages(null)
+        controlsVisibilityAnimator.cancel()
         controlsCollapsePending = false
         controlsVisible = false
         controlsAlpha = 0f
