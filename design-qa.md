@@ -78,3 +78,44 @@ Fixes: constrained and clipped the Pager, reserved compact-height Pager space, s
 ## Final result
 
 final result: passed
+
+---
+
+# Equalizer Design QA
+
+- Source visual truth: `/Users/gongziming/.codex/generated_images/01a046c2-f42f-7722-a69e-106be785c291/exec-5827d150-f9ed-4ef8-8796-0d1efbae46b0.png`
+- Implementation screenshot: `/Users/gongziming/Android/projects/Resonote/feature/settings/impl/src/test/screenshots/Settings/SettingsCompact_equalizer.png`
+- MiniPlayer-inset screenshot: `/Users/gongziming/Android/projects/Resonote/feature/settings/impl/src/test/screenshots/Settings/SettingsCompact_equalizer-mini-player-inset.png`
+- Full-view comparison: `/Users/gongziming/Android/projects/Resonote/feature/settings/impl/build/outputs/roborazzi/SettingsCompact_equalizer_comparison.png`
+- Viewport: 390 × 844 dp, light theme, custom preset at low +6 dB / mid 0 dB / high -1 dB
+- Source pixels: 852 × 1846; implementation pixels: 510 × 1105 at the Roborazzi test density
+- Normalization: source resized to 510 × 1105 and placed beside the implementation without cropping
+
+## Findings
+
+No actionable P0, P1, or P2 differences remain.
+
+- Fonts and typography: the implementation uses the existing Resonote Material typography and locale-aware strings. Chart values, band titles, ranges, and row values were reduced one type step to create the requested finer hierarchy.
+- Spacing and layout rhythm: the 132 dp chart starts 8 dp below the toolbar content edge. The chart, preset tabs, and band controls now live in the same `LazyColumn` pattern as the other settings detail screens. The default compact state still shows all controls, while smaller usable heights and the MiniPlayer inset can scroll naturally.
+- Colors and visual tokens: background, accent, selected tab, curve fill, and control states use Resonote semantic theme colors rather than hard-coded mock colors.
+- Image and asset fidelity: the target contains no raster assets. The curve and interactive control geometry are correctly implemented as native Compose UI.
+- Copy and content: labels come from the existing localized resources. The English screenshot is longer than the Chinese target, so the preset row scrolls horizontally as designed.
+- Interaction and accessibility: preset selection works; each custom slider exposes discrete `SetProgress` semantics; the curve, chart values, and row values share the same live state.
+
+## Comparison History
+
+- Pass 1: no P0/P1/P2 findings. The smaller response chart and tighter band spacing are intentional changes requested after the source mock was generated. No visual correction was required after the normalized comparison.
+- Pass 2: removed every section divider, reduced the response chart to 132 dp, stepped down supporting typography, and refined the custom slider geometry. No actionable P0/P1/P2 differences remain.
+- Pass 3: added 8 dp of breathing room between the toolbar and chart labels. Repeated the compact render with the production 120 dp MiniPlayer content inset; the high-band control remains fully visible above the reserved region.
+- Pass 4: replaced the fixed-height editor column with a single scrollable list and preserved the production 120 dp MiniPlayer bottom content padding. Both normal and MiniPlayer-inset captures keep the high-band control reachable without overlap.
+- Pass 5: reduced each band item from 160 dp to 136 dp after the scroll conversion, removing excess vertical whitespace while preserving slider labels and touch geometry.
+
+## Focused Region Evidence
+
+A separate crop was not required: the normalized 1044 × 1105 side-by-side full-view comparison keeps the chart labels, slider ticks, zero detents, thumbs, and value labels readable at native implementation resolution.
+
+## Follow-up Polish
+
+- P3: validate the same fixed layout on a physical device with unusually large system font scaling before treating large-text behavior as frozen.
+
+final result: passed

@@ -1,5 +1,6 @@
 package com.resonote.feature.settings.impl
 
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
 import androidx.compose.ui.test.assertIsDisplayed
@@ -10,6 +11,9 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -101,7 +105,21 @@ class SettingsScreenScreenshotTest {
     @Test
     fun equalizerPresetPage() {
         setEqualizerScreen()
+
+        composeRule.onNodeWithTag("equalizer-high").assertIsDisplayed()
         capture("equalizer")
+    }
+
+    @Test
+    fun equalizerPresetPageRespectsMiniPlayerInset() {
+        setEqualizerScreen(bottomContentPadding = 120.dp)
+
+        composeRule.onNodeWithTag("equalizer-high").performScrollTo().assertIsDisplayed()
+        val rootBottom = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.bottom
+        val highBottom = composeRule.onNodeWithTag("equalizer-high").fetchSemanticsNode().boundsInRoot.bottom
+        val miniPlayerInset = with(composeRule.density) { 120.dp.toPx() }
+        assertThat(rootBottom - highBottom).isAtLeast(miniPlayerInset)
+        capture("equalizer-mini-player-inset")
     }
 
     @Test
@@ -112,6 +130,18 @@ class SettingsScreenScreenshotTest {
         composeRule.onNodeWithText("Rock").performClick()
 
         assertThat(selected).isEqualTo(EqualizerPreset.Rock)
+    }
+
+    @Test
+    fun equalizerSliderDispatchesUpdatedGains() {
+        var gains: Triple<Int, Int, Int>? = null
+        setEqualizerScreen(onGainsChange = { low, mid, high -> gains = Triple(low, mid, high) })
+
+        composeRule.onNodeWithTag("equalizer-low").performSemanticsAction(SemanticsActions.SetProgress) {
+            it(3f)
+        }
+
+        assertThat(gains).isEqualTo(Triple(3, 0, -1))
     }
 
     @Test
@@ -380,6 +410,7 @@ class SettingsScreenScreenshotTest {
     private fun setEqualizerScreen(
         onPresetChange: (EqualizerPreset) -> Unit = {},
         onGainsChange: (Int, Int, Int) -> Unit = { _, _, _ -> },
+        bottomContentPadding: Dp = 32.dp,
     ) {
         composeRule.setContent {
             DeviceConfigurationOverride(
@@ -387,11 +418,19 @@ class SettingsScreenScreenshotTest {
             ) {
                 ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
                     EqualizerSettingsScreen(
-                        state = SettingsUiState.Ready(PlaybackSpeed.Normal),
+                        state = SettingsUiState.Ready(
+                            playbackSpeed = PlaybackSpeed.Normal,
+                            equalizerEnabled = true,
+                            equalizerLowDb = 6,
+                            equalizerMidDb = 0,
+                            equalizerHighDb = -1,
+                            equalizerCustom = true,
+                        ),
                         onBack = {},
                         onRetry = {},
                         onPresetChange = onPresetChange,
                         onGainsChange = onGainsChange,
+                        bottomContentPadding = bottomContentPadding,
                     )
                 }
             }
