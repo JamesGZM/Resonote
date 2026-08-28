@@ -9,9 +9,10 @@
 Resonote 把在线音乐、本地音乐与个人云盘放进同一套播放体验。打开应用即可浏览和播放，不需要先完成登录或权限配置；当你离开应用后，播放仍可通过系统媒体通知、锁屏和耳机继续控制。
 
 <p align="center">
-  <img src="feature/home/impl/src/test/screenshots/Home/HomeCompact_top_zh.png" alt="Resonote 首页" width="30%">
-  <img src="feature/player/impl/src/test/screenshots/Player/PlayerCompact_lyrics.png" alt="Resonote 歌词播放器" width="30%">
-  <img src="feature/local/impl/src/test/screenshots/LocalMusic/LocalMusicCompact_karaoke_mix_editor.png" alt="Resonote K 歌混音" width="30%">
+  <img src="assets/首页.jpg" alt="Resonote 首页" width="23%">
+  <img src="assets/发现.jpg" alt="Resonote 发现页" width="23%">
+  <img src="assets/播放详情-封面.jpg" alt="Resonote 播放封面" width="23%">
+  <img src="assets/播放详情-歌词.jpg" alt="Resonote 歌词播放器" width="23%">
 </p>
 
 ## 为聆听而设计
