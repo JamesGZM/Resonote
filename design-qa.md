@@ -79,6 +79,41 @@ Fixes: constrained and clipped the Pager, reserved compact-height Pager space, s
 
 final result: passed
 
+# Karaoke Mix Editor Design QA
+
+- Source visual truth: `/Users/gongziming/Android/projects/Resonote/feature/settings/impl/src/test/screenshots/Settings/SettingsCompact_equalizer.png`
+- Implementation screenshots: `/Users/gongziming/Android/projects/Resonote/feature/local/impl/src/test/screenshots/LocalMusic/LocalMusicCompact_karaoke_mix_editor.png` and `/Users/gongziming/Android/projects/Resonote/feature/local/impl/src/test/screenshots/LocalMusic/LocalMusicCompact_karaoke_mix_editor_equalizer.png`
+- Full-view comparison: `/Users/gongziming/Android/projects/Resonote/feature/local/impl/build/outputs/roborazzi/KaraokeMix_equalizer-baseline_comparison.png`
+- Viewport: 390 × 844 dp, Simplified Chinese, light theme
+- Source and implementation pixels: 510 × 1105 each at the same Roborazzi density; no scaling or cropping was used
+- States: initial mix editor and scrolled custom-EQ state at low +1 dB / mid -2 dB / high +4 dB
+
+## Findings
+
+No actionable P0, P1, or P2 differences remain.
+
+- Fonts and typography: the compact section labels, semibold control titles, small supporting ranges, and right-aligned values reproduce the equalizer hierarchy using the existing Resonote typography.
+- Spacing and layout rhythm: project identity, level balance, EQ response, preset tabs, and three bands form a single scrollable sequence. Dividers, preset-card grids, and the oversized bottom action surface were removed; 20 dp horizontal control insets and compact fixed control heights match the baseline rhythm.
+- Colors and visual tokens: selected tabs, curves, active tracks, thumbs, and persistent actions use Resonote semantic theme colors. No new hard-coded palette was introduced.
+- Image and asset fidelity: the editor retains the existing project artwork treatment. The equalizer design baseline contains no additional raster assets; curves and controls are native interactive Compose elements.
+- Copy and content: all visible labels remain localized. Frequency ranges were added in English and Simplified Chinese to match the equalizer information hierarchy.
+- Interaction and accessibility: level and EQ sliders expose discrete `SetProgress` semantics; preset changes update all bands; manual adjustment selects Custom; chart and row values share the same state. Preview is attached to the project row, while save remains persistently reachable as the toolbar confirmation action.
+
+## Comparison History
+
+- Pass 1: replaced MD3 sliders, divider-separated sections, two-column preset cards, and the custom-EQ container with the approved curve, horizontal tabs, thin stepped sliders, zero detents, and borderless section structure. The native-density three-panel comparison shows no actionable P0/P1/P2 drift from the selected design language.
+- Pass 2: moved preview beside the draft project identity, converted save to the toolbar confirmation icon, and removed the full-width bottom action bar. The revised captures recover vertical space and preserve both actions without overlap.
+
+## Focused Region Evidence
+
+A separate crop was not required: the 1578 × 1145 three-panel comparison keeps the baseline slider geometry, K-song balance controls, response chart, preset selection, frequency labels, and custom band controls readable at native implementation resolution.
+
+## Follow-up Polish
+
+- P3: verify the project-row preview action, toolbar save action, and long English preset row on a narrow physical device with large system font scaling.
+
+final result: passed
+
 ---
 
 # Equalizer Design QA

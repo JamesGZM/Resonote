@@ -2,20 +2,22 @@
 
 package com.resonote.feature.local.impl
 
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -29,12 +31,10 @@ import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -45,14 +45,29 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
-import com.resonote.core.designsystem.component.ResonoteButton
 import com.resonote.core.designsystem.component.ResonoteContentPhase
 import com.resonote.core.designsystem.component.ResonoteContentStateLayout
 import com.resonote.core.designsystem.component.ResonoteDestructiveTextButton
@@ -422,6 +437,12 @@ internal fun KaraokeMixEditorScreen(
     } else {
         settings.equalizerPreset
     }
+    val equalizerPresets = remember {
+        listOf(EqualizerPreset.Flat, EqualizerPreset.Custom) +
+            EqualizerPreset.entries.filterNot {
+                it == EqualizerPreset.Off || it == EqualizerPreset.Flat || it == EqualizerPreset.Custom
+            }
+    }
     Scaffold(
         topBar = {
             ResonoteTopAppBar(
@@ -431,220 +452,424 @@ internal fun KaraokeMixEditorScreen(
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.feature_local_impl_back))
                     }
                 },
-            )
-        },
-        bottomBar = {
-            Surface(
-                color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 8.dp,
-            ) {
-                Row(
-                    Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 20.dp, vertical = 12.dp)
-                        .padding(bottom = bottomContentPadding),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    ResonoteTonalIconButton(
-                        label = stringResource(R.string.feature_local_impl_preview_effect),
-                        onClick = { onPreview(settings) },
-                        modifier = Modifier.size(52.dp),
-                    ) {
-                        Icon(if (previewing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, null)
+                actions = {
+                    IconButton(onClick = { onSave(settings) }) {
+                        Icon(
+                            Icons.Rounded.Check,
+                            contentDescription = stringResource(R.string.feature_local_impl_save_mix),
+                        )
                     }
-                    ResonoteButton(
-                        label = stringResource(R.string.feature_local_impl_save_mix),
-                        onClick = { onSave(settings) },
-                        modifier = Modifier.weight(1f).height(52.dp),
-                        leadingIcon = { Icon(Icons.Rounded.Check, null) },
-                    )
-                }
-            }
+                },
+            )
         },
     ) { padding ->
         LazyColumn(
-            Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+            Modifier.fillMaxSize().padding(padding).testTag("karaoke-mix-editor-list"),
+            contentPadding = PaddingValues(top = 12.dp, bottom = bottomContentPadding + 12.dp),
         ) {
-            item {
+            item(key = "project") {
                 KaraokeMixProjectHeader(
                     project = project,
-                    modifier = Modifier.padding(bottom = 16.dp),
+                    previewing = previewing,
+                    onPreview = { onPreview(settings) },
+                    modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 12.dp),
                 )
             }
-            item { HorizontalDivider() }
-            item {
-                MixSection(
-                    title = stringResource(R.string.feature_local_impl_mix_balance_section),
-                    modifier = Modifier.padding(vertical = 20.dp),
-                ) {
-                    MixSlider(R.string.feature_local_impl_vocal_gain, settings.vocalGainDb, -12f..12f, "dB") {
-                        settings = settings.copy(vocalGainDb = it)
-                    }
-                    MixSlider(
-                        R.string.feature_local_impl_accompaniment_gain,
-                        settings.accompanimentGainDb,
-                        -12f..12f,
-                        "dB",
-                    ) { settings = settings.copy(accompanimentGainDb = it) }
-                }
+            item(key = "balance-title") {
+                KaraokeMixSectionTitle(stringResource(R.string.feature_local_impl_mix_balance_section))
             }
-            item { HorizontalDivider() }
-            item {
-                MixSection(
-                    title = stringResource(R.string.feature_local_impl_eq_section),
-                    modifier = Modifier.padding(top = 20.dp, bottom = 24.dp),
-                ) {
-                    Text(
-                        stringResource(R.string.feature_local_impl_eq_hint),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                    EqualizerPreset.entries
-                        .filter { it != EqualizerPreset.Off && it != EqualizerPreset.Custom }
-                        .chunked(2)
-                        .forEach { presets ->
-                            Row(
-                                Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            ) {
-                                presets.forEach { preset ->
-                                    KaraokeEqualizerPresetCard(
-                                        preset = preset,
-                                        selected = selectedEqualizerPreset == preset,
-                                        onClick = {
-                                            settings = settings.withEqualizerPreset(preset)
-                                            customEqualizerEditing = false
-                                        },
-                                        modifier = Modifier.weight(1f),
-                                    )
-                                }
-                                if (presets.size == 1) Spacer(Modifier.weight(1f))
-                            }
+            item(key = "vocal-gain") {
+                KaraokeDbControl(
+                    label = stringResource(R.string.feature_local_impl_vocal_gain),
+                    value = settings.vocalGainDb,
+                    onValueChange = { settings = settings.copy(vocalGainDb = it) },
+                    modifier = Modifier.fillMaxWidth().height(112.dp),
+                    testTag = "karaoke-vocal-gain",
+                )
+            }
+            item(key = "accompaniment-gain") {
+                KaraokeDbControl(
+                    label = stringResource(R.string.feature_local_impl_accompaniment_gain),
+                    value = settings.accompanimentGainDb,
+                    onValueChange = { settings = settings.copy(accompanimentGainDb = it) },
+                    modifier = Modifier.fillMaxWidth().height(112.dp),
+                    testTag = "karaoke-accompaniment-gain",
+                )
+            }
+            item(key = "equalizer-title") {
+                KaraokeMixSectionTitle(stringResource(R.string.feature_local_impl_eq_section))
+            }
+            item(key = "equalizer-chart") {
+                KaraokeEqualizerResponseChart(
+                    lowDb = settings.vocalLowEqDb,
+                    midDb = settings.vocalMidEqDb,
+                    highDb = settings.vocalHighEqDb,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(132.dp)
+                        .padding(start = 20.dp, top = 8.dp, end = 20.dp),
+                )
+            }
+            item(key = "equalizer-presets") {
+                KaraokeEqualizerPresetTabs(
+                    presets = equalizerPresets,
+                    selectedPreset = selectedEqualizerPreset,
+                    onPresetChange = { preset ->
+                        if (preset == EqualizerPreset.Custom) {
+                            customEqualizerEditing = true
+                        } else {
+                            settings = settings.withEqualizerPreset(preset)
+                            customEqualizerEditing = false
                         }
-                    Surface(
-                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                        shape = RoundedCornerShape(24.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainer,
-                    ) {
-                        Column(Modifier.padding(horizontal = 18.dp, vertical = 18.dp)) {
-                            Row(
-                                Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                            ) {
-                                Text(
-                                    stringResource(R.string.feature_local_impl_eq_preset_custom),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                )
-                                Text(
-                                    selectedEqualizerPreset.label(),
-                                    color = MaterialTheme.colorScheme.primary,
-                                    style = MaterialTheme.typography.labelLarge,
-                                )
-                            }
-                            Text(
-                                stringResource(R.string.feature_local_impl_eq_custom_hint),
-                                Modifier.padding(top = 4.dp, bottom = 8.dp),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                style = MaterialTheme.typography.bodySmall,
-                            )
-                            KaraokeEqualizerBandSlider(
-                                label = R.string.feature_local_impl_eq_low,
-                                value = settings.vocalLowEqDb,
-                                testTag = "karaoke-eq-low",
-                                onChange = {
-                                    settings = settings.copy(vocalLowEqDb = it)
-                                    customEqualizerEditing = true
-                                },
-                            )
-                            KaraokeEqualizerBandSlider(
-                                label = R.string.feature_local_impl_eq_mid,
-                                value = settings.vocalMidEqDb,
-                                testTag = "karaoke-eq-mid",
-                                onChange = {
-                                    settings = settings.copy(vocalMidEqDb = it)
-                                    customEqualizerEditing = true
-                                },
-                            )
-                            KaraokeEqualizerBandSlider(
-                                label = R.string.feature_local_impl_eq_high,
-                                value = settings.vocalHighEqDb,
-                                testTag = "karaoke-eq-high",
-                                onChange = {
-                                    settings = settings.copy(vocalHighEqDb = it)
-                                    customEqualizerEditing = true
-                                },
-                            )
-                        }
-                    }
-                }
+                    },
+                    modifier = Modifier.height(52.dp),
+                )
+            }
+            item(key = "equalizer-low") {
+                KaraokeDbControl(
+                    label = stringResource(R.string.feature_local_impl_eq_low),
+                    supportingText = stringResource(R.string.feature_local_impl_eq_low_range),
+                    value = settings.vocalLowEqDb,
+                    onValueChange = {
+                        settings = settings.copy(vocalLowEqDb = it)
+                        customEqualizerEditing = true
+                    },
+                    modifier = Modifier.fillMaxWidth().height(124.dp),
+                    testTag = "karaoke-eq-low",
+                )
+            }
+            item(key = "equalizer-mid") {
+                KaraokeDbControl(
+                    label = stringResource(R.string.feature_local_impl_eq_mid),
+                    supportingText = stringResource(R.string.feature_local_impl_eq_mid_range),
+                    value = settings.vocalMidEqDb,
+                    onValueChange = {
+                        settings = settings.copy(vocalMidEqDb = it)
+                        customEqualizerEditing = true
+                    },
+                    modifier = Modifier.fillMaxWidth().height(124.dp),
+                    testTag = "karaoke-eq-mid",
+                )
+            }
+            item(key = "equalizer-high") {
+                KaraokeDbControl(
+                    label = stringResource(R.string.feature_local_impl_eq_high),
+                    supportingText = stringResource(R.string.feature_local_impl_eq_high_range),
+                    value = settings.vocalHighEqDb,
+                    onValueChange = {
+                        settings = settings.copy(vocalHighEqDb = it)
+                        customEqualizerEditing = true
+                    },
+                    modifier = Modifier.fillMaxWidth().height(124.dp),
+                    testTag = "karaoke-eq-high",
+                )
             }
         }
     }
 }
 
 @Composable
-private fun KaraokeEqualizerPresetCard(
-    preset: EqualizerPreset,
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        onClick = onClick,
-        modifier = modifier.heightIn(min = 76.dp).testTag("karaoke-eq-preset-${preset.name}"),
-        shape = RoundedCornerShape(20.dp),
-        color = if (selected) {
-            MaterialTheme.colorScheme.primaryContainer
-        } else {
-            MaterialTheme.colorScheme.surfaceContainer
-        },
-        contentColor = if (selected) {
-            MaterialTheme.colorScheme.onPrimaryContainer
-        } else {
-            MaterialTheme.colorScheme.onSurface
-        },
-    ) {
-        Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-            Text(
-                preset.label(),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Text(
-                preset.gainsLabel(),
-                Modifier.padding(top = 4.dp),
-                color = if (selected) {
-                    MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.72f)
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
-                style = MaterialTheme.typography.labelMedium,
-            )
-        }
-    }
-}
-
-@Composable
-private fun KaraokeEqualizerBandSlider(label: Int, value: Float, testTag: String, onChange: (Float) -> Unit) {
-    Row(
-        Modifier.fillMaxWidth().padding(top = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(stringResource(label), style = MaterialTheme.typography.bodyMedium)
-        Text(value.roundToInt().gainLabel(), color = MaterialTheme.colorScheme.primary)
-    }
-    Slider(
-        value = value,
-        onValueChange = onChange,
-        modifier = Modifier.fillMaxWidth().testTag(testTag),
-        valueRange = -12f..12f,
-        steps = 23,
+private fun KaraokeMixSectionTitle(title: String) {
+    Text(
+        text = title,
+        modifier = Modifier.padding(start = 20.dp, top = 12.dp, end = 20.dp, bottom = 4.dp),
+        style = MaterialTheme.typography.bodyMedium,
+        fontWeight = FontWeight.SemiBold,
     )
 }
 
 @Composable
-private fun KaraokeMixProjectHeader(project: KaraokeProject, modifier: Modifier = Modifier) {
+private fun KaraokeEqualizerResponseChart(lowDb: Float, midDb: Float, highDb: Float, modifier: Modifier = Modifier) {
+    val primary = MaterialTheme.colorScheme.primary
+    val guide = MaterialTheme.colorScheme.outlineVariant
+    val labels = listOf(
+        stringResource(R.string.feature_local_impl_eq_low) to lowDb,
+        stringResource(R.string.feature_local_impl_eq_mid) to midDb,
+        stringResource(R.string.feature_local_impl_eq_high) to highDb,
+    )
+
+    Column(modifier.testTag("karaoke-eq-response-chart")) {
+        Row(Modifier.fillMaxWidth().height(40.dp)) {
+            labels.forEach { (label, value) ->
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        text = value.roundToInt().gainLabel(),
+                        color = primary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        text = label,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.labelSmall,
+                    )
+                }
+            }
+        }
+        Canvas(Modifier.fillMaxWidth().weight(1f)) {
+            val lowX = size.width / 6f
+            val midX = size.width / 2f
+            val highX = size.width * 5f / 6f
+            val zeroY = size.height * 0.58f
+            val amplitude = size.height * 0.34f
+            fun yFor(value: Float) = zeroY - (value.coerceIn(-12f, 12f) / 12f) * amplitude
+
+            val lowY = yFor(lowDb)
+            val midY = yFor(midDb)
+            val highY = yFor(highDb)
+            val dash = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 5.dp.toPx()))
+            listOf(lowX, midX, highX).forEach { x ->
+                drawLine(
+                    color = guide.copy(alpha = 0.7f),
+                    start = Offset(x, 0f),
+                    end = Offset(x, size.height),
+                    strokeWidth = 1.dp.toPx(),
+                    pathEffect = dash,
+                )
+            }
+            drawLine(
+                color = guide,
+                start = Offset(0f, zeroY),
+                end = Offset(size.width, zeroY),
+                strokeWidth = 1.dp.toPx(),
+            )
+            val curve = karaokeEqualizerCurve(size.width, lowX, midX, highX, lowY, midY, highY)
+            val fill = karaokeEqualizerCurve(size.width, lowX, midX, highX, lowY, midY, highY).apply {
+                lineTo(size.width, zeroY)
+                lineTo(0f, zeroY)
+                close()
+            }
+            drawPath(fill, primary.copy(alpha = 0.08f))
+            drawPath(
+                path = curve,
+                color = primary,
+                style = Stroke(width = 1.5.dp.toPx(), cap = StrokeCap.Round),
+            )
+        }
+    }
+}
+
+@Composable
+private fun KaraokeEqualizerPresetTabs(
+    presets: List<EqualizerPreset>,
+    selectedPreset: EqualizerPreset,
+    onPresetChange: (EqualizerPreset) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LazyRow(
+        modifier = modifier.fillMaxWidth().testTag("karaoke-eq-presets"),
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+    ) {
+        items(presets, key = EqualizerPreset::name) { preset ->
+            val selected = preset == selectedPreset
+            Surface(
+                onClick = { onPresetChange(preset) },
+                modifier = Modifier
+                    .padding(horizontal = 2.dp)
+                    .height(40.dp)
+                    .testTag("karaoke-eq-preset-${preset.name}")
+                    .semantics {
+                        this.selected = selected
+                        role = Role.Tab
+                    },
+                shape = RoundedCornerShape(20.dp),
+                color = if (selected) {
+                    MaterialTheme.colorScheme.primaryContainer
+                } else {
+                    MaterialTheme.colorScheme.background
+                },
+                contentColor = if (selected) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                },
+            ) {
+                Box(
+                    modifier = Modifier.padding(horizontal = 9.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = preset.label(),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                        maxLines = 1,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun KaraokeDbControl(
+    label: String,
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    testTag: String,
+    modifier: Modifier = Modifier,
+    supportingText: String? = null,
+) {
+    Column(modifier.padding(horizontal = 20.dp, vertical = 6.dp)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                supportingText?.let {
+                    Text(
+                        text = it,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.labelSmall,
+                    )
+                }
+            }
+            Text(
+                text = value.roundToInt().gainLabel(),
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.labelLarge,
+            )
+        }
+        KaraokeDbSlider(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier.fillMaxWidth().height(68.dp).testTag(testTag),
+        )
+    }
+}
+
+@Composable
+private fun KaraokeDbSlider(value: Float, onValueChange: (Float) -> Unit, modifier: Modifier = Modifier) {
+    val primary = MaterialTheme.colorScheme.primary
+    val track = MaterialTheme.colorScheme.outlineVariant
+    val notch = MaterialTheme.colorScheme.onPrimary
+    val zeroMarker = MaterialTheme.colorScheme.onSurfaceVariant
+    val snappedValue = value.roundToInt().coerceIn(-12, 12)
+
+    Box(
+        modifier = modifier
+            .semantics {
+                progressBarRangeInfo = ProgressBarRangeInfo(snappedValue.toFloat(), -12f..12f, 23)
+                setProgress { target ->
+                    onValueChange(target.roundToInt().coerceIn(-12, 12).toFloat())
+                    true
+                }
+            }
+            .pointerInput(onValueChange) {
+                fun updateValue(x: Float) {
+                    val fraction = (x / size.width).coerceIn(0f, 1f)
+                    onValueChange((-12f + fraction * 24f).roundToInt().toFloat())
+                }
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    updateValue(down.position.x)
+                    drag(down.id) { change ->
+                        change.consume()
+                        updateValue(change.position.x)
+                    }
+                }
+            },
+    ) {
+        Canvas(Modifier.fillMaxSize()) {
+            val startX = 2.dp.toPx()
+            val endX = size.width - 2.dp.toPx()
+            val trackY = size.height * 0.42f
+            val zeroX = (startX + endX) / 2f
+            val valueX = startX + (endX - startX) * ((snappedValue + 12f) / 24f)
+            drawLine(
+                color = track,
+                start = Offset(startX, trackY),
+                end = Offset(endX, trackY),
+                strokeWidth = 1.5.dp.toPx(),
+                cap = StrokeCap.Round,
+            )
+            repeat(9) { index ->
+                val x = startX + (endX - startX) * index / 8f
+                val tickHalfHeight = if (index % 2 == 0) 5.dp.toPx() else 3.dp.toPx()
+                drawLine(
+                    color = track,
+                    start = Offset(x, trackY - tickHalfHeight),
+                    end = Offset(x, trackY + tickHalfHeight),
+                    strokeWidth = 1.dp.toPx(),
+                    cap = StrokeCap.Round,
+                )
+            }
+            drawLine(
+                color = primary,
+                start = Offset(zeroX, trackY),
+                end = Offset(valueX, trackY),
+                strokeWidth = 2.5.dp.toPx(),
+                cap = StrokeCap.Round,
+            )
+            val diamondRadius = 4.5.dp.toPx()
+            val diamond = Path().apply {
+                moveTo(zeroX, trackY - diamondRadius)
+                lineTo(zeroX + diamondRadius, trackY)
+                lineTo(zeroX, trackY + diamondRadius)
+                lineTo(zeroX - diamondRadius, trackY)
+                close()
+            }
+            drawPath(diamond, zeroMarker.copy(alpha = 0.8f))
+            val thumbWidth = 14.dp.toPx()
+            val thumbHeight = 28.dp.toPx()
+            drawRoundRect(
+                color = primary,
+                topLeft = Offset(valueX - thumbWidth / 2f, trackY - thumbHeight / 2f),
+                size = Size(thumbWidth, thumbHeight),
+                cornerRadius = CornerRadius(4.dp.toPx()),
+            )
+            drawLine(
+                color = notch.copy(alpha = 0.85f),
+                start = Offset(valueX, trackY - 6.dp.toPx()),
+                end = Offset(valueX, trackY + 6.dp.toPx()),
+                strokeWidth = 2.dp.toPx(),
+                cap = StrokeCap.Round,
+            )
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            listOf(-12, -6, 0, 6, 12).forEach { mark ->
+                Text(
+                    text = mark.gainLabel(includeUnit = false),
+                    modifier = Modifier.weight(1f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.labelSmall,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+    }
+}
+
+private fun karaokeEqualizerCurve(
+    width: Float,
+    lowX: Float,
+    midX: Float,
+    highX: Float,
+    lowY: Float,
+    midY: Float,
+    highY: Float,
+): Path = Path().apply {
+    moveTo(0f, lowY)
+    lineTo(lowX, lowY)
+    cubicTo(lowX + width * 0.12f, lowY, midX - width * 0.14f, midY, midX, midY)
+    cubicTo(midX + width * 0.14f, midY, highX - width * 0.12f, highY, highX, highY)
+    lineTo(width, highY)
+}
+
+@Composable
+private fun KaraokeMixProjectHeader(
+    project: KaraokeProject,
+    previewing: Boolean,
+    onPreview: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(64.dp)) { KaraokeProjectArtwork(project) }
         Column(
@@ -671,6 +896,13 @@ private fun KaraokeMixProjectHeader(project: KaraokeProject, modifier: Modifier 
                 style = MaterialTheme.typography.labelMedium,
             )
         }
+        ResonoteTonalIconButton(
+            label = stringResource(R.string.feature_local_impl_preview_effect),
+            onClick = onPreview,
+            modifier = Modifier.size(44.dp),
+        ) {
+            Icon(if (previewing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, null)
+        }
     }
 }
 
@@ -689,41 +921,9 @@ private fun EqualizerPreset.label(): String = stringResource(
     },
 )
 
-private fun EqualizerPreset.gainsLabel(): String = listOf(lowDb, midDb, highDb)
-    .joinToString("  ") { it.gainLabel() }
-
-private fun Int.gainLabel(): String = if (this > 0) "+$this dB" else "$this dB"
-
-@Composable
-private fun MixSection(title: String, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
-    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-        content()
-    }
-}
-
-@Composable
-private fun MixSlider(
-    label: Int,
-    value: Float,
-    range: ClosedFloatingPointRange<Float>,
-    unit: String,
-    onChange: (Float) -> Unit,
-) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(stringResource(label), Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
-        Text(
-            "${if (value > 0) "+" else ""}${value.roundToInt()} $unit",
-            color = MaterialTheme.colorScheme.primary,
-            style = MaterialTheme.typography.labelLarge,
-        )
-    }
-    Slider(
-        value = value,
-        onValueChange = onChange,
-        valueRange = range,
-        modifier = Modifier.fillMaxWidth(),
-    )
+private fun Int.gainLabel(includeUnit: Boolean = true): String {
+    val signed = if (this > 0) "+$this" else "$this"
+    return if (includeUnit) "$signed dB" else signed
 }
 
 @Composable

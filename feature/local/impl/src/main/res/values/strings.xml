@@ -84,6 +84,9 @@
     <string name="feature_local_impl_eq_low">Vocal low</string>
     <string name="feature_local_impl_eq_mid">Vocal mid</string>
     <string name="feature_local_impl_eq_high">Vocal high</string>
+    <string name="feature_local_impl_eq_low_range">below 250 Hz</string>
+    <string name="feature_local_impl_eq_mid_range">250 Hz–4 kHz</string>
+    <string name="feature_local_impl_eq_high_range">above 4 kHz</string>
     <string name="feature_local_impl_vocal_offset">Vocal timing</string>
     <string name="feature_local_impl_save_mix">Save mix</string>
     <string name="feature_local_impl_preview_effect">Preview effect</string>

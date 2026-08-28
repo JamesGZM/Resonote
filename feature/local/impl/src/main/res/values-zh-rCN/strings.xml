@@ -85,6 +85,9 @@
     <string name="feature_local_impl_eq_low">人声低频</string>
     <string name="feature_local_impl_eq_mid">人声中频</string>
     <string name="feature_local_impl_eq_high">人声高频</string>
+    <string name="feature_local_impl_eq_low_range">250 Hz 以下</string>
+    <string name="feature_local_impl_eq_mid_range">250 Hz–4 kHz</string>
+    <string name="feature_local_impl_eq_high_range">4 kHz 以上</string>
     <string name="feature_local_impl_vocal_offset">人声对齐</string>
     <string name="feature_local_impl_save_mix">保存混音</string>
     <string name="feature_local_impl_preview_effect">试听效果</string>

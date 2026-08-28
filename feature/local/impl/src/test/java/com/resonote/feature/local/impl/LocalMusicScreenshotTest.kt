@@ -3,16 +3,14 @@ package com.resonote.feature.local.impl
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
-import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -132,7 +130,7 @@ class LocalMusicScreenshotTest {
                 }
             }
         }
-        composeRule.onNodeWithText("保存混音").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("保存混音").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("试听效果").assertIsDisplayed()
         capture("karaoke_mix_editor")
     }
@@ -153,16 +151,21 @@ class LocalMusicScreenshotTest {
             }
         }
 
+        composeRule.onNodeWithTag("karaoke-vocal-gain").performSemanticsAction(SemanticsActions.SetProgress) {
+            it(2f)
+        }
         composeRule.onNodeWithTag("karaoke-eq-preset-Rock").performClick()
         composeRule.onNodeWithTag("karaoke-eq-low").performSemanticsAction(SemanticsActions.SetProgress) {
             it(1f)
         }
-        composeRule.onAllNodesWithText("自定义").assertCountEquals(2)
-        composeRule.onNodeWithTag("karaoke-eq-high").performScrollTo()
+        composeRule.onNodeWithTag("karaoke-eq-preset-Custom").assertIsSelected()
+        composeRule.onNodeWithTag("karaoke-mix-editor-list").performScrollToIndex(9)
+        composeRule.onNodeWithTag("karaoke-eq-high").assertIsDisplayed()
         capture("karaoke_mix_editor_equalizer")
-        composeRule.onNodeWithText("保存混音").performClick()
+        composeRule.onNodeWithContentDescription("保存混音").performClick()
 
         composeRule.runOnIdle {
+            assertEquals(2f, savedSettings?.vocalGainDb ?: Float.NaN, 0f)
             assertEquals(1f, savedSettings?.vocalLowEqDb ?: Float.NaN, 0f)
             assertEquals(-2f, savedSettings?.vocalMidEqDb ?: Float.NaN, 0f)
             assertEquals(4f, savedSettings?.vocalHighEqDb ?: Float.NaN, 0f)
