@@ -24,7 +24,10 @@ import android.view.ViewConfiguration
 import android.view.WindowManager
 import android.view.animation.DecelerateInterpolator
 import android.view.animation.PathInterpolator
+import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
+import androidx.core.graphics.drawable.DrawableCompat
+import com.resonote.core.designsystem.icon.iconResource
 import com.resonote.core.model.DesktopLyricsDisplayMode
 import com.resonote.core.model.DesktopLyricsPosition
 import com.resonote.core.model.LyricsFontSize
@@ -151,6 +154,7 @@ internal class DesktopLyricsWindow(
     }
 
     private fun handleControl(control: DesktopLyricsControl) {
+        if (!isDesktopLyricsControlAvailable(control, preferences.desktopLyricsLocked)) return
         when (control) {
             DesktopLyricsControl.Lock -> {
                 val locked = !preferences.desktopLyricsLocked
@@ -259,7 +263,25 @@ internal class DesktopLyricsWindow(
     }
 }
 
-private enum class DesktopLyricsControl { Lock, Close, Settings, Previous, PlayPause, Next, Mode }
+internal enum class DesktopLyricsControl { Lock, Close, Settings, Previous, PlayPause, Next, Mode }
+
+internal enum class DesktopLyricsTapOutcome { ShowControls, HideControls, InvokeControl, KeepControls }
+
+internal fun desktopLyricsTapOutcome(
+    controlsWereVisible: Boolean,
+    pressedControl: Boolean,
+    releasedOnPressedControl: Boolean,
+    isLocked: Boolean,
+): DesktopLyricsTapOutcome = when {
+    !controlsWereVisible -> DesktopLyricsTapOutcome.ShowControls
+    pressedControl && releasedOnPressedControl -> DesktopLyricsTapOutcome.InvokeControl
+    pressedControl -> DesktopLyricsTapOutcome.KeepControls
+    isLocked -> DesktopLyricsTapOutcome.ShowControls
+    else -> DesktopLyricsTapOutcome.HideControls
+}
+
+internal fun isDesktopLyricsControlAvailable(control: DesktopLyricsControl, isLocked: Boolean): Boolean =
+    !isLocked || control == DesktopLyricsControl.Lock
 
 private class DesktopLyricsControllerView(
     context: Context,
@@ -278,6 +300,9 @@ private class DesktopLyricsControllerView(
         style = Paint.Style.STROKE
         strokeCap = Paint.Cap.ROUND
         strokeJoin = Paint.Join.ROUND
+    }
+    private val playbackModeIcons = PlaybackMode.entries.associateWith { mode ->
+        requireNotNull(ContextCompat.getDrawable(context, mode.iconResource())).mutate()
     }
     private val buttonRects = DesktopLyricsControl.entries.associateWith { RectF() }
     private val lineTransitionAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
@@ -310,6 +335,9 @@ private class DesktopLyricsControllerView(
     private var downRawX = 0f
     private var downRawY = 0f
     private var dragging = false
+    private var movedBeyondTouchSlop = false
+    private var controlsWereVisibleOnDown = false
+    private var pressedControl: DesktopLyricsControl? = null
     private var previousPrimary: String? = null
     private var previousPrimaryHighlightTextOffset = 0f
     private var previousSecondary: String? = null
@@ -376,6 +404,9 @@ private class DesktopLyricsControllerView(
                 downRawX = event.rawX
                 downRawY = event.rawY
                 dragging = false
+                movedBeyondTouchSlop = false
+                controlsWereVisibleOnDown = controlsVisible && !controlsCollapsePending
+                pressedControl = if (controlsWereVisibleOnDown) controlAt(event.x, event.y) else null
                 showControls()
                 dragStartListener?.invoke()
                 return true
@@ -383,10 +414,13 @@ private class DesktopLyricsControllerView(
             MotionEvent.ACTION_MOVE -> {
                 val dx = event.rawX - downRawX
                 val dy = event.rawY - downRawY
+                if (!movedBeyondTouchSlop && (abs(dx) > touchSlop || abs(dy) > touchSlop)) {
+                    movedBeyondTouchSlop = true
+                }
                 if (
                     !preferences.desktopLyricsLocked &&
                     !dragging &&
-                    (abs(dx) > touchSlop || abs(dy) > touchSlop)
+                    movedBeyondTouchSlop
                 ) {
                     dragging = true
                 }
@@ -396,17 +430,35 @@ private class DesktopLyricsControllerView(
             MotionEvent.ACTION_UP -> {
                 if (dragging) {
                     dragEndListener?.invoke()
-                } else {
+                    scheduleControlsCollapse()
+                } else if (!movedBeyondTouchSlop) {
                     performClick()
-                    buttonRects.entries.firstOrNull {
-                        event.x in it.value.left..it.value.right && event.y in it.value.top..it.value.bottom
-                    }?.key?.let(onControl)
+                    val releasedControl = controlAt(event.x, event.y)
+                    when (
+                        desktopLyricsTapOutcome(
+                            controlsWereVisible = controlsWereVisibleOnDown,
+                            pressedControl = pressedControl != null,
+                            releasedOnPressedControl = pressedControl == releasedControl,
+                            isLocked = preferences.desktopLyricsLocked,
+                        )
+                    ) {
+                        DesktopLyricsTapOutcome.ShowControls -> showControls()
+                        DesktopLyricsTapOutcome.HideControls -> hideControls()
+                        DesktopLyricsTapOutcome.InvokeControl -> {
+                            pressedControl?.let(onControl)
+                            scheduleControlsCollapse()
+                        }
+                        DesktopLyricsTapOutcome.KeepControls -> scheduleControlsCollapse()
+                    }
+                } else {
+                    scheduleControlsCollapse()
                 }
-                scheduleControlsCollapse()
+                pressedControl = null
                 return true
             }
             MotionEvent.ACTION_CANCEL -> {
                 if (dragging) dragEndListener?.invoke()
+                pressedControl = null
                 scheduleControlsCollapse()
                 return true
             }
@@ -485,6 +537,10 @@ private class DesktopLyricsControllerView(
         animateControlsAlphaTo(1f)
         scheduleControlsCollapse()
     }
+
+    private fun controlAt(x: Float, y: Float): DesktopLyricsControl? = buttonRects.entries.firstOrNull {
+        x in it.value.left..it.value.right && y in it.value.top..it.value.bottom
+    }?.key
 
     private fun scheduleControlsCollapse() {
         handler.removeCallbacksAndMessages(null)
@@ -813,6 +869,7 @@ private class DesktopLyricsControllerView(
         val topY = dp(CONTROL_EDGE_DP).toFloat()
         val bottomY = height - dp(CONTROL_EDGE_DP).toFloat()
         drawControl(canvas, DesktopLyricsControl.Lock, edgeX, topY)
+        if (preferences.desktopLyricsLocked) return
         drawControl(canvas, DesktopLyricsControl.Close, width - edgeX, topY)
         drawControl(canvas, DesktopLyricsControl.Settings, edgeX, bottomY)
         drawControl(canvas, DesktopLyricsControl.Previous, width * 0.30f, bottomY)
@@ -930,7 +987,18 @@ private class DesktopLyricsControllerView(
                 iconPaint.style = Paint.Style.FILL
                 canvas.drawPath(path, iconPaint)
             }
-            DesktopLyricsControl.Mode -> drawModeIcon(canvas, x, y, d)
+            DesktopLyricsControl.Mode -> {
+                val icon = playbackModeIcons.getValue(playbackMode)
+                val halfSize = 12 * d
+                DrawableCompat.setTint(icon, iconPaint.color)
+                icon.setBounds(
+                    (x - halfSize).toInt(),
+                    (y - halfSize).toInt(),
+                    (x + halfSize).toInt(),
+                    (y + halfSize).toInt(),
+                )
+                icon.draw(canvas)
+            }
             DesktopLyricsControl.Close -> {
                 canvas.drawLine(x - 7 * d, y - 7 * d, x + 7 * d, y + 7 * d, iconPaint)
                 canvas.drawLine(x + 7 * d, y - 7 * d, x - 7 * d, y + 7 * d, iconPaint)
@@ -947,33 +1015,6 @@ private class DesktopLyricsControllerView(
         canvas.drawCircle(x - 3 * d, y - 6 * d, 2 * d, iconPaint)
         canvas.drawCircle(x + 4 * d, y, 2 * d, iconPaint)
         canvas.drawCircle(x - d, y + 6 * d, 2 * d, iconPaint)
-    }
-
-    private fun drawModeIcon(canvas: Canvas, x: Float, y: Float, d: Float) {
-        when (playbackMode) {
-            PlaybackMode.Shuffle -> {
-                canvas.drawLine(x - 8 * d, y - 6 * d, x - 3 * d, y - 6 * d, iconPaint)
-                canvas.drawLine(x - 3 * d, y - 6 * d, x + 7 * d, y + 6 * d, iconPaint)
-                canvas.drawLine(x - 8 * d, y + 6 * d, x - 3 * d, y + 6 * d, iconPaint)
-                canvas.drawLine(x - 3 * d, y + 6 * d, x + 7 * d, y - 6 * d, iconPaint)
-                canvas.drawLine(x + 4 * d, y - 9 * d, x + 8 * d, y - 6 * d, iconPaint)
-                canvas.drawLine(x + 4 * d, y + 9 * d, x + 8 * d, y + 6 * d, iconPaint)
-            }
-            else -> {
-                canvas.drawArc(x - 9 * d, y - 8 * d, x + 9 * d, y + 5 * d, 205f, 255f, false, iconPaint)
-                canvas.drawLine(x + 6 * d, y - 8 * d, x + 10 * d, y - 4 * d, iconPaint)
-                if (playbackMode == PlaybackMode.SingleLoop) {
-                    secondaryPaint.color = iconPaint.color
-                    secondaryPaint.textSize = 9 * scaledDensity
-                    secondaryPaint.typeface = Typeface.DEFAULT_BOLD
-                    secondaryPaint.textAlign = Paint.Align.CENTER
-                    canvas.drawText("1", x, y + 4 * d, secondaryPaint)
-                    secondaryPaint.textAlign = Paint.Align.LEFT
-                } else if (playbackMode == PlaybackMode.Sequential) {
-                    canvas.drawLine(x - 8 * d, y + 7 * d, x + 8 * d, y + 7 * d, iconPaint)
-                }
-            }
-        }
     }
 
     private fun dp(value: Int) = (value * density).toInt()

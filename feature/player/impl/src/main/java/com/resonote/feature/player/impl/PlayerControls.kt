@@ -18,14 +18,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.Repeat
-import androidx.compose.material.icons.rounded.RepeatOne
-import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material.icons.rounded.StopCircle
@@ -56,6 +52,7 @@ import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.resonote.core.designsystem.icon.iconResource
 import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.ContentFailure
 import com.resonote.core.model.OnlinePlaybackQuality
@@ -243,7 +240,7 @@ internal fun PlaybackControls(
             )
         }
         IconButton(onClick = { onModeChange(mode.next()) }, Modifier.size(48.dp)) {
-            Icon(mode.icon(), mode.label(), tint = palette.contentPrimary)
+            Icon(painterResource(mode.iconResource()), mode.label(), tint = palette.contentPrimary)
         }
     }
 }
@@ -401,13 +398,6 @@ internal fun PlaybackMode.next() = when (this) {
     PlaybackMode.Shuffle -> PlaybackMode.SingleLoop
     PlaybackMode.SingleLoop -> PlaybackMode.Sequential
     PlaybackMode.Sequential -> PlaybackMode.ListLoop
-}
-
-internal fun PlaybackMode.icon() = when (this) {
-    PlaybackMode.ListLoop -> Icons.Rounded.Repeat
-    PlaybackMode.Shuffle -> Icons.Rounded.Shuffle
-    PlaybackMode.SingleLoop -> Icons.Rounded.RepeatOne
-    PlaybackMode.Sequential -> Icons.AutoMirrored.Rounded.PlaylistPlay
 }
 
 @Composable

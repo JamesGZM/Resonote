@@ -13,12 +13,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.DeleteOutline
-import androidx.compose.material.icons.rounded.Repeat
-import androidx.compose.material.icons.rounded.RepeatOne
-import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -27,12 +23,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.resonote.core.designsystem.component.ResonoteBottomSheet
 import com.resonote.core.designsystem.component.ResonoteBottomSheetHeader
 import com.resonote.core.designsystem.component.ResonoteIconButton
 import com.resonote.core.designsystem.component.ResonoteMusicItem
+import com.resonote.core.designsystem.icon.iconResource
 import com.resonote.core.model.PlaybackMode
 import com.resonote.core.playback.PlaybackState
 
@@ -89,7 +87,7 @@ private fun QueueSheetContent(
                     ResonoteIconButton(
                         label = stringResource(R.string.feature_player_impl_queue_mode_action, modeLabel),
                         onClick = { onModeChange(playback.mode.nextQueueMode()) },
-                        icon = { Icon(playback.mode.queueModeIcon(), contentDescription = null) },
+                        icon = { Icon(painterResource(playback.mode.iconResource()), contentDescription = null) },
                     )
                 }
                 ResonoteIconButton(
@@ -149,13 +147,6 @@ private fun PlaybackMode.nextQueueMode(): PlaybackMode = when (this) {
     PlaybackMode.Shuffle -> PlaybackMode.SingleLoop
     PlaybackMode.SingleLoop -> PlaybackMode.Sequential
     PlaybackMode.Sequential -> PlaybackMode.ListLoop
-}
-
-private fun PlaybackMode.queueModeIcon() = when (this) {
-    PlaybackMode.ListLoop -> Icons.Rounded.Repeat
-    PlaybackMode.Shuffle -> Icons.Rounded.Shuffle
-    PlaybackMode.SingleLoop -> Icons.Rounded.RepeatOne
-    PlaybackMode.Sequential -> Icons.AutoMirrored.Rounded.PlaylistPlay
 }
 
 @Composable

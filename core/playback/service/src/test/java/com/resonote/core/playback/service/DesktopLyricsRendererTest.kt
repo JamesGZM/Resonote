@@ -75,6 +75,80 @@ class DesktopLyricsRendererTest {
     }
 
     @Test
+    fun blankTapTogglesControlsWithoutInvokingHiddenButtons() {
+        assertThat(
+            desktopLyricsTapOutcome(
+                controlsWereVisible = false,
+                pressedControl = false,
+                releasedOnPressedControl = false,
+                isLocked = false,
+            ),
+        ).isEqualTo(DesktopLyricsTapOutcome.ShowControls)
+        assertThat(
+            desktopLyricsTapOutcome(
+                controlsWereVisible = true,
+                pressedControl = false,
+                releasedOnPressedControl = false,
+                isLocked = false,
+            ),
+        ).isEqualTo(DesktopLyricsTapOutcome.HideControls)
+    }
+
+    @Test
+    fun visibleControlRequiresPressAndReleaseOnTheSameTarget() {
+        assertThat(
+            desktopLyricsTapOutcome(
+                controlsWereVisible = true,
+                pressedControl = true,
+                releasedOnPressedControl = true,
+                isLocked = false,
+            ),
+        ).isEqualTo(DesktopLyricsTapOutcome.InvokeControl)
+        assertThat(
+            desktopLyricsTapOutcome(
+                controlsWereVisible = true,
+                pressedControl = true,
+                releasedOnPressedControl = false,
+                isLocked = false,
+            ),
+        ).isEqualTo(DesktopLyricsTapOutcome.KeepControls)
+    }
+
+    @Test
+    fun lockedInteractionAlwaysRevealsOrKeepsUnlockControlVisible() {
+        assertThat(
+            desktopLyricsTapOutcome(
+                controlsWereVisible = false,
+                pressedControl = false,
+                releasedOnPressedControl = false,
+                isLocked = true,
+            ),
+        ).isEqualTo(DesktopLyricsTapOutcome.ShowControls)
+        assertThat(
+            desktopLyricsTapOutcome(
+                controlsWereVisible = true,
+                pressedControl = false,
+                releasedOnPressedControl = false,
+                isLocked = true,
+            ),
+        ).isEqualTo(DesktopLyricsTapOutcome.ShowControls)
+    }
+
+    @Test
+    fun lockedDesktopLyricsOnlyAllowsUnlockControl() {
+        assertThat(
+            DesktopLyricsControl.entries.filter {
+                isDesktopLyricsControlAvailable(it, isLocked = true)
+            },
+        ).containsExactly(DesktopLyricsControl.Lock)
+        assertThat(
+            DesktopLyricsControl.entries.filter {
+                isDesktopLyricsControlAvailable(it, isLocked = false)
+            },
+        ).containsExactlyElementsIn(DesktopLyricsControl.entries)
+    }
+
+    @Test
     fun desktopLyricsPositionInterpolatesBetweenPlaybackUpdatesAndStopsAtDuration() {
         assertThat(
             interpolatedDesktopLyricsPosition(
