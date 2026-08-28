@@ -13,8 +13,6 @@ dependencies {
     implementation(projects.core.designsystem)
     implementation(projects.core.model)
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.palette)
-    implementation(libs.coil.core)
     implementation(libs.androidx.media3.common)
     implementation(libs.androidx.media3.database)
     implementation(libs.androidx.media3.datasource)

@@ -6,7 +6,7 @@
     <string name="core_playback_service_desktop_lyrics_failed">Could not load lyrics</string>
     <string name="core_playback_service_desktop_lyrics_notification_channel">Desktop lyrics</string>
     <string name="core_playback_service_desktop_lyrics_notification_title">Desktop lyrics are active</string>
-    <string name="core_playback_service_desktop_lyrics_notification_locked">Position locked · controls remain available</string>
+    <string name="core_playback_service_desktop_lyrics_notification_locked">Touches pass through · use Unlock below</string>
     <string name="core_playback_service_desktop_lyrics_notification_adjust">Drag the lyrics to adjust their position</string>
     <string name="core_playback_service_desktop_lyrics_lock">Lock</string>
     <string name="core_playback_service_desktop_lyrics_unlock">Unlock</string>

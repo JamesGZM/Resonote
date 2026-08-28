@@ -93,6 +93,19 @@ class LyricsSettingsViewModelTest {
         assertThat(repository.preferences.value.desktopLyricsSurfaceOpacity).isEqualTo(70)
         assertThat(controller.refreshCalls).isEqualTo(1)
     }
+
+    @Test
+    fun changingShadowColorPersistsOpaqueColorAndRefreshesService() = runTest(dispatcher) {
+        val repository = FakeLyricsPreferencesRepository()
+        val controller = FakeDesktopLyricsController(repository)
+        val viewModel = LyricsSettingsViewModel(repository, controller)
+
+        viewModel.setDesktopLyricsShadowColor(0x00245B83)
+        advanceUntilIdle()
+
+        assertThat(repository.preferences.value.desktopLyricsShadowColorArgb).isEqualTo(0xFF245B83.toInt())
+        assertThat(controller.refreshCalls).isEqualTo(1)
+    }
 }
 
 private class FakeDesktopLyricsController(private val repository: FakeLyricsPreferencesRepository) :
@@ -114,8 +127,6 @@ private class FakeDesktopLyricsController(private val repository: FakeLyricsPref
     override fun resetPosition() {
         resetCalls++
     }
-
-    override fun setAppForeground(foreground: Boolean) = Unit
 }
 
 private class FakeLyricsPreferencesRepository : LyricsPreferencesRepository {

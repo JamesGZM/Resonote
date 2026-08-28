@@ -47,7 +47,6 @@ import com.resonote.core.designsystem.component.ResonoteTopAppBar
 import com.resonote.core.model.AudioFocusPolicy
 import com.resonote.core.model.CrossfadeDuration
 import com.resonote.core.model.DesktopLyricsControlsTimeout
-import com.resonote.core.model.DesktopLyricsDisplayMode
 import com.resonote.core.model.LyricsBackgroundMode
 import com.resonote.core.model.LyricsDisplayMode
 import com.resonote.core.model.LyricsFontSize
@@ -272,9 +271,11 @@ internal fun PlaybackSettingsScreen(
 }
 
 private enum class LyricsSettingsSheet {
-    DesktopDisplay,
-    DesktopFontSize,
     DesktopControlsTimeout,
+    DesktopBackgroundColor,
+    DesktopForegroundColor,
+    DesktopShadowColor,
+    DesktopOutlineColor,
     Supplemental,
     Display,
     Highlight,
@@ -296,6 +297,24 @@ fun DesktopLyricsSettingsRoute(
     var enableAfterPermission by remember { mutableStateOf(false) }
     var surfaceOpacity by remember(preferences.desktopLyricsSurfaceOpacity) {
         mutableStateOf(preferences.desktopLyricsSurfaceOpacity.toFloat())
+    }
+    var widthPercent by remember(preferences.desktopLyricsWidthPercent) {
+        mutableStateOf(preferences.desktopLyricsWidthPercent.toFloat())
+    }
+    var fontSizeSp by remember(preferences.desktopLyricsFontSizeSp) {
+        mutableStateOf(preferences.desktopLyricsFontSizeSp.toFloat())
+    }
+    var outlineWidthDp by remember(preferences.desktopLyricsOutlineWidthDp) {
+        mutableStateOf(preferences.desktopLyricsOutlineWidthDp)
+    }
+    var shadowOffsetXDp by remember(preferences.desktopLyricsShadowOffsetXDp) {
+        mutableStateOf(preferences.desktopLyricsShadowOffsetXDp)
+    }
+    var shadowOffsetYDp by remember(preferences.desktopLyricsShadowOffsetYDp) {
+        mutableStateOf(preferences.desktopLyricsShadowOffsetYDp)
+    }
+    var shadowBlurRadiusDp by remember(preferences.desktopLyricsShadowBlurRadiusDp) {
+        mutableStateOf(preferences.desktopLyricsShadowBlurRadiusDp)
     }
     val overlayPermissionGranted = remember(permissionRevision) { Settings.canDrawOverlays(context) }
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
@@ -352,24 +371,29 @@ fun DesktopLyricsSettingsRoute(
             item { SettingsDivider() }
             item {
                 SettingsValueRow(
-                    stringResource(R.string.feature_settings_impl_desktop_lyrics_display),
-                    preferences.desktopLyricsDisplayMode.label(),
-                    { openSheet = LyricsSettingsSheet.DesktopDisplay },
+                    stringResource(R.string.feature_settings_impl_desktop_lyrics_background_color),
+                    preferences.desktopLyricsBackgroundColorArgb.colorLabel(),
+                    { openSheet = LyricsSettingsSheet.DesktopBackgroundColor },
+                    Modifier.testTag("desktop-lyrics-background-color"),
                 )
             }
             item { SettingsDivider() }
             item {
                 SettingsValueRow(
-                    stringResource(R.string.feature_settings_impl_desktop_lyrics_font_size),
-                    preferences.desktopLyricsFontSize.label(),
-                    { openSheet = LyricsSettingsSheet.DesktopFontSize },
+                    stringResource(R.string.feature_settings_impl_desktop_lyrics_foreground_color),
+                    preferences.desktopLyricsForegroundColorArgb.colorLabel(),
+                    { openSheet = LyricsSettingsSheet.DesktopForegroundColor },
+                    Modifier.testTag("desktop-lyrics-foreground-color"),
                 )
             }
             item { SettingsDivider() }
             item {
                 SettingsSliderRow(
                     title = stringResource(R.string.feature_settings_impl_desktop_lyrics_surface_opacity),
-                    valueLabel = "${surfaceOpacity.roundToInt()}%",
+                    valueLabel = stringResource(
+                        R.string.feature_settings_impl_desktop_lyrics_percent_value,
+                        surfaceOpacity.roundToInt(),
+                    ),
                     value = surfaceOpacity,
                     onValueChange = { surfaceOpacity = it },
                     onValueChangeFinished = {
@@ -378,6 +402,110 @@ fun DesktopLyricsSettingsRoute(
                     supportingText = stringResource(
                         R.string.feature_settings_impl_desktop_lyrics_surface_opacity_body,
                     ),
+                )
+            }
+            item { SettingsDivider() }
+            item {
+                SettingsSliderRow(
+                    title = stringResource(R.string.feature_settings_impl_desktop_lyrics_width),
+                    valueLabel = stringResource(
+                        R.string.feature_settings_impl_desktop_lyrics_percent_value,
+                        widthPercent.roundToInt(),
+                    ),
+                    value = widthPercent,
+                    onValueChange = { widthPercent = it },
+                    onValueChangeFinished = {
+                        viewModel.setDesktopLyricsWidthPercent(widthPercent.roundToInt())
+                    },
+                    valueRange = 40f..100f,
+                    steps = 5,
+                )
+            }
+            item { SettingsDivider() }
+            item {
+                SettingsSliderRow(
+                    title = stringResource(R.string.feature_settings_impl_desktop_lyrics_font_size),
+                    valueLabel = stringResource(
+                        R.string.feature_settings_impl_desktop_lyrics_sp_value,
+                        fontSizeSp.roundToInt(),
+                    ),
+                    value = fontSizeSp,
+                    onValueChange = { fontSizeSp = it },
+                    onValueChangeFinished = {
+                        viewModel.setDesktopLyricsFontSizeSp(fontSizeSp.roundToInt())
+                    },
+                    valueRange = 16f..40f,
+                    steps = 23,
+                )
+            }
+            item { SettingsDivider() }
+            item {
+                SettingsValueRow(
+                    stringResource(R.string.feature_settings_impl_desktop_lyrics_outline_color),
+                    preferences.desktopLyricsOutlineColorArgb.colorLabel(),
+                    { openSheet = LyricsSettingsSheet.DesktopOutlineColor },
+                    Modifier.testTag("desktop-lyrics-outline-color"),
+                )
+            }
+            item { SettingsDivider() }
+            item {
+                SettingsSliderRow(
+                    title = stringResource(R.string.feature_settings_impl_desktop_lyrics_outline_width),
+                    valueLabel = outlineWidthDp.dpLabel(),
+                    value = outlineWidthDp,
+                    onValueChange = { outlineWidthDp = it },
+                    onValueChangeFinished = { viewModel.setDesktopLyricsOutlineWidth(outlineWidthDp) },
+                    valueRange = 0f..4f,
+                    steps = 7,
+                )
+            }
+            item { SettingsDivider() }
+            item {
+                SettingsValueRow(
+                    stringResource(R.string.feature_settings_impl_desktop_lyrics_shadow_color),
+                    preferences.desktopLyricsShadowColorArgb.colorLabel(),
+                    { openSheet = LyricsSettingsSheet.DesktopShadowColor },
+                    Modifier.testTag("desktop-lyrics-shadow-color"),
+                    supportingText = stringResource(R.string.feature_settings_impl_desktop_lyrics_shadow_color_body),
+                )
+            }
+            item { SettingsDivider() }
+            item {
+                SettingsSliderRow(
+                    title = stringResource(R.string.feature_settings_impl_desktop_lyrics_shadow_x),
+                    valueLabel = shadowOffsetXDp.dpLabel(),
+                    value = shadowOffsetXDp,
+                    onValueChange = { shadowOffsetXDp = it },
+                    onValueChangeFinished = { viewModel.setDesktopLyricsShadowOffsetX(shadowOffsetXDp) },
+                    valueRange = -8f..8f,
+                    steps = 15,
+                )
+            }
+            item { SettingsDivider() }
+            item {
+                SettingsSliderRow(
+                    title = stringResource(R.string.feature_settings_impl_desktop_lyrics_shadow_y),
+                    valueLabel = shadowOffsetYDp.dpLabel(),
+                    value = shadowOffsetYDp,
+                    onValueChange = { shadowOffsetYDp = it },
+                    onValueChangeFinished = { viewModel.setDesktopLyricsShadowOffsetY(shadowOffsetYDp) },
+                    valueRange = -8f..8f,
+                    steps = 15,
+                )
+            }
+            item { SettingsDivider() }
+            item {
+                SettingsSliderRow(
+                    title = stringResource(R.string.feature_settings_impl_desktop_lyrics_shadow_z),
+                    valueLabel = shadowBlurRadiusDp.dpLabel(),
+                    value = shadowBlurRadiusDp,
+                    onValueChange = { shadowBlurRadiusDp = it },
+                    onValueChangeFinished = {
+                        viewModel.setDesktopLyricsShadowBlurRadius(shadowBlurRadiusDp)
+                    },
+                    valueRange = 0f..12f,
+                    steps = 11,
+                    supportingText = stringResource(R.string.feature_settings_impl_desktop_lyrics_shadow_z_body),
                 )
             }
             item { SettingsDivider() }
@@ -412,28 +540,6 @@ fun DesktopLyricsSettingsRoute(
         }
     }
     when (openSheet) {
-        LyricsSettingsSheet.DesktopDisplay -> choiceSheet(
-            stringResource(R.string.feature_settings_impl_desktop_lyrics_display),
-            preferences.desktopLyricsDisplayMode,
-            DesktopLyricsDisplayMode.entries,
-            { it.label() },
-            {
-                openSheet = null
-                viewModel.setDesktopLyricsDisplayMode(it)
-            },
-            { openSheet = null },
-        )
-        LyricsSettingsSheet.DesktopFontSize -> choiceSheet(
-            stringResource(R.string.feature_settings_impl_desktop_lyrics_font_size),
-            preferences.desktopLyricsFontSize,
-            LyricsFontSize.entries,
-            { it.label() },
-            {
-                openSheet = null
-                viewModel.setDesktopLyricsFontSize(it)
-            },
-            { openSheet = null },
-        )
         LyricsSettingsSheet.DesktopControlsTimeout -> choiceSheet(
             stringResource(R.string.feature_settings_impl_desktop_lyrics_controls_timeout),
             preferences.desktopLyricsControlsTimeout,
@@ -445,9 +551,57 @@ fun DesktopLyricsSettingsRoute(
             },
             { openSheet = null },
         )
+        LyricsSettingsSheet.DesktopBackgroundColor -> DesktopLyricsColorSheet(
+            title = stringResource(R.string.feature_settings_impl_desktop_lyrics_background_color),
+            subtitle = stringResource(R.string.feature_settings_impl_desktop_lyrics_color_sheet_body),
+            colorArgb = preferences.desktopLyricsBackgroundColorArgb,
+            onSelect = {
+                openSheet = null
+                viewModel.setDesktopLyricsBackgroundColor(it)
+            },
+            onDismiss = { openSheet = null },
+        )
+        LyricsSettingsSheet.DesktopForegroundColor -> DesktopLyricsColorSheet(
+            title = stringResource(R.string.feature_settings_impl_desktop_lyrics_foreground_color),
+            subtitle = stringResource(R.string.feature_settings_impl_desktop_lyrics_color_sheet_body),
+            colorArgb = preferences.desktopLyricsForegroundColorArgb,
+            onSelect = {
+                openSheet = null
+                viewModel.setDesktopLyricsForegroundColor(it)
+            },
+            onDismiss = { openSheet = null },
+        )
+        LyricsSettingsSheet.DesktopShadowColor -> DesktopLyricsColorSheet(
+            title = stringResource(R.string.feature_settings_impl_desktop_lyrics_shadow_color),
+            subtitle = stringResource(R.string.feature_settings_impl_desktop_lyrics_color_sheet_body),
+            colorArgb = preferences.desktopLyricsShadowColorArgb,
+            onSelect = {
+                openSheet = null
+                viewModel.setDesktopLyricsShadowColor(it)
+            },
+            onDismiss = { openSheet = null },
+        )
+        LyricsSettingsSheet.DesktopOutlineColor -> DesktopLyricsColorSheet(
+            title = stringResource(R.string.feature_settings_impl_desktop_lyrics_outline_color),
+            subtitle = stringResource(R.string.feature_settings_impl_desktop_lyrics_color_sheet_body),
+            colorArgb = preferences.desktopLyricsOutlineColorArgb,
+            onSelect = {
+                openSheet = null
+                viewModel.setDesktopLyricsOutlineColor(it)
+            },
+            onDismiss = { openSheet = null },
+        )
         else -> Unit
     }
 }
+
+private fun Int.colorLabel(): String = "#%06X".format(this and 0xFFFFFF)
+
+@Composable
+private fun Float.dpLabel(): String = stringResource(
+    R.string.feature_settings_impl_desktop_lyrics_dp_value,
+    this,
+)
 
 @Composable
 fun LyricsSettingsRoute(
@@ -557,9 +711,11 @@ fun LyricsSettingsRoute(
         }
     }
     when (openSheet) {
-        LyricsSettingsSheet.DesktopDisplay,
-        LyricsSettingsSheet.DesktopFontSize,
         LyricsSettingsSheet.DesktopControlsTimeout,
+        LyricsSettingsSheet.DesktopBackgroundColor,
+        LyricsSettingsSheet.DesktopForegroundColor,
+        LyricsSettingsSheet.DesktopShadowColor,
+        LyricsSettingsSheet.DesktopOutlineColor,
         -> Unit
         LyricsSettingsSheet.Supplemental -> LyricsSupplementalTextSheet(
             translationEnabled = preferences.translationEnabled,
@@ -651,15 +807,6 @@ fun LyricsSettingsRoute(
         null -> Unit
     }
 }
-
-@Composable
-private fun DesktopLyricsDisplayMode.label() = stringResource(
-    if (this == DesktopLyricsDisplayMode.SingleLine) {
-        R.string.feature_settings_impl_desktop_lyrics_single_line
-    } else {
-        R.string.feature_settings_impl_desktop_lyrics_two_lines
-    },
-)
 
 @Composable
 private fun DesktopLyricsControlsTimeout.label() = stringResource(

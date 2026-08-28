@@ -26,16 +26,13 @@ import android.view.WindowManager
 import android.view.animation.DecelerateInterpolator
 import android.view.animation.PathInterpolator
 import androidx.core.content.ContextCompat
-import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.drawable.DrawableCompat
 import com.resonote.core.designsystem.icon.iconResource
-import com.resonote.core.model.DesktopLyricsDisplayMode
+import com.resonote.core.model.DesktopLyricsDefaults
 import com.resonote.core.model.DesktopLyricsPosition
-import com.resonote.core.model.LyricsFontSize
 import com.resonote.core.model.LyricsPreferences
 import com.resonote.core.model.PlaybackMode
 import kotlin.math.abs
-import kotlin.math.ceil
 import kotlin.math.floor
 
 internal class DesktopLyricsWindow(
@@ -51,10 +48,9 @@ internal class DesktopLyricsWindow(
 ) {
     private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
     private val density = context.resources.displayMetrics.density
-    private val view = DesktopLyricsControllerView(context, ::handleControl, ::updateDesiredWidth)
+    private val view = DesktopLyricsControllerView(context, ::handleControl)
     private var params: WindowManager.LayoutParams? = null
     private var preferences = LyricsPreferences()
-    private var contentWidth = initialWidth()
     private var dragStartX = 0
     private var dragStartY = 0
 
@@ -63,6 +59,7 @@ internal class DesktopLyricsWindow(
     fun show(preferences: LyricsPreferences): Boolean {
         this.preferences = preferences
         if (isVisible) return true
+        val contentWidth = contentWidth(preferences)
         val position = preferences.desktopLyricsPosition ?: defaultPosition()
         val layoutParams = WindowManager.LayoutParams(
             contentWidth,
@@ -101,13 +98,14 @@ internal class DesktopLyricsWindow(
         this.preferences = preferences
         view.preferences = preferences
         val layoutParams = params ?: return
+        val oldWidth = layoutParams.width
+        val newWidth = contentWidth(preferences)
         layoutParams.flags = flags()
         layoutParams.alpha = windowAlpha()
-        layoutParams.width = contentWidth
+        layoutParams.width = newWidth
         layoutParams.height = expandedHeight(preferences)
-        preferences.desktopLyricsPosition?.let {
-            layoutParams.x = it.x
-            layoutParams.y = windowY(it.y)
+        if (oldWidth != newWidth) {
+            layoutParams.x += (oldWidth - newWidth) / 2
         }
         runCatching { windowManager.updateViewLayout(view, layoutParams) }.onFailure { hide() }
         view.post(::clampToScreen)
@@ -118,16 +116,12 @@ internal class DesktopLyricsWindow(
     }
 
     fun renderMessage(message: String) {
-        view.content = DesktopLyricsContent(message, 0f, null, null, message)
+        view.content = DesktopLyricsContent(message, 0f)
     }
 
     fun updatePlayback(isPlaying: Boolean, mode: PlaybackMode) {
         view.isPlaying = isPlaying
         view.playbackMode = mode
-    }
-
-    fun updatePalette(palette: DesktopLyricsPalette, animate: Boolean) {
-        view.updatePalette(palette, animate)
     }
 
     fun resetPosition(): DesktopLyricsPosition {
@@ -194,33 +188,6 @@ internal class DesktopLyricsWindow(
         }
     }
 
-    private fun updateDesiredWidth(desiredWidth: Int) {
-        val displayWidth = displaySize().first
-        val maximumWidth = minOf(
-            dp(MAX_CONTROLLER_WIDTH_DP),
-            displayWidth - dp(SCREEN_EDGE_GAP_DP * 2),
-        ).coerceAtLeast(dp(MIN_CONTROLLER_WIDTH_DP))
-        val targetWidth = desiredWidth.coerceIn(
-            dp(MIN_CONTROLLER_WIDTH_DP),
-            maximumWidth,
-        )
-        if (targetWidth == contentWidth) return
-        val oldWidth = contentWidth
-        contentWidth = targetWidth
-        val layoutParams = params ?: return
-        val leftGap = layoutParams.x
-        val rightGap = displayWidth - layoutParams.x - oldWidth
-        layoutParams.x = when {
-            leftGap <= dp(EDGE_ANCHOR_TOLERANCE_DP) -> dp(SCREEN_EDGE_GAP_DP)
-            rightGap <= dp(EDGE_ANCHOR_TOLERANCE_DP) -> displayWidth - targetWidth - dp(SCREEN_EDGE_GAP_DP)
-            else -> layoutParams.x + (oldWidth - targetWidth) / 2
-        }
-        layoutParams.width = targetWidth
-        runCatching { windowManager.updateViewLayout(view, layoutParams) }
-        clampToScreen()
-        onPositionChanged(DesktopLyricsPosition(layoutParams.x, anchorY(layoutParams.y)))
-    }
-
     private fun flags(): Int = desktopLyricsWindowFlags(preferences.desktopLyricsLocked)
 
     private fun windowAlpha(): Float = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -235,18 +202,19 @@ internal class DesktopLyricsWindow(
 
     private fun defaultPosition(): DesktopLyricsPosition {
         val (width, height) = displaySize()
-        return DesktopLyricsPosition((width - contentWidth) / 2, (height * 0.14f).toInt())
+        return DesktopLyricsPosition((width - contentWidth(preferences)) / 2, (height * 0.14f).toInt())
     }
 
-    private fun initialWidth(): Int = (displaySize().first - dp(SCREEN_EDGE_GAP_DP * 2))
-        .coerceAtMost(dp(280))
-    private fun collapsedHeight(value: LyricsPreferences): Int = if (
-        value.desktopLyricsDisplayMode == DesktopLyricsDisplayMode.TwoLines
-    ) {
-        dp(88)
-    } else {
-        dp(64)
+    private fun contentWidth(value: LyricsPreferences): Int {
+        val available = displaySize().first - dp(SCREEN_EDGE_GAP_DP * 2)
+        return (available * value.desktopLyricsWidthPercent.coerceIn(40, 100) / 100f).toInt()
+            .coerceIn(minOf(dp(MIN_CONTROLLER_WIDTH_DP), available), available)
     }
+
+    private fun collapsedHeight(value: LyricsPreferences): Int =
+        (value.desktopLyricsFontSizeSp * context.resources.displayMetrics.scaledDensity + dp(28))
+            .toInt()
+            .coerceAtLeast(dp(64))
     private fun expandedHeight(value: LyricsPreferences): Int = collapsedHeight(value) + dp(CONTROLS_INSET_DP * 2)
     private fun windowY(anchorY: Int): Int = desktopLyricsWindowY(
         anchorY,
@@ -268,8 +236,6 @@ internal class DesktopLyricsWindow(
 
     private companion object {
         const val CONTROLS_INSET_DP = 38
-        const val EDGE_ANCHOR_TOLERANCE_DP = 24
-        const val MAX_CONTROLLER_WIDTH_DP = 260
         const val MIN_CONTROLLER_WIDTH_DP = 220
         const val SCREEN_EDGE_GAP_DP = 4
     }
@@ -302,18 +268,14 @@ internal fun desktopLyricsTapOutcome(
 internal fun isDesktopLyricsControlAvailable(control: DesktopLyricsControl, isLocked: Boolean): Boolean =
     !isLocked || control == DesktopLyricsControl.Lock
 
-private class DesktopLyricsControllerView(
-    context: Context,
-    private val onControl: (DesktopLyricsControl) -> Unit,
-    private val onDesiredWidthChanged: (Int) -> Unit,
-) : View(context) {
+private class DesktopLyricsControllerView(context: Context, private val onControl: (DesktopLyricsControl) -> Unit) :
+    View(context) {
     private val density = resources.displayMetrics.density
     private val scaledDensity = density * resources.configuration.fontScale
     private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
     private val handler = Handler(Looper.getMainLooper())
     private val surfacePaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { typeface = Typeface.DEFAULT_BOLD }
-    private val secondaryPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val iconPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         strokeWidth = dp(2).toFloat()
         style = Paint.Style.STROKE
@@ -347,10 +309,6 @@ private class DesktopLyricsControllerView(
             },
         )
     }
-    private val paletteAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
-        duration = 280L
-        interpolator = PathInterpolator(0.2f, 0f, 0f, 1f)
-    }
     private var downRawX = 0f
     private var downRawY = 0f
     private var dragging = false
@@ -359,7 +317,6 @@ private class DesktopLyricsControllerView(
     private var pressedControl: DesktopLyricsControl? = null
     private var previousPrimary: String? = null
     private var previousPrimaryHighlightTextOffset = 0f
-    private var previousSecondary: String? = null
     private var lineTransitionProgress = 1f
     private var controlsAlpha = 0f
     private var controlsCollapsePending = false
@@ -372,31 +329,18 @@ private class DesktopLyricsControllerView(
             } else {
                 scheduleControlsCollapse()
             }
-            onDesiredWidthChanged(desiredWidth())
             invalidate()
         }
-    var palette: DesktopLyricsPalette = DesktopLyricsPalette(
-        surfaceArgb = 0xFFF8EBEB.toInt(),
-        accentArgb = 0xFFAE2A4B.toInt(),
-        onSurfaceArgb = 0xFF201A1B.toInt(),
-        onAccentArgb = Color.WHITE,
-        transparentContentArgb = 0xFF201A1B.toInt(),
-        transparentAccentArgb = 0xFFAE2A4B.toInt(),
-    )
-        private set
-    var content: DesktopLyricsContent = DesktopLyricsContent("", 0f, null, null, "")
+    var content: DesktopLyricsContent = DesktopLyricsContent("", 0f)
         set(value) {
             if (field.primary.isNotBlank() && field.primary != value.primary) {
                 previousPrimary = field.primary
                 previousPrimaryHighlightTextOffset = field.primaryHighlightTextOffset
-                previousSecondary = field.supplemental ?: field.next
                 lineTransitionAnimator.cancel()
                 lineTransitionProgress = 0f
                 lineTransitionAnimator.start()
             }
-            val widthChanged = field.layoutReference != value.layoutReference
             field = value
-            if (widthChanged) onDesiredWidthChanged(desiredWidth())
             invalidate()
         }
     var isPlaying: Boolean = false
@@ -511,32 +455,9 @@ private class DesktopLyricsControllerView(
         }
     }
 
-    fun updatePalette(value: DesktopLyricsPalette, animate: Boolean) {
-        if (value == palette) return
-        paletteAnimator.cancel()
-        if (!animate) {
-            palette = value
-            invalidate()
-            return
-        }
-        val from = palette
-        paletteAnimator.removeAllUpdateListeners()
-        paletteAnimator.addUpdateListener {
-            palette = interpolateDesktopLyricsPalette(from, value, it.animatedFraction)
-            invalidate()
-        }
-        paletteAnimator.start()
-    }
-
     fun release() {
         lineTransitionAnimator.cancel()
-        paletteAnimator.cancel()
         resetControlsVisibility()
-    }
-
-    private fun desiredWidth(): Int {
-        textPaint.textSize = baseTextSizeSp() * scaledDensity
-        return ceil(textPaint.measureText(content.layoutReference)).toInt() + dp(LYRICS_HORIZONTAL_PADDING_DP * 2)
     }
 
     fun collapseControls() {
@@ -615,7 +536,7 @@ private class DesktopLyricsControllerView(
         val lyricsTop = lyricsInset().toFloat()
         val lyricsBottom = height - lyricsInset().toFloat()
         surfacePaint.style = Paint.Style.FILL
-        surfacePaint.color = palette.surfaceArgb.withAlpha(alpha)
+        surfacePaint.color = preferences.desktopLyricsBackgroundColorArgb.withAlpha(alpha)
         canvas.drawRoundRect(
             0f,
             lyricsTop,
@@ -627,7 +548,7 @@ private class DesktopLyricsControllerView(
         )
         surfacePaint.style = Paint.Style.STROKE
         surfacePaint.strokeWidth = dp(1).toFloat()
-        surfacePaint.color = palette.onSurfaceArgb.withAlpha((alpha * 0.42f).toInt())
+        surfacePaint.color = preferences.desktopLyricsForegroundColorArgb.withAlpha((alpha * 0.22f).toInt())
         canvas.drawRoundRect(
             0f,
             lyricsTop,
@@ -641,7 +562,6 @@ private class DesktopLyricsControllerView(
     }
 
     private fun drawLyrics(canvas: Canvas) {
-        val baseSp = baseTextSizeSp()
         val lyricsTop = lyricsInset().toFloat()
         val lyricsHeight = height - lyricsInset() * 2f
         val outgoingAlpha = (1f - lineTransitionProgress / 0.72f).coerceIn(0f, 1f)
@@ -651,8 +571,6 @@ private class DesktopLyricsControllerView(
                 canvas = canvas,
                 primary = previous,
                 highlightTextOffset = previousPrimaryHighlightTextOffset,
-                secondary = previousSecondary,
-                baseSp = baseSp,
                 lyricsTop = lyricsTop,
                 lyricsHeight = lyricsHeight,
                 offsetY = -dp(6) * lineTransitionProgress,
@@ -663,8 +581,6 @@ private class DesktopLyricsControllerView(
             canvas = canvas,
             primary = content.primary,
             highlightTextOffset = content.primaryHighlightTextOffset,
-            secondary = secondaryText(),
-            baseSp = baseSp,
             lyricsTop = lyricsTop,
             lyricsHeight = lyricsHeight,
             offsetY = dp(6) * (1f - lineTransitionProgress),
@@ -676,60 +592,36 @@ private class DesktopLyricsControllerView(
         canvas: Canvas,
         primary: String,
         highlightTextOffset: Float,
-        secondary: String?,
-        baseSp: Float,
         lyricsTop: Float,
         lyricsHeight: Float,
         offsetY: Float,
         alpha: Float,
     ) {
         if (alpha <= 0f || primary.isBlank()) return
-        secondaryPaint.typeface = Typeface.DEFAULT
-        val layout = fittedLyricsLayout(
-            primary = primary,
-            secondary = secondary,
-            maximumPrimarySize = baseSp * scaledDensity,
-            availableWidth = width - dp(LYRICS_HORIZONTAL_PADDING_DP * 2),
-            availableHeight = lyricsHeight,
+        textPaint.textSize = preferences.desktopLyricsFontSizeSp.coerceIn(16, 40) * scaledDensity
+        val rows = wrapText(primary, textPaint, width - dp(LYRICS_HORIZONTAL_PADDING_DP * 2))
+        val row = rows.getOrNull(
+            desktopLyricsSegmentIndex(rows.map(LyricsTextRow::sourceStart), highlightTextOffset),
+        ) ?: return
+        val startX = (width - row.width) / 2f
+        val textHeight = textPaint.descent() - textPaint.ascent()
+        val baseline = lyricsTop + (lyricsHeight - textHeight) / 2f + offsetY - textPaint.ascent()
+        val foreground = preferences.desktopLyricsForegroundColorArgb
+        drawStyledText(
+            canvas = canvas,
+            text = row.text,
+            x = startX,
+            baseline = baseline,
+            fillColor = foreground.withAlpha((150 * alpha).toInt()),
         )
-        textPaint.textSize = layout.primaryTextSize
-        secondaryPaint.textSize = layout.secondaryTextSize
-        var baseline = lyricsTop + (lyricsHeight - layout.height) / 2f + offsetY - textPaint.ascent()
-        layout.primaryRows.forEach { row ->
-            val startX = (width - row.width) / 2f
-            drawOutlinedText(
-                canvas,
-                row.text,
-                startX,
-                baseline,
-                textPaint,
-                contentColor().withAlpha((235 * alpha).toInt()),
-            )
-            drawKaraokeHighlight(
-                canvas = canvas,
-                text = row.text,
-                startX = startX,
-                baseline = baseline,
-                highlightTextOffset = highlightTextOffset - row.sourceStart,
-                alpha = alpha,
-            )
-            baseline += layout.primaryLineAdvance
-        }
-        if (layout.secondaryRows.isNotEmpty()) {
-            baseline = lyricsTop + (lyricsHeight - layout.height) / 2f + offsetY +
-                layout.primaryHeight + layout.blockGap - secondaryPaint.ascent()
-            layout.secondaryRows.forEach { row ->
-                drawOutlinedText(
-                    canvas,
-                    row.text,
-                    (width - row.width) / 2f,
-                    baseline,
-                    secondaryPaint,
-                    contentColor().withAlpha((170 * alpha).toInt()),
-                )
-                baseline += layout.secondaryLineAdvance
-            }
-        }
+        drawKaraokeHighlight(
+            canvas = canvas,
+            text = row.text,
+            startX = startX,
+            baseline = baseline,
+            highlightTextOffset = highlightTextOffset - row.sourceStart,
+            alpha = alpha,
+        )
     }
 
     private fun drawKaraokeHighlight(
@@ -751,7 +643,7 @@ private class DesktopLyricsControllerView(
         val gradientEnd = (frontX + feather).coerceAtLeast(startX + 1f)
         val solidEnd = (frontX - feather).coerceAtLeast(startX)
         val solidPosition = ((solidEnd - startX) / (gradientEnd - startX)).coerceIn(0f, 0.98f)
-        val accent = accentColor().withAlpha((255 * alpha).toInt())
+        val accent = preferences.desktopLyricsForegroundColorArgb.withAlpha((255 * alpha).toInt())
         textPaint.style = Paint.Style.FILL
         textPaint.shader = LinearGradient(
             startX,
@@ -762,96 +654,36 @@ private class DesktopLyricsControllerView(
             floatArrayOf(0f, solidPosition, 1f),
             Shader.TileMode.CLAMP,
         )
-        textPaint.setShadowLayer(
-            if (isTransparentSurface()) density * 1.8f else 0f,
-            0f,
-            density * 0.5f,
-            outlineColor(accentColor()).withAlpha(150),
-        )
+        textPaint.clearShadowLayer()
         canvas.drawText(text, startX, baseline, textPaint)
         textPaint.shader = null
         textPaint.clearShadowLayer()
     }
 
-    private fun drawOutlinedText(
-        canvas: Canvas,
-        text: String,
-        x: Float,
-        baseline: Float,
-        paint: Paint,
-        fillColor: Int,
-    ) {
-        paint.shader = null
-        paint.clearShadowLayer()
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = density * if (isTransparentSurface()) 1.65f else 0.85f
-        paint.strokeJoin = Paint.Join.ROUND
-        paint.color = outlineColor(fillColor).withAlpha(
-            (if (isTransparentSurface()) 205 else 115) * Color.alpha(fillColor) / 255,
-        )
-        canvas.drawText(text, x, baseline, paint)
-        paint.style = Paint.Style.FILL
-        paint.color = fillColor
-        if (isTransparentSurface()) {
-            paint.setShadowLayer(
-                density * 2.1f,
-                0f,
-                density * 0.7f,
-                outlineColor(fillColor).withAlpha(180),
+    private fun drawStyledText(canvas: Canvas, text: String, x: Float, baseline: Float, fillColor: Int) {
+        textPaint.shader = null
+        textPaint.clearShadowLayer()
+        val outlineWidth = preferences.desktopLyricsOutlineWidthDp.coerceIn(0f, 4f)
+        if (outlineWidth > 0f) {
+            textPaint.style = Paint.Style.STROKE
+            textPaint.strokeWidth = density * outlineWidth
+            textPaint.strokeJoin = Paint.Join.ROUND
+            textPaint.color = preferences.desktopLyricsOutlineColorArgb.withAlpha(Color.alpha(fillColor))
+            canvas.drawText(text, x, baseline, textPaint)
+        }
+        textPaint.style = Paint.Style.FILL
+        textPaint.color = fillColor
+        val blur = preferences.desktopLyricsShadowBlurRadiusDp.coerceIn(0f, 12f)
+        if (blur > 0f) {
+            textPaint.setShadowLayer(
+                blur * density,
+                preferences.desktopLyricsShadowOffsetXDp.coerceIn(-8f, 8f) * density,
+                preferences.desktopLyricsShadowOffsetYDp.coerceIn(-8f, 8f) * density,
+                preferences.desktopLyricsShadowColorArgb.withAlpha(Color.alpha(fillColor)),
             )
         }
-        canvas.drawText(text, x, baseline, paint)
-        paint.clearShadowLayer()
-    }
-
-    private fun secondaryText(): String? = content.supplemental ?: content.next
-
-    private fun fittedLyricsLayout(
-        primary: String,
-        secondary: String?,
-        maximumPrimarySize: Float,
-        availableWidth: Int,
-        availableHeight: Float,
-    ): LyricsBlockLayout {
-        fun layoutAt(primarySize: Float): LyricsBlockLayout {
-            textPaint.textSize = primarySize
-            secondaryPaint.textSize = primarySize * SECONDARY_TEXT_SIZE_RATIO
-            val primaryRows = wrapText(primary, textPaint, availableWidth)
-            val secondaryRows = secondary
-                ?.takeIf(String::isNotBlank)
-                ?.let { wrapText(it, secondaryPaint, availableWidth) }
-                .orEmpty()
-            val primaryLineAdvance = textPaint.fontSpacing * LINE_ADVANCE_RATIO
-            val secondaryLineAdvance = secondaryPaint.fontSpacing * LINE_ADVANCE_RATIO
-            val primaryHeight = blockHeight(primaryRows.size, textPaint, primaryLineAdvance)
-            val secondaryHeight = blockHeight(secondaryRows.size, secondaryPaint, secondaryLineAdvance)
-            val blockGap = if (secondaryRows.isEmpty()) 0f else primarySize * BLOCK_GAP_RATIO
-            return LyricsBlockLayout(
-                primaryRows = primaryRows,
-                secondaryRows = secondaryRows,
-                primaryTextSize = primarySize,
-                secondaryTextSize = secondaryPaint.textSize,
-                primaryLineAdvance = primaryLineAdvance,
-                secondaryLineAdvance = secondaryLineAdvance,
-                primaryHeight = primaryHeight,
-                blockGap = blockGap,
-                height = primaryHeight + blockGap + secondaryHeight,
-            )
-        }
-
-        val maximumLayout = layoutAt(maximumPrimarySize)
-        if (maximumLayout.height <= availableHeight) return maximumLayout
-        var lower = MIN_DYNAMIC_TEXT_SIZE_PX
-        var upper = maximumPrimarySize
-        repeat(DYNAMIC_TEXT_SIZE_SEARCH_STEPS) {
-            val candidate = (lower + upper) / 2f
-            if (layoutAt(candidate).height <= availableHeight) {
-                lower = candidate
-            } else {
-                upper = candidate
-            }
-        }
-        return layoutAt(lower)
+        canvas.drawText(text, x, baseline, textPaint)
+        textPaint.clearShadowLayer()
     }
 
     private fun wrapText(text: String, paint: Paint, maximumWidth: Int): List<LyricsTextRow> {
@@ -887,11 +719,6 @@ private class DesktopLyricsControllerView(
         return rows
     }
 
-    private fun blockHeight(rowCount: Int, paint: Paint, lineAdvance: Float): Float = when (rowCount) {
-        0 -> 0f
-        else -> paint.descent() - paint.ascent() + lineAdvance * (rowCount - 1)
-    }
-
     private fun drawControls(canvas: Canvas) {
         buttonRects.values.forEach(RectF::setEmpty)
         val edgeX = dp(CONTROL_EDGE_DP).toFloat()
@@ -916,62 +743,19 @@ private class DesktopLyricsControllerView(
             centerY + touchRadius,
         )
         val isPrimary = control == DesktopLyricsControl.PlayPause
-        val containerColor = when {
-            isPrimary -> accentColor()
-            else -> ColorUtils.blendARGB(palette.surfaceArgb, accentColor(), 0.10f)
-        }
         surfacePaint.style = Paint.Style.FILL
-        surfacePaint.color = containerColor.withAlpha(if (isTransparentSurface()) 238 else 224)
-        surfacePaint.setShadowLayer(density * 1.6f, 0f, density * 0.6f, Color.BLACK.withAlpha(48))
+        surfacePaint.color = DesktopLyricsDefaults.FOREGROUND_COLOR_ARGB
         canvas.drawCircle(
             centerX,
             centerY,
             dp(if (isPrimary) 19 else 15).toFloat(),
             surfacePaint,
         )
-        surfacePaint.clearShadowLayer()
-        iconPaint.color = if (isPrimary) {
-            readableForeground(containerColor)
-        } else {
-            palette.onSurfaceArgb
-        }
-        iconPaint.setShadowLayer(
-            if (isTransparentSurface()) density * 1.8f else 0f,
-            0f,
-            density * 0.6f,
-            outlineColor(iconPaint.color).withAlpha(210),
-        )
+        iconPaint.color = Color.WHITE
         drawIcon(canvas, control, centerX, centerY)
-        iconPaint.clearShadowLayer()
     }
-
-    private fun contentColor(): Int = if (preferences.desktopLyricsSurfaceOpacity < 20) {
-        palette.transparentContentArgb
-    } else {
-        palette.onSurfaceArgb
-    }
-
-    private fun accentColor(): Int = if (preferences.desktopLyricsSurfaceOpacity < 20) {
-        palette.transparentAccentArgb
-    } else {
-        palette.accentArgb
-    }
-
-    private fun isTransparentSurface(): Boolean = preferences.desktopLyricsSurfaceOpacity < 20
 
     private fun lyricsInset(): Int = dp(LYRICS_CONTROLS_INSET_DP)
-
-    private fun baseTextSizeSp(): Float = when (preferences.desktopLyricsFontSize) {
-        LyricsFontSize.Small -> 19f
-        LyricsFontSize.Medium -> 23f
-        LyricsFontSize.Large -> 28f
-    }
-
-    private fun outlineColor(fillColor: Int): Int = if (ColorUtils.calculateLuminance(fillColor) > 0.45) {
-        Color.BLACK
-    } else {
-        Color.WHITE
-    }
 
     private fun drawIcon(canvas: Canvas, control: DesktopLyricsControl, x: Float, y: Float) {
         val d = density
@@ -1053,27 +837,13 @@ private class DesktopLyricsControllerView(
         const val CONTROL_ICON_SCALE = 0.68f
         const val LYRICS_CONTROLS_INSET_DP = 38
         const val LYRICS_HORIZONTAL_PADDING_DP = 14
-        const val SECONDARY_TEXT_SIZE_RATIO = 0.62f
-        const val LINE_ADVANCE_RATIO = 0.92f
-        const val BLOCK_GAP_RATIO = 0.14f
-        const val MIN_DYNAMIC_TEXT_SIZE_PX = 0.5f
-        const val DYNAMIC_TEXT_SIZE_SEARCH_STEPS = 12
     }
 }
 
 private data class LyricsTextRow(val text: String, val sourceStart: Int, val width: Float)
 
-private data class LyricsBlockLayout(
-    val primaryRows: List<LyricsTextRow>,
-    val secondaryRows: List<LyricsTextRow>,
-    val primaryTextSize: Float,
-    val secondaryTextSize: Float,
-    val primaryLineAdvance: Float,
-    val secondaryLineAdvance: Float,
-    val primaryHeight: Float,
-    val blockGap: Float,
-    val height: Float,
-)
+internal fun desktopLyricsSegmentIndex(sourceStarts: List<Int>, highlightTextOffset: Float): Int =
+    sourceStarts.indexOfLast { it <= highlightTextOffset }.coerceAtLeast(0)
 
 private fun Int.withAlpha(alpha: Int): Int = Color.argb(
     alpha.coerceIn(0, 255),
@@ -1081,14 +851,6 @@ private fun Int.withAlpha(alpha: Int): Int = Color.argb(
     Color.green(this),
     Color.blue(this),
 )
-
-private fun readableForeground(background: Int): Int = if (
-    ColorUtils.calculateContrast(Color.WHITE, background) >= 4.5
-) {
-    Color.WHITE
-} else {
-    Color.BLACK
-}
 
 internal fun desktopLyricsWindowY(anchorY: Int, controlsInsetPx: Int): Int = anchorY - controlsInsetPx
 

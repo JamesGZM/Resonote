@@ -4,8 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.resonote.core.data.LyricsPreferencesRepository
 import com.resonote.core.model.DesktopLyricsControlsTimeout
-import com.resonote.core.model.DesktopLyricsDisplayMode
-import com.resonote.core.model.LyricsFontSize
 import com.resonote.core.model.LyricsPreferences
 import com.resonote.core.playback.DesktopLyricsController
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -49,18 +47,58 @@ class LyricsSettingsViewModel @Inject constructor(
         if (enabled) desktopLyricsController.show() else desktopLyricsController.hide()
     }
 
-    fun setDesktopLyricsDisplayMode(value: DesktopLyricsDisplayMode) = persist(
-        { copy(desktopLyricsDisplayMode = value) },
-        desktopLyricsController::refresh,
-    )
-
-    fun setDesktopLyricsFontSize(value: LyricsFontSize) = persist(
-        { copy(desktopLyricsFontSize = value) },
-        desktopLyricsController::refresh,
-    )
-
     fun setDesktopLyricsSurfaceOpacity(value: Int) = persist(
         { copy(desktopLyricsSurfaceOpacity = value.coerceIn(0, 100)) },
+        desktopLyricsController::refresh,
+    )
+
+    fun setDesktopLyricsShadowColor(value: Int) = persist(
+        { copy(desktopLyricsShadowColorArgb = value or 0xFF000000.toInt()) },
+        desktopLyricsController::refresh,
+    )
+
+    fun setDesktopLyricsBackgroundColor(value: Int) = persist(
+        { copy(desktopLyricsBackgroundColorArgb = value or 0xFF000000.toInt()) },
+        desktopLyricsController::refresh,
+    )
+
+    fun setDesktopLyricsForegroundColor(value: Int) = persist(
+        { copy(desktopLyricsForegroundColorArgb = value or 0xFF000000.toInt()) },
+        desktopLyricsController::refresh,
+    )
+
+    fun setDesktopLyricsOutlineColor(value: Int) = persist(
+        { copy(desktopLyricsOutlineColorArgb = value or 0xFF000000.toInt()) },
+        desktopLyricsController::refresh,
+    )
+
+    fun setDesktopLyricsShadowOffsetX(value: Float) = persist(
+        { copy(desktopLyricsShadowOffsetXDp = value.coerceIn(-8f, 8f)) },
+        desktopLyricsController::refresh,
+    )
+
+    fun setDesktopLyricsShadowOffsetY(value: Float) = persist(
+        { copy(desktopLyricsShadowOffsetYDp = value.coerceIn(-8f, 8f)) },
+        desktopLyricsController::refresh,
+    )
+
+    fun setDesktopLyricsShadowBlurRadius(value: Float) = persist(
+        { copy(desktopLyricsShadowBlurRadiusDp = value.coerceIn(0f, 12f)) },
+        desktopLyricsController::refresh,
+    )
+
+    fun setDesktopLyricsWidthPercent(value: Int) = persist(
+        { copy(desktopLyricsWidthPercent = value.coerceIn(40, 100)) },
+        desktopLyricsController::refresh,
+    )
+
+    fun setDesktopLyricsFontSizeSp(value: Int) = persist(
+        { copy(desktopLyricsFontSizeSp = value.coerceIn(16, 40)) },
+        desktopLyricsController::refresh,
+    )
+
+    fun setDesktopLyricsOutlineWidth(value: Float) = persist(
+        { copy(desktopLyricsOutlineWidthDp = value.coerceIn(0f, 4f)) },
         desktopLyricsController::refresh,
     )
 
@@ -98,5 +136,4 @@ private object NoOpDesktopLyricsController : DesktopLyricsController {
     override fun hide() = Unit
     override fun refresh() = Unit
     override fun resetPosition() = Unit
-    override fun setAppForeground(foreground: Boolean) = Unit
 }

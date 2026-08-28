@@ -27,6 +27,17 @@ data class LyricsPreferences(
     val desktopLyricsControlsTimeout: String = "",
     val desktopLyricsSurfaceOpacity: Int = 0,
     val desktopLyricsSurfaceOpacitySet: Boolean = false,
+    val desktopLyricsShadowColorArgb: Int = 0xFF000000.toInt(),
+    val desktopLyricsBackgroundColorArgb: Int = 0xFFFFFFFF.toInt(),
+    val desktopLyricsForegroundColorArgb: Int = 0xFFAE2A4B.toInt(),
+    val desktopLyricsShadowOffsetXDp: Float = 0f,
+    val desktopLyricsShadowOffsetYDp: Float = 1f,
+    val desktopLyricsShadowBlurRadiusDp: Float = 2f,
+    val desktopLyricsWidthPercent: Int = 100,
+    val desktopLyricsFontSizeSp: Int = 24,
+    val desktopLyricsOutlineColorArgb: Int = 0xFF000000.toInt(),
+    val desktopLyricsOutlineWidthDp: Float = 0f,
+    val desktopLyricsStyleSet: Boolean = false,
 ) {
     fun writeTo(output: OutputStream) {
         CodedOutputStream.newInstance(output).apply {
@@ -51,6 +62,23 @@ data class LyricsPreferences(
             if (desktopLyricsControlsTimeout.isNotEmpty()) writeString(19, desktopLyricsControlsTimeout)
             if (desktopLyricsSurfaceOpacity != 0) writeInt32(20, desktopLyricsSurfaceOpacity)
             if (desktopLyricsSurfaceOpacitySet) writeBool(21, true)
+            if (desktopLyricsShadowColorArgb != 0xFF000000.toInt()) writeFixed32(22, desktopLyricsShadowColorArgb)
+            if (desktopLyricsBackgroundColorArgb != 0xFFFFFFFF.toInt()) {
+                writeFixed32(23, desktopLyricsBackgroundColorArgb)
+            }
+            if (desktopLyricsForegroundColorArgb != 0xFFAE2A4B.toInt()) {
+                writeFixed32(24, desktopLyricsForegroundColorArgb)
+            }
+            if (desktopLyricsShadowOffsetXDp != 0f) writeFloat(25, desktopLyricsShadowOffsetXDp)
+            if (desktopLyricsShadowOffsetYDp != 1f) writeFloat(26, desktopLyricsShadowOffsetYDp)
+            if (desktopLyricsShadowBlurRadiusDp != 2f) writeFloat(27, desktopLyricsShadowBlurRadiusDp)
+            if (desktopLyricsWidthPercent != 100) writeInt32(28, desktopLyricsWidthPercent)
+            if (desktopLyricsFontSizeSp != 24) writeInt32(29, desktopLyricsFontSizeSp)
+            if (desktopLyricsOutlineColorArgb != 0xFF000000.toInt()) {
+                writeFixed32(30, desktopLyricsOutlineColorArgb)
+            }
+            if (desktopLyricsOutlineWidthDp != 0f) writeFloat(31, desktopLyricsOutlineWidthDp)
+            if (desktopLyricsStyleSet) writeBool(32, true)
             flush()
         }
     }
@@ -81,6 +109,17 @@ data class LyricsPreferences(
             var desktopLyricsControlsTimeout = ""
             var desktopLyricsSurfaceOpacity = 0
             var desktopLyricsSurfaceOpacitySet = false
+            var desktopLyricsShadowColorArgb = 0xFF000000.toInt()
+            var desktopLyricsBackgroundColorArgb = 0xFFFFFFFF.toInt()
+            var desktopLyricsForegroundColorArgb = 0xFFAE2A4B.toInt()
+            var desktopLyricsShadowOffsetXDp = 0f
+            var desktopLyricsShadowOffsetYDp = 1f
+            var desktopLyricsShadowBlurRadiusDp = 2f
+            var desktopLyricsWidthPercent = 100
+            var desktopLyricsFontSizeSp = 24
+            var desktopLyricsOutlineColorArgb = 0xFF000000.toInt()
+            var desktopLyricsOutlineWidthDp = 0f
+            var desktopLyricsStyleSet = false
             while (!coded.isAtEnd) {
                 when (val tag = coded.readTag()) {
                     0 -> break
@@ -105,6 +144,17 @@ data class LyricsPreferences(
                     154 -> desktopLyricsControlsTimeout = coded.readStringRequireUtf8()
                     160 -> desktopLyricsSurfaceOpacity = coded.readInt32()
                     168 -> desktopLyricsSurfaceOpacitySet = coded.readBool()
+                    181 -> desktopLyricsShadowColorArgb = coded.readFixed32()
+                    189 -> desktopLyricsBackgroundColorArgb = coded.readFixed32()
+                    197 -> desktopLyricsForegroundColorArgb = coded.readFixed32()
+                    205 -> desktopLyricsShadowOffsetXDp = coded.readFloat()
+                    213 -> desktopLyricsShadowOffsetYDp = coded.readFloat()
+                    221 -> desktopLyricsShadowBlurRadiusDp = coded.readFloat()
+                    224 -> desktopLyricsWidthPercent = coded.readInt32()
+                    232 -> desktopLyricsFontSizeSp = coded.readInt32()
+                    245 -> desktopLyricsOutlineColorArgb = coded.readFixed32()
+                    253 -> desktopLyricsOutlineWidthDp = coded.readFloat()
+                    256 -> desktopLyricsStyleSet = coded.readBool()
                     else -> coded.skipField(tag)
                 }
             }
@@ -130,6 +180,17 @@ data class LyricsPreferences(
                 desktopLyricsControlsTimeout = desktopLyricsControlsTimeout,
                 desktopLyricsSurfaceOpacity = desktopLyricsSurfaceOpacity,
                 desktopLyricsSurfaceOpacitySet = desktopLyricsSurfaceOpacitySet,
+                desktopLyricsShadowColorArgb = desktopLyricsShadowColorArgb,
+                desktopLyricsBackgroundColorArgb = desktopLyricsBackgroundColorArgb,
+                desktopLyricsForegroundColorArgb = desktopLyricsForegroundColorArgb,
+                desktopLyricsShadowOffsetXDp = desktopLyricsShadowOffsetXDp,
+                desktopLyricsShadowOffsetYDp = desktopLyricsShadowOffsetYDp,
+                desktopLyricsShadowBlurRadiusDp = desktopLyricsShadowBlurRadiusDp,
+                desktopLyricsWidthPercent = desktopLyricsWidthPercent,
+                desktopLyricsFontSizeSp = desktopLyricsFontSizeSp,
+                desktopLyricsOutlineColorArgb = desktopLyricsOutlineColorArgb,
+                desktopLyricsOutlineWidthDp = desktopLyricsOutlineWidthDp,
+                desktopLyricsStyleSet = desktopLyricsStyleSet,
             )
         }
     }

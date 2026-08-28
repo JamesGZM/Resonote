@@ -76,10 +76,23 @@ enum class LyricsHighlightMode { Word, Line }
 enum class LyricsTextAlignment { Center, Start }
 enum class LyricsFontSize { Small, Medium, Large }
 enum class LyricsBackgroundMode { Palette, Artwork, Off }
-enum class DesktopLyricsDisplayMode { SingleLine, TwoLines }
 enum class DesktopLyricsControlsTimeout(val seconds: Int) { ThreeSeconds(3), FiveSeconds(5), EightSeconds(8) }
 
 data class DesktopLyricsPosition(val x: Int, val y: Int)
+
+object DesktopLyricsDefaults {
+    val BACKGROUND_COLOR_ARGB: Int = 0xFFFFFFFF.toInt()
+    val FOREGROUND_COLOR_ARGB: Int = 0xFFAE2A4B.toInt()
+    val SHADOW_COLOR_ARGB: Int = 0xFF000000.toInt()
+    val OUTLINE_COLOR_ARGB: Int = 0xFF000000.toInt()
+    const val SURFACE_OPACITY = 100
+    const val WIDTH_PERCENT = 100
+    const val FONT_SIZE_SP = 24
+    const val SHADOW_OFFSET_X_DP = 0f
+    const val SHADOW_OFFSET_Y_DP = 1f
+    const val SHADOW_BLUR_RADIUS_DP = 2f
+    const val OUTLINE_WIDTH_DP = 0f
+}
 
 data class LyricsPreferences(
     val translationEnabled: Boolean = true,
@@ -90,9 +103,17 @@ data class LyricsPreferences(
     val fontSize: LyricsFontSize = LyricsFontSize.Medium,
     val backgroundMode: LyricsBackgroundMode = LyricsBackgroundMode.Artwork,
     val desktopLyricsEnabled: Boolean = false,
-    val desktopLyricsDisplayMode: DesktopLyricsDisplayMode = DesktopLyricsDisplayMode.TwoLines,
-    val desktopLyricsFontSize: LyricsFontSize = LyricsFontSize.Medium,
-    val desktopLyricsSurfaceOpacity: Int = 0,
+    val desktopLyricsSurfaceOpacity: Int = DesktopLyricsDefaults.SURFACE_OPACITY,
+    val desktopLyricsBackgroundColorArgb: Int = DesktopLyricsDefaults.BACKGROUND_COLOR_ARGB,
+    val desktopLyricsForegroundColorArgb: Int = DesktopLyricsDefaults.FOREGROUND_COLOR_ARGB,
+    val desktopLyricsShadowColorArgb: Int = DesktopLyricsDefaults.SHADOW_COLOR_ARGB,
+    val desktopLyricsShadowOffsetXDp: Float = DesktopLyricsDefaults.SHADOW_OFFSET_X_DP,
+    val desktopLyricsShadowOffsetYDp: Float = DesktopLyricsDefaults.SHADOW_OFFSET_Y_DP,
+    val desktopLyricsShadowBlurRadiusDp: Float = DesktopLyricsDefaults.SHADOW_BLUR_RADIUS_DP,
+    val desktopLyricsWidthPercent: Int = DesktopLyricsDefaults.WIDTH_PERCENT,
+    val desktopLyricsFontSizeSp: Int = DesktopLyricsDefaults.FONT_SIZE_SP,
+    val desktopLyricsOutlineColorArgb: Int = DesktopLyricsDefaults.OUTLINE_COLOR_ARGB,
+    val desktopLyricsOutlineWidthDp: Float = DesktopLyricsDefaults.OUTLINE_WIDTH_DP,
     val desktopLyricsAutoHideWhenPaused: Boolean = false,
     val desktopLyricsControlsTimeout: DesktopLyricsControlsTimeout = DesktopLyricsControlsTimeout.FiveSeconds,
     val desktopLyricsLocked: Boolean = false,

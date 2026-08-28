@@ -2,7 +2,7 @@ package com.resonote.core.data
 
 import com.resonote.core.datastore.LyricsPreferencesStorage
 import com.resonote.core.model.DesktopLyricsControlsTimeout
-import com.resonote.core.model.DesktopLyricsDisplayMode
+import com.resonote.core.model.DesktopLyricsDefaults
 import com.resonote.core.model.DesktopLyricsPosition
 import com.resonote.core.model.LyricsBackgroundMode
 import com.resonote.core.model.LyricsDisplayMode
@@ -35,15 +35,21 @@ internal class DefaultLyricsPreferencesRepository @Inject constructor(private va
             fontSize = stored.enumOrDefault(LyricsFontSize.Medium) { fontSize },
             backgroundMode = stored.enumOrDefault(LyricsBackgroundMode.Artwork) { backgroundMode },
             desktopLyricsEnabled = stored.desktopLyricsEnabled,
-            desktopLyricsDisplayMode = stored.enumOrDefault(DesktopLyricsDisplayMode.TwoLines) {
-                desktopLyricsDisplayMode
-            },
-            desktopLyricsFontSize = stored.enumOrDefault(LyricsFontSize.Medium) { desktopLyricsFontSize },
-            desktopLyricsSurfaceOpacity = if (stored.desktopLyricsSurfaceOpacitySet) {
+            desktopLyricsSurfaceOpacity = if (stored.desktopLyricsStyleSet) {
                 stored.desktopLyricsSurfaceOpacity.coerceIn(0, 100)
             } else {
-                0
+                DesktopLyricsDefaults.SURFACE_OPACITY
             },
+            desktopLyricsBackgroundColorArgb = stored.desktopLyricsBackgroundColorArgb or 0xFF000000.toInt(),
+            desktopLyricsForegroundColorArgb = stored.desktopLyricsForegroundColorArgb or 0xFF000000.toInt(),
+            desktopLyricsShadowColorArgb = stored.desktopLyricsShadowColorArgb or 0xFF000000.toInt(),
+            desktopLyricsShadowOffsetXDp = stored.desktopLyricsShadowOffsetXDp.coerceIn(-8f, 8f),
+            desktopLyricsShadowOffsetYDp = stored.desktopLyricsShadowOffsetYDp.coerceIn(-8f, 8f),
+            desktopLyricsShadowBlurRadiusDp = stored.desktopLyricsShadowBlurRadiusDp.coerceIn(0f, 12f),
+            desktopLyricsWidthPercent = stored.desktopLyricsWidthPercent.coerceIn(40, 100),
+            desktopLyricsFontSizeSp = stored.desktopLyricsFontSizeSp.coerceIn(16, 40),
+            desktopLyricsOutlineColorArgb = stored.desktopLyricsOutlineColorArgb or 0xFF000000.toInt(),
+            desktopLyricsOutlineWidthDp = stored.desktopLyricsOutlineWidthDp.coerceIn(0f, 4f),
             desktopLyricsAutoHideWhenPaused = false,
             desktopLyricsControlsTimeout = stored.enumOrDefault(DesktopLyricsControlsTimeout.FiveSeconds) {
                 desktopLyricsControlsTimeout
@@ -68,10 +74,19 @@ internal class DefaultLyricsPreferencesRepository @Inject constructor(private va
             transliterationEnabled = value.transliterationEnabled,
             supplementalTextFlagsSet = true,
             desktopLyricsEnabled = value.desktopLyricsEnabled,
-            desktopLyricsDisplayMode = value.desktopLyricsDisplayMode.name,
-            desktopLyricsFontSize = value.desktopLyricsFontSize.name,
             desktopLyricsSurfaceOpacity = value.desktopLyricsSurfaceOpacity.coerceIn(0, 100),
             desktopLyricsSurfaceOpacitySet = true,
+            desktopLyricsBackgroundColorArgb = value.desktopLyricsBackgroundColorArgb or 0xFF000000.toInt(),
+            desktopLyricsForegroundColorArgb = value.desktopLyricsForegroundColorArgb or 0xFF000000.toInt(),
+            desktopLyricsShadowColorArgb = value.desktopLyricsShadowColorArgb or 0xFF000000.toInt(),
+            desktopLyricsShadowOffsetXDp = value.desktopLyricsShadowOffsetXDp.coerceIn(-8f, 8f),
+            desktopLyricsShadowOffsetYDp = value.desktopLyricsShadowOffsetYDp.coerceIn(-8f, 8f),
+            desktopLyricsShadowBlurRadiusDp = value.desktopLyricsShadowBlurRadiusDp.coerceIn(0f, 12f),
+            desktopLyricsWidthPercent = value.desktopLyricsWidthPercent.coerceIn(40, 100),
+            desktopLyricsFontSizeSp = value.desktopLyricsFontSizeSp.coerceIn(16, 40),
+            desktopLyricsOutlineColorArgb = value.desktopLyricsOutlineColorArgb or 0xFF000000.toInt(),
+            desktopLyricsOutlineWidthDp = value.desktopLyricsOutlineWidthDp.coerceIn(0f, 4f),
+            desktopLyricsStyleSet = true,
             desktopLyricsAutoHideWhenPaused = value.desktopLyricsAutoHideWhenPaused,
             desktopLyricsControlsTimeout = value.desktopLyricsControlsTimeout.name,
             desktopLyricsLocked = value.desktopLyricsLocked,

@@ -1,17 +1,15 @@
 package com.resonote.core.playback.service
 
 import com.google.common.truth.Truth.assertThat
-import com.resonote.core.model.DesktopLyricsDisplayMode
 import com.resonote.core.model.LyricLine
 import com.resonote.core.model.LyricSyllable
 import com.resonote.core.model.LyricsDocument
-import com.resonote.core.model.LyricsPreferences
 import com.resonote.core.model.PlaybackMode
 import org.junit.Test
 
 class DesktopLyricsRendererTest {
     @Test
-    fun renderSelectsActiveLineHighlightsElapsedWordsAndShowsNextLine() {
+    fun renderSelectsActiveLineAndHighlightsElapsedWords() {
         val document = LyricsDocument(
             listOf(
                 LyricLine(
@@ -25,21 +23,18 @@ class DesktopLyricsRendererTest {
             ),
         )
 
-        val content = DesktopLyricsRenderer.render(document, 1_600, LyricsPreferences())
+        val content = DesktopLyricsRenderer.render(document, 1_600)
 
         assertThat(content).isEqualTo(
             DesktopLyricsContent(
                 primary = "Hello world",
                 primaryHighlightTextOffset = 7f,
-                supplemental = "你好，世界",
-                next = "Next line",
-                layoutReference = "Hello world",
             ),
         )
     }
 
     @Test
-    fun renderHonorsSingleLineAndSupplementalPreferences() {
+    fun lineTimedLyricsAdvanceAcrossTheCurrentLineDuration() {
         val document = LyricsDocument(
             listOf(
                 LyricLine(
@@ -50,20 +45,35 @@ class DesktopLyricsRendererTest {
             ),
         )
 
-        val content = DesktopLyricsRenderer.render(
-            document,
-            500,
-            LyricsPreferences(
-                translationEnabled = false,
-                transliterationEnabled = false,
-                desktopLyricsDisplayMode = DesktopLyricsDisplayMode.SingleLine,
+        val content = DesktopLyricsRenderer.render(document, 1_500)
+
+        assertThat(content?.primary).isEqualTo("Line")
+        assertThat(content?.primaryHighlightTextOffset).isEqualTo(2f)
+    }
+
+    @Test
+    fun singleLineRemovesEmbeddedLineBreaksAndSupplementalRows() {
+        val document = LyricsDocument(
+            listOf(
+                LyricLine(
+                    syllables = listOf(LyricSyllable("女：\n下一句", 1_000, 2_000)),
+                    translation = "Translation",
+                ),
             ),
         )
 
-        assertThat(content?.primary).isEqualTo("Line")
-        assertThat(content?.primaryHighlightTextOffset).isEqualTo(0f)
-        assertThat(content?.supplemental).isNull()
-        assertThat(content?.next).isNull()
+        val content = DesktopLyricsRenderer.render(document, 1_500)
+
+        assertThat(content?.primary).isEqualTo("女： 下一句")
+        assertThat(content?.primary).doesNotContain("\n")
+    }
+
+    @Test
+    fun longLineSegmentsAdvanceOneVisibleRowAtATime() {
+        assertThat(desktopLyricsSegmentIndex(listOf(0, 8, 16), 0f)).isEqualTo(0)
+        assertThat(desktopLyricsSegmentIndex(listOf(0, 8, 16), 7.9f)).isEqualTo(0)
+        assertThat(desktopLyricsSegmentIndex(listOf(0, 8, 16), 8f)).isEqualTo(1)
+        assertThat(desktopLyricsSegmentIndex(listOf(0, 8, 16), 20f)).isEqualTo(2)
     }
 
     @Test
@@ -129,14 +139,12 @@ class DesktopLyricsRendererTest {
     }
 
     @Test
-    fun desktopLyricsWindowOnlyShowsOutsideTheAppWhenEnabledAndPermitted() {
-        assertThat(desktopLyricsWindowShouldBeVisible(true, appForeground = false, overlayPermissionGranted = true))
+    fun desktopLyricsWindowStaysVisibleInsideTheAppWhenEnabledAndPermitted() {
+        assertThat(desktopLyricsWindowShouldBeVisible(true, overlayPermissionGranted = true))
             .isTrue()
-        assertThat(desktopLyricsWindowShouldBeVisible(true, appForeground = true, overlayPermissionGranted = true))
+        assertThat(desktopLyricsWindowShouldBeVisible(false, overlayPermissionGranted = true))
             .isFalse()
-        assertThat(desktopLyricsWindowShouldBeVisible(false, appForeground = false, overlayPermissionGranted = true))
-            .isFalse()
-        assertThat(desktopLyricsWindowShouldBeVisible(true, appForeground = false, overlayPermissionGranted = false))
+        assertThat(desktopLyricsWindowShouldBeVisible(true, overlayPermissionGranted = false))
             .isFalse()
     }
 
@@ -170,6 +178,14 @@ class DesktopLyricsRendererTest {
                 durationMillis = 3_000,
             ),
         ).isEqualTo(3_000)
+        assertThat(
+            interpolatedDesktopLyricsPosition(
+                positionAnchorMillis = 1_000,
+                elapsedRealtimeMillis = 240,
+                durationMillis = 3_000,
+                visualLeadMillis = 260,
+            ),
+        ).isEqualTo(1_500)
     }
 
     @Test

@@ -8,6 +8,4 @@ interface DesktopLyricsController {
     fun refresh()
 
     fun resetPosition()
-
-    fun setAppForeground(foreground: Boolean)
 }

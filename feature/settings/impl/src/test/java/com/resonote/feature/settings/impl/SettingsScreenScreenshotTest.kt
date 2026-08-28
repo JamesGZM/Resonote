@@ -256,6 +256,31 @@ class SettingsScreenScreenshotTest {
     }
 
     @Test
+    fun desktopLyricsSettingsOpensShadowColorPalette() {
+        val repository = object : LyricsPreferencesRepository {
+            override val preferences = MutableStateFlow(LyricsPreferences())
+
+            override suspend fun setPreferences(value: LyricsPreferences) {
+                preferences.value = value
+            }
+
+            override suspend fun reset() {
+                preferences.value = LyricsPreferences()
+            }
+        }
+        val viewModel = LyricsSettingsViewModel(repository)
+        composeRule.setContent {
+            ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                DesktopLyricsSettingsRoute(onBack = {}, viewModel = viewModel)
+            }
+        }
+
+        composeRule.onNodeWithTag("desktop-lyrics-shadow-color").performScrollTo().performClick()
+
+        composeRule.onNodeWithTag("desktop-lyrics-shadow-palette").assertIsDisplayed()
+    }
+
+    @Test
     fun backActionRemainsReachable() {
         var backClicks = 0
         setScreen(onBack = { backClicks++ })
