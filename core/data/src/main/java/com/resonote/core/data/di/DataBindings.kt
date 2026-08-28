@@ -9,6 +9,7 @@ import com.resonote.core.data.DefaultAuthRepository
 import com.resonote.core.data.DefaultCloudRepository
 import com.resonote.core.data.DefaultContentCatalogRepository
 import com.resonote.core.data.DefaultHomeRepository
+import com.resonote.core.data.DefaultKaraokeRepository
 import com.resonote.core.data.DefaultLibraryRepository
 import com.resonote.core.data.DefaultLikedSongsRepository
 import com.resonote.core.data.DefaultListeningHistoryRepository
@@ -31,6 +32,7 @@ import com.resonote.core.data.DefaultVipRewardRepository
 import com.resonote.core.data.EncryptedApiSessionStore
 import com.resonote.core.data.HomeRecommendationSampler
 import com.resonote.core.data.HomeRepository
+import com.resonote.core.data.KaraokeRepository
 import com.resonote.core.data.LibraryRepository
 import com.resonote.core.data.LikedSongsRepository
 import com.resonote.core.data.ListeningHistoryRepository
@@ -112,6 +114,9 @@ internal abstract class DataBindings {
 
     @Binds
     abstract fun bindLocalMediaRepository(implementation: DefaultLocalMediaRepository): LocalMediaRepository
+
+    @Binds
+    abstract fun bindKaraokeRepository(implementation: DefaultKaraokeRepository): KaraokeRepository
 
     @Binds
     abstract fun bindListeningHistoryRepository(

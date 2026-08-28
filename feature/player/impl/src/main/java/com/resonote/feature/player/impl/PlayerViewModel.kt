@@ -6,9 +6,12 @@ import com.resonote.core.data.AuthRepository
 import com.resonote.core.data.LikedSongsRepository
 import com.resonote.core.data.LyricsPreferencesRepository
 import com.resonote.core.data.LyricsRepository
+import com.resonote.core.karaoke.KaraokeController
+import com.resonote.core.karaoke.KaraokeSessionState
 import com.resonote.core.model.AuthState
 import com.resonote.core.model.CollectionLoadResult
 import com.resonote.core.model.ContentFailure
+import com.resonote.core.model.KaraokeSourceMode
 import com.resonote.core.model.LyricsDocument
 import com.resonote.core.model.LyricsPreferences
 import com.resonote.core.model.OnlinePlaybackQuality
@@ -61,6 +64,7 @@ data class PlayerUiState(
     val lyrics: LyricsUiState = LyricsUiState.Idle,
     val lyricsPreferences: LyricsPreferences = LyricsPreferences(),
     val like: LikeUiState = LikeUiState.Unsupported,
+    val karaoke: KaraokeSessionState = KaraokeSessionState(),
 )
 
 @HiltViewModel
@@ -70,6 +74,7 @@ class PlayerViewModel @Inject constructor(
     private val lyricsPreferencesRepository: LyricsPreferencesRepository,
     private val likedSongsRepository: LikedSongsRepository,
     private val authRepository: AuthRepository,
+    private val karaokeController: KaraokeController,
 ) : ViewModel() {
     constructor(
         playbackController: PlaybackController,
@@ -80,6 +85,7 @@ class PlayerViewModel @Inject constructor(
         TestLyricsPreferencesRepository,
         TestLikedSongsRepository,
         TestAuthRepository,
+        TestKaraokeController,
     )
     private val lyricsState = MutableStateFlow<LyricsUiState>(LyricsUiState.Idle)
     private val likeState = MutableStateFlow<LikeUiState>(LikeUiState.Unsupported)
@@ -93,8 +99,9 @@ class PlayerViewModel @Inject constructor(
         lyricsState,
         lyricsPreferencesRepository.preferences,
         likeState,
-    ) { playback, lyrics, lyricsPreferences, like ->
-        PlayerUiState(playback, lyrics, lyricsPreferences, like)
+        karaokeController.state,
+    ) { playback, lyrics, lyricsPreferences, like, karaoke ->
+        PlayerUiState(playback, lyrics, lyricsPreferences, like, karaoke)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
@@ -205,6 +212,28 @@ class PlayerViewModel @Inject constructor(
 
     fun clearQueue() = playbackController.clear()
 
+    fun enableKaraokeMode() {
+        playbackController.state.value.currentItem?.let(karaokeController::enable)
+    }
+
+    fun disableKaraokeMode() = karaokeController.disable()
+
+    fun startKaraoke() = karaokeController.start()
+
+    fun pauseKaraoke() = karaokeController.pause()
+
+    fun resumeKaraoke() = karaokeController.resume()
+
+    fun previousKaraoke() = karaokeController.previous()
+
+    fun nextKaraoke() = karaokeController.next()
+
+    fun stopKaraoke() = karaokeController.stopAndSave()
+
+    fun selectKaraokeSource(sourceMode: KaraokeSourceMode) = karaokeController.selectSource(sourceMode)
+
+    fun acknowledgeKaraokeFailure() = karaokeController.acknowledgeFailure()
+
     private suspend fun loadLyrics(request: LyricsRequest) {
         val generation = ++lyricsGeneration
         lyricsState.value = LyricsUiState.Loading
@@ -250,6 +279,20 @@ private object TestAuthRepository : AuthRepository {
     ): com.resonote.core.model.PasswordLoginResult = error("unused")
     override suspend fun createQrLoginKey(): com.resonote.core.model.QrLoginKeyResult = error("unused")
     override suspend fun checkQrLogin(key: String): com.resonote.core.model.QrLoginCheckResult = error("unused")
+}
+
+private object TestKaraokeController : KaraokeController {
+    override val state = MutableStateFlow(KaraokeSessionState())
+    override fun enable(item: PlaybackItem) = Unit
+    override fun disable() = Unit
+    override fun start() = Unit
+    override fun selectSource(sourceMode: KaraokeSourceMode) = Unit
+    override fun pause() = Unit
+    override fun resume() = Unit
+    override fun previous() = Unit
+    override fun next() = Unit
+    override fun stopAndSave() = Unit
+    override fun acknowledgeFailure() = Unit
 }
 
 private sealed interface LyricsTarget {

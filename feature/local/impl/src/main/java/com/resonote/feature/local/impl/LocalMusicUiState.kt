@@ -1,5 +1,8 @@
 package com.resonote.feature.local.impl
 
+import com.resonote.core.karaoke.KaraokePreviewState
+import com.resonote.core.model.KaraokeProject
+import com.resonote.core.model.KaraokeProjectId
 import com.resonote.core.model.LocalMedia
 import com.resonote.core.model.LocalMediaImportCandidate
 import com.resonote.core.model.LocalMediaImportFailure
@@ -13,6 +16,11 @@ data class LocalMusicUiState(
     val pendingDelete: LocalMedia? = null,
     val deletingMediaId: String? = null,
     val deleteFailed: Boolean = false,
+    val selectedTab: LocalMusicTab = LocalMusicTab.Songs,
+    val karaokeProjects: List<KaraokeProject> = emptyList(),
+    val selectedProjectIds: Set<KaraokeProjectId> = emptySet(),
+    val editingProject: KaraokeProject? = null,
+    val preview: KaraokePreviewState = KaraokePreviewState(),
 ) {
     val visibleMedia: List<LocalMedia>
         get() {
@@ -47,6 +55,8 @@ data class LocalMusicUiState(
             }
         }
 }
+
+enum class LocalMusicTab { Songs, KaraokeWorks }
 
 enum class LocalMusicSort { ImportedNewest, Title, Artist, Duration }
 

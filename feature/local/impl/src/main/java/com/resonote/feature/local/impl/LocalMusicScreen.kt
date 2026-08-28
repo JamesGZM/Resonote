@@ -5,6 +5,7 @@ package com.resonote.feature.local.impl
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,7 +19,9 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -77,6 +80,16 @@ fun LocalMusicRoute(
         onDismissDelete = viewModel::dismissDelete,
         onConfirmDelete = viewModel::confirmDelete,
         onDismissDeleteFailure = viewModel::dismissDeleteFailure,
+        onSelectTab = viewModel::selectTab,
+        onToggleProjectSelection = viewModel::toggleProjectSelection,
+        onSelectAllProjects = viewModel::selectAllProjects,
+        onDeleteSelectedProjects = viewModel::deleteSelectedProjects,
+        onExportSelectedProjects = viewModel::exportSelectedProjects,
+        onExportProject = viewModel::exportProject,
+        onTogglePreview = viewModel::togglePreview,
+        onEditProject = viewModel::editProject,
+        onDismissProjectEditor = viewModel::dismissProjectEditor,
+        onSaveProjectMix = viewModel::saveProjectMix,
     )
 }
 
@@ -99,104 +112,159 @@ internal fun LocalMusicScreen(
     onDismissDelete: () -> Unit,
     onConfirmDelete: () -> Unit,
     onDismissDeleteFailure: () -> Unit,
+    onSelectTab: (LocalMusicTab) -> Unit = {},
+    onToggleProjectSelection: (com.resonote.core.model.KaraokeProjectId) -> Unit = {},
+    onSelectAllProjects: () -> Unit = {},
+    onDeleteSelectedProjects: () -> Unit = {},
+    onExportSelectedProjects: () -> Unit = {},
+    onExportProject: (com.resonote.core.model.KaraokeProjectId) -> Unit = {},
+    onTogglePreview: (com.resonote.core.model.KaraokeProjectId) -> Unit = {},
+    onEditProject: (com.resonote.core.model.KaraokeProjectId) -> Unit = {},
+    onDismissProjectEditor: () -> Unit = {},
+    onSaveProjectMix: (com.resonote.core.model.KaraokeMixSettings) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            ResonoteTopAppBar(
-                title = {
-                    LocalSearchInput(
-                        value = state.query,
-                        onValueChange = onQueryChange,
-                        placeholder = stringResource(R.string.feature_local_impl_search_hint),
-                        clearLabel = stringResource(R.string.feature_local_impl_clear_search),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Rounded.ArrowBack,
-                            stringResource(R.string.feature_local_impl_back),
+            Column {
+                ResonoteTopAppBar(
+                    title = {
+                        if (state.selectedTab == LocalMusicTab.Songs) {
+                            LocalSearchInput(
+                                value = state.query,
+                                onValueChange = onQueryChange,
+                                placeholder = stringResource(R.string.feature_local_impl_search_hint),
+                                clearLabel = stringResource(R.string.feature_local_impl_clear_search),
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        } else {
+                            Text(stringResource(R.string.feature_local_impl_karaoke_works_title))
+                        }
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                Icons.AutoMirrored.Rounded.ArrowBack,
+                                stringResource(R.string.feature_local_impl_back),
+                            )
+                        }
+                    },
+                )
+                PrimaryTabRow(selectedTabIndex = state.selectedTab.ordinal) {
+                    LocalMusicTab.entries.forEach { tab ->
+                        Tab(
+                            selected = state.selectedTab == tab,
+                            onClick = { onSelectTab(tab) },
+                            text = {
+                                Text(
+                                    stringResource(
+                                        if (tab == LocalMusicTab.Songs) {
+                                            R.string.feature_local_impl_tab_songs
+                                        } else {
+                                            R.string.feature_local_impl_tab_karaoke_works
+                                        },
+                                    ),
+                                )
+                            },
                         )
                     }
-                },
-            )
+                }
+            }
         },
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding).testTag("local-music-list"),
-            contentPadding = PaddingValues(
-                start = 16.dp,
-                top = 8.dp,
-                end = 16.dp,
-                bottom = bottomContentPadding,
-            ),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            if (!state.isLoading && state.media.isNotEmpty()) {
-                item(key = "summary") {
-                    LocalLibrarySummary(
-                        media = state.media,
-                        importEnabled = !state.importState.isBusy(),
-                        onPickFiles = onPickFiles,
-                        onPickDirectory = onPickDirectory,
-                    )
+        if (state.selectedTab == LocalMusicTab.KaraokeWorks) {
+            KaraokeWorksContent(
+                state = state,
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    top = 12.dp,
+                    end = 16.dp,
+                    bottom = bottomContentPadding,
+                ),
+                modifier = Modifier.fillMaxSize().padding(padding),
+                onToggleSelection = onToggleProjectSelection,
+                onSelectAll = onSelectAllProjects,
+                onDeleteSelected = onDeleteSelectedProjects,
+                onExportSelected = onExportSelectedProjects,
+                onExport = onExportProject,
+                onPreview = onTogglePreview,
+                onEdit = onEditProject,
+            )
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().padding(padding).testTag("local-music-list"),
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    top = 8.dp,
+                    end = 16.dp,
+                    bottom = bottomContentPadding,
+                ),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                if (!state.isLoading && state.media.isNotEmpty()) {
+                    item(key = "summary") {
+                        LocalLibrarySummary(
+                            media = state.media,
+                            importEnabled = !state.importState.isBusy(),
+                            onPickFiles = onPickFiles,
+                            onPickDirectory = onPickDirectory,
+                        )
+                    }
                 }
-            }
 
-            when (val importState = state.importState) {
-                LocalImportUiState.Idle -> Unit
-                LocalImportUiState.ScanningDirectory -> item(key = "directory-scan") {
-                    DirectoryScanCard(onCancelImport)
+                when (val importState = state.importState) {
+                    LocalImportUiState.Idle -> Unit
+                    LocalImportUiState.ScanningDirectory -> item(key = "directory-scan") {
+                        DirectoryScanCard(onCancelImport)
+                    }
+                    is LocalImportUiState.Running -> item(key = "import-progress") {
+                        ImportProgressCard(importState, onCancelImport)
+                    }
+                    is LocalImportUiState.AwaitingDuplicate -> Unit
+                    is LocalImportUiState.Completed -> item(key = "import-result") {
+                        ImportResultCard(importState, onDismissImportResult)
+                    }
+                    is LocalImportUiState.DirectoryFailed -> item(key = "directory-error") {
+                        DirectoryFailureCard(importState.reason, onDismissImportResult)
+                    }
                 }
-                is LocalImportUiState.Running -> item(key = "import-progress") {
-                    ImportProgressCard(importState, onCancelImport)
-                }
-                is LocalImportUiState.AwaitingDuplicate -> Unit
-                is LocalImportUiState.Completed -> item(key = "import-result") {
-                    ImportResultCard(importState, onDismissImportResult)
-                }
-                is LocalImportUiState.DirectoryFailed -> item(key = "directory-error") {
-                    DirectoryFailureCard(importState.reason, onDismissImportResult)
-                }
-            }
 
-            if (state.deleteFailed) {
-                item(key = "delete-error") { DeleteFailureCard(onDismissDeleteFailure) }
-            }
+                if (state.deleteFailed) {
+                    item(key = "delete-error") { DeleteFailureCard(onDismissDeleteFailure) }
+                }
 
-            if (!state.isLoading && state.media.isNotEmpty()) {
-                item(key = "tools") {
-                    LocalMusicTools(state, onSortChange, onPlayAll)
+                if (!state.isLoading && state.media.isNotEmpty()) {
+                    item(key = "tools") {
+                        LocalMusicTools(state, onSortChange, onPlayAll)
+                    }
                 }
-            }
 
-            when {
-                state.isLoading -> item(key = "loading") { LoadingState() }
-                state.media.isEmpty() -> item(key = "empty") {
-                    EmptyState(
-                        onPickFiles = onPickFiles,
-                        onPickDirectory = onPickDirectory,
-                        modifier = Modifier.fillParentMaxHeight(0.55f),
-                    )
-                }
-                state.visibleMedia.isEmpty() -> item(key = "no-results") {
-                    NoResultsState(
-                        query = state.query,
-                        modifier = Modifier.fillParentMaxHeight(0.55f),
-                    )
-                }
-                else -> items(state.visibleMedia, key = { it.id.value }) { media ->
-                    LocalMediaRow(
-                        media = media,
-                        isPlaying = playingMediaId == media.id.value,
-                        isDeleting = state.deletingMediaId == media.id.value,
-                        onPlay = { onPlayMedia(media) },
-                        onDelete = { onRequestDelete(media) },
-                    )
+                when {
+                    state.isLoading -> item(key = "loading") { LoadingState() }
+                    state.media.isEmpty() -> item(key = "empty") {
+                        EmptyState(
+                            onPickFiles = onPickFiles,
+                            onPickDirectory = onPickDirectory,
+                            modifier = Modifier.fillParentMaxHeight(0.55f),
+                        )
+                    }
+                    state.visibleMedia.isEmpty() -> item(key = "no-results") {
+                        NoResultsState(
+                            query = state.query,
+                            modifier = Modifier.fillParentMaxHeight(0.55f),
+                        )
+                    }
+                    else -> items(state.visibleMedia, key = { it.id.value }) { media ->
+                        LocalMediaRow(
+                            media = media,
+                            isPlaying = playingMediaId == media.id.value,
+                            isDeleting = state.deletingMediaId == media.id.value,
+                            onPlay = { onPlayMedia(media) },
+                            onDelete = { onRequestDelete(media) },
+                        )
+                    }
                 }
             }
         }
@@ -226,6 +294,13 @@ internal fun LocalMusicScreen(
                     onClick = onConfirmDelete,
                 )
             },
+        )
+    }
+    state.editingProject?.let { project ->
+        KaraokeMixEditorSheet(
+            project = project,
+            onDismiss = onDismissProjectEditor,
+            onSave = onSaveProjectMix,
         )
     }
 }

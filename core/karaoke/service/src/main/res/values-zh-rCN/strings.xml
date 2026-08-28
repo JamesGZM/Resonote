@@ -1,0 +1,14 @@
+<resources>
+    <string name="core_karaoke_service_channel">K 歌录音</string>
+    <string name="core_karaoke_service_title">正在 K 歌</string>
+    <string name="core_karaoke_service_preparing">正在准备伴奏…</string>
+    <string name="core_karaoke_service_countdown">%1$d 秒后开始录音</string>
+    <string name="core_karaoke_service_recording">录音中 · %1$s</string>
+    <string name="core_karaoke_service_paused">录音已暂停</string>
+    <string name="core_karaoke_service_failed">录音已停止</string>
+    <string name="core_karaoke_service_pause">暂停</string>
+    <string name="core_karaoke_service_resume">继续</string>
+    <string name="core_karaoke_service_previous">上一首</string>
+    <string name="core_karaoke_service_next">下一首</string>
+    <string name="core_karaoke_service_stop">停止并保存</string>
+</resources>

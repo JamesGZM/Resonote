@@ -16,6 +16,7 @@ internal data class ApiEndpointOrigins(
     val complexSearch: String = "https://complexsearch.kugou.com",
     val lyrics: String = "https://lyrics.kugou.com",
     val qrLogin: String = "https://login-user.kugou.com",
+    val karaoke: String = "https://nsongacsing.kugou.com",
 )
 
 internal fun interface ApiOriginPolicy {

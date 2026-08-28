@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.google.common.truth.Truth.assertThat
 import com.resonote.core.database.di.DatabaseModule
 import com.resonote.core.database.history.DeviceHistoryEntity
+import com.resonote.core.database.karaoke.KaraokeProjectEntity
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -16,7 +17,7 @@ import org.robolectric.annotation.Config
 @Config(sdk = [35])
 class ResonoteDatabaseMigrationTest {
     @Test
-    fun migrationFromVersionOnePreservesLocalMediaAndCreatesHistory() = runTest {
+    fun migrationFromVersionOnePreservesLocalMediaAndCreatesHistoryAndKaraoke() = runTest {
         val context = RuntimeEnvironment.getApplication()
         val databaseName = "resonote-migration-1-2.db"
         context.deleteDatabase(databaseName)
@@ -71,13 +72,19 @@ class ResonoteDatabaseMigrationTest {
 
         val migrated =
             Room.databaseBuilder(context, ResonoteDatabase::class.java, databaseName)
-                .addMigrations(DatabaseModule.MIGRATION_1_2)
+                .addMigrations(
+                    DatabaseModule.MIGRATION_1_2,
+                    DatabaseModule.MIGRATION_2_3,
+                    DatabaseModule.MIGRATION_3_4,
+                )
                 .allowMainThreadQueries()
                 .build()
         try {
             assertThat(migrated.localMediaDao().findById("retained")?.title).isEqualTo("Retained")
             migrated.deviceHistoryDao().record(historyEntity())
             assertThat(migrated.deviceHistoryDao().findAll().single().mediaId).isEqualTo("cloud-hash")
+            migrated.karaokeDao().insertProject(karaokeProjectEntity())
+            assertThat(migrated.karaokeDao().findProject("karaoke-project")?.songTitle).isEqualTo("Karaoke song")
         } finally {
             migrated.close()
             context.deleteDatabase(databaseName)
@@ -107,6 +114,27 @@ class ResonoteDatabaseMigrationTest {
             albumAudioId = "123",
             lastPlayedAtEpochMillis = 2_000,
             playCount = 1,
+        )
+
+        fun karaokeProjectEntity() = KaraokeProjectEntity(
+            id = "karaoke-project",
+            songHash = "song-hash",
+            songTitle = "Karaoke song",
+            artist = "Artist",
+            artworkUri = null,
+            sourceMode = "Accompaniment",
+            trimStartMillis = 0,
+            status = "Draft",
+            vocalGainDb = 0f,
+            accompanimentGainDb = 0f,
+            vocalLowEqDb = 0f,
+            vocalMidEqDb = 0f,
+            vocalHighEqDb = 0f,
+            vocalOffsetMillis = 0,
+            durationMillis = 180_000,
+            createdAtEpochMillis = 3_000,
+            updatedAtEpochMillis = 3_000,
+            exportedContentUri = null,
         )
     }
 }

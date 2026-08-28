@@ -26,7 +26,11 @@ import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
 import com.github.takahirom.roborazzi.captureScreenRoboImage
 import com.resonote.core.designsystem.theme.ResonoteTheme
 import com.resonote.core.designsystem.theme.ResonoteThemeMode
+import com.resonote.core.karaoke.KaraokeSessionState
+import com.resonote.core.karaoke.KaraokeSessionStatus
 import com.resonote.core.model.AudioQuality
+import com.resonote.core.model.KaraokeProjectId
+import com.resonote.core.model.KaraokeSourceMode
 import com.resonote.core.model.LyricLine
 import com.resonote.core.model.LyricSyllable
 import com.resonote.core.model.LyricsDocument
@@ -83,6 +87,58 @@ class PlayerScreenScreenshotTest {
 
         captureScreenRoboImage(
             filePath = "src/test/screenshots/Player/PlayerCompact_lyrics.png",
+            roborazziOptions = DefaultRoborazziOptions,
+        )
+    }
+
+    @Test
+    fun player_compactKaraokeReady() {
+        setPlayerContent(
+            initialState = screenshotState().copy(
+                playback = screenshotState().playback.copy(positionMillis = 10_000),
+                karaoke = KaraokeSessionState(
+                    enabled = true,
+                    availableSourceModes = setOf(KaraokeSourceMode.Accompaniment, KaraokeSourceMode.Original),
+                    selectedSourceMode = KaraokeSourceMode.Accompaniment,
+                ),
+            ),
+        )
+        composeRule.mainClock.advanceTimeBy(1_000)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithText("Backing").assertIsDisplayed()
+        composeRule.onNodeWithText("Original").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Skip intro").assertIsDisplayed()
+        captureScreenRoboImage(
+            filePath = "src/test/screenshots/Player/PlayerCompact_karaoke_ready.png",
+            roborazziOptions = DefaultRoborazziOptions,
+        )
+    }
+
+    @Test
+    fun player_compactKaraokeRecording() {
+        setPlayerContent(
+            initialState = screenshotState().copy(
+                karaoke = KaraokeSessionState(
+                    enabled = true,
+                    continuousRecordingArmed = true,
+                    status = KaraokeSessionStatus.Recording(
+                        KaraokeProjectId("project"),
+                        elapsedMillis = 102_000,
+                        hasOfficialAccompaniment = true,
+                    ),
+                    availableSourceModes = setOf(KaraokeSourceMode.Accompaniment, KaraokeSourceMode.Original),
+                    selectedSourceMode = KaraokeSourceMode.Accompaniment,
+                ),
+            ),
+        )
+        composeRule.mainClock.advanceTimeBy(1_000)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithContentDescription("Pause").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Finish and save").assertIsDisplayed()
+        captureScreenRoboImage(
+            filePath = "src/test/screenshots/Player/PlayerCompact_karaoke_recording.png",
             roborazziOptions = DefaultRoborazziOptions,
         )
     }
@@ -219,6 +275,7 @@ class PlayerScreenScreenshotTest {
     }
 
     private fun setPlayerContent(
+        initialState: PlayerUiState = screenshotState(),
         onTogglePlay: () -> Unit = {},
         onNext: () -> Unit = {},
         onSeek: (Long) -> Unit = {},
@@ -235,7 +292,7 @@ class PlayerScreenScreenshotTest {
                 override = DeviceConfigurationOverride.ForcedSize(DpSize(390.dp, 844.dp)),
             ) {
                 ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
-                    var playerState by remember { mutableStateOf(screenshotState()) }
+                    var playerState by remember { mutableStateOf(initialState) }
                     PlayerScreen(
                         state = playerState,
                         onBack = {},
@@ -255,6 +312,7 @@ class PlayerScreenScreenshotTest {
                         onSelectQueueItem = {},
                         onRemoveQueueItem = {},
                         onClearQueue = {},
+                        karaokeEnabled = playerState.karaoke.enabled,
                         initialPage = initialPage,
                         onPlayNextClick = onPlayNextClick,
                         onAppendToQueueClick = onAppendToQueueClick,

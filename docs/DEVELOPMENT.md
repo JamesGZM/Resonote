@@ -21,8 +21,12 @@
 | 关系型持久数据 | `core:database` |
 | 偏好或小型持久状态 | `core:datastore` / `datastore-proto` |
 | 文件导入、媒体扫描和本地 metadata | `core:media:local` |
+| K 歌私有素材、录音文件和容量检查 | `core:media:karaoke` |
 | 跨页面播放合同 | `core:playback:api` |
 | 后台音频 ExoPlayer、Queue、MediaSession、播放恢复 | `core:playback:service` |
+| K 歌后台会话、试听与导出合同 | `core:karaoke:api` |
+| K 歌麦克风前台服务、Composition 试听与 WorkManager 导出 | `core:karaoke:service` |
+| 播放详情页内的 K 歌状态与过渡 | `feature:player:impl` |
 | 前台 MV Player 与页面生命周期 | `feature:video:impl`，遵循 ADR-0005 |
 | 主题 Token 与通用原子组件 | `core:designsystem` |
 | 应用级组合、全局导航、Shell | `app` |
@@ -87,6 +91,7 @@ Feature -> Repository interface -> Repository implementation
 | Repository 与映射 | `./gradlew :core:data:testDebugUnitTest` |
 | DataStore / Database | 对应模块的 `testDebugUnitTest` 与迁移测试 |
 | Playback | `./gradlew :core:playback:service:testDebugUnitTest` |
+| K 歌协议、存储、DSP 与导出 | `:core:network:testDebugUnitTest`、`:core:database:testDebugUnitTest`、`:core:karaoke:service:testDebugUnitTest` |
 | Feature 状态/交互 | 对应 Feature 的 `testDebugUnitTest` |
 | 设计组件 | `:core:designsystem:testDebugUnitTest` 和相关 Roborazzi Task |
 | 文档 | `./gradlew checkDocumentation` |

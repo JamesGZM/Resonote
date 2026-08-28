@@ -11,6 +11,11 @@ import androidx.compose.ui.unit.dp
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.resonote.core.designsystem.theme.ResonoteTheme
 import com.resonote.core.designsystem.theme.ResonoteThemeMode
+import com.resonote.core.model.KaraokeMixSettings
+import com.resonote.core.model.KaraokeProject
+import com.resonote.core.model.KaraokeProjectId
+import com.resonote.core.model.KaraokeProjectStatus
+import com.resonote.core.model.KaraokeSourceMode
 import com.resonote.core.model.LocalMedia
 import com.resonote.core.model.LocalMediaId
 import com.resonote.core.screenshottesting.DefaultRoborazziOptions
@@ -55,6 +60,34 @@ class LocalMusicScreenshotTest {
             playingMediaId = "one",
         )
         capture("content")
+    }
+
+    @Test
+    fun localMusic_karaokeWorks() {
+        setScreen(
+            LocalMusicUiState(
+                isLoading = false,
+                selectedTab = LocalMusicTab.KaraokeWorks,
+                karaokeProjects = listOf(
+                    KaraokeProject(
+                        id = KaraokeProjectId("work"),
+                        songHash = "hash",
+                        songTitle = "潮汐记忆",
+                        artist = "林澈",
+                        artworkUri = null,
+                        sourceMode = KaraokeSourceMode.Accompaniment,
+                        trimStartMillis = 0,
+                        status = KaraokeProjectStatus.Edited,
+                        mixSettings = KaraokeMixSettings(),
+                        durationMillis = 218_000,
+                        createdAtEpochMillis = 1_723_456_789,
+                        updatedAtEpochMillis = 1_723_456_789,
+                        exportedContentUri = null,
+                    ),
+                ),
+            ),
+        )
+        capture("karaoke_works")
     }
 
     private fun setScreen(state: LocalMusicUiState, playingMediaId: String? = null) {

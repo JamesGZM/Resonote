@@ -1,5 +1,9 @@
 package com.resonote.feature.player.impl
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -33,13 +37,16 @@ import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.resonote.core.designsystem.component.LocalResonoteSnackbarController
 import com.resonote.core.designsystem.tokens.ResonoteTokens
+import com.resonote.core.karaoke.KaraokeSessionFailure
 import com.resonote.core.model.LyricsBackgroundMode
 import com.resonote.core.model.OnlinePlaybackQuality
 import com.resonote.core.model.OnlineSong
@@ -69,6 +76,22 @@ fun PlayerRoute(
     val likeUnsupported = stringResource(R.string.feature_player_impl_like_unsupported)
     val queuedNext = stringResource(R.string.feature_player_impl_added_next)
     val queuedLast = stringResource(R.string.feature_player_impl_added_queue)
+    val context = LocalContext.current
+    val microphoneDenied = stringResource(R.string.feature_player_impl_karaoke_microphone_denied)
+    val karaokeFailure = state.karaoke.failure?.let { failure ->
+        stringResource(
+            when (failure) {
+                KaraokeSessionFailure.UnsupportedSource -> R.string.feature_player_impl_karaoke_source_error
+                KaraokeSessionFailure.SourceUnavailable -> R.string.feature_player_impl_karaoke_source_error
+                KaraokeSessionFailure.MicrophoneUnavailable -> R.string.feature_player_impl_karaoke_microphone_error
+                KaraokeSessionFailure.InsufficientStorage -> R.string.feature_player_impl_karaoke_storage_error
+                KaraokeSessionFailure.StorageUnavailable -> R.string.feature_player_impl_karaoke_save_error
+            },
+        )
+    }
+    val microphoneLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) viewModel.startKaraoke() else snackbar?.show(microphoneDenied)
+    }
     val onlineSong = (state.playback.currentItem?.origin as? PlaybackOrigin.Online)?.song
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
@@ -77,6 +100,12 @@ fun PlayerRoute(
                 PlayerEvent.LikeFailed -> snackbar?.show(likeFailed)
                 PlayerEvent.LikeUnsupported -> snackbar?.show(likeUnsupported)
             }
+        }
+    }
+    LaunchedEffect(karaokeFailure) {
+        karaokeFailure?.let {
+            snackbar?.show(it)
+            viewModel.acknowledgeKaraokeFailure()
         }
     }
     PlayerScreen(
@@ -95,6 +124,29 @@ fun PlayerRoute(
         onClearQueue = viewModel::clearQueue,
         onToggleLike = viewModel::toggleLike,
         onLyricsSettingsClick = onLyricsSettingsClick,
+        karaokeEnabled = state.karaoke.enabled,
+        onKaraokeModeChange = { enabled ->
+            if (enabled) {
+                viewModel.enableKaraokeMode()
+            } else {
+                viewModel.disableKaraokeMode()
+            }
+        },
+        onStartKaraoke = {
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) ==
+                PackageManager.PERMISSION_GRANTED
+            ) {
+                viewModel.startKaraoke()
+            } else {
+                microphoneLauncher.launch(Manifest.permission.RECORD_AUDIO)
+            }
+        },
+        onPauseKaraoke = viewModel::pauseKaraoke,
+        onResumeKaraoke = viewModel::resumeKaraoke,
+        onPreviousKaraoke = viewModel::previousKaraoke,
+        onNextKaraoke = viewModel::nextKaraoke,
+        onStopKaraoke = viewModel::stopKaraoke,
+        onSelectKaraokeSource = viewModel::selectKaraokeSource,
         paletteSeed = paletteSeed,
         containerTransitionRunning = containerTransitionRunning,
         containerTransitionOrigin = containerTransitionOrigin,
@@ -140,6 +192,15 @@ fun PlayerScreen(
     onSongInfoClick: (() -> Unit)? = null,
     onToggleLike: () -> Unit = {},
     onLyricsSettingsClick: () -> Unit = {},
+    karaokeEnabled: Boolean = false,
+    onKaraokeModeChange: (Boolean) -> Unit = {},
+    onStartKaraoke: () -> Unit = {},
+    onPauseKaraoke: () -> Unit = {},
+    onResumeKaraoke: () -> Unit = {},
+    onPreviousKaraoke: () -> Unit = {},
+    onNextKaraoke: () -> Unit = {},
+    onStopKaraoke: () -> Unit = {},
+    onSelectKaraokeSource: (com.resonote.core.model.KaraokeSourceMode) -> Unit = {},
     paletteSeed: PlayerPaletteSeed? = null,
     containerTransitionRunning: Boolean = false,
     containerTransitionOrigin: Rect? = null,
@@ -178,6 +239,9 @@ fun PlayerScreen(
             withFrameNanos { }
             transitionContentReady = true
         }
+    }
+    LaunchedEffect(karaokeEnabled) {
+        if (karaokeEnabled) currentPage = 1
     }
     val artworkBackdropVisible = currentPage == 0 ||
         state.lyricsPreferences.backgroundMode == LyricsBackgroundMode.Artwork
@@ -294,24 +358,34 @@ fun PlayerScreen(
                             state.playback.durationMillis,
                             palette,
                             onSeek,
+                            enabled = !karaokeEnabled || !state.karaoke.continuousRecordingArmed,
                         )
-                        PlaybackControls(
-                            state.playback.status,
-                            state.playback.mode,
-                            state.like,
-                            palette,
-                            onToggleLike,
-                            onTogglePlay,
-                            onPrevious,
-                            onNext,
-                            onModeChange,
-                        )
-                        PlayerToolRow(
-                            palette,
-                            state.playback.playbackSpeed,
-                            { formatOpen = true },
-                            { speedOpen = true },
-                            { queueOpen = true },
+                        PlayerBottomControls(
+                            karaokeEnabled = karaokeEnabled,
+                            karaoke = state.karaoke,
+                            lyrics = state.lyrics,
+                            positionMillis = state.playback.positionMillis,
+                            playbackStatus = state.playback.status,
+                            playbackMode = state.playback.mode,
+                            playbackSpeed = state.playback.playbackSpeed,
+                            like = state.like,
+                            palette = palette,
+                            onToggleLike = onToggleLike,
+                            onTogglePlay = onTogglePlay,
+                            onPrevious = onPrevious,
+                            onNext = onNext,
+                            onModeChange = onModeChange,
+                            onStartKaraoke = onStartKaraoke,
+                            onPauseKaraoke = onPauseKaraoke,
+                            onResumeKaraoke = onResumeKaraoke,
+                            onPreviousKaraoke = onPreviousKaraoke,
+                            onNextKaraoke = onNextKaraoke,
+                            onStopKaraoke = onStopKaraoke,
+                            onSelectKaraokeSource = onSelectKaraokeSource,
+                            onSkipIntro = onSeek,
+                            onOpenFormat = { formatOpen = true },
+                            onOpenSpeed = { speedOpen = true },
+                            onOpenQueue = { queueOpen = true },
                         )
                     }
                 }
@@ -326,6 +400,8 @@ fun PlayerScreen(
             onAddToPlaylistClick,
             onSongInfoClick,
             onLyricsSettingsClick,
+            karaokeEnabled,
+            onKaraokeModeChange,
         )
     }
     if (queueOpen) {

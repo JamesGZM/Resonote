@@ -71,6 +71,7 @@ internal fun PlayerProgress(
     durationMillis: Long,
     palette: PlayerPalette,
     onSeek: (Long) -> Unit,
+    enabled: Boolean = true,
 ) {
     val duration = durationMillis.coerceAtLeast(1L)
     var pendingFraction by remember { mutableStateOf<Float?>(null) }
@@ -87,6 +88,7 @@ internal fun PlayerProgress(
                 pendingFraction = null
             },
             Modifier.fillMaxSize(),
+            enabled = enabled,
         )
         Row(
             Modifier.fillMaxWidth().align(Alignment.TopCenter).padding(horizontal = 7.dp, vertical = 16.dp),
@@ -111,6 +113,7 @@ internal fun ThinPlayerSeekBar(
     onSeek: (Float) -> Unit,
     onSeekFinished: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     var dragging by remember { mutableStateOf(false) }
     val thumb by animateDpAsState(if (dragging) 14.dp else 8.dp, label = "player seek thumb")
@@ -118,37 +121,40 @@ internal fun ThinPlayerSeekBar(
     val position = positionMillis.coerceIn(0L, duration)
     val played = position.toFloat() / duration
     val buffered = bufferedPositionMillis.coerceIn(position, duration).toFloat() / duration
-    Canvas(
-        modifier.height(48.dp)
-            .semantics {
-                progressBarRangeInfo = ProgressBarRangeInfo(position.toFloat(), 0f..duration.toFloat())
-                setProgress { target ->
-                    onSeek((target.coerceIn(0f, duration.toFloat()) / duration).coerceIn(0f, 1f))
+    val interactionModifier = if (enabled) {
+        Modifier.semantics {
+            progressBarRangeInfo = ProgressBarRangeInfo(position.toFloat(), 0f..duration.toFloat())
+            setProgress { target ->
+                onSeek((target.coerceIn(0f, duration.toFloat()) / duration).coerceIn(0f, 1f))
+                onSeekFinished()
+                true
+            }
+        }.pointerInput(duration) {
+            awaitEachGesture {
+                val down = awaitFirstDown(requireUnconsumed = false)
+                down.consume()
+                dragging = true
+                fun seek(x: Float) {
+                    val inset = 7.dp.toPx()
+                    onSeek(((x - inset) / (size.width - inset * 2f).coerceAtLeast(1f)).coerceIn(0f, 1f))
+                }
+                try {
+                    seek(down.position.x)
+                    drag(down.id) { change ->
+                        change.consume()
+                        seek(change.position.x)
+                    }
+                } finally {
+                    dragging = false
                     onSeekFinished()
-                    true
                 }
             }
-            .pointerInput(duration) {
-                awaitEachGesture {
-                    val down = awaitFirstDown(requireUnconsumed = false)
-                    down.consume()
-                    dragging = true
-                    fun seek(x: Float) {
-                        val inset = 7.dp.toPx()
-                        onSeek(((x - inset) / (size.width - inset * 2f).coerceAtLeast(1f)).coerceIn(0f, 1f))
-                    }
-                    try {
-                        seek(down.position.x)
-                        drag(down.id) { change ->
-                            change.consume()
-                            seek(change.position.x)
-                        }
-                    } finally {
-                        dragging = false
-                        onSeekFinished()
-                    }
-                }
-            },
+        }
+    } else {
+        Modifier.semantics { progressBarRangeInfo = ProgressBarRangeInfo(position.toFloat(), 0f..duration.toFloat()) }
+    }
+    Canvas(
+        modifier.height(48.dp).then(interactionModifier),
     ) {
         val inset = 7.dp.toPx()
         val start = inset

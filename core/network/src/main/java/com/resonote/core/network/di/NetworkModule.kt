@@ -9,6 +9,7 @@ import com.resonote.core.network.AuthNetworkDataSource
 import com.resonote.core.network.CatalogNetworkDataSource
 import com.resonote.core.network.CloudNetworkDataSource
 import com.resonote.core.network.HomeNetworkDataSource
+import com.resonote.core.network.KaraokeNetworkDataSource
 import com.resonote.core.network.LibraryNetworkDataSource
 import com.resonote.core.network.ListeningHistoryNetworkDataSource
 import com.resonote.core.network.LyricsNetworkDataSource
@@ -30,6 +31,7 @@ import com.resonote.core.network.protocol.ApiOriginPolicy
 import com.resonote.core.network.protocol.ApiResponseMetadataInterceptor
 import com.resonote.core.network.protocol.ApiSigningInterceptor
 import com.resonote.core.network.protocol.DeviceRegistrationProfileProvider
+import com.resonote.core.network.protocol.KaraokeAccompanimentProtocolClient
 import com.resonote.core.network.protocol.ProductionApiOriginPolicy
 import com.resonote.core.network.protocol.ProtocolRandom
 import com.resonote.core.network.protocol.RedactedNetworkLoggingInterceptor
@@ -218,6 +220,11 @@ internal abstract class NetworkBindings {
 
     @Binds
     abstract fun bindLyricsNetworkDataSource(implementation: RealLyricsNetworkDataSource): LyricsNetworkDataSource
+
+    @Binds
+    abstract fun bindKaraokeNetworkDataSource(
+        implementation: KaraokeAccompanimentProtocolClient,
+    ): KaraokeNetworkDataSource
 
     @Binds abstract fun bindVideoNetworkDataSource(implementation: RealVideoNetworkDataSource): VideoNetworkDataSource
 

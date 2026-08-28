@@ -52,4 +52,16 @@
     <string name="feature_player_impl_queue_mode_action">播放模式：%1$s</string>
     <string name="feature_player_impl_clear">清空</string>
     <string name="feature_player_impl_remove">移除 %1$s</string>
+    <string name="feature_player_impl_karaoke_mode">K 歌模式</string>
+    <string name="feature_player_impl_karaoke_mode_description">连续录制当前队列并自动保存草稿</string>
+    <string name="feature_player_impl_karaoke_start">开始 K 歌</string>
+    <string name="feature_player_impl_karaoke_stop">结束并保存</string>
+    <string name="feature_player_impl_karaoke_skip_intro">跳过前奏</string>
+    <string name="feature_player_impl_karaoke_accompaniment">伴奏</string>
+    <string name="feature_player_impl_karaoke_original">原唱</string>
+    <string name="feature_player_impl_karaoke_microphone_denied">需要麦克风权限才能录音</string>
+    <string name="feature_player_impl_karaoke_microphone_error">麦克风当前不可用</string>
+    <string name="feature_player_impl_karaoke_source_error">暂时无法准备 K 歌音源</string>
+    <string name="feature_player_impl_karaoke_storage_error">存储空间不足，无法继续录音</string>
+    <string name="feature_player_impl_karaoke_save_error">K 歌草稿保存失败</string>
 </resources>

@@ -1,0 +1,14 @@
+<resources>
+    <string name="core_karaoke_service_channel">Karaoke recording</string>
+    <string name="core_karaoke_service_title">Karaoke recording</string>
+    <string name="core_karaoke_service_preparing">Preparing accompaniment…</string>
+    <string name="core_karaoke_service_countdown">Recording starts in %1$d</string>
+    <string name="core_karaoke_service_recording">Recording · %1$s</string>
+    <string name="core_karaoke_service_paused">Recording paused</string>
+    <string name="core_karaoke_service_failed">Recording stopped</string>
+    <string name="core_karaoke_service_pause">Pause</string>
+    <string name="core_karaoke_service_resume">Resume</string>
+    <string name="core_karaoke_service_previous">Previous</string>
+    <string name="core_karaoke_service_next">Next</string>
+    <string name="core_karaoke_service_stop">Stop and save</string>
+</resources>

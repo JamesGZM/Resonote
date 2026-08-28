@@ -161,6 +161,8 @@ interface PlaybackController {
 
     fun playAll(items: List<PlaybackItem>, startIndex: Int = 0)
 
+    fun replaceQueue(items: List<PlaybackItem>, startIndex: Int, positionMillis: Long, playWhenReady: Boolean)
+
     fun playNext(items: List<PlaybackItem>)
 
     fun append(items: List<PlaybackItem>)
@@ -180,6 +182,8 @@ interface PlaybackController {
     fun previous()
 
     fun seekTo(positionMillis: Long)
+
+    fun replaceCurrentItem(item: PlaybackItem, positionMillis: Long, playWhenReady: Boolean)
 
     fun setMode(mode: PlaybackMode)
 

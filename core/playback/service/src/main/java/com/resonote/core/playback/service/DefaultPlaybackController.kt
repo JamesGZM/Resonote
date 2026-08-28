@@ -170,6 +170,29 @@ internal class DefaultPlaybackController internal constructor(
         }
     }
 
+    override fun replaceQueue(
+        items: List<PlaybackItem>,
+        startIndex: Int,
+        positionMillis: Long,
+        playWhenReady: Boolean,
+    ) {
+        require(items.isNotEmpty()) { "Playback queue must not be empty" }
+        require(startIndex in items.indices) { "startIndex must point to an item" }
+        hasPlaybackMutation = true
+        scope.launch {
+            queue.replace(items, startIndex)
+            failureRecovery.reset()
+            publishQueue(status = PlaybackStatus.Resolving)
+            requestPersistSession(positionMillis = positionMillis)
+            resolveAndLoad(
+                item = checkNotNull(queue.currentItem),
+                failureBehavior = FailureBehavior.SkipQueueItem,
+                startPositionMillis = positionMillis,
+                playWhenReady = playWhenReady,
+            )
+        }
+    }
+
     override fun append(items: List<PlaybackItem>) {
         if (items.isEmpty()) return
         hasPlaybackMutation = true
@@ -333,6 +356,21 @@ internal class DefaultPlaybackController internal constructor(
         }
         mutableState.value = mutableState.value.copy(positionMillis = target)
         requestPersistSession(positionMillis = target)
+    }
+
+    override fun replaceCurrentItem(item: PlaybackItem, positionMillis: Long, playWhenReady: Boolean) {
+        if (item.queueKey != queue.currentItem?.queueKey) return
+        hasPlaybackMutation = true
+        scope.launch {
+            failureRecovery.reset()
+            mutableState.value = mutableState.value.copy(issue = null)
+            resolveAndLoad(
+                item = item,
+                failureBehavior = FailureBehavior.RejectWithoutQueueMutation,
+                startPositionMillis = positionMillis,
+                playWhenReady = playWhenReady,
+            )
+        }
     }
 
     override fun setMode(mode: PlaybackMode) {

@@ -84,6 +84,10 @@ internal fun PlayerPager(
     modifier: Modifier = Modifier,
 ) {
     val pagerState = rememberPagerState(initialPage = initialPage.coerceIn(0, 1), pageCount = { 2 })
+    LaunchedEffect(initialPage) {
+        val target = initialPage.coerceIn(0, 1)
+        if (pagerState.currentPage != target) pagerState.animateScrollToPage(target)
+    }
     LaunchedEffect(pagerState.currentPage) { onPageChanged(pagerState.currentPage) }
     HorizontalPager(
         state = pagerState,

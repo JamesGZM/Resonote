@@ -142,6 +142,12 @@ class PlayerViewModelTest {
 
         override fun play(item: PlaybackItem) = Unit
         override fun playAll(items: List<PlaybackItem>, startIndex: Int) = Unit
+        override fun replaceQueue(
+            items: List<PlaybackItem>,
+            startIndex: Int,
+            positionMillis: Long,
+            playWhenReady: Boolean,
+        ) = Unit
         override fun playNext(items: List<PlaybackItem>) = Unit
         override fun append(items: List<PlaybackItem>) = Unit
         override fun selectQueueItem(index: Int) {
@@ -158,6 +164,7 @@ class PlayerViewModelTest {
         override fun seekTo(positionMillis: Long) {
             seekPosition = positionMillis
         }
+        override fun replaceCurrentItem(item: PlaybackItem, positionMillis: Long, playWhenReady: Boolean) = Unit
         override fun setMode(mode: PlaybackMode) {
             selectedMode = mode
         }

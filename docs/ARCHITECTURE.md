@@ -28,14 +28,18 @@ flowchart TB
     database[":core:database\nRoom"]
     datastore[":core:datastore\nProto 偏好与 Session"]
     local[":core:media:local\n文件导入与媒体解析"]
+    karaokeMedia[":core:media:karaoke\nK 歌私有素材与录音文件"]
     playbackApi[":core:playback:api\nMedia3-free 播放合同"]
     playbackService[":core:playback:service\nMedia3、Queue、MediaSession"]
+    karaokeApi[":core:karaoke:api\nK 歌会话、试听与导出合同"]
+    karaokeService[":core:karaoke:service\n麦克风 FGS、混音试听与导出"]
 
     app --> featureApi
     app --> featureImpl
     app --> navigation
     app --> playbackApi
     app --> playbackService
+    app --> karaokeService
     catalog --> design
 
     featureImpl --> featureApi
@@ -50,10 +54,16 @@ flowchart TB
     data --> database
     data --> datastore
     data --> local
+    data --> karaokeMedia
 
     playbackApi --> model
     playbackService --> playbackApi
     playbackService --> data
+    karaokeApi --> model
+    karaokeApi --> playbackApi
+    karaokeService --> karaokeApi
+    karaokeService --> playbackApi
+    karaokeService --> data
 ```
 
 强制规则：
@@ -95,12 +105,15 @@ flowchart TB
 - `core:database`：Room Database、DAO、Entity 与 Migration。
 - `core:datastore` / `datastore-proto`：主题、播放偏好、Session 等非关系型持久状态。
 - `core:media:local`：Android 文件入口、私有副本、媒体校验和 metadata 提取。
+- `core:media:karaoke`：K 歌伴奏/原唱的稳定私有副本、48 kHz 单声道人声分段和 512 MiB 安全余量检查。
 
 ### Playback
 
 `core:playback:api` 定义 UI 可消费的后台音频播放状态和命令，不暴露 Media3。`core:playback:service` 持有音频 ExoPlayer、Queue、Source Resolver、失败恢复、播放历史资格和 MediaSessionService。
 
 音频页面销毁不能成为停止播放的信号；Feature 只向 `PlaybackController` 发送意图并观察状态。
+
+K 歌拥有独立的后台生命周期，但不是独立导航页面。播放详情页右上角开关只改变当前 Player 的控制状态，背景、顶栏、歌词 Pager、队列与播放位置保持连续；麦克风权限仍只在用户点击开始时请求。`core:karaoke:api` 提供不暴露 Media3 的会话、作品试听和导出合同；`core:karaoke:service` 以 microphone 前台服务持续录音，跟随播放队列切歌并把有效分段交给 `KaraokeRepository`。作品、混音参数、人声分段和伴奏/原唱切换时间轴以 Room 为事实源，底轨和人声源文件保存在 App 私有目录；v4 起作品可在录制中切换双底轨，试听与导出按切换边界裁剪并串接。已导出的 M4A 通过 MediaStore 写入 `Music/Resonote/Karaoke`，删除工程默认不删除该公开文件。试听和导出复用同一个 Media3 Composition，应用人声/伴奏增益、三段人声 EQ、±200 ms 对齐与最终 PCM 限幅。只有用户手动开始后才武装连续录音，短于 1 秒或静音的分段不能形成作品。
 
 桌面歌词同样独立于页面生命周期。`DesktopLyricsController` 是设置与 App Shell 使用的控制合同；`DesktopLyricsService` 订阅 `PlaybackController`、`LyricsRepository`、主题和歌词偏好，以 `TYPE_APPLICATION_OVERLAY` 持有可拖动的悬浮播放控制器。悬浮层复用播放器的封面 Palette 取色顺序，并在封面不可用时回退到 Resonote Light / Dark / AMOLED 或系统动态强调色；无底板时按 App 明暗主题选择前景，有底板时按封面底色选择前景。首次显示可使用主题回退色；切歌时必须保留当前 Palette，等新封面 Palette 就绪后直接做 A→B 插值，不能插入默认色。播放位置的公共状态保持 500ms 更新频率，桌面歌词只在播放中按单调时钟插值到 60ms 渲染帧；逐字高亮使用柔化前沿，行切换必须让主行和辅助行共同完成缓动交接，并避免描边文本叠亮。已有歌词时，下一首歌词加载阶段冻结现有内容，不能插入“正在加载”中间帧。透明底板下的文字和控制使用高对比描边与阴影，有底板时降低保护层强度。悬浮层以歌词区域作为持久化位置锚点，控制显隐期间保持窗口尺寸和坐标不变，只改变透明度。窗口宽度按当前歌曲歌词文本测量，在 220–260dp 间收紧，并保留 4dp 屏幕边距；歌词基准或字号变化时才可更新宽度。拖动必须以 `WindowManager.LayoutParams` 的真实窗口坐标为起点。顶部提供位置锁定和关闭，底部依次提供设置、上一首、播放/暂停、下一首与播放模式，其中播放按钮固定居中，四角按钮共享水平边距；控制使用 Resonote Material 3 的圆形 Filled / Tonal Icon Button 形态和 Palette 语义。控制显示使用短时纯透明度渐变，反向操作从当前透明度继续，不能造成歌词或按钮跳变。设置动作通过 App Intent 直达桌面歌词设置页。锁定仅禁止拖动，闭锁图标从已验收的开锁图标几何闭合得到，不增加锁孔或另一套造型；歌词与全部播放控制始终可操作。控制栏超时仅折叠操作区，歌词在暂停时仍保留。系统特殊权限、前台服务通知和窗口失败只影响桌面歌词，不得改变播放事实或播放器内歌词状态。
 

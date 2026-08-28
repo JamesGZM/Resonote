@@ -2,9 +2,15 @@ package com.resonote.feature.local.impl
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.resonote.core.data.KaraokeRepository
 import com.resonote.core.data.LocalMediaDirectoryScanFailure
 import com.resonote.core.data.LocalMediaDirectoryScanResult
 import com.resonote.core.data.LocalMediaRepository
+import com.resonote.core.karaoke.KaraokeExportController
+import com.resonote.core.karaoke.KaraokePreviewController
+import com.resonote.core.karaoke.KaraokePreviewState
+import com.resonote.core.model.KaraokeMixSettings
+import com.resonote.core.model.KaraokeProjectId
 import com.resonote.core.model.LocalMedia
 import com.resonote.core.model.LocalMediaDeleteResult
 import com.resonote.core.model.LocalMediaDuplicateAction
@@ -17,12 +23,24 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class LocalMusicViewModel @Inject constructor(private val repository: LocalMediaRepository) : ViewModel() {
+class LocalMusicViewModel @Inject constructor(
+    private val repository: LocalMediaRepository,
+    private val karaokeRepository: KaraokeRepository,
+    private val karaokeExportController: KaraokeExportController,
+    private val karaokePreviewController: KaraokePreviewController,
+) : ViewModel() {
+    constructor(repository: LocalMediaRepository) : this(
+        repository,
+        EmptyKaraokeRepository,
+        EmptyKaraokeExportController,
+        EmptyKaraokePreviewController,
+    )
     private val mutableUiState = MutableStateFlow(LocalMusicUiState())
     val uiState: StateFlow<LocalMusicUiState> = mutableUiState.asStateFlow()
 
@@ -41,6 +59,84 @@ class LocalMusicViewModel @Inject constructor(private val repository: LocalMedia
             repository.observeAll()
                 .catch { mutableUiState.update { state -> state.copy(isLoading = false) } }
                 .collect { media -> mutableUiState.update { it.copy(media = media, isLoading = false) } }
+        }
+        viewModelScope.launch {
+            karaokeRepository.observeProjects().collect { projects ->
+                mutableUiState.update { state ->
+                    state.copy(
+                        karaokeProjects = projects,
+                        selectedProjectIds = state.selectedProjectIds.intersect(projects.map { it.id }.toSet()),
+                        editingProject = state.editingProject?.let { editing ->
+                            projects.firstOrNull { it.id == editing.id }
+                        },
+                    )
+                }
+            }
+        }
+        viewModelScope.launch {
+            karaokePreviewController.state.collect { preview -> mutableUiState.update { it.copy(preview = preview) } }
+        }
+    }
+
+    fun selectTab(tab: LocalMusicTab) {
+        if (tab == mutableUiState.value.selectedTab) return
+        karaokePreviewController.stop()
+        mutableUiState.update { it.copy(selectedTab = tab, selectedProjectIds = emptySet(), editingProject = null) }
+    }
+
+    fun toggleProjectSelection(id: KaraokeProjectId) {
+        mutableUiState.update { state ->
+            val selected = state.selectedProjectIds.toMutableSet()
+            if (!selected.add(id)) selected.remove(id)
+            state.copy(selectedProjectIds = selected)
+        }
+    }
+
+    fun selectAllProjects() {
+        mutableUiState.update { state ->
+            val all = state.karaokeProjects.mapTo(linkedSetOf()) { it.id }
+            state.copy(selectedProjectIds = if (state.selectedProjectIds == all) emptySet() else all)
+        }
+    }
+
+    fun deleteSelectedProjects() {
+        val ids = mutableUiState.value.selectedProjectIds
+        if (ids.isEmpty()) return
+        karaokePreviewController.stop()
+        viewModelScope.launch {
+            if (karaokeRepository.deleteProjects(ids)) {
+                mutableUiState.update { it.copy(selectedProjectIds = emptySet(), editingProject = null) }
+            }
+        }
+    }
+
+    fun exportSelectedProjects() {
+        karaokeExportController.export(mutableUiState.value.selectedProjectIds)
+    }
+
+    fun exportProject(id: KaraokeProjectId) {
+        karaokeExportController.export(setOf(id))
+    }
+
+    fun togglePreview(id: KaraokeProjectId) = karaokePreviewController.toggle(id)
+
+    fun editProject(id: KaraokeProjectId) {
+        mutableUiState.update { state ->
+            state.copy(editingProject = state.karaokeProjects.firstOrNull { it.id == id })
+        }
+    }
+
+    fun dismissProjectEditor() {
+        mutableUiState.update { it.copy(editingProject = null) }
+    }
+
+    fun saveProjectMix(settings: KaraokeMixSettings) {
+        val project = mutableUiState.value.editingProject ?: return
+        viewModelScope.launch {
+            if (karaokeRepository.updateMix(project.id, settings)) {
+                karaokePreviewController.stop()
+                mutableUiState.update { it.copy(editingProject = null) }
+            }
         }
     }
 
@@ -275,4 +371,47 @@ class LocalMusicViewModel @Inject constructor(private val repository: LocalMedia
         LocalMediaDirectoryScanFailure.PermissionDenied -> LocalDirectoryImportFailure.PermissionDenied
         LocalMediaDirectoryScanFailure.Unavailable -> LocalDirectoryImportFailure.Unavailable
     }
+}
+
+private object EmptyKaraokeRepository : KaraokeRepository {
+    override fun observeProjects() = flowOf(emptyList<com.resonote.core.model.KaraokeProject>())
+    override suspend fun findProject(id: KaraokeProjectId) = null
+    override suspend fun prepareProject(request: com.resonote.core.data.KaraokePreparationRequest) =
+        com.resonote.core.data.PrepareKaraokeResult.Failed(
+            com.resonote.core.data.KaraokePreparationFailure.SourceUnavailable,
+        )
+    override suspend fun selectBackingSource(
+        projectId: KaraokeProjectId,
+        sourceMode: com.resonote.core.model.KaraokeSourceMode,
+        timelineStartMillis: Long,
+    ) = false
+    override suspend fun setTrimStart(projectId: KaraokeProjectId, trimStartMillis: Long) = false
+    override suspend fun createRecordingFile(projectId: KaraokeProjectId, expectedDurationMillis: Long) =
+        com.resonote.core.data.KaraokeRecordingFileResult.Failed
+    override suspend fun commitRecordingSegment(
+        projectId: KaraokeProjectId,
+        segmentId: String,
+        path: String,
+        timelineStartMillis: Long,
+        durationMillis: Long,
+        peakAmplitude: Int,
+    ) = false
+    override suspend fun updateMix(projectId: KaraokeProjectId, settings: KaraokeMixSettings) = false
+    override suspend fun renderInput(projectId: KaraokeProjectId) = null
+    override suspend fun updateExportStatus(
+        projectId: KaraokeProjectId,
+        status: com.resonote.core.model.KaraokeProjectStatus,
+        exportedContentUri: String?,
+    ) = false
+    override suspend fun deleteProjects(projectIds: Set<KaraokeProjectId>) = false
+}
+
+private object EmptyKaraokeExportController : KaraokeExportController {
+    override fun export(projectIds: Set<KaraokeProjectId>) = false
+}
+
+private object EmptyKaraokePreviewController : KaraokePreviewController {
+    override val state = MutableStateFlow(KaraokePreviewState())
+    override fun toggle(projectId: KaraokeProjectId) = Unit
+    override fun stop() = Unit
 }

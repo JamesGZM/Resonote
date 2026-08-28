@@ -52,4 +52,16 @@
     <string name="feature_player_impl_queue_mode_action">Playback mode: %1$s</string>
     <string name="feature_player_impl_clear">Clear</string>
     <string name="feature_player_impl_remove">Remove %1$s</string>
+    <string name="feature_player_impl_karaoke_mode">Karaoke mode</string>
+    <string name="feature_player_impl_karaoke_mode_description">Record each song and save it as a draft</string>
+    <string name="feature_player_impl_karaoke_start">Start karaoke</string>
+    <string name="feature_player_impl_karaoke_stop">Finish and save</string>
+    <string name="feature_player_impl_karaoke_skip_intro">Skip intro</string>
+    <string name="feature_player_impl_karaoke_accompaniment">Backing</string>
+    <string name="feature_player_impl_karaoke_original">Original</string>
+    <string name="feature_player_impl_karaoke_microphone_denied">Microphone permission is required to record</string>
+    <string name="feature_player_impl_karaoke_microphone_error">The microphone is unavailable</string>
+    <string name="feature_player_impl_karaoke_source_error">The karaoke audio source could not be prepared</string>
+    <string name="feature_player_impl_karaoke_storage_error">Not enough storage space to record</string>
+    <string name="feature_player_impl_karaoke_save_error">The karaoke draft could not be saved</string>
 </resources>

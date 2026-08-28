@@ -67,6 +67,7 @@ dependencies {
     implementation(projects.core.network)
     implementation(projects.core.playback.api)
     implementation(projects.core.playback.service)
+    implementation(projects.core.karaoke.service)
     implementation(projects.feature.auth.impl)
     implementation(projects.feature.album.api)
     implementation(projects.feature.album.impl)

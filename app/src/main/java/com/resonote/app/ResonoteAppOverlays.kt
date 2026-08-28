@@ -207,8 +207,10 @@ internal fun BoxScope.ResonoteAppOverlays(
 
 internal fun NavKey?.hasPrimaryNavigation(): Boolean = this is TabsShellNavKey
 
-internal fun NavKey?.showsMiniPlayer(): Boolean =
-    this != null && this !is PlayerNavKey && this !is RecognitionNavKey && this !is VideoNavKey
+internal fun NavKey?.showsMiniPlayer(): Boolean = this != null &&
+    this !is PlayerNavKey &&
+    this !is RecognitionNavKey &&
+    this !is VideoNavKey
 
 internal enum class SnackbarHostSurface {
     PlaybackQueue,

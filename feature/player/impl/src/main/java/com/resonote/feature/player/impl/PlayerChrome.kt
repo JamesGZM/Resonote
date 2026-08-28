@@ -20,6 +20,7 @@ import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.LibraryAdd
 import androidx.compose.material.icons.rounded.Lyrics
+import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -29,6 +30,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -129,8 +131,38 @@ internal fun PlayerActionsSheet(
     onAddToPlaylist: (() -> Unit)?,
     onShowInfo: (() -> Unit)?,
     onLyricsSettings: () -> Unit,
+    karaokeEnabled: Boolean,
+    onKaraokeModeChange: (Boolean) -> Unit,
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
+        Row(
+            Modifier.fillMaxWidth().clickable {
+                onDismiss()
+                onKaraokeModeChange(!karaokeEnabled)
+            }
+                .padding(horizontal = 24.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(Icons.Rounded.Mic, null)
+            Column(Modifier.weight(1f).padding(start = 18.dp)) {
+                Text(
+                    stringResource(R.string.feature_player_impl_karaoke_mode),
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+                Text(
+                    stringResource(R.string.feature_player_impl_karaoke_mode_description),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            Switch(
+                checked = karaokeEnabled,
+                onCheckedChange = {
+                    onDismiss()
+                    onKaraokeModeChange(it)
+                },
+            )
+        }
         onPlayNext?.let {
             PlayerActionRow(Icons.Rounded.SkipNext, stringResource(R.string.feature_player_impl_play_next)) {
                 onDismiss()

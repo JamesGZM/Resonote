@@ -174,6 +174,13 @@ class PlaybackViewModelTest {
             playedIndex = startIndex
         }
 
+        override fun replaceQueue(
+            items: List<PlaybackItem>,
+            startIndex: Int,
+            positionMillis: Long,
+            playWhenReady: Boolean,
+        ) = Unit
+
         override fun append(items: List<PlaybackItem>) {
             appendedItems = items
         }
@@ -199,6 +206,8 @@ class PlaybackViewModelTest {
         override fun previous() = Unit
 
         override fun seekTo(positionMillis: Long) = Unit
+
+        override fun replaceCurrentItem(item: PlaybackItem, positionMillis: Long, playWhenReady: Boolean) = Unit
 
         override fun setMode(mode: PlaybackMode) = Unit
 
