@@ -91,6 +91,10 @@
     <string name="feature_settings_impl_desktop_lyrics">显示桌面歌词</string>
     <string name="feature_settings_impl_desktop_lyrics_body">开启后始终显示同步歌词，包括 Resonote 应用内</string>
     <string name="feature_settings_impl_desktop_lyrics_permission_body">允许显示在其他应用上层后即可开启桌面歌词</string>
+    <string name="feature_settings_impl_desktop_lyrics_opacity">整体透明度</string>
+    <string name="feature_settings_impl_desktop_lyrics_opacity_body">同时作用于歌词和播放控制</string>
+    <string name="feature_settings_impl_desktop_lyrics_opacity_sheet_body">转动旋钮，调节整个悬浮控制器的透明度</string>
+    <string name="feature_settings_impl_desktop_lyrics_opacity_knob">透明度</string>
     <string name="feature_settings_impl_desktop_lyrics_background_color">歌词背景色</string>
     <string name="feature_settings_impl_desktop_lyrics_background_color_body">播放进度尚未过渡到的歌词字体颜色</string>
     <string name="feature_settings_impl_desktop_lyrics_foreground_color">歌词前景色</string>
@@ -102,6 +106,7 @@
     <string name="feature_settings_impl_desktop_lyrics_width_sheet_body">转动旋钮，平衡每行长度与屏幕空间</string>
     <string name="feature_settings_impl_desktop_lyrics_width_knob">宽度</string>
     <string name="feature_settings_impl_desktop_lyrics_integer_value">%1$d</string>
+    <string name="feature_settings_impl_desktop_lyrics_percent_value">%1$d%%</string>
     <string name="feature_settings_impl_desktop_lyrics_decimal_value">%1$.1f</string>
     <string name="feature_settings_impl_desktop_lyrics_outline">文字描边</string>
     <string name="feature_settings_impl_desktop_lyrics_outline_color">描边颜色</string>

@@ -49,6 +49,27 @@ internal fun DesktopLyricsWidthSheet(
 )
 
 @Composable
+internal fun DesktopLyricsOpacitySheet(
+    opacityPercent: Int,
+    onOpacityChange: (Int) -> Unit,
+    onReset: () -> Unit,
+    onDismiss: () -> Unit,
+) = DesktopLyricsKnobSheet(
+    title = stringResource(R.string.feature_settings_impl_desktop_lyrics_opacity),
+    subtitle = stringResource(R.string.feature_settings_impl_desktop_lyrics_opacity_sheet_body),
+    knobTitle = stringResource(R.string.feature_settings_impl_desktop_lyrics_opacity_knob),
+    value = opacityPercent.toFloat(),
+    defaultValue = DesktopLyricsDefaults.SURFACE_OPACITY.toFloat(),
+    valueLabel = { desktopLyricsOpacityLabel(it.roundToInt()) },
+    onValueChangeFinished = { onOpacityChange(it.roundToInt()) },
+    valueRange = 0f..100f,
+    steps = 99,
+    testTag = "desktop-lyrics-opacity-knob",
+    onReset = onReset,
+    onDismiss = onDismiss,
+)
+
+@Composable
 internal fun DesktopLyricsFontSizeSheet(
     fontSizeSp: Int,
     onFontSizeChange: (Int) -> Unit,
@@ -267,6 +288,10 @@ internal fun DesktopLyricsShadowSheet(
 @Composable
 internal fun desktopLyricsWidthLabel(value: Int): String =
     stringResource(R.string.feature_settings_impl_desktop_lyrics_integer_value, value)
+
+@Composable
+internal fun desktopLyricsOpacityLabel(value: Int): String =
+    stringResource(R.string.feature_settings_impl_desktop_lyrics_percent_value, value)
 
 @Composable
 internal fun desktopLyricsFontSizeLabel(value: Int): String =

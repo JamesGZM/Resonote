@@ -256,7 +256,8 @@ class SettingsScreenScreenshotTest {
         composeRule.onNodeWithTag("desktop-lyrics-switch").assertIsDisplayed()
         composeRule.onNodeWithText("#AE2A4B").assertDoesNotExist()
         composeRule.onNodeWithText("#000000").assertDoesNotExist()
-        composeRule.onNodeWithText("Floating surface opacity").assertDoesNotExist()
+        composeRule.onNodeWithText("Overall opacity").assertIsDisplayed()
+        composeRule.onNodeWithTag("desktop-lyrics-opacity").assertExists()
         composeRule.onNodeWithTag("desktop-lyrics-background-color").assertExists()
         composeRule.onNodeWithTag("desktop-lyrics-foreground-color").assertExists()
         composeRule.onNodeWithTag("desktop-lyrics-shadow").assertExists()
@@ -266,6 +267,26 @@ class SettingsScreenScreenshotTest {
         composeRule.onNodeWithTag("desktop-lyrics-shadow-x-knob").assertDoesNotExist()
         composeRule.onNodeWithText("Controller behavior").assertDoesNotExist()
         capture("desktop-lyrics")
+    }
+
+    @Test
+    fun desktopLyricsSettingsUsesOpacityKnob() {
+        val repository = lyricsPreferencesRepository()
+        setDesktopLyricsScreen(repository)
+
+        composeRule.onNodeWithTag("desktop-lyrics-opacity").performClick()
+        composeRule.onNodeWithTag("desktop-lyrics-opacity-knob")
+            .assertIsDisplayed()
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "100%"))
+        composeRule.onNodeWithTag("desktop-lyrics-restore-default").assertIsDisplayed()
+        capture("desktop-lyrics-opacity")
+
+        composeRule.onNodeWithTag("desktop-lyrics-opacity-knob")
+            .performSemanticsAction(SemanticsActions.SetProgress) { it(64f) }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("desktop-lyrics-opacity-knob")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "64%"))
+        assertThat(repository.preferences.value.desktopLyricsSurfaceOpacity).isEqualTo(64)
     }
 
     @Test

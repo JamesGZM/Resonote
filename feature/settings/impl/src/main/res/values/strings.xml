@@ -91,6 +91,10 @@
     <string name="feature_settings_impl_desktop_lyrics">Show desktop lyrics</string>
     <string name="feature_settings_impl_desktop_lyrics_body">Keep synchronized lyrics visible everywhere, including inside Resonote</string>
     <string name="feature_settings_impl_desktop_lyrics_permission_body">Allow display over other apps to turn on desktop lyrics</string>
+    <string name="feature_settings_impl_desktop_lyrics_opacity">Overall opacity</string>
+    <string name="feature_settings_impl_desktop_lyrics_opacity_body">Applies to lyrics and playback controls</string>
+    <string name="feature_settings_impl_desktop_lyrics_opacity_sheet_body">Turn the knob to adjust the entire floating controller</string>
+    <string name="feature_settings_impl_desktop_lyrics_opacity_knob">Opacity</string>
     <string name="feature_settings_impl_desktop_lyrics_background_color">Lyrics background color</string>
     <string name="feature_settings_impl_desktop_lyrics_background_color_body">Color of the lyrics before the progress transition</string>
     <string name="feature_settings_impl_desktop_lyrics_foreground_color">Lyrics foreground color</string>
@@ -102,6 +106,7 @@
     <string name="feature_settings_impl_desktop_lyrics_width_sheet_body">Turn the knob to balance line length and screen space</string>
     <string name="feature_settings_impl_desktop_lyrics_width_knob">Width</string>
     <string name="feature_settings_impl_desktop_lyrics_integer_value">%1$d</string>
+    <string name="feature_settings_impl_desktop_lyrics_percent_value">%1$d%%</string>
     <string name="feature_settings_impl_desktop_lyrics_decimal_value">%1$.1f</string>
     <string name="feature_settings_impl_desktop_lyrics_outline">Text outline</string>
     <string name="feature_settings_impl_desktop_lyrics_outline_color">Outline color</string>
