@@ -3,6 +3,7 @@
 package com.resonote.core.playback.service
 
 import android.content.Context
+import android.media.AudioManager
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.exoplayer.DefaultRenderersFactory
@@ -35,6 +36,7 @@ class ResonotePlaybackService : MediaSessionService() {
     internal lateinit var playbackPreferencesRepository: PlaybackPreferencesRepository
 
     private var mediaSession: MediaSession? = null
+    private var communicationPlaybackGuard: CommunicationPlaybackGuard? = null
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     override fun onCreate() {
@@ -75,6 +77,12 @@ class ResonotePlaybackService : MediaSessionService() {
             }
         val player = QueueAwarePlayer(exoPlayer, queueCommandRouter)
         mediaSession = MediaSession.Builder(this, player).build()
+        communicationPlaybackGuard = CommunicationPlaybackGuard(
+            audioManager = getSystemService(AudioManager::class.java),
+            player = exoPlayer,
+            scope = serviceScope,
+            mainExecutor = mainExecutor,
+        ).also(CommunicationPlaybackGuard::start)
         serviceScope.launch {
             playbackPreferencesRepository.preferences.collect { preferences ->
                 equalizer.update(
@@ -94,6 +102,8 @@ class ResonotePlaybackService : MediaSessionService() {
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = mediaSession
 
     override fun onDestroy() {
+        communicationPlaybackGuard?.release()
+        communicationPlaybackGuard = null
         serviceScope.cancel()
         clearListener()
         mediaSession?.run {
