@@ -1,6 +1,7 @@
 package com.resonote.feature.settings.impl
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,13 +17,13 @@ import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -147,6 +148,53 @@ internal fun SettingsValueRow(
 }
 
 @Composable
+internal fun SettingsColorRow(
+    title: String,
+    color: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    supportingText: String? = null,
+    containerColor: Color = MaterialTheme.colorScheme.background,
+) {
+    Surface(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier.fillMaxWidth(),
+        color = containerColor,
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+                supportingText?.let {
+                    Text(
+                        it,
+                        modifier = Modifier.padding(top = 2.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            }
+            Spacer(Modifier.width(12.dp))
+            Box(
+                Modifier.size(28.dp)
+                    .background(color, CircleShape)
+                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
+            )
+            Icon(
+                Icons.Rounded.ChevronRight,
+                contentDescription = null,
+                modifier = Modifier.padding(start = 6.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
 internal fun SettingsInfoRow(
     title: String,
     value: String,
@@ -256,51 +304,6 @@ internal fun SettingsSwitchRow(
             onCheckedChange = onCheckedChange,
             modifier = if (switchTestTag == null) Modifier else Modifier.testTag(switchTestTag),
             enabled = enabled,
-        )
-    }
-}
-
-@Composable
-internal fun SettingsSliderRow(
-    title: String,
-    valueLabel: String,
-    value: Float,
-    onValueChange: (Float) -> Unit,
-    onValueChangeFinished: () -> Unit,
-    modifier: Modifier = Modifier,
-    supportingText: String? = null,
-    enabled: Boolean = true,
-    valueRange: ClosedFloatingPointRange<Float> = 0f..100f,
-    steps: Int = 9,
-) {
-    Column(modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
-                supportingText?.let {
-                    Text(
-                        it,
-                        modifier = Modifier.padding(top = 2.dp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                }
-            }
-            Spacer(Modifier.width(12.dp))
-            Text(
-                valueLabel,
-                color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
-        Slider(
-            value = value,
-            onValueChange = onValueChange,
-            onValueChangeFinished = onValueChangeFinished,
-            enabled = enabled,
-            valueRange = valueRange,
-            steps = steps,
         )
     }
 }

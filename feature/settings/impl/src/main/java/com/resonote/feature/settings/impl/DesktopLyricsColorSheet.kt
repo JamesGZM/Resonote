@@ -4,6 +4,7 @@ package com.resonote.feature.settings.impl
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -20,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -48,6 +50,7 @@ internal fun DesktopLyricsColorSheet(
     colorArgb: Int,
     onSelect: (Int) -> Unit,
     onDismiss: () -> Unit,
+    onReset: (() -> Unit)? = null,
 ) {
     val initialHsv = remember(colorArgb) {
         FloatArray(3).also { AndroidColor.colorToHSV(colorArgb, it) }
@@ -56,15 +59,25 @@ internal fun DesktopLyricsColorSheet(
     var saturation by remember(colorArgb) { mutableFloatStateOf(initialHsv[1]) }
     var brightness by remember(colorArgb) { mutableFloatStateOf(initialHsv[2]) }
     val selectedColor = AndroidColor.HSVToColor(floatArrayOf(hue, saturation, brightness))
-    val colorLabel = "#%06X".format(selectedColor and 0xFFFFFF)
 
-    ResonoteBottomSheet(onDismissRequest = onDismiss) {
+    ResonoteBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+    ) {
         Column(
             Modifier.fillMaxWidth().navigationBarsPadding().padding(bottom = 24.dp),
         ) {
             ResonoteBottomSheetHeader(
                 title = title,
                 subtitle = subtitle,
+                actions = {
+                    onReset?.let {
+                        RestoreDefaultAction(
+                            onClick = it,
+                            testTag = "desktop-lyrics-color-restore-default",
+                        )
+                    }
+                },
             )
             Column(
                 Modifier.fillMaxWidth().padding(horizontal = 20.dp),
@@ -88,16 +101,10 @@ internal fun DesktopLyricsColorSheet(
                 ) {
                     Box(
                         Modifier.size(40.dp)
-                            .background(Color(selectedColor), CircleShape),
+                            .background(Color(selectedColor), CircleShape)
+                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
                     )
-                    Text(
-                        text = stringResource(
-                            R.string.feature_settings_impl_desktop_lyrics_color_value,
-                            colorLabel,
-                        ),
-                        modifier = Modifier.weight(1f),
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
+                    Box(Modifier.weight(1f))
                     Button(onClick = { onSelect(selectedColor) }) {
                         Text(stringResource(R.string.feature_settings_impl_done))
                     }

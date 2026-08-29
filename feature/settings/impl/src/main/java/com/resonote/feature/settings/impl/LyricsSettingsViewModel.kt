@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.resonote.core.data.LyricsPreferencesRepository
 import com.resonote.core.model.DesktopLyricsControlsTimeout
+import com.resonote.core.model.DesktopLyricsDefaults
 import com.resonote.core.model.LyricsPreferences
 import com.resonote.core.playback.DesktopLyricsController
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -46,11 +47,6 @@ class LyricsSettingsViewModel @Inject constructor(
     fun setDesktopLyricsEnabled(enabled: Boolean) = persist({ copy(desktopLyricsEnabled = enabled) }) {
         if (enabled) desktopLyricsController.show() else desktopLyricsController.hide()
     }
-
-    fun setDesktopLyricsSurfaceOpacity(value: Int) = persist(
-        { copy(desktopLyricsSurfaceOpacity = value.coerceIn(0, 100)) },
-        desktopLyricsController::refresh,
-    )
 
     fun setDesktopLyricsShadowColor(value: Int) = persist(
         { copy(desktopLyricsShadowColorArgb = value or 0xFF000000.toInt()) },
@@ -104,6 +100,53 @@ class LyricsSettingsViewModel @Inject constructor(
 
     fun setDesktopLyricsControlsTimeout(value: DesktopLyricsControlsTimeout) = persist(
         { copy(desktopLyricsControlsTimeout = value) },
+        desktopLyricsController::refresh,
+    )
+
+    fun resetDesktopLyricsBackgroundColor() = persist(
+        { copy(desktopLyricsBackgroundColorArgb = DesktopLyricsDefaults.BACKGROUND_COLOR_ARGB) },
+        desktopLyricsController::refresh,
+    )
+
+    fun resetDesktopLyricsForegroundColor() = persist(
+        { copy(desktopLyricsForegroundColorArgb = DesktopLyricsDefaults.FOREGROUND_COLOR_ARGB) },
+        desktopLyricsController::refresh,
+    )
+
+    fun resetDesktopLyricsWidth() = persist(
+        { copy(desktopLyricsWidthPercent = DesktopLyricsDefaults.WIDTH_PERCENT) },
+        desktopLyricsController::refresh,
+    )
+
+    fun resetDesktopLyricsFontSize() = persist(
+        { copy(desktopLyricsFontSizeSp = DesktopLyricsDefaults.FONT_SIZE_SP) },
+        desktopLyricsController::refresh,
+    )
+
+    fun resetDesktopLyricsOutline() = persist(
+        {
+            copy(
+                desktopLyricsOutlineColorArgb = DesktopLyricsDefaults.OUTLINE_COLOR_ARGB,
+                desktopLyricsOutlineWidthDp = DesktopLyricsDefaults.OUTLINE_WIDTH_DP,
+            )
+        },
+        desktopLyricsController::refresh,
+    )
+
+    fun resetDesktopLyricsShadow() = persist(
+        {
+            copy(
+                desktopLyricsShadowColorArgb = DesktopLyricsDefaults.SHADOW_COLOR_ARGB,
+                desktopLyricsShadowOffsetXDp = DesktopLyricsDefaults.SHADOW_OFFSET_X_DP,
+                desktopLyricsShadowOffsetYDp = DesktopLyricsDefaults.SHADOW_OFFSET_Y_DP,
+                desktopLyricsShadowBlurRadiusDp = DesktopLyricsDefaults.SHADOW_BLUR_RADIUS_DP,
+            )
+        },
+        desktopLyricsController::refresh,
+    )
+
+    fun resetDesktopLyricsControlsTimeout() = persist(
+        { copy(desktopLyricsControlsTimeout = DesktopLyricsControlsTimeout.FiveSeconds) },
         desktopLyricsController::refresh,
     )
 

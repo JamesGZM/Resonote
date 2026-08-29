@@ -440,7 +440,6 @@ private class DesktopLyricsControllerView(context: Context, private val onContro
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        drawSurface(canvas)
         drawLyrics(canvas)
         if (controlsVisible && controlsAlpha > 0f) {
             val checkpoint = canvas.saveLayerAlpha(
@@ -530,37 +529,6 @@ private class DesktopLyricsControllerView(context: Context, private val onContro
         invalidate()
     }
 
-    private fun drawSurface(canvas: Canvas) {
-        val alpha = (preferences.desktopLyricsSurfaceOpacity.coerceIn(0, 100) * 2.55f).toInt()
-        if (alpha == 0) return
-        val lyricsTop = lyricsInset().toFloat()
-        val lyricsBottom = height - lyricsInset().toFloat()
-        surfacePaint.style = Paint.Style.FILL
-        surfacePaint.color = preferences.desktopLyricsBackgroundColorArgb.withAlpha(alpha)
-        canvas.drawRoundRect(
-            0f,
-            lyricsTop,
-            width.toFloat(),
-            lyricsBottom,
-            dp(14).toFloat(),
-            dp(14).toFloat(),
-            surfacePaint,
-        )
-        surfacePaint.style = Paint.Style.STROKE
-        surfacePaint.strokeWidth = dp(1).toFloat()
-        surfacePaint.color = preferences.desktopLyricsForegroundColorArgb.withAlpha((alpha * 0.22f).toInt())
-        canvas.drawRoundRect(
-            0f,
-            lyricsTop,
-            width.toFloat(),
-            lyricsBottom,
-            dp(14).toFloat(),
-            dp(14).toFloat(),
-            surfacePaint,
-        )
-        surfacePaint.style = Paint.Style.FILL
-    }
-
     private fun drawLyrics(canvas: Canvas) {
         val lyricsTop = lyricsInset().toFloat()
         val lyricsHeight = height - lyricsInset() * 2f
@@ -606,13 +574,13 @@ private class DesktopLyricsControllerView(context: Context, private val onContro
         val startX = (width - row.width) / 2f
         val textHeight = textPaint.descent() - textPaint.ascent()
         val baseline = lyricsTop + (lyricsHeight - textHeight) / 2f + offsetY - textPaint.ascent()
-        val foreground = preferences.desktopLyricsForegroundColorArgb
+        val background = preferences.desktopLyricsBackgroundColorArgb
         drawStyledText(
             canvas = canvas,
             text = row.text,
             x = startX,
             baseline = baseline,
-            fillColor = foreground.withAlpha((150 * alpha).toInt()),
+            fillColor = background.withAlpha((150 * alpha).toInt()),
         )
         drawKaraokeHighlight(
             canvas = canvas,

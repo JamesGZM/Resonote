@@ -1,8 +1,11 @@
 package com.resonote.feature.settings.impl
 
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -251,12 +254,95 @@ class SettingsScreenScreenshotTest {
         }
 
         composeRule.onNodeWithTag("desktop-lyrics-switch").assertIsDisplayed()
+        composeRule.onNodeWithText("#AE2A4B").assertDoesNotExist()
+        composeRule.onNodeWithText("#000000").assertDoesNotExist()
+        composeRule.onNodeWithText("Floating surface opacity").assertDoesNotExist()
+        composeRule.onNodeWithTag("desktop-lyrics-background-color").assertExists()
+        composeRule.onNodeWithTag("desktop-lyrics-foreground-color").assertExists()
+        composeRule.onNodeWithTag("desktop-lyrics-shadow").assertExists()
+        composeRule.onNodeWithTag("desktop-lyrics-width-knob").assertDoesNotExist()
+        composeRule.onNodeWithTag("desktop-lyrics-font-size-knob").assertDoesNotExist()
+        composeRule.onNodeWithTag("desktop-lyrics-outline-width-knob").assertDoesNotExist()
+        composeRule.onNodeWithTag("desktop-lyrics-shadow-x-knob").assertDoesNotExist()
         composeRule.onNodeWithText("Controller behavior").assertDoesNotExist()
         capture("desktop-lyrics")
     }
 
     @Test
-    fun desktopLyricsSettingsOpensShadowColorPalette() {
+    fun desktopLyricsSettingsUsesWidthKnob() {
+        val repository = lyricsPreferencesRepository()
+        setDesktopLyricsScreen(repository)
+
+        composeRule.onNodeWithTag("desktop-lyrics-width").performClick()
+        composeRule.onNodeWithTag("desktop-lyrics-width-knob")
+            .assertIsDisplayed()
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "100"))
+        composeRule.onNodeWithTag("desktop-lyrics-restore-default").assertIsDisplayed()
+        capture("desktop-lyrics-width")
+
+        composeRule.onNodeWithTag("desktop-lyrics-width-knob")
+            .performSemanticsAction(SemanticsActions.SetProgress) { it(71f) }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("desktop-lyrics-width-knob")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "71"))
+        assertThat(repository.preferences.value.desktopLyricsWidthPercent).isEqualTo(71)
+
+        composeRule.onNodeWithTag("desktop-lyrics-restore-default").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("desktop-lyrics-width-knob")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "100"))
+        assertThat(repository.preferences.value.desktopLyricsWidthPercent).isEqualTo(100)
+    }
+
+    @Test
+    fun desktopLyricsSettingsUsesFontSizeKnob() {
+        val repository = lyricsPreferencesRepository()
+        setDesktopLyricsScreen(repository)
+
+        composeRule.onNodeWithTag("desktop-lyrics-font-size").performClick()
+        composeRule.onNodeWithTag("desktop-lyrics-font-size-knob")
+            .assertIsDisplayed()
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "24"))
+        composeRule.onNodeWithTag("desktop-lyrics-restore-default").assertIsDisplayed()
+        capture("desktop-lyrics-font-size")
+
+        composeRule.onNodeWithTag("desktop-lyrics-font-size-knob")
+            .performSemanticsAction(SemanticsActions.SetProgress) { it(31f) }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("desktop-lyrics-font-size-knob")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "31"))
+        assertThat(repository.preferences.value.desktopLyricsFontSizeSp).isEqualTo(31)
+    }
+
+    @Test
+    fun desktopLyricsSettingsUsesOutlineKnob() {
+        val repository = lyricsPreferencesRepository()
+        setDesktopLyricsScreen(repository)
+
+        composeRule.onNodeWithTag("desktop-lyrics-outline").performClick()
+        composeRule.onNodeWithTag("desktop-lyrics-outline-color-picker").assertIsDisplayed()
+        composeRule.onNodeWithTag("desktop-lyrics-restore-default").assertIsDisplayed()
+        composeRule.onNodeWithTag("desktop-lyrics-outline-width-knob")
+            .assertIsDisplayed()
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "0.0"))
+        capture("desktop-lyrics-outline")
+
+        composeRule.onNodeWithTag("desktop-lyrics-outline-width-knob")
+            .performSemanticsAction(SemanticsActions.SetProgress) { it(2.3f) }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("desktop-lyrics-outline-width-knob")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "2.3"))
+        assertThat(repository.preferences.value.desktopLyricsOutlineWidthDp).isWithin(0.001f).of(2.3f)
+
+        composeRule.onNodeWithTag("desktop-lyrics-outline-color-picker").performClick()
+
+        composeRule.onNodeWithTag("desktop-lyrics-shadow-palette").assertIsDisplayed()
+        composeRule.onNodeWithTag("desktop-lyrics-outline-sheet").assertExists()
+        composeRule.onNodeWithTag("desktop-lyrics-color-restore-default").assertDoesNotExist()
+    }
+
+    @Test
+    fun desktopLyricsSettingsOpensShadowControlsAndColorPalette() {
         val repository = object : LyricsPreferencesRepository {
             override val preferences = MutableStateFlow(LyricsPreferences())
 
@@ -275,9 +361,47 @@ class SettingsScreenScreenshotTest {
             }
         }
 
-        composeRule.onNodeWithTag("desktop-lyrics-shadow-color").performScrollTo().performClick()
+        composeRule.onNodeWithTag("desktop-lyrics-shadow").performScrollTo().performClick()
+
+        composeRule.onNodeWithTag("desktop-lyrics-shadow-x-knob")
+            .assertIsDisplayed()
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "0.0"))
+        composeRule.onNodeWithTag("desktop-lyrics-restore-default").assertIsDisplayed()
+        composeRule.onNodeWithTag("desktop-lyrics-shadow-y-knob")
+            .assertIsDisplayed()
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "1.0"))
+        composeRule.onNodeWithTag("desktop-lyrics-shadow-softness-knob")
+            .assertIsDisplayed()
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "2.0"))
+        capture("desktop-lyrics-shadow")
+
+        composeRule.onNodeWithTag("desktop-lyrics-shadow-x-knob")
+            .performSemanticsAction(SemanticsActions.SetProgress) { it(-3.7f) }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("desktop-lyrics-shadow-x-knob")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "-3.7"))
+        assertThat(repository.preferences.value.desktopLyricsShadowOffsetXDp).isWithin(0.001f).of(-3.7f)
+
+        composeRule.onNodeWithTag("desktop-lyrics-shadow-color-picker").performClick()
 
         composeRule.onNodeWithTag("desktop-lyrics-shadow-palette").assertIsDisplayed()
+        composeRule.onNodeWithTag("desktop-lyrics-shadow-sheet").assertExists()
+        composeRule.onNodeWithTag("desktop-lyrics-color-restore-default").assertDoesNotExist()
+        composeRule.onNodeWithText("#000000").assertDoesNotExist()
+    }
+
+    @Test
+    fun desktopLyricsPrimaryColorAndTimeoutSheetsShowRestoreDefault() {
+        val repository = lyricsPreferencesRepository()
+        setDesktopLyricsScreen(repository)
+
+        composeRule.onNodeWithTag("desktop-lyrics-background-color").performClick()
+        composeRule.onNodeWithTag("desktop-lyrics-color-restore-default").assertIsDisplayed()
+        capture("desktop-lyrics-background-color")
+        composeRule.onNodeWithText("Done").performClick()
+
+        composeRule.onNodeWithTag("desktop-lyrics-controls-timeout").performScrollTo().performClick()
+        composeRule.onNodeWithTag("desktop-lyrics-restore-default").assertIsDisplayed()
     }
 
     @Test
@@ -469,5 +593,28 @@ class SettingsScreenScreenshotTest {
             filePath = "src/test/screenshots/Settings/SettingsCompact_$name.png",
             roborazziOptions = DefaultRoborazziOptions,
         )
+    }
+
+    private fun lyricsPreferencesRepository() = TestLyricsPreferencesRepository()
+
+    private class TestLyricsPreferencesRepository : LyricsPreferencesRepository {
+        override val preferences = MutableStateFlow(LyricsPreferences())
+
+        override suspend fun setPreferences(value: LyricsPreferences) {
+            preferences.value = value
+        }
+
+        override suspend fun reset() {
+            preferences.value = LyricsPreferences()
+        }
+    }
+
+    private fun setDesktopLyricsScreen(repository: LyricsPreferencesRepository) {
+        val viewModel = LyricsSettingsViewModel(repository)
+        composeRule.setContent {
+            ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                DesktopLyricsSettingsRoute(onBack = {}, viewModel = viewModel)
+            }
+        }
     }
 }

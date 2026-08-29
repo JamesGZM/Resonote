@@ -26,6 +26,7 @@ import com.resonote.core.model.ThemePreferences
 import com.resonote.core.navigation.LoginContinuation
 import com.resonote.core.navigation.LoginGateNavKey
 import com.resonote.core.navigation.TabsShellNavKey
+import com.resonote.core.playback.DesktopLyricsController
 import com.resonote.core.playback.DesktopLyricsNavigation
 import com.resonote.feature.cloud.api.CloudNavKey
 import com.resonote.feature.local.api.LocalMusicNavKey
@@ -59,7 +60,12 @@ class MainActivityViewModelTest {
     @Test
     fun requiredExpiredAcknowledgedAndAuthenticatedStatesRemainCentralized() = runTest {
         val repository = FakeAuthRepository()
-        val viewModel = MainActivityViewModel(repository, FakeLocalMediaRepository(), FakeThemePreferencesRepository())
+        val viewModel = MainActivityViewModel(
+            repository,
+            FakeLocalMediaRepository(),
+            FakeThemePreferencesRepository(),
+            FakeDesktopLyricsController(),
+        )
 
         repository.state.value = AuthState.AuthenticationRequired(AuthGateReason.Required)
         assertThat(viewModel.authState.value).isEqualTo(AuthState.AuthenticationRequired(AuthGateReason.Required))
@@ -160,6 +166,7 @@ class MainActivityViewModelTest {
             FakeAuthRepository(),
             FakeLocalMediaRepository(),
             FakeThemePreferencesRepository(),
+            FakeDesktopLyricsController(),
         )
 
         assertThat(
@@ -195,6 +202,7 @@ class MainActivityViewModelTest {
             FakeAuthRepository(),
             FakeLocalMediaRepository(),
             FakeThemePreferencesRepository(),
+            FakeDesktopLyricsController(),
         )
 
         assertThat(viewModel.handleDesktopLyricsIntent(Intent(Intent.ACTION_MAIN))).isFalse()
@@ -223,9 +231,28 @@ class MainActivityViewModelTest {
     fun appStartupTriggersLocalStorageRecovery() {
         val localMedia = FakeLocalMediaRepository()
 
-        MainActivityViewModel(FakeAuthRepository(), localMedia, FakeThemePreferencesRepository())
+        MainActivityViewModel(
+            FakeAuthRepository(),
+            localMedia,
+            FakeThemePreferencesRepository(),
+            FakeDesktopLyricsController(),
+        )
 
         assertThat(localMedia.recoveryCalls).isEqualTo(1)
+    }
+
+    @Test
+    fun appStartupRestoresDesktopLyricsServiceFromPersistedPreference() {
+        val desktopLyricsController = FakeDesktopLyricsController()
+
+        MainActivityViewModel(
+            FakeAuthRepository(),
+            FakeLocalMediaRepository(),
+            FakeThemePreferencesRepository(),
+            desktopLyricsController,
+        )
+
+        assertThat(desktopLyricsController.refreshCalls).isEqualTo(1)
     }
 
     private class FakeAuthRepository : AuthRepository {
@@ -278,5 +305,19 @@ class MainActivityViewModelTest {
         override val themePreferences = flowOf(ThemePreferences())
         override suspend fun setThemeMode(themeMode: ThemeMode) = Unit
         override suspend fun setDynamicColorEnabled(enabled: Boolean) = Unit
+    }
+
+    private class FakeDesktopLyricsController : DesktopLyricsController {
+        var refreshCalls = 0
+
+        override fun show() = Unit
+
+        override fun hide() = Unit
+
+        override fun refresh() {
+            refreshCalls += 1
+        }
+
+        override fun resetPosition() = Unit
     }
 }

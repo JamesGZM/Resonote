@@ -8,6 +8,7 @@ import com.resonote.core.data.LocalMediaRepository
 import com.resonote.core.data.ThemePreferencesRepository
 import com.resonote.core.model.AuthState
 import com.resonote.core.model.ThemePreferences
+import com.resonote.core.playback.DesktopLyricsController
 import com.resonote.core.playback.DesktopLyricsNavigation
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,6 +25,7 @@ internal class MainActivityViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     localMediaRepository: LocalMediaRepository,
     themePreferencesRepository: ThemePreferencesRepository,
+    desktopLyricsController: DesktopLyricsController,
 ) : ViewModel() {
     private val mutableExternalImportRequests = MutableStateFlow<List<ExternalLocalImportRequest>>(emptyList())
     val externalImportRequests: StateFlow<List<ExternalLocalImportRequest>> =
@@ -35,6 +37,7 @@ internal class MainActivityViewModel @Inject constructor(
 
     init {
         viewModelScope.launch { localMediaRepository.recoverStorage() }
+        desktopLyricsController.refresh()
     }
 
     val authState: StateFlow<AuthState> =

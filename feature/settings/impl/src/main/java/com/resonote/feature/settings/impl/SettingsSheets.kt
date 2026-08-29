@@ -16,10 +16,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -104,11 +106,20 @@ internal fun <T> SettingsSingleChoiceSheet(
     selected: T,
     options: List<Pair<T, String>>,
     onSelect: (T) -> Unit,
+    onReset: (() -> Unit)? = null,
     onDismiss: () -> Unit,
 ) {
-    ResonoteBottomSheet(onDismissRequest = onDismiss) {
+    ResonoteBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+    ) {
         Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(bottom = 12.dp)) {
-            ResonoteBottomSheetHeader(title = title)
+            ResonoteBottomSheetHeader(
+                title = title,
+                actions = {
+                    onReset?.let { RestoreDefaultAction(onClick = it) }
+                },
+            )
             Spacer(Modifier.height(8.dp))
             options.forEach { (value, label) ->
                 Row(
@@ -128,6 +139,20 @@ internal fun <T> SettingsSingleChoiceSheet(
                 }
             }
         }
+    }
+}
+
+@Composable
+internal fun RestoreDefaultAction(
+    modifier: Modifier = Modifier,
+    testTag: String = "desktop-lyrics-restore-default",
+    onClick: () -> Unit,
+) {
+    TextButton(
+        onClick = onClick,
+        modifier = modifier.testTag(testTag),
+    ) {
+        Text(stringResource(R.string.feature_settings_impl_restore_default))
     }
 }
 
