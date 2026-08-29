@@ -16,13 +16,13 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
-import androidx.compose.material.icons.rounded.Equalizer
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.LibraryAdd
 import androidx.compose.material.icons.rounded.Lyrics
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -141,7 +141,7 @@ internal fun PlayerActionsSheet(
     onAppendToQueue: (() -> Unit)?,
     onAddToPlaylist: (() -> Unit)?,
     onShowInfo: (() -> Unit)?,
-    onEqualizerSettings: () -> Unit,
+    onPlaybackSettings: () -> Unit,
     onLyricsSettings: () -> Unit,
     karaokeEnabled: Boolean,
     onKaraokeModeChange: (Boolean) -> Unit,
@@ -202,9 +202,9 @@ internal fun PlayerActionsSheet(
                 it()
             }
         }
-        PlayerActionRow(Icons.Rounded.Equalizer, stringResource(R.string.feature_player_impl_equalizer_settings)) {
+        PlayerActionRow(Icons.Rounded.Settings, stringResource(R.string.feature_player_impl_playback_settings)) {
             onDismiss()
-            onEqualizerSettings()
+            onPlaybackSettings()
         }
         PlayerActionRow(Icons.Rounded.Lyrics, stringResource(R.string.feature_player_impl_lyrics_settings)) {
             onDismiss()

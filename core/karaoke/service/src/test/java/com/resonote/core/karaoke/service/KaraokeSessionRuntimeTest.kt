@@ -46,6 +46,15 @@ class KaraokeSessionRuntimeTest {
         assertThat(result.failure).isEqualTo(KaraokeSessionFailure.SourceUnavailable)
     }
 
+    @Test
+    fun stopCompletionDisarmsContinuousRecordingAndRequiresManualRestart() {
+        val result = recordingState().copy(savingInProgress = true).completeKaraokeStop()
+
+        assertThat(result.status).isEqualTo(KaraokeSessionStatus.Off)
+        assertThat(result.continuousRecordingArmed).isFalse()
+        assertThat(result.savingInProgress).isFalse()
+    }
+
     private fun recordingState() = KaraokeSessionState(
         enabled = true,
         continuousRecordingArmed = true,

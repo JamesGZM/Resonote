@@ -136,7 +136,7 @@ class SettingsScreenScreenshotTest {
     }
 
     @Test
-    fun equalizerSliderDispatchesUpdatedGains() {
+    fun equalizerKnobDispatchesUpdatedGains() {
         var gains: Triple<Int, Int, Int>? = null
         setEqualizerScreen(onGainsChange = { low, mid, high -> gains = Triple(low, mid, high) })
 

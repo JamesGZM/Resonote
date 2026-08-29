@@ -2,53 +2,30 @@
 
 package com.resonote.feature.settings.impl
 
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.ProgressBarRangeInfo
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.progressBarRangeInfo
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.setProgress
-import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.resonote.core.designsystem.component.ResonoteBottomSheet
 import com.resonote.core.designsystem.component.ResonoteBottomSheetHeader
+import com.resonote.core.designsystem.component.ResonoteRotaryKnob
 import com.resonote.core.model.DesktopLyricsDefaults
-import kotlin.math.PI
 import kotlin.math.abs
-import kotlin.math.atan2
-import kotlin.math.cos
 import kotlin.math.roundToInt
-import kotlin.math.sin
 
 @Composable
 internal fun DesktopLyricsWidthSheet(
@@ -134,7 +111,7 @@ internal fun DesktopLyricsOutlineSheet(
                 modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                 horizontalArrangement = Arrangement.Center,
             ) {
-                RotarySettingKnob(
+                ResonoteRotaryKnob(
                     title = stringResource(R.string.feature_settings_impl_desktop_lyrics_outline_thickness),
                     valueLabel = desktopLyricsOutlineLabel(width),
                     value = width,
@@ -186,7 +163,7 @@ private fun DesktopLyricsKnobSheet(
                 modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                 horizontalArrangement = Arrangement.Center,
             ) {
-                RotarySettingKnob(
+                ResonoteRotaryKnob(
                     title = knobTitle,
                     valueLabel = valueLabel(currentValue),
                     value = currentValue,
@@ -252,7 +229,7 @@ internal fun DesktopLyricsShadowSheet(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
-                RotarySettingKnob(
+                ResonoteRotaryKnob(
                     title = stringResource(R.string.feature_settings_impl_desktop_lyrics_shadow_x),
                     valueLabel = desktopLyricsDecimalLabel(horizontal),
                     value = horizontal,
@@ -262,7 +239,7 @@ internal fun DesktopLyricsShadowSheet(
                     steps = 159,
                     modifier = Modifier.weight(1f).testTag("desktop-lyrics-shadow-x-knob"),
                 )
-                RotarySettingKnob(
+                ResonoteRotaryKnob(
                     title = stringResource(R.string.feature_settings_impl_desktop_lyrics_shadow_y),
                     valueLabel = desktopLyricsDecimalLabel(vertical),
                     value = vertical,
@@ -272,7 +249,7 @@ internal fun DesktopLyricsShadowSheet(
                     steps = 159,
                     modifier = Modifier.weight(1f).testTag("desktop-lyrics-shadow-y-knob"),
                 )
-                RotarySettingKnob(
+                ResonoteRotaryKnob(
                     title = stringResource(R.string.feature_settings_impl_desktop_lyrics_shadow_z),
                     valueLabel = desktopLyricsDecimalLabel(softness),
                     value = softness,
@@ -284,126 +261,6 @@ internal fun DesktopLyricsShadowSheet(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun RotarySettingKnob(
-    title: String,
-    valueLabel: String,
-    value: Float,
-    onValueChange: (Float) -> Unit,
-    onValueChangeFinished: (Float) -> Unit,
-    valueRange: ClosedFloatingPointRange<Float>,
-    steps: Int,
-    knobSize: Dp = 104.dp,
-    modifier: Modifier = Modifier,
-) {
-    val activeColor = MaterialTheme.colorScheme.primary
-    val inactiveColor = MaterialTheme.colorScheme.outlineVariant
-    val centerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-    val indicatorColor = MaterialTheme.colorScheme.onSurfaceVariant
-    val coercedValue = value.coerceIn(valueRange)
-    val span = valueRange.endInclusive - valueRange.start
-    val fraction = (coercedValue - valueRange.start) / span
-
-    fun snap(target: Float): Float {
-        val intervals = steps + 1
-        val targetFraction = ((target - valueRange.start) / span).coerceIn(0f, 1f)
-        return valueRange.start + (targetFraction * intervals).roundToInt() * span / intervals
-    }
-
-    Column(
-        modifier = modifier.semantics {
-            contentDescription = title
-            stateDescription = valueLabel
-            progressBarRangeInfo = ProgressBarRangeInfo(coercedValue, valueRange, steps)
-            setProgress { target ->
-                val snapped = snap(target)
-                onValueChange(snapped)
-                onValueChangeFinished(snapped)
-                true
-            }
-        },
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Medium,
-            textAlign = TextAlign.Center,
-        )
-        Canvas(
-            Modifier.size(knobSize)
-                .pointerInput(valueRange, steps) {
-                    awaitEachGesture {
-                        val down = awaitFirstDown(requireUnconsumed = false)
-                        down.consume()
-                        var latestValue = coercedValue
-
-                        fun update(position: Offset) {
-                            val center = Offset(size.width / 2f, size.height / 2f)
-                            var angle = atan2(position.y - center.y, position.x - center.x) * 180f / PI.toFloat()
-                            if (angle < 0f) angle += 360f
-                            if (angle < KNOB_START_ANGLE) angle += 360f
-                            val targetFraction = ((angle - KNOB_START_ANGLE) / KNOB_SWEEP_ANGLE).coerceIn(0f, 1f)
-                            latestValue = snap(valueRange.start + span * targetFraction)
-                            onValueChange(latestValue)
-                        }
-
-                        try {
-                            update(down.position)
-                            drag(down.id) { change ->
-                                change.consume()
-                                update(change.position)
-                            }
-                        } finally {
-                            onValueChangeFinished(latestValue)
-                        }
-                    }
-                },
-        ) {
-            val strokeWidth = 7.dp.toPx()
-            val radius = size.minDimension / 2f - 14.dp.toPx()
-            val topLeft = Offset(center.x - radius, center.y - radius)
-            val arcSize = androidx.compose.ui.geometry.Size(radius * 2f, radius * 2f)
-            drawArc(
-                color = inactiveColor,
-                startAngle = KNOB_START_ANGLE,
-                sweepAngle = KNOB_SWEEP_ANGLE,
-                useCenter = false,
-                topLeft = topLeft,
-                size = arcSize,
-                style = Stroke(strokeWidth, cap = StrokeCap.Round),
-            )
-            drawArc(
-                color = activeColor,
-                startAngle = KNOB_START_ANGLE,
-                sweepAngle = KNOB_SWEEP_ANGLE * fraction,
-                useCenter = false,
-                topLeft = topLeft,
-                size = arcSize,
-                style = Stroke(strokeWidth, cap = StrokeCap.Round),
-            )
-            drawCircle(centerColor, radius = radius - 9.dp.toPx())
-            val indicatorAngle = (KNOB_START_ANGLE + KNOB_SWEEP_ANGLE * fraction) * PI.toFloat() / 180f
-            val indicatorStart = radius * 0.36f
-            val indicatorEnd = radius * 0.66f
-            drawLine(
-                color = indicatorColor,
-                start = center + Offset(cos(indicatorAngle) * indicatorStart, sin(indicatorAngle) * indicatorStart),
-                end = center + Offset(cos(indicatorAngle) * indicatorEnd, sin(indicatorAngle) * indicatorEnd),
-                strokeWidth = 3.dp.toPx(),
-                cap = StrokeCap.Round,
-            )
-        }
-        Text(
-            text = valueLabel,
-            color = MaterialTheme.colorScheme.primary,
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.SemiBold,
-            textAlign = TextAlign.Center,
-        )
     }
 }
 
@@ -431,6 +288,3 @@ private fun desktopLyricsDecimalLabel(value: Float): String = stringResource(
     R.string.feature_settings_impl_desktop_lyrics_decimal_value,
     if (abs(value) < 0.05f) 0f else value,
 )
-
-private const val KNOB_START_ANGLE = 135f
-private const val KNOB_SWEEP_ANGLE = 270f

@@ -176,7 +176,8 @@ internal class KaraokeSessionRuntime @Inject constructor(
     }
 
     fun stopAndSave() {
-        if (cancelCountdown()) return
+        playback.pause()
+        if (cancelCountdown(resumePlayback = false)) return
         if (mutableState.value.savingInProgress) return
         scope.launch {
             commandMutex.withLock {
@@ -184,11 +185,7 @@ internal class KaraokeSessionRuntime @Inject constructor(
                 preparingJob?.cancel()
                 stopCapture()
                 cleanupEmptyProject()
-                mutableState.value = mutableState.value.copy(
-                    continuousRecordingArmed = false,
-                    savingInProgress = false,
-                    status = KaraokeSessionStatus.Off,
-                )
+                mutableState.value = mutableState.value.completeKaraokeStop()
                 playback.state.value.currentItem?.let { current ->
                     prepareSong(originalItems[current.queueKey] ?: current, autoStart = false)
                 }
@@ -572,3 +569,9 @@ internal fun KaraokeSessionState.completeSourceSwitch(
 )
 
 internal fun PlaybackStatus.shouldStartAfterKaraokeCountdown() = this == PlaybackStatus.Paused
+
+internal fun KaraokeSessionState.completeKaraokeStop() = copy(
+    continuousRecordingArmed = false,
+    savingInProgress = false,
+    status = KaraokeSessionStatus.Off,
+)

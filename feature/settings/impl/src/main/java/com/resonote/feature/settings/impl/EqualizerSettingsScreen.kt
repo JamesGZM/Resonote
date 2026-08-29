@@ -1,9 +1,6 @@
 package com.resonote.feature.settings.impl
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -28,32 +25,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.disabled
-import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.resonote.core.designsystem.component.LocalResonoteSnackbarController
 import com.resonote.core.designsystem.component.ResonoteLoadingState
+import com.resonote.core.designsystem.component.ResonoteRotaryKnob
 import com.resonote.core.model.EqualizerPreset
 import kotlin.math.roundToInt
 
@@ -178,53 +168,59 @@ private fun EqualizerEditor(
                 modifier = Modifier.height(52.dp),
             )
         }
-        item(key = "low-band") {
-            EqualizerBandControl(
-                copy = lowCopy,
-                value = lowDb,
-                enabled = enabled,
-                onValueChange = {
-                    lowDb = it
-                    customEditing = true
-                },
-                onValueChangeFinished = {
-                    onGainsChange(lowDb.roundToInt(), midDb.roundToInt(), highDb.roundToInt())
-                },
-                modifier = Modifier.fillMaxWidth().height(136.dp),
-                testTag = "equalizer-low",
-            )
-        }
-        item(key = "mid-band") {
-            EqualizerBandControl(
-                copy = midCopy,
-                value = midDb,
-                enabled = enabled,
-                onValueChange = {
-                    midDb = it
-                    customEditing = true
-                },
-                onValueChangeFinished = {
-                    onGainsChange(lowDb.roundToInt(), midDb.roundToInt(), highDb.roundToInt())
-                },
-                modifier = Modifier.fillMaxWidth().height(136.dp),
-                testTag = "equalizer-mid",
-            )
-        }
-        item(key = "high-band") {
-            EqualizerBandControl(
-                copy = highCopy,
-                value = highDb,
-                enabled = enabled,
-                onValueChange = {
-                    highDb = it
-                    customEditing = true
-                },
-                onValueChangeFinished = {
-                    onGainsChange(lowDb.roundToInt(), midDb.roundToInt(), highDb.roundToInt())
-                },
-                modifier = Modifier.fillMaxWidth().height(136.dp),
-                testTag = "equalizer-high",
-            )
+        item(key = "bands") {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 18.dp),
+            ) {
+                ResonoteRotaryKnob(
+                    title = lowCopy.title,
+                    valueLabel = gainLabel(lowDb.roundToInt()),
+                    value = lowDb,
+                    enabled = enabled,
+                    onValueChange = {
+                        lowDb = it
+                        customEditing = true
+                    },
+                    onValueChangeFinished = {
+                        onGainsChange(it.roundToInt(), midDb.roundToInt(), highDb.roundToInt())
+                    },
+                    valueRange = -12f..12f,
+                    steps = 23,
+                    modifier = Modifier.weight(1f).testTag("equalizer-low"),
+                )
+                ResonoteRotaryKnob(
+                    title = midCopy.title,
+                    valueLabel = gainLabel(midDb.roundToInt()),
+                    value = midDb,
+                    enabled = enabled,
+                    onValueChange = {
+                        midDb = it
+                        customEditing = true
+                    },
+                    onValueChangeFinished = {
+                        onGainsChange(lowDb.roundToInt(), it.roundToInt(), highDb.roundToInt())
+                    },
+                    valueRange = -12f..12f,
+                    steps = 23,
+                    modifier = Modifier.weight(1f).testTag("equalizer-mid"),
+                )
+                ResonoteRotaryKnob(
+                    title = highCopy.title,
+                    valueLabel = gainLabel(highDb.roundToInt()),
+                    value = highDb,
+                    enabled = enabled,
+                    onValueChange = {
+                        highDb = it
+                        customEditing = true
+                    },
+                    onValueChangeFinished = {
+                        onGainsChange(lowDb.roundToInt(), midDb.roundToInt(), it.roundToInt())
+                    },
+                    valueRange = -12f..12f,
+                    steps = 23,
+                    modifier = Modifier.weight(1f).testTag("equalizer-high"),
+                )
+            }
         }
     }
 }
@@ -396,177 +392,6 @@ private fun EqualizerPresetTabs(
                         maxLines = 1,
                     )
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun EqualizerBandControl(
-    copy: EqualizerBandCopy,
-    value: Float,
-    enabled: Boolean,
-    onValueChange: (Float) -> Unit,
-    onValueChangeFinished: () -> Unit,
-    testTag: String,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 6.dp),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(Modifier.weight(1f)) {
-                Text(
-                    text = copy.title,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text = copy.range,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.labelSmall,
-                )
-            }
-            Text(
-                text = gainLabel(value.roundToInt(), includeUnit = true),
-                color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.labelLarge,
-            )
-        }
-        ResonoteEqualizerSlider(
-            value = value,
-            enabled = enabled,
-            onValueChange = onValueChange,
-            onValueChangeFinished = onValueChangeFinished,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(68.dp)
-                .testTag(testTag),
-        )
-    }
-}
-
-@Composable
-private fun ResonoteEqualizerSlider(
-    value: Float,
-    enabled: Boolean,
-    onValueChange: (Float) -> Unit,
-    onValueChangeFinished: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val primary = MaterialTheme.colorScheme.primary
-    val track = MaterialTheme.colorScheme.outlineVariant
-    val notch = MaterialTheme.colorScheme.onPrimary
-    val zeroMarker = MaterialTheme.colorScheme.onSurfaceVariant
-    val snappedValue = value.roundToInt().coerceIn(-12, 12)
-
-    Box(
-        modifier = modifier
-            .semantics {
-                progressBarRangeInfo = ProgressBarRangeInfo(snappedValue.toFloat(), -12f..12f, 23)
-                if (!enabled) disabled()
-                setProgress { target ->
-                    if (!enabled) return@setProgress false
-                    onValueChange(target.roundToInt().coerceIn(-12, 12).toFloat())
-                    onValueChangeFinished()
-                    true
-                }
-            }
-            .pointerInput(enabled, onValueChange, onValueChangeFinished) {
-                if (!enabled) return@pointerInput
-                fun updateValue(x: Float) {
-                    val fraction = (x / size.width).coerceIn(0f, 1f)
-                    onValueChange((-12f + fraction * 24f).roundToInt().toFloat())
-                }
-                awaitEachGesture {
-                    val down = awaitFirstDown(requireUnconsumed = false)
-                    updateValue(down.position.x)
-                    drag(down.id) { change ->
-                        change.consume()
-                        updateValue(change.position.x)
-                    }
-                    onValueChangeFinished()
-                }
-            },
-    ) {
-        Canvas(Modifier.fillMaxSize()) {
-            val startX = 2.dp.toPx()
-            val endX = size.width - 2.dp.toPx()
-            val trackY = size.height * 0.42f
-            val zeroX = (startX + endX) / 2f
-            val valueX = startX + (endX - startX) * ((snappedValue + 12f) / 24f)
-            val trackColor = if (enabled) track else track.copy(alpha = 0.45f)
-            val activeColor = if (enabled) primary else primary.copy(alpha = 0.38f)
-
-            drawLine(
-                color = trackColor,
-                start = Offset(startX, trackY),
-                end = Offset(endX, trackY),
-                strokeWidth = 1.5.dp.toPx(),
-                cap = StrokeCap.Round,
-            )
-            repeat(9) { index ->
-                val x = startX + (endX - startX) * index / 8f
-                val tickHalfHeight = if (index % 2 == 0) 5.dp.toPx() else 3.dp.toPx()
-                drawLine(
-                    color = trackColor,
-                    start = Offset(x, trackY - tickHalfHeight),
-                    end = Offset(x, trackY + tickHalfHeight),
-                    strokeWidth = 1.dp.toPx(),
-                    cap = StrokeCap.Round,
-                )
-            }
-            drawLine(
-                color = activeColor,
-                start = Offset(zeroX, trackY),
-                end = Offset(valueX, trackY),
-                strokeWidth = 2.5.dp.toPx(),
-                cap = StrokeCap.Round,
-            )
-
-            val diamondRadius = 4.5.dp.toPx()
-            val diamond = Path().apply {
-                moveTo(zeroX, trackY - diamondRadius)
-                lineTo(zeroX + diamondRadius, trackY)
-                lineTo(zeroX, trackY + diamondRadius)
-                lineTo(zeroX - diamondRadius, trackY)
-                close()
-            }
-            drawPath(diamond, zeroMarker.copy(alpha = 0.8f))
-
-            val thumbWidth = 14.dp.toPx()
-            val thumbHeight = 28.dp.toPx()
-            drawRoundRect(
-                color = activeColor,
-                topLeft = Offset(valueX - thumbWidth / 2f, trackY - thumbHeight / 2f),
-                size = Size(thumbWidth, thumbHeight),
-                cornerRadius = CornerRadius(4.dp.toPx()),
-            )
-            drawLine(
-                color = notch.copy(alpha = if (enabled) 0.85f else 0.45f),
-                start = Offset(valueX, trackY - 6.dp.toPx()),
-                end = Offset(valueX, trackY + 6.dp.toPx()),
-                strokeWidth = 2.dp.toPx(),
-                cap = StrokeCap.Round,
-            )
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            listOf(-12, -6, 0, 6, 12).forEach { mark ->
-                Text(
-                    text = gainLabel(mark),
-                    modifier = Modifier.weight(1f),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.labelSmall,
-                    textAlign = TextAlign.Center,
-                )
             }
         }
     }

@@ -3,9 +3,6 @@
 package com.resonote.feature.local.impl
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -45,26 +42,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
@@ -73,6 +63,7 @@ import com.resonote.core.designsystem.component.ResonoteContentStateLayout
 import com.resonote.core.designsystem.component.ResonoteDestructiveTextButton
 import com.resonote.core.designsystem.component.ResonoteEmptyState
 import com.resonote.core.designsystem.component.ResonoteErrorState
+import com.resonote.core.designsystem.component.ResonoteRotaryKnob
 import com.resonote.core.designsystem.component.ResonoteTonalIconButton
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
 import com.resonote.core.model.EqualizerPreset
@@ -478,23 +469,34 @@ internal fun KaraokeMixEditorScreen(
             item(key = "balance-title") {
                 KaraokeMixSectionTitle(stringResource(R.string.feature_local_impl_mix_balance_section))
             }
-            item(key = "vocal-gain") {
-                KaraokeDbControl(
-                    label = stringResource(R.string.feature_local_impl_vocal_gain),
-                    value = settings.vocalGainDb,
-                    onValueChange = { settings = settings.copy(vocalGainDb = it) },
-                    modifier = Modifier.fillMaxWidth().height(112.dp),
-                    testTag = "karaoke-vocal-gain",
-                )
-            }
-            item(key = "accompaniment-gain") {
-                KaraokeDbControl(
-                    label = stringResource(R.string.feature_local_impl_accompaniment_gain),
-                    value = settings.accompanimentGainDb,
-                    onValueChange = { settings = settings.copy(accompanimentGainDb = it) },
-                    modifier = Modifier.fillMaxWidth().height(112.dp),
-                    testTag = "karaoke-accompaniment-gain",
-                )
+            item(key = "balance-controls") {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 28.dp, vertical = 18.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                ) {
+                    ResonoteRotaryKnob(
+                        title = stringResource(R.string.feature_local_impl_vocal_gain),
+                        valueLabel = settings.vocalGainDb.roundToInt().gainLabel(includeUnit = false),
+                        value = settings.vocalGainDb,
+                        onValueChange = { settings = settings.copy(vocalGainDb = it) },
+                        onValueChangeFinished = {},
+                        valueRange = -12f..12f,
+                        steps = 23,
+                        knobSize = 120.dp,
+                        modifier = Modifier.weight(1f).testTag("karaoke-vocal-gain"),
+                    )
+                    ResonoteRotaryKnob(
+                        title = stringResource(R.string.feature_local_impl_accompaniment_gain),
+                        valueLabel = settings.accompanimentGainDb.roundToInt().gainLabel(includeUnit = false),
+                        value = settings.accompanimentGainDb,
+                        onValueChange = { settings = settings.copy(accompanimentGainDb = it) },
+                        onValueChangeFinished = {},
+                        valueRange = -12f..12f,
+                        steps = 23,
+                        knobSize = 120.dp,
+                        modifier = Modifier.weight(1f).testTag("karaoke-accompaniment-gain"),
+                    )
+                }
             }
             item(key = "equalizer-title") {
                 KaraokeMixSectionTitle(stringResource(R.string.feature_local_impl_eq_section))
@@ -525,44 +527,51 @@ internal fun KaraokeMixEditorScreen(
                     modifier = Modifier.height(52.dp),
                 )
             }
-            item(key = "equalizer-low") {
-                KaraokeDbControl(
-                    label = stringResource(R.string.feature_local_impl_eq_low),
-                    supportingText = stringResource(R.string.feature_local_impl_eq_low_range),
-                    value = settings.vocalLowEqDb,
-                    onValueChange = {
-                        settings = settings.copy(vocalLowEqDb = it)
-                        customEqualizerEditing = true
-                    },
-                    modifier = Modifier.fillMaxWidth().height(124.dp),
-                    testTag = "karaoke-eq-low",
-                )
-            }
-            item(key = "equalizer-mid") {
-                KaraokeDbControl(
-                    label = stringResource(R.string.feature_local_impl_eq_mid),
-                    supportingText = stringResource(R.string.feature_local_impl_eq_mid_range),
-                    value = settings.vocalMidEqDb,
-                    onValueChange = {
-                        settings = settings.copy(vocalMidEqDb = it)
-                        customEqualizerEditing = true
-                    },
-                    modifier = Modifier.fillMaxWidth().height(124.dp),
-                    testTag = "karaoke-eq-mid",
-                )
-            }
-            item(key = "equalizer-high") {
-                KaraokeDbControl(
-                    label = stringResource(R.string.feature_local_impl_eq_high),
-                    supportingText = stringResource(R.string.feature_local_impl_eq_high_range),
-                    value = settings.vocalHighEqDb,
-                    onValueChange = {
-                        settings = settings.copy(vocalHighEqDb = it)
-                        customEqualizerEditing = true
-                    },
-                    modifier = Modifier.fillMaxWidth().height(124.dp),
-                    testTag = "karaoke-eq-high",
-                )
+            item(key = "equalizer-controls") {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 18.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                ) {
+                    ResonoteRotaryKnob(
+                        title = stringResource(R.string.feature_local_impl_eq_low),
+                        valueLabel = settings.vocalLowEqDb.roundToInt().gainLabel(includeUnit = false),
+                        value = settings.vocalLowEqDb,
+                        onValueChange = {
+                            settings = settings.copy(vocalLowEqDb = it)
+                            customEqualizerEditing = true
+                        },
+                        onValueChangeFinished = {},
+                        valueRange = -12f..12f,
+                        steps = 23,
+                        modifier = Modifier.weight(1f).testTag("karaoke-eq-low"),
+                    )
+                    ResonoteRotaryKnob(
+                        title = stringResource(R.string.feature_local_impl_eq_mid),
+                        valueLabel = settings.vocalMidEqDb.roundToInt().gainLabel(includeUnit = false),
+                        value = settings.vocalMidEqDb,
+                        onValueChange = {
+                            settings = settings.copy(vocalMidEqDb = it)
+                            customEqualizerEditing = true
+                        },
+                        onValueChangeFinished = {},
+                        valueRange = -12f..12f,
+                        steps = 23,
+                        modifier = Modifier.weight(1f).testTag("karaoke-eq-mid"),
+                    )
+                    ResonoteRotaryKnob(
+                        title = stringResource(R.string.feature_local_impl_eq_high),
+                        valueLabel = settings.vocalHighEqDb.roundToInt().gainLabel(includeUnit = false),
+                        value = settings.vocalHighEqDb,
+                        onValueChange = {
+                            settings = settings.copy(vocalHighEqDb = it)
+                            customEqualizerEditing = true
+                        },
+                        onValueChangeFinished = {},
+                        valueRange = -12f..12f,
+                        steps = 23,
+                        modifier = Modifier.weight(1f).testTag("karaoke-eq-high"),
+                    )
+                }
             }
         }
     }
@@ -698,150 +707,6 @@ private fun KaraokeEqualizerPresetTabs(
                         maxLines = 1,
                     )
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun KaraokeDbControl(
-    label: String,
-    value: Float,
-    onValueChange: (Float) -> Unit,
-    testTag: String,
-    modifier: Modifier = Modifier,
-    supportingText: String? = null,
-) {
-    Column(modifier.padding(horizontal = 20.dp, vertical = 6.dp)) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                supportingText?.let {
-                    Text(
-                        text = it,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.labelSmall,
-                    )
-                }
-            }
-            Text(
-                text = value.roundToInt().gainLabel(),
-                color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.labelLarge,
-            )
-        }
-        KaraokeDbSlider(
-            value = value,
-            onValueChange = onValueChange,
-            modifier = Modifier.fillMaxWidth().height(68.dp).testTag(testTag),
-        )
-    }
-}
-
-@Composable
-private fun KaraokeDbSlider(value: Float, onValueChange: (Float) -> Unit, modifier: Modifier = Modifier) {
-    val primary = MaterialTheme.colorScheme.primary
-    val track = MaterialTheme.colorScheme.outlineVariant
-    val notch = MaterialTheme.colorScheme.onPrimary
-    val zeroMarker = MaterialTheme.colorScheme.onSurfaceVariant
-    val snappedValue = value.roundToInt().coerceIn(-12, 12)
-
-    Box(
-        modifier = modifier
-            .semantics {
-                progressBarRangeInfo = ProgressBarRangeInfo(snappedValue.toFloat(), -12f..12f, 23)
-                setProgress { target ->
-                    onValueChange(target.roundToInt().coerceIn(-12, 12).toFloat())
-                    true
-                }
-            }
-            .pointerInput(onValueChange) {
-                fun updateValue(x: Float) {
-                    val fraction = (x / size.width).coerceIn(0f, 1f)
-                    onValueChange((-12f + fraction * 24f).roundToInt().toFloat())
-                }
-                awaitEachGesture {
-                    val down = awaitFirstDown(requireUnconsumed = false)
-                    updateValue(down.position.x)
-                    drag(down.id) { change ->
-                        change.consume()
-                        updateValue(change.position.x)
-                    }
-                }
-            },
-    ) {
-        Canvas(Modifier.fillMaxSize()) {
-            val startX = 2.dp.toPx()
-            val endX = size.width - 2.dp.toPx()
-            val trackY = size.height * 0.42f
-            val zeroX = (startX + endX) / 2f
-            val valueX = startX + (endX - startX) * ((snappedValue + 12f) / 24f)
-            drawLine(
-                color = track,
-                start = Offset(startX, trackY),
-                end = Offset(endX, trackY),
-                strokeWidth = 1.5.dp.toPx(),
-                cap = StrokeCap.Round,
-            )
-            repeat(9) { index ->
-                val x = startX + (endX - startX) * index / 8f
-                val tickHalfHeight = if (index % 2 == 0) 5.dp.toPx() else 3.dp.toPx()
-                drawLine(
-                    color = track,
-                    start = Offset(x, trackY - tickHalfHeight),
-                    end = Offset(x, trackY + tickHalfHeight),
-                    strokeWidth = 1.dp.toPx(),
-                    cap = StrokeCap.Round,
-                )
-            }
-            drawLine(
-                color = primary,
-                start = Offset(zeroX, trackY),
-                end = Offset(valueX, trackY),
-                strokeWidth = 2.5.dp.toPx(),
-                cap = StrokeCap.Round,
-            )
-            val diamondRadius = 4.5.dp.toPx()
-            val diamond = Path().apply {
-                moveTo(zeroX, trackY - diamondRadius)
-                lineTo(zeroX + diamondRadius, trackY)
-                lineTo(zeroX, trackY + diamondRadius)
-                lineTo(zeroX - diamondRadius, trackY)
-                close()
-            }
-            drawPath(diamond, zeroMarker.copy(alpha = 0.8f))
-            val thumbWidth = 14.dp.toPx()
-            val thumbHeight = 28.dp.toPx()
-            drawRoundRect(
-                color = primary,
-                topLeft = Offset(valueX - thumbWidth / 2f, trackY - thumbHeight / 2f),
-                size = Size(thumbWidth, thumbHeight),
-                cornerRadius = CornerRadius(4.dp.toPx()),
-            )
-            drawLine(
-                color = notch.copy(alpha = 0.85f),
-                start = Offset(valueX, trackY - 6.dp.toPx()),
-                end = Offset(valueX, trackY + 6.dp.toPx()),
-                strokeWidth = 2.dp.toPx(),
-                cap = StrokeCap.Round,
-            )
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            listOf(-12, -6, 0, 6, 12).forEach { mark ->
-                Text(
-                    text = mark.gainLabel(includeUnit = false),
-                    modifier = Modifier.weight(1f),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.labelSmall,
-                    textAlign = TextAlign.Center,
-                )
             }
         }
     }

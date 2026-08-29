@@ -336,13 +336,13 @@ class PlayerScreenScreenshotTest {
 
     @Test
     fun playerActionsDoNotExposeShare() {
-        var equalizerClicks = 0
-        setPlayerContent(onEqualizerSettingsClick = { equalizerClicks++ })
+        var playbackSettingsClicks = 0
+        setPlayerContent(onPlaybackSettingsClick = { playbackSettingsClicks++ })
 
         composeRule.onNodeWithContentDescription("More options").performClick()
 
-        composeRule.onNodeWithText("Equalizer").assertIsDisplayed().performClick()
-        assertEquals(1, equalizerClicks)
+        composeRule.onNodeWithText("Playback settings").assertIsDisplayed().performClick()
+        assertEquals(1, playbackSettingsClicks)
         composeRule.onNodeWithContentDescription("More options").performClick()
         composeRule.onNodeWithText("Lyrics settings").assertIsDisplayed()
         composeRule.onNodeWithText("Share").assertDoesNotExist()
@@ -359,7 +359,7 @@ class PlayerScreenScreenshotTest {
         onAppendToQueueClick: (() -> Unit)? = null,
         onAddToPlaylistClick: (() -> Unit)? = null,
         onSongInfoClick: (() -> Unit)? = null,
-        onEqualizerSettingsClick: () -> Unit = {},
+        onPlaybackSettingsClick: () -> Unit = {},
         initialPage: Int = 0,
     ) {
         composeRule.setContent {
@@ -393,7 +393,7 @@ class PlayerScreenScreenshotTest {
                         onAppendToQueueClick = onAppendToQueueClick,
                         onAddToPlaylistClick = onAddToPlaylistClick,
                         onSongInfoClick = onSongInfoClick,
-                        onEqualizerSettingsClick = onEqualizerSettingsClick,
+                        onPlaybackSettingsClick = onPlaybackSettingsClick,
                         paletteSeed = PlayerPaletteSeed(
                             mediaId = "current",
                             artworkUri = "test-artwork",

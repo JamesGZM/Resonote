@@ -313,7 +313,7 @@ internal fun ResonoteNavDisplay(
                             backStack.add(LoginGateNavKey(sessionExpired = false))
                         }
                     },
-                    onEqualizerSettingsClick = { backStack.add(EqualizerSettingsNavKey) },
+                    onPlaybackSettingsClick = { backStack.add(PlaybackSettingsNavKey) },
                     onLyricsSettingsClick = { backStack.add(LyricsSettingsNavKey) },
                     paletteSeed = playerPaletteSeed,
                     containerTransitionRunning = playerTransition.currentState != playerTransition.targetState,
