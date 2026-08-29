@@ -92,6 +92,7 @@ fun LocalMusicRoute(
         onEditProject = viewModel::editProject,
         onDismissProjectEditor = viewModel::dismissProjectEditor,
         onPreviewProjectMix = viewModel::previewProjectMix,
+        onSeekProjectPreview = viewModel::seekProjectPreview,
         onSaveProjectMix = viewModel::saveProjectMix,
     )
 }
@@ -126,6 +127,7 @@ internal fun LocalMusicScreen(
     onEditProject: (com.resonote.core.model.KaraokeProjectId) -> Unit = {},
     onDismissProjectEditor: () -> Unit = {},
     onPreviewProjectMix: (com.resonote.core.model.KaraokeMixSettings) -> Unit = {},
+    onSeekProjectPreview: (Long) -> Unit = {},
     onSaveProjectMix: (com.resonote.core.model.KaraokeMixSettings) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
@@ -133,9 +135,10 @@ internal fun LocalMusicScreen(
         BackHandler(onBack = onDismissProjectEditor)
         KaraokeMixEditorScreen(
             project = project,
-            previewing = state.preview.projectId == project.id && state.preview.isPlaying,
+            previewState = state.preview.takeIf { it.projectId == project.id },
             onBack = onDismissProjectEditor,
             onPreview = onPreviewProjectMix,
+            onSeekPreview = onSeekProjectPreview,
             onSave = onSaveProjectMix,
             bottomContentPadding = bottomContentPadding,
         )

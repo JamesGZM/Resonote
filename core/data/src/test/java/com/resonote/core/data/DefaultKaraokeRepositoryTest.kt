@@ -106,6 +106,59 @@ class DefaultKaraokeRepositoryTest {
         recording.delete()
     }
 
+    @Test
+    fun commitRecordingSegmentReplacesSongDurationWithRecordedTimelineEnd() = runTest {
+        val dao = FakeKaraokeDao()
+        val repository = DefaultKaraokeRepository(
+            dao = dao,
+            network = FakeKaraokeNetworkDataSource,
+            playbackRepository = FakeSongPlaybackRepository,
+            store = FakeKaraokeAssetStore(),
+        )
+        val project = prepareProject(repository)
+        val recording = recordingFile()
+
+        val result = repository.commitRecordingSegment(
+            projectId = project.project.id,
+            segmentId = "three-second-take",
+            path = recording.absolutePath,
+            timelineStartMillis = 12_000,
+            durationMillis = 3_000,
+            peakAmplitude = 1_000,
+        )
+
+        assertThat(result).isEqualTo(KaraokeRecordingCommitResult.Saved)
+        assertThat(dao.findProject(project.project.id.value)?.durationMillis).isEqualTo(15_000)
+    }
+
+    @Test
+    fun findProjectRepairsLegacySongDurationFromRecordedSegments() = runTest {
+        val dao = FakeKaraokeDao()
+        val repository = DefaultKaraokeRepository(
+            dao = dao,
+            network = FakeKaraokeNetworkDataSource,
+            playbackRepository = FakeSongPlaybackRepository,
+            store = FakeKaraokeAssetStore(),
+        )
+        val project = prepareProject(repository)
+        dao.insertSegment(
+            KaraokeRecordingSegmentEntity(
+                id = "legacy-segment",
+                projectId = project.project.id.value,
+                assetId = "legacy-asset",
+                timelineStartMillis = 12_000,
+                durationMillis = 3_000,
+                sampleRateHz = 48_000,
+                channelCount = 1,
+                peakAmplitude = 1_000,
+                nonSilent = true,
+                createdAtEpochMillis = 1,
+            ),
+        )
+
+        assertThat(repository.findProject(project.project.id)?.durationMillis).isEqualTo(15_000)
+    }
+
     private suspend fun prepareProject(repository: DefaultKaraokeRepository): PreparedKaraokeProject {
         val result = repository.prepareProject(
             KaraokePreparationRequest(
@@ -133,12 +186,13 @@ class DefaultKaraokeRepositoryTest {
         var failSegmentInsert = false
         private val projects = mutableMapOf<String, KaraokeProjectEntity>()
         private val backingSegments = mutableListOf<KaraokeBackingSegmentEntity>()
+        private val recordingSegments = mutableListOf<KaraokeRecordingSegmentEntity>()
 
         override fun observeProjects(): Flow<List<KaraokeProjectEntity>> = flowOf(projects.values.toList())
 
         override suspend fun findProject(projectId: String) = projects[projectId]
 
-        override suspend fun findSegments(projectId: String): List<KaraokeRecordingSegmentEntity> = emptyList()
+        override suspend fun findSegments(projectId: String) = recordingSegments.filter { it.projectId == projectId }
 
         override suspend fun findBackingSegments(projectId: String) =
             backingSegments.filter { it.projectId == projectId }
@@ -155,6 +209,7 @@ class DefaultKaraokeRepositoryTest {
 
         override suspend fun insertSegment(segment: KaraokeRecordingSegmentEntity) {
             if (failSegmentInsert) error("segment insert failed")
+            recordingSegments += segment
         }
 
         override suspend fun insertBackingSegment(segment: KaraokeBackingSegmentEntity) {

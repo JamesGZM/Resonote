@@ -60,7 +60,7 @@ data class LocalMusicUiState(
     val visibleKaraokeProjects: List<KaraokeProject>
         get() {
             val normalizedQuery = query.trim()
-            return if (normalizedQuery.isEmpty()) {
+            val filtered = if (normalizedQuery.isEmpty()) {
                 karaokeProjects
             } else {
                 karaokeProjects.filter { project ->
@@ -68,6 +68,10 @@ data class LocalMusicUiState(
                         project.artist.orEmpty().contains(normalizedQuery, ignoreCase = true)
                 }
             }
+            return filtered.sortedWith(
+                compareByDescending<KaraokeProject> { it.createdAtEpochMillis }
+                    .thenByDescending { it.id.value },
+            )
         }
 }
 

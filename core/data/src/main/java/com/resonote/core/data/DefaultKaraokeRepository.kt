@@ -37,9 +37,15 @@ internal class DefaultKaraokeRepository @Inject constructor(
 ) : KaraokeRepository {
     private val mutationMutex = Mutex()
 
-    override fun observeProjects() = dao.observeProjects().map { rows -> rows.map { it.asExternalModel() } }
+    override fun observeProjects() = dao.observeProjects().map { rows ->
+        rows.map { project ->
+            project.withRecordedTimelineEnd(dao.findSegments(project.id)).asExternalModel()
+        }
+    }
 
-    override suspend fun findProject(id: KaraokeProjectId) = dao.findProject(id.value)?.asExternalModel()
+    override suspend fun findProject(id: KaraokeProjectId) = dao.findProject(id.value)?.let { project ->
+        project.withRecordedTimelineEnd(dao.findSegments(id.value)).asExternalModel()
+    }
 
     override suspend fun prepareProject(request: KaraokePreparationRequest): PrepareKaraokeResult =
         mutationMutex.withLock {
@@ -238,6 +244,10 @@ internal class DefaultKaraokeRepository @Inject constructor(
             return@withLock KaraokeRecordingCommitResult.Discarded
         }
         val project = dao.findProject(projectId.value) ?: return@withLock KaraokeRecordingCommitResult.Failed
+        val recordedEndMillis = (
+            dao.findSegments(projectId.value).maxOfOrNull { it.timelineStartMillis + it.durationMillis }
+                ?: project.trimStartMillis
+            ).coerceAtLeast(timelineStartMillis + durationMillis)
         val now = System.currentTimeMillis()
         val assetId = UUID.randomUUID().toString()
         try {
@@ -268,7 +278,7 @@ internal class DefaultKaraokeRepository @Inject constructor(
             )
             dao.updateProject(
                 project.copy(
-                    durationMillis = maxOf(project.durationMillis, timelineStartMillis + durationMillis),
+                    durationMillis = recordedEndMillis,
                     updatedAtEpochMillis = now,
                 ),
             )
@@ -301,7 +311,7 @@ internal class DefaultKaraokeRepository @Inject constructor(
         }
 
     override suspend fun renderInput(projectId: KaraokeProjectId): KaraokeRenderInput? {
-        val project = dao.findProject(projectId.value) ?: return null
+        val storedProject = dao.findProject(projectId.value) ?: return null
         val assets = dao.findAssets(projectId.value)
         val paths = assets.associateBy { it.id }
         val backingSegments = dao.findBackingSegments(projectId.value).mapNotNull { segment ->
@@ -319,10 +329,12 @@ internal class DefaultKaraokeRepository @Inject constructor(
             )
         }
         if (backingSegments.isEmpty()) return null
-        val segments = dao.findSegments(projectId.value).mapNotNull { segment ->
+        val storedSegments = dao.findSegments(projectId.value)
+        val segments = storedSegments.mapNotNull { segment ->
             val asset = paths[segment.assetId] ?: return@mapNotNull null
             KaraokeRenderSegment(asset.storagePath, segment.asExternalModel())
         }
+        val project = storedProject.withRecordedTimelineEnd(storedSegments)
         return KaraokeRenderInput(project.asExternalModel(), backingSegments, segments)
     }
 
@@ -371,6 +383,12 @@ internal class DefaultKaraokeRepository @Inject constructor(
         vocalHighEqDb = vocalHighEqDb.coerceIn(-12f, 12f),
         vocalOffsetMillis = vocalOffsetMillis.coerceIn(-200, 200),
     )
+
+    private fun KaraokeProjectEntity.withRecordedTimelineEnd(
+        segments: List<KaraokeRecordingSegmentEntity>,
+    ): KaraokeProjectEntity = segments.maxOfOrNull { it.timelineStartMillis + it.durationMillis }
+        ?.let { recordedEnd -> copy(durationMillis = recordedEnd) }
+        ?: this
 
     private companion object {
         const val MIN_VALID_TAKE_MILLIS = 1_000L

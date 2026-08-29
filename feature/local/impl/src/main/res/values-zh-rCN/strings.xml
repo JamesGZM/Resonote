@@ -63,7 +63,7 @@
     <string name="feature_local_impl_karaoke_empty_title">还没有 K 歌作品</string>
     <string name="feature_local_impl_karaoke_empty_body">从播放页右上角开启 K 歌模式，有效录音会自动保存为草稿</string>
     <string name="feature_local_impl_karaoke_count">共 %1$d 个作品</string>
-    <string name="feature_local_impl_karaoke_library_summary">集中管理已保存的录音，可试听、混音或导出</string>
+    <string name="feature_local_impl_karaoke_library_summary">导出文件保存在“音乐/Resonote/Karaoke”</string>
     <string name="feature_local_impl_selected_count">已选择 %1$d 个</string>
     <string name="feature_local_impl_karaoke_load_error_title">无法加载 K 歌作品</string>
     <string name="feature_local_impl_karaoke_load_error_body">请检查存储权限后重试</string>
@@ -78,7 +78,7 @@
     <string name="feature_local_impl_delete_works_body">将删除 %1$d 个工程及其私有源文件；已导出到“音乐”的文件会保留。</string>
     <string name="feature_local_impl_preview">试听</string>
     <string name="feature_local_impl_edit_mix">编辑混音</string>
-    <string name="feature_local_impl_export">导出 M4A</string>
+    <string name="feature_local_impl_export">导出到音乐</string>
     <string name="feature_local_impl_mix_title">编辑混音</string>
     <string name="feature_local_impl_vocal_gain">人声</string>
     <string name="feature_local_impl_accompaniment_gain">伴奏</string>
@@ -92,10 +92,12 @@
     <string name="feature_local_impl_save_mix">保存混音</string>
     <string name="feature_local_impl_preview_effect">试听效果</string>
     <string name="feature_local_impl_mix_balance_section">音量平衡</string>
+    <string name="feature_local_impl_mix_balance_hint">调整人声与伴奏的音量比例</string>
     <string name="feature_local_impl_eq_section">人声均衡器</string>
     <string name="feature_local_impl_eq_hint">选择适合人声的声音风格</string>
     <string name="feature_local_impl_eq_custom_hint">选择预设会同步调整滑块；手动调整后自动切换为自定义</string>
     <string name="feature_local_impl_sync_section">人声同步</string>
+    <string name="feature_local_impl_restore_default">恢复默认</string>
     <string name="feature_local_impl_eq_preset_flat">原声</string>
     <string name="feature_local_impl_eq_preset_bass">低音增强</string>
     <string name="feature_local_impl_eq_preset_pop">流行</string>

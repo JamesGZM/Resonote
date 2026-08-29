@@ -4,6 +4,11 @@ import com.google.common.truth.Truth.assertThat
 import com.resonote.core.data.LocalMediaDirectoryScanFailure
 import com.resonote.core.data.LocalMediaDirectoryScanResult
 import com.resonote.core.data.LocalMediaRepository
+import com.resonote.core.model.KaraokeMixSettings
+import com.resonote.core.model.KaraokeProject
+import com.resonote.core.model.KaraokeProjectId
+import com.resonote.core.model.KaraokeProjectStatus
+import com.resonote.core.model.KaraokeSourceMode
 import com.resonote.core.model.LocalMedia
 import com.resonote.core.model.LocalMediaDeleteResult
 import com.resonote.core.model.LocalMediaDuplicateAction
@@ -59,6 +64,26 @@ class LocalMusicViewModelTest {
         viewModel.updateSort(LocalMusicSort.Artist)
         assertThat(viewModel.uiState.value.visibleMedia.map { it.id.value })
             .containsExactly("two", "one").inOrder()
+    }
+
+    @Test
+    fun karaokeWorksAreSortedByCreationTimeInsteadOfLastEditTime() {
+        val olderRecentlyEdited = karaokeProject(
+            id = "older",
+            createdAtEpochMillis = 100,
+            updatedAtEpochMillis = 300,
+        )
+        val newer = karaokeProject(
+            id = "newer",
+            createdAtEpochMillis = 200,
+            updatedAtEpochMillis = 200,
+        )
+
+        val visibleIds = LocalMusicUiState(
+            karaokeProjects = listOf(olderRecentlyEdited, newer),
+        ).visibleKaraokeProjects.map { it.id.value }
+
+        assertThat(visibleIds).containsExactly("newer", "older").inOrder()
     }
 
     @Test
@@ -318,6 +343,22 @@ class LocalMusicViewModelTest {
             bitDepth = 24,
             bitrateBitsPerSecond = 2_304_000,
             importedAtEpochMillis = importedAt,
+        )
+
+        fun karaokeProject(id: String, createdAtEpochMillis: Long, updatedAtEpochMillis: Long) = KaraokeProject(
+            id = KaraokeProjectId(id),
+            songHash = "hash-$id",
+            songTitle = id,
+            artist = null,
+            artworkUri = null,
+            sourceMode = KaraokeSourceMode.Accompaniment,
+            trimStartMillis = 0,
+            status = KaraokeProjectStatus.Draft,
+            mixSettings = KaraokeMixSettings(),
+            durationMillis = 3_000,
+            createdAtEpochMillis = createdAtEpochMillis,
+            updatedAtEpochMillis = updatedAtEpochMillis,
+            exportedContentUri = null,
         )
     }
 }

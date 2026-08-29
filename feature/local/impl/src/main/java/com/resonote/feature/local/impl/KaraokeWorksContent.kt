@@ -2,7 +2,11 @@
 
 package com.resonote.feature.local.impl
 
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -47,13 +51,17 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -64,8 +72,10 @@ import com.resonote.core.designsystem.component.ResonoteDestructiveTextButton
 import com.resonote.core.designsystem.component.ResonoteEmptyState
 import com.resonote.core.designsystem.component.ResonoteErrorState
 import com.resonote.core.designsystem.component.ResonoteRotaryKnob
+import com.resonote.core.designsystem.component.ResonoteSectionHeader
 import com.resonote.core.designsystem.component.ResonoteTonalIconButton
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
+import com.resonote.core.karaoke.KaraokePreviewState
 import com.resonote.core.model.EqualizerPreset
 import com.resonote.core.model.KaraokeMixSettings
 import com.resonote.core.model.KaraokeProject
@@ -276,8 +286,8 @@ private fun KaraokeWorkRow(
                 KaraokeProjectArtwork(project)
                 Surface(
                     onClick = onToggleSelection,
-                    modifier = Modifier.align(Alignment.TopEnd).size(28.dp),
-                    shape = RoundedCornerShape(bottomStart = 10.dp, topEnd = 14.dp),
+                    modifier = Modifier.align(Alignment.BottomStart).size(28.dp),
+                    shape = RoundedCornerShape(topEnd = 10.dp, bottomStart = 14.dp),
                     color = if (selected) {
                         MaterialTheme.colorScheme.primary
                     } else {
@@ -317,7 +327,7 @@ private fun KaraokeWorkRow(
                         append(" · ")
                         append(project.status.label())
                         append(" · ")
-                        append(project.durationMillis.asDurationLabel())
+                        append(project.recordedDurationMillis.asDurationLabel())
                     },
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall,
@@ -413,9 +423,10 @@ private fun String.firstArtworkCharacter(): String = trim()
 @Composable
 internal fun KaraokeMixEditorScreen(
     project: KaraokeProject,
-    previewing: Boolean,
+    previewState: KaraokePreviewState?,
     onBack: () -> Unit,
     onPreview: (KaraokeMixSettings) -> Unit,
+    onSeekPreview: (Long) -> Unit,
     onSave: (KaraokeMixSettings) -> Unit,
     bottomContentPadding: androidx.compose.ui.unit.Dp,
 ) {
@@ -461,13 +472,28 @@ internal fun KaraokeMixEditorScreen(
             item(key = "project") {
                 KaraokeMixProjectHeader(
                     project = project,
-                    previewing = previewing,
+                    previewState = previewState,
                     onPreview = { onPreview(settings) },
+                    onSeekPreview = onSeekPreview,
                     modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 12.dp),
                 )
             }
             item(key = "balance-title") {
-                KaraokeMixSectionTitle(stringResource(R.string.feature_local_impl_mix_balance_section))
+                ResonoteSectionHeader(
+                    title = stringResource(R.string.feature_local_impl_mix_balance_section),
+                    supportingText = stringResource(R.string.feature_local_impl_mix_balance_hint),
+                    modifier = Modifier.padding(horizontal = 20.dp),
+                    trailingContent = {
+                        TextButton(
+                            onClick = {
+                                settings = settings.copy(vocalGainDb = 0f, accompanimentGainDb = 0f)
+                            },
+                            modifier = Modifier.testTag("karaoke-balance-reset"),
+                        ) {
+                            Text(stringResource(R.string.feature_local_impl_restore_default))
+                        }
+                    },
+                )
             }
             item(key = "balance-controls") {
                 Row(
@@ -499,7 +525,26 @@ internal fun KaraokeMixEditorScreen(
                 }
             }
             item(key = "equalizer-title") {
-                KaraokeMixSectionTitle(stringResource(R.string.feature_local_impl_eq_section))
+                ResonoteSectionHeader(
+                    title = stringResource(R.string.feature_local_impl_eq_section),
+                    supportingText = stringResource(R.string.feature_local_impl_eq_hint),
+                    modifier = Modifier.padding(horizontal = 20.dp),
+                    trailingContent = {
+                        TextButton(
+                            onClick = {
+                                settings = settings.copy(
+                                    vocalLowEqDb = 0f,
+                                    vocalMidEqDb = 0f,
+                                    vocalHighEqDb = 0f,
+                                )
+                                customEqualizerEditing = false
+                            },
+                            modifier = Modifier.testTag("karaoke-equalizer-reset"),
+                        ) {
+                            Text(stringResource(R.string.feature_local_impl_restore_default))
+                        }
+                    },
+                )
             }
             item(key = "equalizer-chart") {
                 KaraokeEqualizerResponseChart(
@@ -575,16 +620,6 @@ internal fun KaraokeMixEditorScreen(
             }
         }
     }
-}
-
-@Composable
-private fun KaraokeMixSectionTitle(title: String) {
-    Text(
-        text = title,
-        modifier = Modifier.padding(start = 20.dp, top = 12.dp, end = 20.dp, bottom = 4.dp),
-        style = MaterialTheme.typography.bodyMedium,
-        fontWeight = FontWeight.SemiBold,
-    )
 }
 
 @Composable
@@ -731,42 +766,125 @@ private fun karaokeEqualizerCurve(
 @Composable
 private fun KaraokeMixProjectHeader(
     project: KaraokeProject,
-    previewing: Boolean,
+    previewState: KaraokePreviewState?,
     onPreview: () -> Unit,
+    onSeekPreview: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(64.dp)) { KaraokeProjectArtwork(project) }
-        Column(
-            Modifier.weight(1f).padding(start = 14.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            Text(
-                project.songTitle,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                project.artist ?: stringResource(R.string.feature_local_impl_unknown_artist),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                "${project.status.label()} · ${project.durationMillis.asDurationLabel()}",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.labelMedium,
-            )
+    val duration = previewState?.durationMillis?.takeIf { it > 0 } ?: project.recordedDurationMillis
+    val position = previewState?.positionMillis?.coerceIn(0L, duration) ?: 0L
+    Column(modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(64.dp)) { KaraokeProjectArtwork(project) }
+            Column(
+                Modifier.weight(1f).padding(start = 14.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(
+                    project.songTitle,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    project.artist ?: stringResource(R.string.feature_local_impl_unknown_artist),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    "${project.status.label()} · ${project.recordedDurationMillis.asDurationLabel()}",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.labelMedium,
+                )
+            }
+            ResonoteTonalIconButton(
+                label = stringResource(R.string.feature_local_impl_preview_effect),
+                onClick = onPreview,
+                modifier = Modifier.size(44.dp),
+            ) {
+                Icon(if (previewState?.isPlaying == true) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, null)
+            }
         }
-        ResonoteTonalIconButton(
-            label = stringResource(R.string.feature_local_impl_preview_effect),
-            onClick = onPreview,
-            modifier = Modifier.size(44.dp),
-        ) {
-            Icon(if (previewing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, null)
+        KaraokePreviewProgress(
+            positionMillis = position,
+            durationMillis = duration,
+            onSeek = onSeekPreview,
+            enabled = previewState != null,
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+        )
+    }
+}
+
+@Composable
+private fun KaraokePreviewProgress(
+    positionMillis: Long,
+    durationMillis: Long,
+    onSeek: (Long) -> Unit,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val duration = durationMillis.coerceAtLeast(1L)
+    var pendingFraction by remember { mutableStateOf<Float?>(null) }
+    var dragging by remember { mutableStateOf(false) }
+    val thumb by animateDpAsState(if (dragging) 14.dp else 8.dp, label = "karaoke preview seek thumb")
+    val visiblePosition = pendingFraction?.let { (it * duration).toLong() }
+        ?: positionMillis.coerceIn(0L, duration)
+    val played = visiblePosition.toFloat() / duration
+    val interaction = if (enabled) {
+        Modifier
+            .semantics {
+                progressBarRangeInfo = ProgressBarRangeInfo(visiblePosition.toFloat(), 0f..duration.toFloat())
+                setProgress { target ->
+                    onSeek(target.toLong().coerceIn(0L, duration))
+                    true
+                }
+            }
+            .pointerInput(duration) {
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    down.consume()
+                    dragging = true
+                    fun update(x: Float) {
+                        val inset = 7.dp.toPx()
+                        pendingFraction = ((x - inset) / (size.width - inset * 2f).coerceAtLeast(1f))
+                            .coerceIn(0f, 1f)
+                    }
+                    try {
+                        update(down.position.x)
+                        drag(down.id) { change ->
+                            change.consume()
+                            update(change.position.x)
+                        }
+                    } finally {
+                        pendingFraction?.let { onSeek((it * duration).toLong()) }
+                        pendingFraction = null
+                        dragging = false
+                    }
+                }
+            }
+    } else {
+        Modifier.semantics {
+            progressBarRangeInfo = ProgressBarRangeInfo(visiblePosition.toFloat(), 0f..duration.toFloat())
+        }
+    }
+    Box(modifier.height(48.dp).then(interaction)) {
+        val track = MaterialTheme.colorScheme.outlineVariant
+        val accent = MaterialTheme.colorScheme.primary
+        Canvas(Modifier.fillMaxWidth().height(24.dp)) {
+            val inset = 7.dp.toPx()
+            val width = (size.width - inset * 2f).coerceAtLeast(0f)
+            val y = 12.dp.toPx()
+            drawLine(track, Offset(inset, y), Offset(inset + width, y), 3.dp.toPx(), StrokeCap.Round)
+            drawLine(accent, Offset(inset, y), Offset(inset + width * played, y), 3.dp.toPx(), StrokeCap.Round)
+            drawCircle(accent, thumb.toPx() / 2f, Offset(inset + width * played, y))
+        }
+        Row(Modifier.fillMaxWidth().align(Alignment.BottomCenter).padding(horizontal = 7.dp)) {
+            Text(visiblePosition.asDurationLabel(), style = MaterialTheme.typography.labelMedium)
+            Box(Modifier.weight(1f))
+            Text(durationMillis.asDurationLabel(), style = MaterialTheme.typography.labelMedium)
         }
     }
 }
@@ -807,3 +925,6 @@ private fun Long.asDurationLabel(): String {
     val seconds = TimeUnit.MILLISECONDS.toSeconds(this) % 60
     return "%d:%02d".format(minutes, seconds)
 }
+
+private val KaraokeProject.recordedDurationMillis: Long
+    get() = (durationMillis - trimStartMillis).coerceAtLeast(0L)

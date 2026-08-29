@@ -143,6 +143,8 @@ class LocalMusicViewModel @Inject constructor(
         karaokePreviewController.toggle(project.id, settings)
     }
 
+    fun seekProjectPreview(positionMillis: Long) = karaokePreviewController.seekTo(positionMillis)
+
     fun editProject(id: KaraokeProjectId) {
         mutableUiState.update { state ->
             state.copy(editingProject = state.karaokeProjects.firstOrNull { it.id == id })
@@ -436,5 +438,6 @@ private object EmptyKaraokeExportController : KaraokeExportController {
 private object EmptyKaraokePreviewController : KaraokePreviewController {
     override val state = MutableStateFlow(KaraokePreviewState())
     override fun toggle(projectId: KaraokeProjectId, mixSettings: KaraokeMixSettings?) = Unit
+    override fun seekTo(positionMillis: Long) = Unit
     override fun stop() = Unit
 }

@@ -14,7 +14,9 @@ import com.resonote.core.model.KaraokeProjectId
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -31,15 +33,21 @@ internal class Media3KaraokePreviewController @Inject constructor(
     private val mutableState = MutableStateFlow(KaraokePreviewState())
     override val state = mutableState.asStateFlow()
     private var activeMixSettings: KaraokeMixSettings? = null
+    private var progressJob: Job? = null
     private val player = CompositionPlayer.Builder(context).build().apply {
         addListener(
             object : Player.Listener {
                 override fun onIsPlayingChanged(isPlaying: Boolean) {
                     mutableState.value = mutableState.value.copy(isPlaying = isPlaying)
+                    if (isPlaying) startProgressUpdates() else stopProgressUpdates(updateOnce = true)
                 }
 
                 override fun onPlaybackStateChanged(playbackState: Int) {
-                    if (playbackState == Player.STATE_ENDED) mutableState.value = KaraokePreviewState()
+                    if (playbackState == Player.STATE_READY) updateProgress()
+                    if (playbackState == Player.STATE_ENDED) {
+                        stopProgressUpdates()
+                        mutableState.value = KaraokePreviewState()
+                    }
                 }
             },
         )
@@ -70,9 +78,44 @@ internal class Media3KaraokePreviewController @Inject constructor(
         }
     }
 
+    override fun seekTo(positionMillis: Long) {
+        if (mutableState.value.projectId == null) return
+        player.seekTo(positionMillis.coerceIn(0L, player.duration.coerceAtLeast(0L)))
+        updateProgress()
+    }
+
     override fun stop() {
+        stopProgressUpdates()
         player.stop()
         activeMixSettings = null
         mutableState.value = KaraokePreviewState()
+    }
+
+    private fun startProgressUpdates() {
+        progressJob?.cancel()
+        progressJob = scope.launch {
+            while (true) {
+                updateProgress()
+                delay(PREVIEW_PROGRESS_INTERVAL_MILLIS)
+            }
+        }
+    }
+
+    private fun stopProgressUpdates(updateOnce: Boolean = false) {
+        progressJob?.cancel()
+        progressJob = null
+        if (updateOnce) updateProgress()
+    }
+
+    private fun updateProgress() {
+        val duration = player.duration.takeIf { it > 0 } ?: 0L
+        mutableState.value = mutableState.value.copy(
+            positionMillis = player.currentPosition.coerceIn(0L, duration.coerceAtLeast(0L)),
+            durationMillis = duration,
+        )
+    }
+
+    private companion object {
+        const val PREVIEW_PROGRESS_INTERVAL_MILLIS = 100L
     }
 }

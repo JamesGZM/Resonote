@@ -121,9 +121,10 @@ class LocalMusicScreenshotTest {
                 ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
                     KaraokeMixEditorScreen(
                         project = karaokeProject(),
-                        previewing = false,
+                        previewState = null,
                         onBack = {},
                         onPreview = {},
+                        onSeekPreview = {},
                         onSave = {},
                         bottomContentPadding = 80.dp,
                     )
@@ -142,9 +143,10 @@ class LocalMusicScreenshotTest {
             ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
                 KaraokeMixEditorScreen(
                     project = karaokeProject(),
-                    previewing = false,
+                    previewState = null,
                     onBack = {},
                     onPreview = {},
+                    onSeekPreview = {},
                     onSave = { savedSettings = it },
                     bottomContentPadding = 0.dp,
                 )
@@ -174,6 +176,17 @@ class LocalMusicScreenshotTest {
             assertEquals(1f, savedSettings?.vocalLowEqDb ?: Float.NaN, 0f)
             assertEquals(2f, savedSettings?.vocalMidEqDb ?: Float.NaN, 0f)
             assertEquals(4f, savedSettings?.vocalHighEqDb ?: Float.NaN, 0f)
+        }
+
+        composeRule.onNodeWithTag("karaoke-balance-reset").performScrollTo().performClick()
+        composeRule.onNodeWithTag("karaoke-equalizer-reset").performScrollTo().performClick()
+        composeRule.onNodeWithContentDescription("保存混音").performClick()
+        composeRule.runOnIdle {
+            assertEquals(0f, savedSettings?.vocalGainDb ?: Float.NaN, 0f)
+            assertEquals(0f, savedSettings?.accompanimentGainDb ?: Float.NaN, 0f)
+            assertEquals(0f, savedSettings?.vocalLowEqDb ?: Float.NaN, 0f)
+            assertEquals(0f, savedSettings?.vocalMidEqDb ?: Float.NaN, 0f)
+            assertEquals(0f, savedSettings?.vocalHighEqDb ?: Float.NaN, 0f)
         }
     }
 

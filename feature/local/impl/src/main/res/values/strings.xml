@@ -62,7 +62,7 @@
     <string name="feature_local_impl_karaoke_empty_title">No karaoke works yet</string>
     <string name="feature_local_impl_karaoke_empty_body">Start karaoke from the player menu. Valid takes are saved automatically.</string>
     <string name="feature_local_impl_karaoke_count">%1$d works</string>
-    <string name="feature_local_impl_karaoke_library_summary">Your saved takes, ready to preview, mix, or export</string>
+    <string name="feature_local_impl_karaoke_library_summary">Exports are saved to Music/Resonote/Karaoke</string>
     <string name="feature_local_impl_selected_count">%1$d selected</string>
     <string name="feature_local_impl_karaoke_load_error_title">Couldn’t load karaoke works</string>
     <string name="feature_local_impl_karaoke_load_error_body">Check storage access and try again.</string>
@@ -77,7 +77,7 @@
     <string name="feature_local_impl_delete_works_body">%1$d projects and their private source files will be deleted. Files already exported to Music will be kept.</string>
     <string name="feature_local_impl_preview">Preview</string>
     <string name="feature_local_impl_edit_mix">Edit mix</string>
-    <string name="feature_local_impl_export">Export M4A</string>
+    <string name="feature_local_impl_export">Export to Music</string>
     <string name="feature_local_impl_mix_title">Edit mix</string>
     <string name="feature_local_impl_vocal_gain">Vocal</string>
     <string name="feature_local_impl_accompaniment_gain">Accompaniment</string>
@@ -91,10 +91,12 @@
     <string name="feature_local_impl_save_mix">Save mix</string>
     <string name="feature_local_impl_preview_effect">Preview effect</string>
     <string name="feature_local_impl_mix_balance_section">Level balance</string>
+    <string name="feature_local_impl_mix_balance_hint">Balance the vocal and accompaniment levels</string>
     <string name="feature_local_impl_eq_section">Vocal equalizer</string>
     <string name="feature_local_impl_eq_hint">Choose a sound style that suits the vocal</string>
     <string name="feature_local_impl_eq_custom_hint">Presets update the sliders; manual adjustments switch to Custom</string>
     <string name="feature_local_impl_sync_section">Vocal sync</string>
+    <string name="feature_local_impl_restore_default">Reset</string>
     <string name="feature_local_impl_eq_preset_flat">Original</string>
     <string name="feature_local_impl_eq_preset_bass">Bass boost</string>
     <string name="feature_local_impl_eq_preset_pop">Pop</string>
