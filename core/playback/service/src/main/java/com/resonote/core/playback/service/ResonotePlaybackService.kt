@@ -4,6 +4,7 @@ package com.resonote.core.playback.service
 
 import android.content.Context
 import android.media.AudioManager
+import androidx.core.content.ContextCompat
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.exoplayer.DefaultRenderersFactory
@@ -81,7 +82,7 @@ class ResonotePlaybackService : MediaSessionService() {
             audioManager = getSystemService(AudioManager::class.java),
             player = exoPlayer,
             scope = serviceScope,
-            mainExecutor = mainExecutor,
+            mainExecutor = ContextCompat.getMainExecutor(this),
         ).also(CommunicationPlaybackGuard::start)
         serviceScope.launch {
             playbackPreferencesRepository.preferences.collect { preferences ->

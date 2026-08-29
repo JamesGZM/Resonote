@@ -39,7 +39,7 @@ internal class CommunicationPlaybackGuard(
         started = true
 
         player.addListener(playerListener)
-        if (sdkInt >= Build.VERSION_CODES.S) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && sdkInt >= Build.VERSION_CODES.S) {
             registerModeChangedListener()
         }
         if (player.isPlaying) {
