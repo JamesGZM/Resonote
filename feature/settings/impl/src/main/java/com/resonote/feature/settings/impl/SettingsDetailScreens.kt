@@ -277,6 +277,7 @@ internal fun PlaybackSettingsScreen(
 
 private enum class LyricsSettingsSheet {
     DesktopControlsTimeout,
+    DesktopOpacity,
     DesktopWidth,
     DesktopFontSize,
     DesktopOutline,
@@ -355,6 +356,18 @@ fun DesktopLyricsSettingsRoute(
                         },
                     ),
                     switchTestTag = "desktop-lyrics-switch",
+                )
+            }
+            item { SettingsDivider() }
+            item {
+                SettingsValueRow(
+                    title = stringResource(R.string.feature_settings_impl_desktop_lyrics_opacity),
+                    value = desktopLyricsOpacityLabel(preferences.desktopLyricsSurfaceOpacity),
+                    onClick = { openSheet = LyricsSettingsSheet.DesktopOpacity },
+                    modifier = Modifier.testTag("desktop-lyrics-opacity"),
+                    supportingText = stringResource(
+                        R.string.feature_settings_impl_desktop_lyrics_opacity_body,
+                    ),
                 )
             }
             item { SettingsDivider() }
@@ -456,6 +469,12 @@ fun DesktopLyricsSettingsRoute(
         }
     }
     when (openSheet) {
+        LyricsSettingsSheet.DesktopOpacity -> DesktopLyricsOpacitySheet(
+            opacityPercent = preferences.desktopLyricsSurfaceOpacity,
+            onOpacityChange = viewModel::setDesktopLyricsSurfaceOpacity,
+            onReset = viewModel::resetDesktopLyricsSurfaceOpacity,
+            onDismiss = { openSheet = null },
+        )
         LyricsSettingsSheet.DesktopControlsTimeout -> choiceSheet(
             title = stringResource(R.string.feature_settings_impl_desktop_lyrics_controls_timeout),
             selected = preferences.desktopLyricsControlsTimeout,
@@ -664,6 +683,7 @@ fun LyricsSettingsRoute(
     }
     when (openSheet) {
         LyricsSettingsSheet.DesktopControlsTimeout,
+        LyricsSettingsSheet.DesktopOpacity,
         LyricsSettingsSheet.DesktopWidth,
         LyricsSettingsSheet.DesktopFontSize,
         LyricsSettingsSheet.DesktopOutline,

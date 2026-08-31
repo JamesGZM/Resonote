@@ -1,4 +1,7 @@
 <resources>
+    <string name="core_playback_service_download_channel">Music downloads</string>
+    <string name="core_playback_service_download_channel_description">Progress for music saved for offline playback</string>
+    <string name="core_playback_service_download_notification_message">Saving music for offline playback</string>
     <string name="core_playback_service_desktop_lyrics_waiting">Play a song to show desktop lyrics</string>
     <string name="core_playback_service_desktop_lyrics_loading">Loading lyrics…</string>
     <string name="core_playback_service_desktop_lyrics_empty">No lyrics available</string>

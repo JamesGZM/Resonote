@@ -38,6 +38,7 @@ import com.resonote.core.model.OnlinePlaybackQuality
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.PlaybackMode
 import com.resonote.core.model.PlaybackSpeed
+import com.resonote.core.model.ResolvedSongSource
 import com.resonote.core.playback.PlaybackItem
 import com.resonote.core.playback.PlaybackState
 import com.resonote.core.playback.PlaybackStatus
@@ -68,6 +69,32 @@ class PlayerScreenScreenshotTest {
 
         captureScreenRoboImage(
             filePath = "src/test/screenshots/Player/PlayerCompact_cover.png",
+            roborazziOptions = DefaultRoborazziOptions,
+        )
+    }
+
+    @Test
+    fun player_compactOfflineProgress() {
+        val initialState = screenshotState()
+        val downloadedItem = initialState.playback.queue.first().copy(
+            resolvedSource = ResolvedSongSource(
+                uri = "https://media.example/downloaded.flac",
+                durationMillis = 248_000,
+                extension = "flac",
+                cacheKey = "download:current",
+                isOffline = true,
+            ),
+        )
+        setPlayerContent(
+            initialState = initialState.copy(
+                playback = initialState.playback.copy(
+                    queue = listOf(downloadedItem) + initialState.playback.queue.drop(1),
+                ),
+            ),
+        )
+
+        captureScreenRoboImage(
+            filePath = "src/test/screenshots/Player/PlayerCompact_offline-progress.png",
             roborazziOptions = DefaultRoborazziOptions,
         )
     }
@@ -302,11 +329,13 @@ class PlayerScreenScreenshotTest {
         var playNextCount = 0
         var appendCount = 0
         var addToPlaylistCount = 0
+        var downloadCount = 0
         var infoCount = 0
         setPlayerContent(
             onPlayNextClick = { playNextCount++ },
             onAppendToQueueClick = { appendCount++ },
             onAddToPlaylistClick = { addToPlaylistCount++ },
+            onDownloadClick = { downloadCount++ },
             onSongInfoClick = { infoCount++ },
         )
 
@@ -326,11 +355,14 @@ class PlayerScreenScreenshotTest {
         composeRule.onNodeWithContentDescription("More options").performClick()
         composeRule.onNodeWithText("Add to playlist").performClick()
         composeRule.onNodeWithContentDescription("More options").performClick()
+        composeRule.onNodeWithText("Download").performClick()
+        composeRule.onNodeWithContentDescription("More options").performClick()
         composeRule.onNodeWithText("Song information").performClick()
 
         assertEquals(1, playNextCount)
         assertEquals(1, appendCount)
         assertEquals(1, addToPlaylistCount)
+        assertEquals(1, downloadCount)
         assertEquals(1, infoCount)
     }
 
@@ -358,6 +390,7 @@ class PlayerScreenScreenshotTest {
         onPlayNextClick: (() -> Unit)? = null,
         onAppendToQueueClick: (() -> Unit)? = null,
         onAddToPlaylistClick: (() -> Unit)? = null,
+        onDownloadClick: (() -> Unit)? = null,
         onSongInfoClick: (() -> Unit)? = null,
         onPlaybackSettingsClick: () -> Unit = {},
         initialPage: Int = 0,
@@ -392,6 +425,7 @@ class PlayerScreenScreenshotTest {
                         onPlayNextClick = onPlayNextClick,
                         onAppendToQueueClick = onAppendToQueueClick,
                         onAddToPlaylistClick = onAddToPlaylistClick,
+                        onDownloadClick = onDownloadClick,
                         onSongInfoClick = onSongInfoClick,
                         onPlaybackSettingsClick = onPlaybackSettingsClick,
                         paletteSeed = PlayerPaletteSeed(

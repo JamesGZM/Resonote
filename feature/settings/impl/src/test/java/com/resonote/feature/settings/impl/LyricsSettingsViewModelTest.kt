@@ -83,6 +83,19 @@ class LyricsSettingsViewModelTest {
     }
 
     @Test
+    fun changingDesktopLyricsOpacityClampsPersistsAndRefreshesService() = runTest(dispatcher) {
+        val repository = FakeLyricsPreferencesRepository()
+        val controller = FakeDesktopLyricsController(repository)
+        val viewModel = LyricsSettingsViewModel(repository, controller)
+
+        viewModel.setDesktopLyricsSurfaceOpacity(64)
+        advanceUntilIdle()
+
+        assertThat(repository.preferences.value.desktopLyricsSurfaceOpacity).isEqualTo(64)
+        assertThat(controller.refreshCalls).isEqualTo(1)
+    }
+
+    @Test
     fun changingShadowColorPersistsOpaqueColorAndRefreshesService() = runTest(dispatcher) {
         val repository = FakeLyricsPreferencesRepository()
         val controller = FakeDesktopLyricsController(repository)
@@ -113,6 +126,7 @@ class LyricsSettingsViewModelTest {
         val repository = FakeLyricsPreferencesRepository(
             LyricsPreferences(
                 desktopLyricsBackgroundColorArgb = 0xFF123456.toInt(),
+                desktopLyricsSurfaceOpacity = 42,
                 desktopLyricsForegroundColorArgb = 0xFF654321.toInt(),
                 desktopLyricsShadowColorArgb = 0xFF112233.toInt(),
                 desktopLyricsShadowOffsetXDp = -4f,
@@ -129,6 +143,7 @@ class LyricsSettingsViewModelTest {
         val viewModel = LyricsSettingsViewModel(repository, controller)
 
         viewModel.resetDesktopLyricsBackgroundColor()
+        viewModel.resetDesktopLyricsSurfaceOpacity()
         viewModel.resetDesktopLyricsForegroundColor()
         viewModel.resetDesktopLyricsWidth()
         viewModel.resetDesktopLyricsFontSize()
@@ -140,6 +155,7 @@ class LyricsSettingsViewModelTest {
         val preferences = repository.preferences.value
         assertThat(preferences.desktopLyricsBackgroundColorArgb)
             .isEqualTo(DesktopLyricsDefaults.BACKGROUND_COLOR_ARGB)
+        assertThat(preferences.desktopLyricsSurfaceOpacity).isEqualTo(DesktopLyricsDefaults.SURFACE_OPACITY)
         assertThat(preferences.desktopLyricsForegroundColorArgb)
             .isEqualTo(DesktopLyricsDefaults.FOREGROUND_COLOR_ARGB)
         assertThat(preferences.desktopLyricsWidthPercent).isEqualTo(DesktopLyricsDefaults.WIDTH_PERCENT)
@@ -157,7 +173,7 @@ class LyricsSettingsViewModelTest {
             .isEqualTo(DesktopLyricsDefaults.SHADOW_BLUR_RADIUS_DP)
         assertThat(preferences.desktopLyricsControlsTimeout)
             .isEqualTo(DesktopLyricsControlsTimeout.FiveSeconds)
-        assertThat(controller.refreshCalls).isEqualTo(7)
+        assertThat(controller.refreshCalls).isEqualTo(8)
     }
 }
 

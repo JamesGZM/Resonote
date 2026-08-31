@@ -16,7 +16,10 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-internal class PlaybackMediaCache @Inject constructor(@ApplicationContext context: Context) {
+internal class PlaybackMediaCache @Inject constructor(
+    @ApplicationContext context: Context,
+    downloadStore: PlaybackDownloadStore,
+) {
     private val cache = SimpleCache(
         File(context.cacheDir, CACHE_DIRECTORY_NAME),
         LeastRecentlyUsedCacheEvictor(MAX_CACHE_BYTES),
@@ -29,10 +32,17 @@ internal class PlaybackMediaCache @Inject constructor(@ApplicationContext contex
         .setUpstreamDataSourceFactory(httpDataSourceFactory)
         .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
 
-    val playbackDataSourceFactory: DataSource.Factory = DefaultDataSource.Factory(
+    private val streamingDataSourceFactory: DataSource.Factory = DefaultDataSource.Factory(
         context,
         cacheDataSourceFactory,
     )
+
+    val playbackDataSourceFactory: DataSource.Factory = DataSource.Factory {
+        RoutingPlaybackDataSource(
+            downloads = downloadStore.cacheOnlyDataSourceFactory,
+            streaming = streamingDataSourceFactory,
+        )
+    }
 
     fun sizeBytes(): Long = cache.cacheSpace
 

@@ -61,6 +61,7 @@ fun PlayerRoute(
     onPlayNextClick: (OnlineSong) -> Unit,
     onAppendToQueueClick: (OnlineSong) -> Unit,
     onAddToPlaylistClick: (OnlineSong) -> Unit,
+    onDownloadClick: (OnlineSong) -> Unit,
     onSongInfoClick: (OnlineSong) -> Unit,
     onLoginRequest: () -> Unit = {},
     onPlaybackSettingsClick: () -> Unit = {},
@@ -77,6 +78,7 @@ fun PlayerRoute(
     val likeUnsupported = stringResource(R.string.feature_player_impl_like_unsupported)
     val queuedNext = stringResource(R.string.feature_player_impl_added_next)
     val queuedLast = stringResource(R.string.feature_player_impl_added_queue)
+    val downloadAdded = stringResource(R.string.feature_player_impl_download_added)
     val context = LocalContext.current
     val microphoneDenied = stringResource(R.string.feature_player_impl_karaoke_microphone_denied)
     val karaokeFailure = state.karaoke.failure?.let { failure ->
@@ -167,6 +169,12 @@ fun PlayerRoute(
             }
         },
         onAddToPlaylistClick = onlineSong?.let { song -> { onAddToPlaylistClick(song) } },
+        onDownloadClick = onlineSong?.let { song ->
+            {
+                onDownloadClick(song)
+                snackbar?.show(downloadAdded)
+            }
+        },
         onSongInfoClick = onlineSong?.let { song -> { onSongInfoClick(song) } },
     )
 }
@@ -192,6 +200,7 @@ fun PlayerScreen(
     onPlayNextClick: (() -> Unit)? = null,
     onAppendToQueueClick: (() -> Unit)? = null,
     onAddToPlaylistClick: (() -> Unit)? = null,
+    onDownloadClick: (() -> Unit)? = null,
     onSongInfoClick: (() -> Unit)? = null,
     onToggleLike: () -> Unit = {},
     onPlaybackSettingsClick: () -> Unit = {},
@@ -365,6 +374,9 @@ fun PlayerScreen(
                             palette,
                             onSeek,
                             enabled = !karaokeEnabled || !state.karaoke.continuousRecordingArmed,
+                            showBufferedProgress = state.playback.currentItem?.let { item ->
+                                item.origin !is PlaybackOrigin.Local && item.resolvedSource?.isOffline != true
+                            } ?: false,
                         )
                         PlayerBottomControls(
                             karaokeEnabled = karaokeEnabled,
@@ -404,6 +416,7 @@ fun PlayerScreen(
             onPlayNextClick,
             onAppendToQueueClick,
             onAddToPlaylistClick,
+            onDownloadClick,
             onSongInfoClick,
             onPlaybackSettingsClick,
             onLyricsSettingsClick,

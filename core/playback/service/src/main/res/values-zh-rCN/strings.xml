@@ -1,4 +1,7 @@
 <resources>
+    <string name="core_playback_service_download_channel">音乐下载</string>
+    <string name="core_playback_service_download_channel_description">显示离线音乐的下载进度</string>
+    <string name="core_playback_service_download_notification_message">正在保存音乐以供离线播放</string>
     <string name="core_playback_service_desktop_lyrics_waiting">播放歌曲后显示桌面歌词</string>
     <string name="core_playback_service_desktop_lyrics_loading">正在加载歌词…</string>
     <string name="core_playback_service_desktop_lyrics_empty">暂无歌词</string>

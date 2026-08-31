@@ -16,6 +16,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
+import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.LibraryAdd
@@ -140,6 +141,7 @@ internal fun PlayerActionsSheet(
     onPlayNext: (() -> Unit)?,
     onAppendToQueue: (() -> Unit)?,
     onAddToPlaylist: (() -> Unit)?,
+    onDownload: (() -> Unit)?,
     onShowInfo: (() -> Unit)?,
     onPlaybackSettings: () -> Unit,
     onLyricsSettings: () -> Unit,
@@ -192,6 +194,12 @@ internal fun PlayerActionsSheet(
         }
         onAddToPlaylist?.let {
             PlayerActionRow(Icons.Rounded.LibraryAdd, stringResource(R.string.feature_player_impl_add_playlist)) {
+                onDismiss()
+                it()
+            }
+        }
+        onDownload?.let {
+            PlayerActionRow(Icons.Rounded.Download, stringResource(R.string.feature_player_impl_download)) {
                 onDismiss()
                 it()
             }

@@ -134,8 +134,27 @@ class DesktopLyricsRendererTest {
             desktopLyricsWindowFlags(locked = false) and
                 android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
         ).isEqualTo(0)
-        assertThat(desktopLyricsWindowAlpha(locked = true, maximumObscuringOpacity = 0.8f)).isEqualTo(0.8f)
-        assertThat(desktopLyricsWindowAlpha(locked = false, maximumObscuringOpacity = 0.8f)).isEqualTo(1f)
+        assertThat(
+            desktopLyricsWindowAlpha(
+                locked = true,
+                opacityPercent = 100,
+                maximumObscuringOpacity = 0.8f,
+            ),
+        ).isEqualTo(0.8f)
+        assertThat(
+            desktopLyricsWindowAlpha(
+                locked = false,
+                opacityPercent = 65,
+                maximumObscuringOpacity = 0.8f,
+            ),
+        ).isEqualTo(0.65f)
+        assertThat(
+            desktopLyricsWindowAlpha(
+                locked = true,
+                opacityPercent = 65,
+                maximumObscuringOpacity = 0.8f,
+            ),
+        ).isEqualTo(0.65f)
     }
 
     @Test

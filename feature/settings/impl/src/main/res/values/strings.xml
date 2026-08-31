@@ -91,6 +91,10 @@
     <string name="feature_settings_impl_desktop_lyrics">Show desktop lyrics</string>
     <string name="feature_settings_impl_desktop_lyrics_body">Keep synchronized lyrics visible everywhere, including inside Resonote</string>
     <string name="feature_settings_impl_desktop_lyrics_permission_body">Allow display over other apps to turn on desktop lyrics</string>
+    <string name="feature_settings_impl_desktop_lyrics_opacity">Overall opacity</string>
+    <string name="feature_settings_impl_desktop_lyrics_opacity_body">Applies to lyrics and playback controls</string>
+    <string name="feature_settings_impl_desktop_lyrics_opacity_sheet_body">Turn the knob to adjust the entire floating controller</string>
+    <string name="feature_settings_impl_desktop_lyrics_opacity_knob">Opacity</string>
     <string name="feature_settings_impl_desktop_lyrics_background_color">Lyrics background color</string>
     <string name="feature_settings_impl_desktop_lyrics_background_color_body">Color of the lyrics before the progress transition</string>
     <string name="feature_settings_impl_desktop_lyrics_foreground_color">Lyrics foreground color</string>
@@ -102,6 +106,7 @@
     <string name="feature_settings_impl_desktop_lyrics_width_sheet_body">Turn the knob to balance line length and screen space</string>
     <string name="feature_settings_impl_desktop_lyrics_width_knob">Width</string>
     <string name="feature_settings_impl_desktop_lyrics_integer_value">%1$d</string>
+    <string name="feature_settings_impl_desktop_lyrics_percent_value">%1$d%%</string>
     <string name="feature_settings_impl_desktop_lyrics_decimal_value">%1$.1f</string>
     <string name="feature_settings_impl_desktop_lyrics_outline">Text outline</string>
     <string name="feature_settings_impl_desktop_lyrics_outline_color">Outline color</string>
@@ -193,6 +198,27 @@
     <string name="feature_settings_impl_library_coroutines">Asynchronous programming</string>
     <string name="feature_settings_impl_library_protobuf">Data serialization</string>
     <string name="feature_settings_impl_privacy">Privacy</string>
-    <string name="feature_settings_impl_privacy_body">Resonote stores theme, playback and lyrics preferences, queue and playback/search history, and music you explicitly import on this device. Sign-in credentials use encrypted storage. Online content, sign-in, cloud music and recognition communicate with upstream services only when required by those features. Opening About checks the public GitHub Releases endpoint for updates. Recognition audio is used for the current request and cleared after completion, cancellation or failure. Desktop lyrics use the system display-over-other-apps permission and an on-device foreground service only while enabled; Resonote does not read other apps’ notifications. Resonote contains no advertising, analytics or telemetry. Playback cache only reduces repeated traffic and can be cleared at any time.</string>
+    <string name="feature_settings_impl_privacy_body">Resonote stores theme, playback and lyrics preferences, queue and playback/search history, and music you explicitly import or download on this device. Sign-in credentials use encrypted storage. Online content, sign-in, cloud music and recognition communicate with upstream services only when required by those features. Opening About checks the public GitHub Releases endpoint for updates. Recognition audio is used for the current request and cleared after completion, cancellation or failure. Desktop lyrics use the system display-over-other-apps permission and an on-device foreground service only while enabled; Resonote does not read other apps’ notifications. Resonote contains no advertising, analytics or telemetry. Playback cache only reduces repeated traffic and can be cleared at any time without deleting downloads.</string>
     <string name="feature_settings_impl_license_body">MIT License\n\nCopyright © 2026 JamesGZM\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files, to deal in the Software without restriction, subject to inclusion of the copyright and permission notice. The software is provided “as is”, without warranty of any kind.</string>
+    <string name="feature_settings_impl_download_management">Download management</string>
+    <string name="feature_settings_impl_download_management_summary">View progress and manage offline music</string>
+    <string name="feature_settings_impl_download_empty_title">No downloads</string>
+    <string name="feature_settings_impl_download_empty_body">Songs you download will appear here and in Local Music.</string>
+    <string name="feature_settings_impl_download_summary">%1$d active · %2$d completed · %3$d failed</string>
+    <string name="feature_settings_impl_download_private_storage">Completed songs automatically appear in Local Music and stay on this device.</string>
+    <string name="feature_settings_impl_download_pause_all">Pause all</string>
+    <string name="feature_settings_impl_download_resume_all">Resume all</string>
+    <string name="feature_settings_impl_download_preparing">Preparing</string>
+    <string name="feature_settings_impl_download_queued">Waiting</string>
+    <string name="feature_settings_impl_download_downloading">Downloading</string>
+    <string name="feature_settings_impl_download_progress">Downloading · %1$d%%</string>
+    <string name="feature_settings_impl_download_paused">Paused</string>
+    <string name="feature_settings_impl_download_completed">Downloaded · Available in Local Music</string>
+    <string name="feature_settings_impl_download_failed">Download failed</string>
+    <string name="feature_settings_impl_download_removing">Removing</string>
+    <string name="feature_settings_impl_download_pause">Pause download</string>
+    <string name="feature_settings_impl_download_resume">Resume download</string>
+    <string name="feature_settings_impl_download_remove">Remove</string>
+    <string name="feature_settings_impl_download_remove_title">Remove download?</string>
+    <string name="feature_settings_impl_download_remove_body">“%1$s” will also be removed from Local Music.</string>
 </resources>

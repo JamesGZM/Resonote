@@ -16,9 +16,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.FolderOpen
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.MoreVert
@@ -49,29 +51,32 @@ import com.resonote.core.designsystem.component.ResonoteArtworkState
 import com.resonote.core.designsystem.component.ResonoteIconButton
 import com.resonote.core.designsystem.component.ResonoteMusicItem
 import com.resonote.core.designsystem.component.ResonotePlainAction
+import com.resonote.core.designsystem.component.ResonoteRemoteArtwork
 import com.resonote.core.designsystem.tokens.ResonoteTokens
 import com.resonote.core.model.LocalMedia
+import com.resonote.core.playback.MusicDownload
+import java.util.Locale
 
 @Composable
 internal fun LocalLibrarySummary(
-    media: List<LocalMedia>,
+    itemCount: Int,
+    totalBytes: Long,
     importEnabled: Boolean,
     onPickFiles: () -> Unit,
     onPickDirectory: () -> Unit,
 ) {
-    val totalBytes = media.sumOf(LocalMedia::sizeBytes)
     Row(
         modifier = Modifier.fillMaxWidth().padding(start = 8.dp, top = 4.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text(
-                stringResource(R.string.feature_local_impl_summary, media.size, totalBytes.fileSize()),
+                stringResource(R.string.feature_local_impl_summary, itemCount, totalBytes.fileSize()),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
             )
             Text(
-                stringResource(R.string.feature_local_impl_private_copy),
+                stringResource(R.string.feature_local_impl_device_storage),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodySmall,
             )
@@ -109,13 +114,48 @@ internal fun LocalMusicTools(state: LocalMusicUiState, onSortChange: (LocalMusic
             }
         }
         Spacer(Modifier.weight(1f))
-        ResonotePlainAction(onClick = onPlayAll, enabled = state.visibleMedia.isNotEmpty()) {
+        ResonotePlainAction(onClick = onPlayAll, enabled = state.visibleItems.isNotEmpty()) {
             Text(
                 text = stringResource(R.string.feature_local_impl_play_all),
                 modifier = Modifier.padding(horizontal = 8.dp),
                 color = MaterialTheme.colorScheme.primary,
                 style = MaterialTheme.typography.labelLarge,
             )
+        }
+    }
+}
+
+@Composable
+internal fun DownloadStatusCard(activeCount: Int, failedCount: Int, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceContainer,
+    ) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(Icons.Rounded.Download, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    if (activeCount > 0) {
+                        stringResource(R.string.feature_local_impl_downloading_count, activeCount)
+                    } else {
+                        stringResource(R.string.feature_local_impl_download_failed_count, failedCount)
+                    },
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    stringResource(R.string.feature_local_impl_open_download_management),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null)
         }
     }
 }
@@ -242,4 +282,65 @@ internal fun LocalMediaRow(
             )
         }
     }
+}
+
+@Composable
+internal fun DownloadedMediaRow(
+    download: MusicDownload,
+    isPlaying: Boolean,
+    onPlay: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    var menuExpanded by remember { mutableStateOf(false) }
+    ResonoteMusicItem(
+        title = download.song.title,
+        supportingText = listOfNotNull(
+            download.song.artist ?: download.song.albumTitle,
+            stringResource(R.string.feature_local_impl_downloaded),
+        ).joinToString(" · "),
+        duration = download.song.durationMillis.durationLabel(),
+        onClick = onPlay,
+        onMoreClick = null,
+        artworkState = if (download.song.coverUrl ==
+            null
+        ) {
+            ResonoteArtworkState.MISSING
+        } else {
+            ResonoteArtworkState.LOADED
+        },
+        artwork = {
+            ResonoteRemoteArtwork(
+                model = download.song.coverUrl,
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+            )
+        },
+        qualityLabel = download.extension?.uppercase(Locale.ROOT) ?: "AUDIO",
+        isPlaying = isPlaying,
+        trailingAction = {
+            Box {
+                ResonoteIconButton(
+                    label = stringResource(R.string.feature_local_impl_more_actions, download.song.title),
+                    onClick = { menuExpanded = true },
+                    icon = {
+                        Icon(
+                            Icons.Rounded.MoreVert,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    },
+                )
+                DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.feature_local_impl_delete_download)) },
+                        leadingIcon = { Icon(Icons.Rounded.Delete, contentDescription = null) },
+                        onClick = {
+                            menuExpanded = false
+                            onDelete()
+                        },
+                    )
+                }
+            }
+        },
+    )
 }

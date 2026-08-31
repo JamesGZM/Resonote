@@ -39,14 +39,16 @@ import com.resonote.core.designsystem.component.ResonoteTabPager
 import com.resonote.core.designsystem.component.ResonoteTabbedToolbar
 import com.resonote.core.designsystem.component.ResonoteTopAppBar
 import com.resonote.core.model.LocalMedia
+import com.resonote.core.playback.PlaybackItem
 
 @Composable
 fun LocalMusicRoute(
     playingMediaId: String?,
     bottomContentPadding: Dp,
     onBack: () -> Unit,
-    onPlayAll: (List<LocalMedia>) -> Unit,
-    onPlayMedia: (LocalMedia) -> Unit,
+    onPlayAll: (List<PlaybackItem>) -> Unit,
+    onPlayMedia: (PlaybackItem) -> Unit,
+    onDownloadManagementClick: () -> Unit = {},
     pendingImportRequestId: Long? = null,
     pendingImportUris: List<String> = emptyList(),
     onPendingImportAccepted: (Long) -> Unit = {},
@@ -72,8 +74,9 @@ fun LocalMusicRoute(
         onPickDirectory = { directoryPicker.launch(null) },
         onQueryChange = viewModel::updateQuery,
         onSortChange = viewModel::updateSort,
-        onPlayAll = { onPlayAll(state.visibleMedia) },
-        onPlayMedia = onPlayMedia,
+        onPlayAll = { onPlayAll(state.visibleItems.map(LocalLibraryItem::toPlaybackItem)) },
+        onPlayMedia = { onPlayMedia(it.toPlaybackItem()) },
+        onDownloadManagementClick = onDownloadManagementClick,
         onCancelImport = viewModel::cancelImport,
         onResolveDuplicate = viewModel::resolveDuplicate,
         onDismissImportResult = viewModel::dismissImportResult,
@@ -81,6 +84,9 @@ fun LocalMusicRoute(
         onDismissDelete = viewModel::dismissDelete,
         onConfirmDelete = viewModel::confirmDelete,
         onDismissDeleteFailure = viewModel::dismissDeleteFailure,
+        onRequestDownloadDelete = viewModel::requestDownloadDelete,
+        onDismissDownloadDelete = viewModel::dismissDownloadDelete,
+        onConfirmDownloadDelete = viewModel::confirmDownloadDelete,
         onSelectTab = viewModel::selectTab,
         onRetryKaraokeProjects = viewModel::retryKaraokeProjects,
         onToggleProjectSelection = viewModel::toggleProjectSelection,
@@ -108,7 +114,8 @@ internal fun LocalMusicScreen(
     onQueryChange: (String) -> Unit,
     onSortChange: (LocalMusicSort) -> Unit,
     onPlayAll: () -> Unit,
-    onPlayMedia: (LocalMedia) -> Unit,
+    onPlayMedia: (LocalLibraryItem) -> Unit,
+    onDownloadManagementClick: () -> Unit = {},
     onCancelImport: () -> Unit,
     onResolveDuplicate: (Boolean) -> Unit,
     onDismissImportResult: () -> Unit,
@@ -116,6 +123,9 @@ internal fun LocalMusicScreen(
     onDismissDelete: () -> Unit,
     onConfirmDelete: () -> Unit,
     onDismissDeleteFailure: () -> Unit,
+    onRequestDownloadDelete: (com.resonote.core.playback.MusicDownload) -> Unit = {},
+    onDismissDownloadDelete: () -> Unit = {},
+    onConfirmDownloadDelete: () -> Unit = {},
     onSelectTab: (LocalMusicTab) -> Unit = {},
     onRetryKaraokeProjects: () -> Unit = {},
     onToggleProjectSelection: (com.resonote.core.model.KaraokeProjectId) -> Unit = {},
@@ -216,13 +226,24 @@ internal fun LocalMusicScreen(
                     ),
                     verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
-                    if (!state.isLoading && state.media.isNotEmpty()) {
+                    if (!state.isLoading && state.libraryItems.isNotEmpty()) {
                         item(key = "summary") {
                             LocalLibrarySummary(
-                                media = state.media,
+                                itemCount = state.libraryItems.size,
+                                totalBytes = state.libraryItems.sumOf(LocalLibraryItem::sizeBytes),
                                 importEnabled = !state.importState.isBusy(),
                                 onPickFiles = onPickFiles,
                                 onPickDirectory = onPickDirectory,
+                            )
+                        }
+                    }
+
+                    if (state.activeDownloadCount > 0 || state.failedDownloadCount > 0) {
+                        item(key = "download-status") {
+                            DownloadStatusCard(
+                                activeCount = state.activeDownloadCount,
+                                failedCount = state.failedDownloadCount,
+                                onClick = onDownloadManagementClick,
                             )
                         }
                     }
@@ -248,7 +269,7 @@ internal fun LocalMusicScreen(
                         item(key = "delete-error") { DeleteFailureCard(onDismissDeleteFailure) }
                     }
 
-                    if (!state.isLoading && state.media.isNotEmpty()) {
+                    if (!state.isLoading && state.libraryItems.isNotEmpty()) {
                         item(key = "tools") {
                             LocalMusicTools(state, onSortChange, onPlayAll)
                         }
@@ -256,27 +277,35 @@ internal fun LocalMusicScreen(
 
                     when {
                         state.isLoading -> item(key = "loading") { LoadingState() }
-                        state.media.isEmpty() -> item(key = "empty") {
+                        state.libraryItems.isEmpty() -> item(key = "empty") {
                             EmptyState(
                                 onPickFiles = onPickFiles,
                                 onPickDirectory = onPickDirectory,
                                 modifier = Modifier.fillParentMaxHeight(0.55f),
                             )
                         }
-                        state.visibleMedia.isEmpty() -> item(key = "no-results") {
+                        state.visibleItems.isEmpty() -> item(key = "no-results") {
                             NoResultsState(
                                 query = state.query,
                                 modifier = Modifier.fillParentMaxHeight(0.55f),
                             )
                         }
-                        else -> items(state.visibleMedia, key = { it.id.value }) { media ->
-                            LocalMediaRow(
-                                media = media,
-                                isPlaying = playingMediaId == media.id.value,
-                                isDeleting = state.deletingMediaId == media.id.value,
-                                onPlay = { onPlayMedia(media) },
-                                onDelete = { onRequestDelete(media) },
-                            )
+                        else -> items(state.visibleItems, key = LocalLibraryItem::stableId) { item ->
+                            when (item) {
+                                is LocalLibraryItem.Imported -> LocalMediaRow(
+                                    media = item.media,
+                                    isPlaying = playingMediaId == item.media.id.value,
+                                    isDeleting = state.deletingMediaId == item.media.id.value,
+                                    onPlay = { onPlayMedia(item) },
+                                    onDelete = { onRequestDelete(item.media) },
+                                )
+                                is LocalLibraryItem.Downloaded -> DownloadedMediaRow(
+                                    download = item.download,
+                                    isPlaying = playingMediaId == item.download.song.hash,
+                                    onPlay = { onPlayMedia(item) },
+                                    onDelete = { onRequestDownloadDelete(item.download) },
+                                )
+                            }
                         }
                     }
                 }
@@ -306,6 +335,27 @@ internal fun LocalMusicScreen(
                 ResonoteDestructiveTextButton(
                     label = stringResource(R.string.feature_local_impl_delete_confirm),
                     onClick = onConfirmDelete,
+                )
+            },
+        )
+    }
+    state.pendingDownloadDelete?.let { download ->
+        AlertDialog(
+            onDismissRequest = onDismissDownloadDelete,
+            icon = { Icon(Icons.Rounded.Delete, contentDescription = null) },
+            title = { Text(stringResource(R.string.feature_local_impl_delete_download_title)) },
+            text = {
+                Text(stringResource(R.string.feature_local_impl_delete_download_body, download.song.title))
+            },
+            dismissButton = {
+                TextButton(onClick = onDismissDownloadDelete) {
+                    Text(stringResource(R.string.feature_local_impl_cancel))
+                }
+            },
+            confirmButton = {
+                ResonoteDestructiveTextButton(
+                    label = stringResource(R.string.feature_local_impl_delete_confirm),
+                    onClick = onConfirmDownloadDelete,
                 )
             },
         )

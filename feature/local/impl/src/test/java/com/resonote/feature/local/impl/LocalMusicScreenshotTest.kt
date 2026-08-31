@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.resonote.core.designsystem.theme.ResonoteTheme
 import com.resonote.core.designsystem.theme.ResonoteThemeMode
+import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.KaraokeMixSettings
 import com.resonote.core.model.KaraokeProject
 import com.resonote.core.model.KaraokeProjectId
@@ -24,6 +25,10 @@ import com.resonote.core.model.KaraokeProjectStatus
 import com.resonote.core.model.KaraokeSourceMode
 import com.resonote.core.model.LocalMedia
 import com.resonote.core.model.LocalMediaId
+import com.resonote.core.model.OnlinePlaybackQuality
+import com.resonote.core.model.OnlineSong
+import com.resonote.core.playback.MusicDownload
+import com.resonote.core.playback.MusicDownloadState
 import com.resonote.core.screenshottesting.DefaultRoborazziOptions
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -67,6 +72,24 @@ class LocalMusicScreenshotTest {
             playingMediaId = "one",
         )
         capture("content")
+    }
+
+    @Test
+    fun localMusic_downloadsJoinLibraryAndShowTaskEntry() {
+        setScreen(
+            LocalMusicUiState(
+                media = listOf(media("one", "潮汐来信", "林澈", 96_000, 24)),
+                downloads = listOf(
+                    download("two", "Northbound", MusicDownloadState.Completed),
+                    download("three", "Flight Mode", MusicDownloadState.Downloading),
+                ),
+                isLoading = false,
+            ),
+            playingMediaId = "two",
+        )
+
+        composeRule.onNodeWithTag("local-music-list").assertIsDisplayed()
+        capture("downloads")
     }
 
     @Test
@@ -260,5 +283,29 @@ class LocalMusicScreenshotTest {
         createdAtEpochMillis = 1_723_456_789,
         updatedAtEpochMillis = 1_723_456_789,
         exportedContentUri = null,
+    )
+
+    private fun download(id: String, title: String, state: MusicDownloadState) = MusicDownload(
+        id = "download:$id",
+        song = OnlineSong(
+            hash = id,
+            title = title,
+            artist = "Mira",
+            coverUrl = null,
+            albumId = null,
+            albumAudioId = null,
+            durationMillis = 218_000,
+            quality = AudioQuality.Lossless,
+            vip = false,
+            albumTitle = "夜航集",
+        ),
+        quality = OnlinePlaybackQuality.Lossless,
+        sourceUri = "https://example.test/$id.flac",
+        extension = "flac",
+        state = state,
+        progressPercent = if (state == MusicDownloadState.Downloading) 38f else 100f,
+        bytesDownloaded = 42_400_000,
+        totalBytes = 42_400_000,
+        updatedAtEpochMillis = 1_723_456_790,
     )
 }

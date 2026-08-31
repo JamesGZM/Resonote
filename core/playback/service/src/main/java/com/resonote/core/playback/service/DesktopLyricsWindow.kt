@@ -193,11 +193,12 @@ internal class DesktopLyricsWindow(
     private fun windowAlpha(): Float = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         desktopLyricsWindowAlpha(
             locked = preferences.desktopLyricsLocked,
+            opacityPercent = preferences.desktopLyricsSurfaceOpacity,
             maximumObscuringOpacity = context.getSystemService(InputManager::class.java)
                 .maximumObscuringOpacityForTouch,
         )
     } else {
-        1f
+        preferences.desktopLyricsSurfaceOpacity.coerceIn(0, 100) / 100f
     }
 
     private fun defaultPosition(): DesktopLyricsPosition {
@@ -247,8 +248,14 @@ internal fun desktopLyricsWindowFlags(locked: Boolean): Int = WindowManager.Layo
     WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
     if (locked) WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE else 0
 
-internal fun desktopLyricsWindowAlpha(locked: Boolean, maximumObscuringOpacity: Float): Float =
-    if (locked) maximumObscuringOpacity.coerceIn(0f, 1f) else 1f
+internal fun desktopLyricsWindowAlpha(locked: Boolean, opacityPercent: Int, maximumObscuringOpacity: Float): Float {
+    val requestedOpacity = opacityPercent.coerceIn(0, 100) / 100f
+    return if (locked) {
+        minOf(requestedOpacity, maximumObscuringOpacity.coerceIn(0f, 1f))
+    } else {
+        requestedOpacity
+    }
+}
 
 internal enum class DesktopLyricsTapOutcome { ShowControls, HideControls, InvokeControl, KeepControls }
 

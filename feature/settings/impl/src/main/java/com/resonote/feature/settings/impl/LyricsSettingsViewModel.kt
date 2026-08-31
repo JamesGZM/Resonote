@@ -53,6 +53,11 @@ class LyricsSettingsViewModel @Inject constructor(
         desktopLyricsController::refresh,
     )
 
+    fun setDesktopLyricsSurfaceOpacity(value: Int) = persist(
+        { copy(desktopLyricsSurfaceOpacity = value.coerceIn(0, 100)) },
+        desktopLyricsController::refresh,
+    )
+
     fun setDesktopLyricsBackgroundColor(value: Int) = persist(
         { copy(desktopLyricsBackgroundColorArgb = value or 0xFF000000.toInt()) },
         desktopLyricsController::refresh,
@@ -105,6 +110,11 @@ class LyricsSettingsViewModel @Inject constructor(
 
     fun resetDesktopLyricsBackgroundColor() = persist(
         { copy(desktopLyricsBackgroundColorArgb = DesktopLyricsDefaults.BACKGROUND_COLOR_ARGB) },
+        desktopLyricsController::refresh,
+    )
+
+    fun resetDesktopLyricsSurfaceOpacity() = persist(
+        { copy(desktopLyricsSurfaceOpacity = DesktopLyricsDefaults.SURFACE_OPACITY) },
         desktopLyricsController::refresh,
     )
 

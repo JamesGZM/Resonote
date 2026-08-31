@@ -91,6 +91,10 @@
     <string name="feature_settings_impl_desktop_lyrics">显示桌面歌词</string>
     <string name="feature_settings_impl_desktop_lyrics_body">开启后始终显示同步歌词，包括 Resonote 应用内</string>
     <string name="feature_settings_impl_desktop_lyrics_permission_body">允许显示在其他应用上层后即可开启桌面歌词</string>
+    <string name="feature_settings_impl_desktop_lyrics_opacity">整体透明度</string>
+    <string name="feature_settings_impl_desktop_lyrics_opacity_body">同时作用于歌词和播放控制</string>
+    <string name="feature_settings_impl_desktop_lyrics_opacity_sheet_body">转动旋钮，调节整个悬浮控制器的透明度</string>
+    <string name="feature_settings_impl_desktop_lyrics_opacity_knob">透明度</string>
     <string name="feature_settings_impl_desktop_lyrics_background_color">歌词背景色</string>
     <string name="feature_settings_impl_desktop_lyrics_background_color_body">播放进度尚未过渡到的歌词字体颜色</string>
     <string name="feature_settings_impl_desktop_lyrics_foreground_color">歌词前景色</string>
@@ -102,6 +106,7 @@
     <string name="feature_settings_impl_desktop_lyrics_width_sheet_body">转动旋钮，平衡每行长度与屏幕空间</string>
     <string name="feature_settings_impl_desktop_lyrics_width_knob">宽度</string>
     <string name="feature_settings_impl_desktop_lyrics_integer_value">%1$d</string>
+    <string name="feature_settings_impl_desktop_lyrics_percent_value">%1$d%%</string>
     <string name="feature_settings_impl_desktop_lyrics_decimal_value">%1$.1f</string>
     <string name="feature_settings_impl_desktop_lyrics_outline">文字描边</string>
     <string name="feature_settings_impl_desktop_lyrics_outline_color">描边颜色</string>
@@ -193,6 +198,27 @@
     <string name="feature_settings_impl_library_coroutines">异步编程</string>
     <string name="feature_settings_impl_library_protobuf">数据序列化</string>
     <string name="feature_settings_impl_privacy">隐私政策</string>
-    <string name="feature_settings_impl_privacy_body">Resonote 会在设备上保存主题、播放与歌词偏好、队列、播放与搜索历史，以及你主动导入的本地音乐。登录凭据使用加密存储。在线内容、登录、云盘和听歌识曲会按功能需要与上游服务通信；打开关于页时会请求 GitHub 的公开 Releases 接口检查更新。听歌识曲录音只用于当次识别，结束、取消或失败后清除。桌面歌词仅在开启时使用系统“显示在其他应用上层”权限与本机前台服务，Resonote 不会读取其他应用的通知。Resonote 不包含广告、分析或遥测，也不会在未触发相关功能时请求麦克风权限。播放缓存仅用于减少重复流量，可随时在设置中清除。</string>
+    <string name="feature_settings_impl_privacy_body">Resonote 会在设备上保存主题、播放与歌词偏好、队列、播放与搜索历史，以及你主动导入或下载的音乐。登录凭据使用加密存储。在线内容、登录、云盘和听歌识曲会按功能需要与上游服务通信；打开关于页时会请求 GitHub 的公开 Releases 接口检查更新。听歌识曲录音只用于当次识别，结束、取消或失败后清除。桌面歌词仅在开启时使用系统“显示在其他应用上层”权限与本机前台服务，Resonote 不会读取其他应用的通知。Resonote 不包含广告、分析或遥测，也不会在未触发相关功能时请求麦克风权限。播放缓存仅用于减少重复流量，可随时在设置中清除，且不会删除下载。</string>
     <string name="feature_settings_impl_license_body">MIT License\n\nCopyright © 2026 JamesGZM\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files, to deal in the Software without restriction, subject to inclusion of the copyright and permission notice. The software is provided “as is”, without warranty of any kind.</string>
+    <string name="feature_settings_impl_download_management">下载管理</string>
+    <string name="feature_settings_impl_download_management_summary">查看进度并管理离线音乐</string>
+    <string name="feature_settings_impl_download_empty_title">暂无下载</string>
+    <string name="feature_settings_impl_download_empty_body">下载的歌曲会显示在这里，并自动进入本地音乐。</string>
+    <string name="feature_settings_impl_download_summary">%1$d 个进行中 · %2$d 个已完成 · %3$d 个失败</string>
+    <string name="feature_settings_impl_download_private_storage">下载完成后自动进入本地音乐，文件仅保存在这台设备上。</string>
+    <string name="feature_settings_impl_download_pause_all">全部暂停</string>
+    <string name="feature_settings_impl_download_resume_all">全部继续</string>
+    <string name="feature_settings_impl_download_preparing">正在准备</string>
+    <string name="feature_settings_impl_download_queued">等待下载</string>
+    <string name="feature_settings_impl_download_downloading">正在下载</string>
+    <string name="feature_settings_impl_download_progress">正在下载 · %1$d%%</string>
+    <string name="feature_settings_impl_download_paused">已暂停</string>
+    <string name="feature_settings_impl_download_completed">已下载 · 可在本地音乐播放</string>
+    <string name="feature_settings_impl_download_failed">下载失败</string>
+    <string name="feature_settings_impl_download_removing">正在移除</string>
+    <string name="feature_settings_impl_download_pause">暂停下载</string>
+    <string name="feature_settings_impl_download_resume">继续下载</string>
+    <string name="feature_settings_impl_download_remove">移除</string>
+    <string name="feature_settings_impl_download_remove_title">移除下载？</string>
+    <string name="feature_settings_impl_download_remove_body">“%1$s”也会从本地音乐中移除。</string>
 </resources>

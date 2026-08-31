@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Lyrics
@@ -58,6 +59,7 @@ fun SettingsRoute(
     onPlaybackClick: () -> Unit = {},
     onLyricsClick: () -> Unit = {},
     onPermissionsClick: () -> Unit = {},
+    onDownloadsClick: () -> Unit = {},
     onAboutClick: () -> Unit = {},
     bottomContentPadding: Dp = 32.dp,
     viewModel: SettingsViewModel = hiltViewModel(),
@@ -86,6 +88,7 @@ fun SettingsRoute(
         onPlaybackClick = onPlaybackClick,
         onLyricsClick = onLyricsClick,
         onPermissionsClick = onPermissionsClick,
+        onDownloadsClick = onDownloadsClick,
         onAboutClick = onAboutClick,
         onThemeModeChange = viewModel::setThemeMode,
         onDynamicColorChange = viewModel::setDynamicColorEnabled,
@@ -108,6 +111,7 @@ internal fun SettingsScreen(
     onPlaybackClick: () -> Unit = {},
     onLyricsClick: () -> Unit = {},
     onPermissionsClick: () -> Unit = {},
+    onDownloadsClick: () -> Unit = {},
     onAboutClick: () -> Unit = {},
     onThemeModeChange: (ThemeMode) -> Unit = {},
     onDynamicColorChange: (Boolean) -> Unit = {},
@@ -194,6 +198,16 @@ internal fun SettingsScreen(
                             supportingText = stringResource(R.string.feature_settings_impl_lyrics_summary),
                             icon = Icons.Rounded.Lyrics,
                             onClick = onLyricsClick,
+                        )
+                    }
+                    item { SettingsDivider() }
+                    item {
+                        SettingsNavigationRow(
+                            title = stringResource(R.string.feature_settings_impl_download_management),
+                            supportingText = stringResource(R.string.feature_settings_impl_download_management_summary),
+                            icon = Icons.Rounded.Download,
+                            onClick = onDownloadsClick,
+                            modifier = Modifier.testTag("settings-downloads"),
                         )
                     }
                     item { SettingsDivider() }

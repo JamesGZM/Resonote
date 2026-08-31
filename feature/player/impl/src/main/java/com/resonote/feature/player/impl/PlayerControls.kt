@@ -69,6 +69,7 @@ internal fun PlayerProgress(
     palette: PlayerPalette,
     onSeek: (Long) -> Unit,
     enabled: Boolean = true,
+    showBufferedProgress: Boolean = true,
 ) {
     val duration = durationMillis.coerceAtLeast(1L)
     var pendingFraction by remember { mutableStateOf<Float?>(null) }
@@ -86,6 +87,7 @@ internal fun PlayerProgress(
             },
             Modifier.fillMaxSize(),
             enabled = enabled,
+            showBufferedProgress = showBufferedProgress,
         )
         Row(
             Modifier.fillMaxWidth().align(Alignment.TopCenter).padding(horizontal = 7.dp, vertical = 16.dp),
@@ -111,6 +113,7 @@ internal fun ThinPlayerSeekBar(
     onSeekFinished: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    showBufferedProgress: Boolean = true,
 ) {
     var dragging by remember { mutableStateOf(false) }
     val thumb by animateDpAsState(if (dragging) 14.dp else 8.dp, label = "player seek thumb")
@@ -165,7 +168,9 @@ internal fun ThinPlayerSeekBar(
             StrokeCap.Round,
         )
         line(1f, palette.contentMuted.copy(alpha = 0.45f))
-        line(buffered, palette.contentSecondary.copy(alpha = 0.55f))
+        if (showBufferedProgress) {
+            line(buffered, palette.contentSecondary.copy(alpha = 0.55f))
+        }
         line(played, palette.accent)
         drawCircle(palette.accent, thumb.toPx() / 2f, Offset(start + width * played, y))
     }

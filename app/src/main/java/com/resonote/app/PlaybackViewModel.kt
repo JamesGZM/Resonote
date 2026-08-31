@@ -7,6 +7,7 @@ import com.resonote.core.model.LocalMedia
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.PlaybackMode
 import com.resonote.core.model.ResolvedSongSource
+import com.resonote.core.playback.MusicDownloadController
 import com.resonote.core.playback.PlaybackController
 import com.resonote.core.playback.PlaybackItem
 import com.resonote.core.playback.PlaybackState
@@ -15,7 +16,12 @@ import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 
 @HiltViewModel
-internal class PlaybackViewModel @Inject constructor(private val playbackController: PlaybackController) : ViewModel() {
+internal class PlaybackViewModel @Inject constructor(
+    private val playbackController: PlaybackController,
+    private val musicDownloadController: MusicDownloadController,
+) : ViewModel() {
+    constructor(playbackController: PlaybackController) : this(playbackController, EmptyMusicDownloadController)
+
     val state: StateFlow<PlaybackState> = playbackController.state
 
     fun play(song: OnlineSong) {
@@ -65,6 +71,16 @@ internal class PlaybackViewModel @Inject constructor(private val playbackControl
         playbackController.playAll(media.map(::PlaybackItem), startIndex)
     }
 
+    fun playLocalItems(items: List<PlaybackItem>, startIndex: Int = 0) {
+        playbackController.playAll(items, startIndex)
+    }
+
+    fun playLocalItem(item: PlaybackItem) {
+        playbackController.play(item)
+    }
+
+    fun download(song: OnlineSong) = musicDownloadController.download(song)
+
     fun playDeviceHistory(items: List<DeviceHistoryItem>, startIndex: Int = 0) {
         playbackController.playAll(items.map { PlaybackItem(it.record) }, startIndex)
     }
@@ -86,4 +102,21 @@ internal class PlaybackViewModel @Inject constructor(private val playbackControl
     fun removeQueueItem(index: Int) = playbackController.removeQueueItem(index)
 
     fun clearQueue() = playbackController.clear()
+
+    private object EmptyMusicDownloadController : MusicDownloadController {
+        override val downloads = kotlinx.coroutines.flow.MutableStateFlow(
+            emptyList<com.resonote.core.playback.MusicDownload>(),
+        )
+        override fun download(song: OnlineSong) = Unit
+        override fun pause(id: String) = Unit
+        override fun resume(id: String) = Unit
+        override fun retry(id: String) = Unit
+        override fun remove(id: String) = Unit
+        override fun pauseAll() = Unit
+        override fun resumeAll() = Unit
+        override fun completedSource(
+            songHash: String,
+            quality: com.resonote.core.model.OnlinePlaybackQuality?,
+        ): ResolvedSongSource? = null
+    }
 }

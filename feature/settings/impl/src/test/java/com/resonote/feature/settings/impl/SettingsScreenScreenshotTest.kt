@@ -25,10 +25,14 @@ import com.resonote.core.data.LyricsPreferencesRepository
 import com.resonote.core.designsystem.theme.ResonoteTheme
 import com.resonote.core.designsystem.theme.ResonoteThemeMode
 import com.resonote.core.model.AppRelease
+import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.EqualizerPreset
 import com.resonote.core.model.LyricsPreferences
 import com.resonote.core.model.OnlinePlaybackQuality
+import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.PlaybackSpeed
+import com.resonote.core.playback.MusicDownload
+import com.resonote.core.playback.MusicDownloadState
 import com.resonote.core.screenshottesting.DefaultRoborazziOptions
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Rule
@@ -51,6 +55,31 @@ class SettingsScreenScreenshotTest {
 
         composeRule.onNodeWithTag("settings-playback").assertIsDisplayed()
         capture("home")
+    }
+
+    @Test
+    fun downloadManagementShowsTaskStates() {
+        composeRule.setContent {
+            ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                DownloadManagementScreen(
+                    downloads = listOf(
+                        download("one", "Northbound", MusicDownloadState.Downloading, 42f),
+                        download("two", "Flight Mode", MusicDownloadState.Completed),
+                        download("three", "Signals", MusicDownloadState.Failed),
+                    ),
+                    onBack = {},
+                    onPause = {},
+                    onResume = {},
+                    onRetry = {},
+                    onRemove = {},
+                    onPauseAll = {},
+                    onResumeAll = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("download-management-list").assertIsDisplayed()
+        capture("downloads")
     }
 
     @Test
@@ -256,7 +285,8 @@ class SettingsScreenScreenshotTest {
         composeRule.onNodeWithTag("desktop-lyrics-switch").assertIsDisplayed()
         composeRule.onNodeWithText("#AE2A4B").assertDoesNotExist()
         composeRule.onNodeWithText("#000000").assertDoesNotExist()
-        composeRule.onNodeWithText("Floating surface opacity").assertDoesNotExist()
+        composeRule.onNodeWithText("Overall opacity").assertIsDisplayed()
+        composeRule.onNodeWithTag("desktop-lyrics-opacity").assertExists()
         composeRule.onNodeWithTag("desktop-lyrics-background-color").assertExists()
         composeRule.onNodeWithTag("desktop-lyrics-foreground-color").assertExists()
         composeRule.onNodeWithTag("desktop-lyrics-shadow").assertExists()
@@ -266,6 +296,26 @@ class SettingsScreenScreenshotTest {
         composeRule.onNodeWithTag("desktop-lyrics-shadow-x-knob").assertDoesNotExist()
         composeRule.onNodeWithText("Controller behavior").assertDoesNotExist()
         capture("desktop-lyrics")
+    }
+
+    @Test
+    fun desktopLyricsSettingsUsesOpacityKnob() {
+        val repository = lyricsPreferencesRepository()
+        setDesktopLyricsScreen(repository)
+
+        composeRule.onNodeWithTag("desktop-lyrics-opacity").performClick()
+        composeRule.onNodeWithTag("desktop-lyrics-opacity-knob")
+            .assertIsDisplayed()
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "100%"))
+        composeRule.onNodeWithTag("desktop-lyrics-restore-default").assertIsDisplayed()
+        capture("desktop-lyrics-opacity")
+
+        composeRule.onNodeWithTag("desktop-lyrics-opacity-knob")
+            .performSemanticsAction(SemanticsActions.SetProgress) { it(64f) }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("desktop-lyrics-opacity-knob")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "64%"))
+        assertThat(repository.preferences.value.desktopLyricsSurfaceOpacity).isEqualTo(64)
     }
 
     @Test
@@ -594,6 +644,29 @@ class SettingsScreenScreenshotTest {
             roborazziOptions = DefaultRoborazziOptions,
         )
     }
+
+    private fun download(id: String, title: String, state: MusicDownloadState, progress: Float? = null) = MusicDownload(
+        id = "download:$id",
+        song = OnlineSong(
+            hash = id,
+            title = title,
+            artist = "Resonote",
+            coverUrl = null,
+            albumId = null,
+            albumAudioId = null,
+            durationMillis = 180_000,
+            quality = AudioQuality.Lossless,
+            vip = false,
+        ),
+        quality = OnlinePlaybackQuality.Lossless,
+        sourceUri = "https://example.test/$id.flac",
+        extension = "flac",
+        state = state,
+        progressPercent = progress,
+        bytesDownloaded = 24_000_000,
+        totalBytes = 48_000_000,
+        updatedAtEpochMillis = 1_723_456_789,
+    )
 
     private fun lyricsPreferencesRepository() = TestLyricsPreferencesRepository()
 
