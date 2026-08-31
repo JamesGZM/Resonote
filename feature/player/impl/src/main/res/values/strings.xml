@@ -12,6 +12,8 @@
     <string name="feature_player_impl_play_next">Play next</string>
     <string name="feature_player_impl_append_queue">Add to queue</string>
     <string name="feature_player_impl_add_playlist">Add to playlist</string>
+    <string name="feature_player_impl_download">Download</string>
+    <string name="feature_player_impl_download_added">Added to downloads</string>
     <string name="feature_player_impl_song_info">Song information</string>
     <string name="feature_player_impl_added_next">Playing next</string>
     <string name="feature_player_impl_added_queue">Added to queue</string>

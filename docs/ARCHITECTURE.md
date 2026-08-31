@@ -30,7 +30,7 @@ flowchart TB
     local[":core:media:local\n文件导入与媒体解析"]
     karaokeMedia[":core:media:karaoke\nK 歌私有素材与录音文件"]
     playbackApi[":core:playback:api\nMedia3-free 播放合同"]
-    playbackService[":core:playback:service\nMedia3、Queue、MediaSession"]
+    playbackService[":core:playback:service\nMedia3、Queue、MediaSession、DownloadManager"]
     karaokeApi[":core:karaoke:api\nK 歌会话、试听与导出合同"]
     karaokeService[":core:karaoke:service\n麦克风 FGS、混音试听与导出"]
 
@@ -98,7 +98,7 @@ flowchart TB
 
 - 用户持久状态、设备历史和本地媒体以 Room / DataStore / App 私有文件为本地单一事实源。
 - 首页快照是启动和离线降级缓存，成功刷新后更新，不替代远端内容事实。
-- 搜索、榜单、在线歌单、艺人/专辑、云盘、歌词、MV 地址与短时播放地址以远端为事实源；没有产品合同不得为了形式上的“离线优先”持久化。
+- 搜索、榜单、在线歌单、艺人/专辑、云盘、歌词、MV 地址与短时播放地址以远端为事实源；用户明确下载的在线歌曲由 Media3 DownloadIndex 与持久缓存保存设备事实。
 - 只有批准离线能力或后台同步后，才为对应数据增加 Room 缓存、刷新策略与 WorkManager；Repository 的存在本身不表示数据可离线使用。
 
 - `core:network`：语义化 Network DataSource、私有 Retrofit Service/DTO、签名、Session、风控和特殊协议。
@@ -109,7 +109,7 @@ flowchart TB
 
 ### Playback
 
-`core:playback:api` 定义 UI 可消费的后台音频播放状态和命令，不暴露 Media3。`core:playback:service` 持有音频 ExoPlayer、Queue、Source Resolver、失败恢复、播放历史资格和 MediaSessionService。
+`core:playback:api` 定义 UI 可消费的后台音频播放与下载状态和命令，不暴露 Media3。`core:playback:service` 持有音频 ExoPlayer、Queue、Source Resolver、失败恢复、播放历史资格、MediaSessionService，以及 Media3 DownloadManager/DownloadService。在线播放使用 `cacheDir` 下有容量上限的 LRU 缓存；用户下载使用 `filesDir` 下独立、不可自动淘汰的缓存和 DownloadIndex。Source Resolver 优先复用已完成下载，播放 DataSource 按下载 cache key 路由到无网络上游的持久缓存。下载完成项由本地音乐 Feature 聚合展示，但保留 `PlaybackOrigin.Online`，不写入手动导入媒体的 Room 索引，也不复制第二份文件。
 
 音频页面销毁不能成为停止播放的信号；Feature 只向 `PlaybackController` 发送意图并观察状态。
 

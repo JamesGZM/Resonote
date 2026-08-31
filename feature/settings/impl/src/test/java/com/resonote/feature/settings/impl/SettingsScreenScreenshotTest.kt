@@ -25,10 +25,14 @@ import com.resonote.core.data.LyricsPreferencesRepository
 import com.resonote.core.designsystem.theme.ResonoteTheme
 import com.resonote.core.designsystem.theme.ResonoteThemeMode
 import com.resonote.core.model.AppRelease
+import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.EqualizerPreset
 import com.resonote.core.model.LyricsPreferences
 import com.resonote.core.model.OnlinePlaybackQuality
+import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.PlaybackSpeed
+import com.resonote.core.playback.MusicDownload
+import com.resonote.core.playback.MusicDownloadState
 import com.resonote.core.screenshottesting.DefaultRoborazziOptions
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Rule
@@ -51,6 +55,31 @@ class SettingsScreenScreenshotTest {
 
         composeRule.onNodeWithTag("settings-playback").assertIsDisplayed()
         capture("home")
+    }
+
+    @Test
+    fun downloadManagementShowsTaskStates() {
+        composeRule.setContent {
+            ResonoteTheme(themeMode = ResonoteThemeMode.LIGHT) {
+                DownloadManagementScreen(
+                    downloads = listOf(
+                        download("one", "Northbound", MusicDownloadState.Downloading, 42f),
+                        download("two", "Flight Mode", MusicDownloadState.Completed),
+                        download("three", "Signals", MusicDownloadState.Failed),
+                    ),
+                    onBack = {},
+                    onPause = {},
+                    onResume = {},
+                    onRetry = {},
+                    onRemove = {},
+                    onPauseAll = {},
+                    onResumeAll = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("download-management-list").assertIsDisplayed()
+        capture("downloads")
     }
 
     @Test
@@ -615,6 +644,29 @@ class SettingsScreenScreenshotTest {
             roborazziOptions = DefaultRoborazziOptions,
         )
     }
+
+    private fun download(id: String, title: String, state: MusicDownloadState, progress: Float? = null) = MusicDownload(
+        id = "download:$id",
+        song = OnlineSong(
+            hash = id,
+            title = title,
+            artist = "Resonote",
+            coverUrl = null,
+            albumId = null,
+            albumAudioId = null,
+            durationMillis = 180_000,
+            quality = AudioQuality.Lossless,
+            vip = false,
+        ),
+        quality = OnlinePlaybackQuality.Lossless,
+        sourceUri = "https://example.test/$id.flac",
+        extension = "flac",
+        state = state,
+        progressPercent = progress,
+        bytesDownloaded = 24_000_000,
+        totalBytes = 48_000_000,
+        updatedAtEpochMillis = 1_723_456_789,
+    )
 
     private fun lyricsPreferencesRepository() = TestLyricsPreferencesRepository()
 

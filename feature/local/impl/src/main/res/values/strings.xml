@@ -10,7 +10,7 @@
     <string name="feature_local_impl_search_hint">Title, artist, album, or file name</string>
     <string name="feature_local_impl_clear_search">Clear search</string>
     <string name="feature_local_impl_sort">Sort: %1$s</string>
-    <string name="feature_local_impl_sort_imported">Recently imported</string>
+    <string name="feature_local_impl_sort_imported">Recently added</string>
     <string name="feature_local_impl_sort_title">Title</string>
     <string name="feature_local_impl_sort_artist">Artist</string>
     <string name="feature_local_impl_sort_duration">Duration</string>
@@ -111,4 +111,12 @@
     <string name="feature_local_impl_status_exporting">Exporting</string>
     <string name="feature_local_impl_status_exported">Exported</string>
     <string name="feature_local_impl_status_export_failed">Export failed</string>
+    <string name="feature_local_impl_device_storage">Imported and downloaded music stays on this device</string>
+    <string name="feature_local_impl_downloading_count">Downloading %1$d songs</string>
+    <string name="feature_local_impl_download_failed_count">%1$d downloads need attention</string>
+    <string name="feature_local_impl_open_download_management">Tap to open download management</string>
+    <string name="feature_local_impl_downloaded">Downloaded</string>
+    <string name="feature_local_impl_delete_download">Remove download</string>
+    <string name="feature_local_impl_delete_download_title">Remove downloaded song?</string>
+    <string name="feature_local_impl_delete_download_body">“%1$s” will be deleted from this device and removed from Local Music.</string>
 </resources>

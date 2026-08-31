@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
 import androidx.compose.material.icons.rounded.DeleteOutline
+import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.LibraryAdd
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -54,6 +55,7 @@ internal fun OnlineSongActionsSheet(
     onPlayNext: () -> Unit,
     onAppendToQueue: () -> Unit,
     onAddToPlaylist: () -> Unit,
+    onDownload: () -> Unit = {},
     onShowInfo: () -> Unit,
     snackbarHost: @Composable () -> Unit = {},
 ) {
@@ -72,6 +74,7 @@ internal fun OnlineSongActionsSheet(
             SongActionRow(Icons.Rounded.SkipNext, R.string.song_action_play_next, onPlayNext)
             SongActionRow(Icons.AutoMirrored.Rounded.PlaylistAdd, R.string.song_action_append_queue, onAppendToQueue)
             SongActionRow(Icons.Rounded.LibraryAdd, R.string.song_action_add_playlist, onAddToPlaylist)
+            SongActionRow(Icons.Rounded.Download, R.string.song_action_download, onDownload)
             SongActionRow(Icons.Rounded.Info, R.string.song_action_info, onShowInfo)
             request.onRemoveRequest?.let { remove ->
                 HorizontalDivider(Modifier.padding(horizontal = 24.dp, vertical = 8.dp))

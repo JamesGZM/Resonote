@@ -18,7 +18,10 @@ import com.resonote.core.model.OnlinePlaybackQuality
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.ResolveSongSourceResult
 import com.resonote.core.model.ResolvedSongSource
+import com.resonote.core.playback.MusicDownload
+import com.resonote.core.playback.MusicDownloadController
 import com.resonote.core.playback.PlaybackItem
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -67,6 +70,29 @@ class PlaybackSourceResolverTest {
     }
 
     @Test
+    fun completedDownloadSkipsNetworkResolution() = runTest {
+        val songRepository = FakeSongRepository()
+        val downloadedSource = ResolvedSongSource(
+            uri = "https://media.example/offline.flac",
+            durationMillis = 180_000,
+            extension = "flac",
+            cacheKey = "download:offline",
+            isOffline = true,
+        )
+        val resolver = PlaybackSourceResolver(
+            songRepository,
+            FakeCloudRepository(),
+            FakeLocalRepository(),
+            FakeDownloadController(downloadedSource),
+        )
+
+        val result = resolver.resolve(PlaybackItem(song("offline")))
+
+        assertThat((result as ResolveSongSourceResult.Resolved).source).isEqualTo(downloadedSource)
+        assertThat(songRepository.resolvedHashes).isEmpty()
+    }
+
+    @Test
     fun localItemUsesPersistentPrivateSourceWithoutNetworkResolution() = runTest {
         val songRepository = FakeSongRepository()
         val cloudRepository = FakeCloudRepository()
@@ -76,7 +102,7 @@ class PlaybackSourceResolverTest {
         val result = resolver.resolve(PlaybackItem(localMedia()))
 
         assertThat((result as ResolveSongSourceResult.Resolved).source).isEqualTo(
-            ResolvedSongSource("file:/private/signals.flac", 180_000, "flac"),
+            ResolvedSongSource("file:/private/signals.flac", 180_000, "flac", isOffline = true),
         )
         assertThat(localRepository.resolvedIds).containsExactly(LocalMediaId("local-id"))
         assertThat(songRepository.resolvedHashes).isEmpty()
@@ -128,6 +154,18 @@ class PlaybackSourceResolverTest {
             resolvedIds += id
             return source
         }
+    }
+
+    private class FakeDownloadController(private val source: ResolvedSongSource) : MusicDownloadController {
+        override val downloads = MutableStateFlow(emptyList<MusicDownload>())
+        override fun download(song: OnlineSong) = Unit
+        override fun pause(id: String) = Unit
+        override fun resume(id: String) = Unit
+        override fun retry(id: String) = Unit
+        override fun remove(id: String) = Unit
+        override fun pauseAll() = Unit
+        override fun resumeAll() = Unit
+        override fun completedSource(songHash: String, quality: OnlinePlaybackQuality?) = source
     }
 
     private companion object {

@@ -12,6 +12,8 @@
     <string name="feature_player_impl_play_next">下一首播放</string>
     <string name="feature_player_impl_append_queue">加入队尾</string>
     <string name="feature_player_impl_add_playlist">添加到歌单</string>
+    <string name="feature_player_impl_download">下载</string>
+    <string name="feature_player_impl_download_added">已加入下载</string>
     <string name="feature_player_impl_song_info">歌曲信息</string>
     <string name="feature_player_impl_added_next">将作为下一首播放</string>
     <string name="feature_player_impl_added_queue">已加入队尾</string>

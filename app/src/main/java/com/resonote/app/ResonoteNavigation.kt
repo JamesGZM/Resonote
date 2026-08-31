@@ -56,6 +56,7 @@ import com.resonote.feature.search.api.SearchNavKey
 import com.resonote.feature.search.impl.SearchRoute
 import com.resonote.feature.settings.api.AboutSettingsNavKey
 import com.resonote.feature.settings.api.DesktopLyricsSettingsNavKey
+import com.resonote.feature.settings.api.DownloadManagementNavKey
 import com.resonote.feature.settings.api.EqualizerSettingsNavKey
 import com.resonote.feature.settings.api.LicenseSettingsNavKey
 import com.resonote.feature.settings.api.LyricsSettingsNavKey
@@ -66,6 +67,7 @@ import com.resonote.feature.settings.api.PrivacySettingsNavKey
 import com.resonote.feature.settings.api.SettingsNavKey
 import com.resonote.feature.settings.impl.AboutSettingsRoute
 import com.resonote.feature.settings.impl.DesktopLyricsSettingsRoute
+import com.resonote.feature.settings.impl.DownloadManagementRoute
 import com.resonote.feature.settings.impl.EqualizerSettingsRoute
 import com.resonote.feature.settings.impl.LicenseSettingsRoute
 import com.resonote.feature.settings.impl.LyricsSettingsRoute
@@ -307,6 +309,7 @@ internal fun ResonoteNavDisplay(
                     onPlayNextClick = { playbackViewModel.playNextOnline(it) },
                     onAppendToQueueClick = playbackViewModel::appendOnline,
                     onAddToPlaylistClick = onOpenPlaylistPicker,
+                    onDownloadClick = playbackViewModel::download,
                     onSongInfoClick = onOpenSongInfo,
                     onLoginRequest = {
                         if (backStack.lastOrNull() !is LoginGateNavKey) {
@@ -327,7 +330,14 @@ internal fun ResonoteNavDisplay(
                     onPlaybackClick = { backStack.add(PlaybackSettingsNavKey) },
                     onLyricsClick = { backStack.add(LyricsSettingsNavKey) },
                     onPermissionsClick = { backStack.add(PermissionsSettingsNavKey) },
+                    onDownloadsClick = { backStack.add(DownloadManagementNavKey) },
                     onAboutClick = { backStack.add(AboutSettingsNavKey) },
+                    bottomContentPadding = standaloneBottomContentPadding,
+                )
+            }
+            entry<DownloadManagementNavKey> { key ->
+                DownloadManagementRoute(
+                    onBack = { backStack.popIfCurrent(key) },
                     bottomContentPadding = standaloneBottomContentPadding,
                 )
             }
@@ -504,8 +514,9 @@ internal fun ResonoteNavDisplay(
                     onBack = {
                         if (backStack.leaveLocalMusic(key)) onFinishExternalTask()
                     },
-                    onPlayAll = playbackViewModel::playAllLocal,
-                    onPlayMedia = playbackViewModel::playLocal,
+                    onPlayAll = playbackViewModel::playLocalItems,
+                    onPlayMedia = playbackViewModel::playLocalItem,
+                    onDownloadManagementClick = { backStack.add(DownloadManagementNavKey) },
                     pendingImportRequestId = externalImportRequest?.id,
                     pendingImportUris = externalImportRequest?.uris.orEmpty(),
                     onPendingImportAccepted = viewModel::acknowledgeExternalImportRequest,

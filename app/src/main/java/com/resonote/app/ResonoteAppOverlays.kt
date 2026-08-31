@@ -91,6 +91,7 @@ internal fun BoxScope.ResonoteAppOverlays(
 ) {
     val queueNextMessage = stringResource(R.string.song_action_added_next)
     val queueAddedMessage = stringResource(R.string.song_action_added_queue)
+    val downloadAddedMessage = stringResource(R.string.song_action_download_added)
     val snackbarHostSurface = state.snackbarHostSurface
 
     if (state.queueOpen) {
@@ -131,6 +132,11 @@ internal fun BoxScope.ResonoteAppOverlays(
             onAddToPlaylist = {
                 state.songActionRequest = null
                 onOpenPlaylistPicker(request.song)
+            },
+            onDownload = {
+                state.songActionRequest = null
+                playbackViewModel.download(request.song)
+                snackbarController.show(downloadAddedMessage)
             },
             onShowInfo = {
                 state.songActionRequest = null

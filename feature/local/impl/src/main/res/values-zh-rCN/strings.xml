@@ -10,7 +10,7 @@
     <string name="feature_local_impl_search_hint">标题、艺人、专辑或文件名</string>
     <string name="feature_local_impl_clear_search">清除搜索</string>
     <string name="feature_local_impl_sort">排序：%1$s</string>
-    <string name="feature_local_impl_sort_imported">最近导入</string>
+    <string name="feature_local_impl_sort_imported">最近添加</string>
     <string name="feature_local_impl_sort_title">标题</string>
     <string name="feature_local_impl_sort_artist">艺人</string>
     <string name="feature_local_impl_sort_duration">时长</string>
@@ -111,4 +111,12 @@
     <string name="feature_local_impl_status_exporting">导出中</string>
     <string name="feature_local_impl_status_exported">已导出</string>
     <string name="feature_local_impl_status_export_failed">导出失败</string>
+    <string name="feature_local_impl_device_storage">导入和下载的音乐仅保存在这台设备上</string>
+    <string name="feature_local_impl_downloading_count">正在下载 %1$d 首</string>
+    <string name="feature_local_impl_download_failed_count">%1$d 个下载需要处理</string>
+    <string name="feature_local_impl_open_download_management">点击进入下载管理</string>
+    <string name="feature_local_impl_downloaded">已下载</string>
+    <string name="feature_local_impl_delete_download">移除下载</string>
+    <string name="feature_local_impl_delete_download_title">移除已下载歌曲？</string>
+    <string name="feature_local_impl_delete_download_body">“%1$s”将从设备中删除，并从本地音乐中移除。</string>
 </resources>

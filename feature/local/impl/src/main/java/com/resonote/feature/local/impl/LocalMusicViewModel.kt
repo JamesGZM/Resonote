@@ -16,6 +16,7 @@ import com.resonote.core.model.LocalMediaDeleteResult
 import com.resonote.core.model.LocalMediaDuplicateAction
 import com.resonote.core.model.LocalMediaImportFailure
 import com.resonote.core.model.LocalMediaImportResult
+import com.resonote.core.playback.MusicDownloadController
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -34,12 +35,14 @@ class LocalMusicViewModel @Inject constructor(
     private val karaokeRepository: KaraokeRepository,
     private val karaokeExportController: KaraokeExportController,
     private val karaokePreviewController: KaraokePreviewController,
+    private val downloadController: MusicDownloadController,
 ) : ViewModel() {
     constructor(repository: LocalMediaRepository) : this(
         repository,
         EmptyKaraokeRepository,
         EmptyKaraokeExportController,
         EmptyKaraokePreviewController,
+        EmptyMusicDownloadController,
     )
     private val mutableUiState = MutableStateFlow(LocalMusicUiState())
     val uiState: StateFlow<LocalMusicUiState> = mutableUiState.asStateFlow()
@@ -64,6 +67,11 @@ class LocalMusicViewModel @Inject constructor(
         observeKaraokeProjects()
         viewModelScope.launch {
             karaokePreviewController.state.collect { preview -> mutableUiState.update { it.copy(preview = preview) } }
+        }
+        viewModelScope.launch {
+            downloadController.downloads.collect { downloads ->
+                mutableUiState.update { it.copy(downloads = downloads) }
+            }
         }
     }
 
@@ -313,6 +321,20 @@ class LocalMusicViewModel @Inject constructor(
         mutableUiState.update { it.copy(deleteFailed = false) }
     }
 
+    fun requestDownloadDelete(download: com.resonote.core.playback.MusicDownload) {
+        mutableUiState.update { it.copy(pendingDownloadDelete = download) }
+    }
+
+    fun dismissDownloadDelete() {
+        mutableUiState.update { it.copy(pendingDownloadDelete = null) }
+    }
+
+    fun confirmDownloadDelete() {
+        val download = mutableUiState.value.pendingDownloadDelete ?: return
+        mutableUiState.update { it.copy(pendingDownloadDelete = null) }
+        downloadController.remove(download.id)
+    }
+
     private fun continueImport() {
         importJob = viewModelScope.launch {
             publishProgress()
@@ -440,4 +462,16 @@ private object EmptyKaraokePreviewController : KaraokePreviewController {
     override fun toggle(projectId: KaraokeProjectId, mixSettings: KaraokeMixSettings?) = Unit
     override fun seekTo(positionMillis: Long) = Unit
     override fun stop() = Unit
+}
+
+private object EmptyMusicDownloadController : MusicDownloadController {
+    override val downloads = MutableStateFlow(emptyList<com.resonote.core.playback.MusicDownload>())
+    override fun download(song: com.resonote.core.model.OnlineSong) = Unit
+    override fun pause(id: String) = Unit
+    override fun resume(id: String) = Unit
+    override fun retry(id: String) = Unit
+    override fun remove(id: String) = Unit
+    override fun pauseAll() = Unit
+    override fun resumeAll() = Unit
+    override fun completedSource(songHash: String, quality: com.resonote.core.model.OnlinePlaybackQuality?) = null
 }

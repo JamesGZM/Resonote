@@ -14,6 +14,8 @@
     <string name="song_action_play_next">下一首播放</string>
     <string name="song_action_append_queue">加入队尾</string>
     <string name="song_action_add_playlist">添加到歌单</string>
+    <string name="song_action_download">下载</string>
+    <string name="song_action_download_added">已加入下载</string>
     <string name="song_action_info">歌曲信息</string>
     <string name="song_action_remove_playlist">从当前歌单移除</string>
     <string name="song_action_added_queue">已加入队尾</string>
