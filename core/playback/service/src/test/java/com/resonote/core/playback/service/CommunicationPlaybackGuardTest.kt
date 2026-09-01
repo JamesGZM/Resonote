@@ -23,7 +23,7 @@ class CommunicationPlaybackGuardTest {
     fun communicationModesPausePlayback() {
         communicationModes().forEach { mode ->
             val player = playingPlayer()
-            guard(player).pauseForAudioMode(mode)
+            guard(player).onAudioModeChanged(mode)
             shadowOf(android.os.Looper.getMainLooper()).idle()
 
             assertThat(player.playWhenReady).isFalse()
@@ -34,7 +34,7 @@ class CommunicationPlaybackGuardTest {
     fun normalModeDoesNotPausePlayback() {
         val player = playingPlayer()
 
-        guard(player).pauseForAudioMode(AudioManager.MODE_NORMAL)
+        guard(player).onAudioModeChanged(AudioManager.MODE_NORMAL)
         shadowOf(android.os.Looper.getMainLooper()).idle()
 
         assertThat(player.playWhenReady).isTrue()
@@ -45,9 +45,40 @@ class CommunicationPlaybackGuardTest {
         val player = playingPlayer()
         val guard = guard(player)
 
-        guard.pauseForAudioMode(AudioManager.MODE_IN_COMMUNICATION)
+        guard.onAudioModeChanged(AudioManager.MODE_IN_COMMUNICATION)
         shadowOf(android.os.Looper.getMainLooper()).idle()
-        guard.pauseForAudioMode(AudioManager.MODE_NORMAL)
+        guard.onAudioModeChanged(AudioManager.MODE_NORMAL)
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        assertThat(player.playWhenReady).isFalse()
+    }
+
+    @Test
+    fun manualPlaybackDuringCommunicationIsNotPausedAgain() {
+        val player = playingPlayer()
+        val guard = guard(player)
+
+        guard.onAudioModeChanged(AudioManager.MODE_IN_COMMUNICATION)
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+        player.play()
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+        guard.onAudioModeChanged(AudioManager.MODE_IN_COMMUNICATION)
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+
+        assertThat(player.playWhenReady).isTrue()
+    }
+
+    @Test
+    fun enteringCommunicationAgainPausesManualPlayback() {
+        val player = playingPlayer()
+        val guard = guard(player)
+
+        guard.onAudioModeChanged(AudioManager.MODE_IN_COMMUNICATION)
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+        guard.onAudioModeChanged(AudioManager.MODE_NORMAL)
+        player.play()
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+        guard.onAudioModeChanged(AudioManager.MODE_IN_COMMUNICATION)
         shadowOf(android.os.Looper.getMainLooper()).idle()
 
         assertThat(player.playWhenReady).isFalse()
