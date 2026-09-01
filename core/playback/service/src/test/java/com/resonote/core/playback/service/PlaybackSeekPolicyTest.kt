@@ -32,4 +32,26 @@ class PlaybackSeekPolicyTest {
             ),
         ).isFalse()
     }
+
+    @Test
+    fun previousRestartsWhenLoadedMediaMatchesQueueCurrentItem() {
+        assertThat(
+            shouldRestartCurrentOnPrevious(
+                loadedQueueKey = "online:current",
+                currentQueueKey = "online:current",
+                positionMillis = 5_001,
+            ),
+        ).isTrue()
+    }
+
+    @Test
+    fun previousNavigatesQueueWhenAutomaticTransitionRetainsEndedMedia() {
+        assertThat(
+            shouldRestartCurrentOnPrevious(
+                loadedQueueKey = "online:finished",
+                currentQueueKey = "online:next",
+                positionMillis = 180_000,
+            ),
+        ).isFalse()
+    }
 }

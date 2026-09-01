@@ -332,7 +332,13 @@ internal class DefaultPlaybackController internal constructor(
         hasPlaybackMutation = true
         scope.launch {
             val player = controller
-            if (player != null && player.currentPosition > PREVIOUS_RESTART_THRESHOLD_MILLIS) {
+            if (
+                player != null && shouldRestartCurrentOnPrevious(
+                    loadedQueueKey = player.currentMediaItem?.mediaId,
+                    currentQueueKey = queue.currentItem?.queueKey,
+                    positionMillis = player.currentPosition,
+                )
+            ) {
                 player.seekTo(0)
                 return@launch
             }
@@ -863,7 +869,6 @@ internal class DefaultPlaybackController internal constructor(
     private companion object {
         const val POSITION_UPDATE_INTERVAL_MILLIS = 500L
         const val POSITION_CHECKPOINT_INTERVAL_MILLIS = 5_000L
-        const val PREVIOUS_RESTART_THRESHOLD_MILLIS = 5_000L
         const val AUTOMATIC_SKIP_DELAY_MILLIS = 3_000L
         const val MAX_CONSECUTIVE_AUTOMATIC_SKIPS = 5
     }
