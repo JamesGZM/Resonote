@@ -333,7 +333,8 @@ internal class DefaultPlaybackController internal constructor(
         scope.launch {
             val player = controller
             if (
-                player != null && shouldRestartCurrentOnPrevious(
+                player != null &&
+                shouldRestartCurrentOnPrevious(
                     loadedQueueKey = player.currentMediaItem?.mediaId,
                     currentQueueKey = queue.currentItem?.queueKey,
                     positionMillis = player.currentPosition,
