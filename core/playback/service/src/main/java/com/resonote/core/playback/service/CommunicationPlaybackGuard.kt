@@ -26,24 +26,24 @@ internal class CommunicationPlaybackGuard(
                 return
             }
 
-            pauseForAudioMode(audioManager.mode)
             startLegacyPollingIfNeeded()
         }
     }
     private var legacyPollingJob: Job? = null
     private var unregisterModeChangedListener: (() -> Unit)? = null
+    private var communicationModeActive = false
     private var started = false
 
     fun start() {
         if (started) return
         started = true
+        communicationModeActive = isCommunicationAudioMode(audioManager.mode, sdkInt)
 
         player.addListener(playerListener)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && sdkInt >= Build.VERSION_CODES.S) {
             registerModeChangedListener()
         }
         if (player.isPlaying) {
-            pauseForAudioMode(audioManager.mode)
             startLegacyPollingIfNeeded()
         }
     }
@@ -59,8 +59,10 @@ internal class CommunicationPlaybackGuard(
         unregisterModeChangedListener = null
     }
 
-    internal fun pauseForAudioMode(mode: Int) {
-        if (player.isPlaying && isCommunicationAudioMode(mode, sdkInt)) {
+    internal fun onAudioModeChanged(mode: Int) {
+        val wasCommunicationModeActive = communicationModeActive
+        communicationModeActive = isCommunicationAudioMode(mode, sdkInt)
+        if (player.isPlaying && communicationModeActive && !wasCommunicationModeActive) {
             player.pause()
         }
     }
@@ -70,7 +72,7 @@ internal class CommunicationPlaybackGuard(
 
         legacyPollingJob = scope.launch {
             while (isActive && player.isPlaying) {
-                pauseForAudioMode(audioManager.mode)
+                onAudioModeChanged(audioManager.mode)
                 delay(legacyPollIntervalMillis)
             }
         }
@@ -78,7 +80,7 @@ internal class CommunicationPlaybackGuard(
 
     @RequiresApi(Build.VERSION_CODES.S)
     private fun registerModeChangedListener() {
-        val listener = AudioManager.OnModeChangedListener(::pauseForAudioMode)
+        val listener = AudioManager.OnModeChangedListener(::onAudioModeChanged)
         audioManager.addOnModeChangedListener(mainExecutor, listener)
         unregisterModeChangedListener = { audioManager.removeOnModeChangedListener(listener) }
     }

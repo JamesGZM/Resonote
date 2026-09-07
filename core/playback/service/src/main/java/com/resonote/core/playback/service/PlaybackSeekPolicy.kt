@@ -9,5 +9,14 @@ internal fun shouldRetainPendingSeekPosition(
 ): Boolean = elapsedSinceRequestMillis < SEEK_ACKNOWLEDGEMENT_TIMEOUT_MILLIS &&
     abs(targetPositionMillis - reportedPositionMillis) > SEEK_ACKNOWLEDGEMENT_TOLERANCE_MILLIS
 
+internal fun shouldRestartCurrentOnPrevious(
+    loadedQueueKey: String?,
+    currentQueueKey: String?,
+    positionMillis: Long,
+): Boolean = loadedQueueKey != null &&
+    loadedQueueKey == currentQueueKey &&
+    positionMillis > PREVIOUS_RESTART_THRESHOLD_MILLIS
+
 private const val SEEK_ACKNOWLEDGEMENT_TOLERANCE_MILLIS = 2_000L
 private const val SEEK_ACKNOWLEDGEMENT_TIMEOUT_MILLIS = 2_500L
+private const val PREVIOUS_RESTART_THRESHOLD_MILLIS = 5_000L
