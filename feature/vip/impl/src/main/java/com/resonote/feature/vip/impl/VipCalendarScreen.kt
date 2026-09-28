@@ -69,9 +69,9 @@ internal fun VipCalendarScreen(
     canVerify: Boolean = true,
 ) {
     Scaffold(topBar = {
-        TopAppBar(title = { Text(stringResource(R.string.vip_calendar_title)) }, navigationIcon = {
+        TopAppBar(title = { Text(stringResource(R.string.feature_vip_impl_vip_calendar_title)) }, navigationIcon = {
             IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.vip_calendar_back))
+                Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.feature_vip_impl_vip_calendar_back))
             }
         })
     }) { padding ->
@@ -80,12 +80,15 @@ internal fun VipCalendarScreen(
                 Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp),
             ) {
-                val autoLabel = stringResource(R.string.vip_calendar_auto)
+                val autoLabel = stringResource(R.string.feature_vip_impl_vip_calendar_auto)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
-                        Text(stringResource(R.string.vip_calendar_auto), style = MaterialTheme.typography.titleMedium)
                         Text(
-                            stringResource(R.string.vip_calendar_auto_body),
+                            stringResource(R.string.feature_vip_impl_vip_calendar_auto),
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                        Text(
+                            stringResource(R.string.feature_vip_impl_vip_calendar_auto_body),
                             style = MaterialTheme.typography.bodySmall,
                         )
                     }
@@ -104,22 +107,26 @@ internal fun VipCalendarScreen(
                             IconButton(onClick = onPrevious) {
                                 Icon(
                                     Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
-                                    stringResource(R.string.vip_calendar_previous),
+                                    stringResource(R.string.feature_vip_impl_vip_calendar_previous),
                                 )
                             }
                             Text(
-                                stringResource(R.string.vip_calendar_month, state.month.year, state.month.monthValue),
+                                stringResource(
+                                    R.string.feature_vip_impl_vip_calendar_month,
+                                    state.month.year,
+                                    state.month.monthValue,
+                                ),
                                 Modifier.weight(1f),
                                 style = MaterialTheme.typography.titleLarge,
                             )
                             IconButton(onClick = onNext, enabled = state.month < YearMonth.from(state.today)) {
                                 Icon(
                                     Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                                    stringResource(R.string.vip_calendar_next),
+                                    stringResource(R.string.feature_vip_impl_vip_calendar_next),
                                 )
                             }
                         }
-                        val weekdays = stringResource(R.string.vip_calendar_weekdays).split(",")
+                        val weekdays = stringResource(R.string.feature_vip_impl_vip_calendar_weekdays).split(",")
                         Row {
                             weekdays.forEach {
                                 Text(
@@ -143,9 +150,9 @@ internal fun VipCalendarScreen(
                                         val signed = state.records.any { it.date == date && it.signed }
                                         val today = date == state.today
                                         val dateLabel = if (signed) {
-                                            R.string.vip_calendar_signed_date
+                                            R.string.feature_vip_impl_vip_calendar_signed_date
                                         } else {
-                                            R.string.vip_calendar_empty_date
+                                            R.string.feature_vip_impl_vip_calendar_empty_date
                                         }
                                         val description = stringResource(dateLabel, date.toString())
                                         val background = if (today) {
@@ -170,7 +177,7 @@ internal fun VipCalendarScreen(
                         }
                         Text(
                             stringResource(
-                                R.string.vip_calendar_count,
+                                R.string.feature_vip_impl_vip_calendar_count,
                                 state.records.count {
                                     it.signed &&
                                         YearMonth.from(it.date) == state.month
@@ -179,20 +186,23 @@ internal fun VipCalendarScreen(
                         )
                     }
                 }
-                Text(stringResource(R.string.vip_calendar_note), style = MaterialTheme.typography.bodySmall)
+                Text(
+                    stringResource(R.string.feature_vip_impl_vip_calendar_note),
+                    style = MaterialTheme.typography.bodySmall,
+                )
                 state.error?.let { Text(stringResource(it.calendarMessage()), color = MaterialTheme.colorScheme.error) }
                 if (state.error != null && state.records.isEmpty()) {
                     TextButton(onClick = onRefresh, enabled = !state.loading) {
-                        Text(stringResource(R.string.vip_calendar_retry))
+                        Text(stringResource(R.string.feature_vip_impl_vip_calendar_retry))
                     }
                 }
                 state.result?.let { result ->
                     Text(
                         stringResource(
                             when {
-                                result.upgraded -> R.string.vip_calendar_success
-                                result.claimed -> R.string.vip_calendar_partial
-                                else -> R.string.vip_calendar_failed
+                                result.upgraded -> R.string.feature_vip_impl_vip_calendar_success
+                                result.claimed -> R.string.feature_vip_impl_vip_calendar_partial
+                                else -> R.string.feature_vip_impl_vip_calendar_failed
                             },
                         ),
                     )
@@ -201,11 +211,16 @@ internal fun VipCalendarScreen(
                     if (risk != null && canVerify) {
                         Button(onClick = {
                             onVerify(risk.challenge)
-                        }) { Text(stringResource(R.string.vip_calendar_verify)) }
+                        }) { Text(stringResource(R.string.feature_vip_impl_vip_calendar_verify)) }
                     }
                 }
                 Button(onClick = onSignIn, enabled = !state.busy, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(if (state.busy) R.string.vip_calendar_busy else R.string.vip_calendar_manual))
+                    val label = if (state.busy) {
+                        R.string.feature_vip_impl_vip_calendar_busy
+                    } else {
+                        R.string.feature_vip_impl_vip_calendar_manual
+                    }
+                    Text(stringResource(label))
                 }
                 Spacer(Modifier.height(128.dp))
             }
@@ -214,10 +229,10 @@ internal fun VipCalendarScreen(
 }
 
 private fun ContentFailure.calendarMessage(): Int = when (this) {
-    ContentFailure.Network -> R.string.vip_calendar_network
-    ContentFailure.AuthenticationRequired -> R.string.vip_calendar_login
-    ContentFailure.RiskBlocked -> R.string.vip_calendar_blocked
-    is ContentFailure.RiskVerificationRequired -> R.string.vip_calendar_verification
-    ContentFailure.Protocol -> R.string.vip_calendar_protocol
-    ContentFailure.ServiceRejected -> R.string.vip_calendar_failed
+    ContentFailure.Network -> R.string.feature_vip_impl_vip_calendar_network
+    ContentFailure.AuthenticationRequired -> R.string.feature_vip_impl_vip_calendar_login
+    ContentFailure.RiskBlocked -> R.string.feature_vip_impl_vip_calendar_blocked
+    is ContentFailure.RiskVerificationRequired -> R.string.feature_vip_impl_vip_calendar_verification
+    ContentFailure.Protocol -> R.string.feature_vip_impl_vip_calendar_protocol
+    ContentFailure.ServiceRejected -> R.string.feature_vip_impl_vip_calendar_failed
 }
