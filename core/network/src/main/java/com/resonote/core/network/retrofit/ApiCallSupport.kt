@@ -11,6 +11,8 @@ import com.resonote.core.network.api.model.MusicApiResponse
 import com.resonote.core.network.protocol.ApiRawResponse
 import com.resonote.core.network.protocol.ApiSessionPropagation
 import com.resonote.core.network.protocol.apiRequestPolicy
+import com.resonote.core.network.protocol.diagnosticCode
+import com.resonote.core.network.protocol.diagnosticNetworkLog
 import com.resonote.core.network.risk.ApiRiskChallengeDetector
 import com.resonote.core.network.session.ApiAuthenticationContext
 import com.resonote.core.network.session.ApiSessionManager
@@ -33,6 +35,7 @@ internal class ApiCallExecutor @Inject constructor(private val sessions: ApiSess
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (api: ApiException) {
+            diagnosticNetworkLog { "call failure type=${api.javaClass.simpleName}" }
             throw api
         } catch (http: retrofit2.HttpException) {
             val propagation = http.response()?.raw()?.request?.apiRequestPolicy()?.sessionPropagation
@@ -49,6 +52,9 @@ internal class ApiCallExecutor @Inject constructor(private val sessions: ApiSess
         } catch (offline: UnknownHostException) {
             throw ApiNetworkException(ApiNetworkException.Kind.Offline, offline)
         } catch (malformed: SerializationException) {
+            diagnosticNetworkLog {
+                "call failure classification=MalformedResponse type=${malformed.javaClass.simpleName}"
+            }
             throw ApiProtocolException(ApiProtocolException.Reason.MalformedResponse)
         } catch (connection: IOException) {
             throw ApiNetworkException(ApiNetworkException.Kind.Connection, connection)
@@ -65,6 +71,7 @@ internal class ApiResponseVerifier @Inject constructor(
     suspend fun requireSuccess(response: MusicApiResponse) {
         requireNoRiskChallenge(response)
         serviceFailureCodeOrNull(response)?.let { serviceCode ->
+            diagnosticNetworkLog { "response classification=ServiceRejected code=${serviceCode.diagnosticCode()}" }
             throw ApiServiceException(serviceCode)
         }
     }
@@ -89,6 +96,7 @@ internal class ApiResponseVerifier @Inject constructor(
                 serviceCode,
                 authenticationContext,
             )
+            diagnosticNetworkLog { "response classification=ServiceRejected code=${serviceCode.diagnosticCode()}" }
             throw ApiServiceException(serviceCode)
         }
         return body
@@ -111,6 +119,7 @@ internal class ApiResponseVerifier @Inject constructor(
     suspend fun requireWriteSuccess(response: MusicApiResponse) {
         requireNoRiskChallenge(response)
         serviceFailureCodeOrNull(response)?.let { serviceCode ->
+            diagnosticNetworkLog { "response classification=ServiceRejected code=${serviceCode.diagnosticCode()}" }
             throw ApiServiceException(serviceCode)
         }
     }

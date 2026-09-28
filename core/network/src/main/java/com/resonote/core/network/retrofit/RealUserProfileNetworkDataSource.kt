@@ -27,12 +27,13 @@ internal class RealUserProfileNetworkDataSource @Inject constructor(
 ) : UserProfileNetworkDataSource {
     override suspend fun userDetail(): NetworkUserDetail {
         val session = requireAuthenticatedSession()
+        val authenticationContext = responses.authenticationContext()
         val clientTime = clock.millis() / 1_000
         val envelope = buildJsonObject {
             put("token", requireNotNull(session.token))
             put("clienttime", clientTime)
         }.toString()
-        val response = calls.execute {
+        val rawResponse = calls.execute {
             musicApi.userDetail(
                 body = UserDetailRequest(
                     visitTime = clientTime,
@@ -42,7 +43,7 @@ internal class RealUserProfileNetworkDataSource @Inject constructor(
                 ),
             )
         }
-        responses.requireSuccess(response)
+        val response = responses.requireSuccess(rawResponse, authenticationContext)
         val data = response.data ?: throw missingField()
         val userId = data.userid?.takeIf { it.isNotBlank() && it != "0" } ?: session.userId ?: throw missingField()
         return NetworkUserDetail(

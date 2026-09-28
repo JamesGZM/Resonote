@@ -11,8 +11,8 @@
     <string name="feature_library_impl_my_unnamed_user">未命名用户</string>
     <string name="feature_library_impl_my_default_signature">还没有填写个性签名</string>
     <string name="feature_library_impl_my_vip">VIP</string>
-    <string name="feature_library_impl_my_daily_vip_check_in">签到</string>
-    <string name="feature_library_impl_my_daily_vip_login">登录后领取，返回时不会自动签到</string>
+    <string name="feature_library_impl_my_daily_vip_check_in">签到日历</string>
+    <string name="feature_library_impl_my_daily_vip_login">登录后查看签到日历</string>
     <string name="feature_library_impl_my_cloud">我的云盘</string>
     <string name="feature_library_impl_my_cloud_body">浏览并播放账号云端音乐</string>
     <string name="feature_library_impl_my_cloud_login">登录后继续进入云盘</string>

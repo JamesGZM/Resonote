@@ -23,9 +23,12 @@ import com.resonote.core.datastore.ProtoLyricsPreferencesStorage
 import com.resonote.core.datastore.ProtoPlaybackPreferencesStorage
 import com.resonote.core.datastore.ProtoPlaybackSessionSnapshotStorage
 import com.resonote.core.datastore.ProtoSearchHistoryStorage
+import com.resonote.core.datastore.ProtoVipPreferencesStorage
 import com.resonote.core.datastore.SearchHistorySerializer
 import com.resonote.core.datastore.SearchHistoryStorage
 import com.resonote.core.datastore.SessionCipher
+import com.resonote.core.datastore.VipPreferencesSerializer
+import com.resonote.core.datastore.VipPreferencesStorage
 import com.resonote.core.datastore.proto.AppearancePreferences
 import com.resonote.core.datastore.proto.EncryptedApiSession
 import com.resonote.core.datastore.proto.HomeSnapshot
@@ -33,6 +36,7 @@ import com.resonote.core.datastore.proto.LyricsPreferences
 import com.resonote.core.datastore.proto.PlaybackPreferences
 import com.resonote.core.datastore.proto.PlaybackSessionSnapshot
 import com.resonote.core.datastore.proto.SearchHistory
+import com.resonote.core.datastore.proto.VipPreferences
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -45,6 +49,14 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 internal object DataStoreModule {
+    @Provides
+    @Singleton
+    fun provideVipPreferencesDataStore(@ApplicationContext context: Context): DataStore<VipPreferences> =
+        DataStoreFactory.create(
+            serializer = VipPreferencesSerializer,
+            produceFile = { File(context.filesDir, "datastore/vip_preferences.pb") },
+        )
+
     @Provides
     @Singleton
     fun provideEncryptedSessionDataStore(@ApplicationContext context: Context): DataStore<EncryptedApiSession> =
@@ -106,6 +118,9 @@ internal object DataStoreModule {
 @Module
 @InstallIn(SingletonComponent::class)
 internal abstract class DataStoreBindings {
+    @Binds
+    abstract fun bindVipPreferencesStorage(implementation: ProtoVipPreferencesStorage): VipPreferencesStorage
+
     @Binds
     abstract fun bindHomeSnapshotStorage(implementation: ProtoHomeSnapshotStorage): HomeSnapshotStorage
 

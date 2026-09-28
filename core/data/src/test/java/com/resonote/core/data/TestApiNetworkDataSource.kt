@@ -6,6 +6,7 @@ import com.resonote.core.network.CloudNetworkDataSource
 import com.resonote.core.network.HomeNetworkDataSource
 import com.resonote.core.network.LibraryNetworkDataSource
 import com.resonote.core.network.LyricsNetworkDataSource
+import com.resonote.core.network.NetworkVipCheckInRecord
 import com.resonote.core.network.PlaybackNetworkDataSource
 import com.resonote.core.network.PlaylistNetworkDataSource
 import com.resonote.core.network.RankingNetworkDataSource
@@ -139,5 +140,7 @@ internal abstract class TestApiNetworkDataSource :
     override suspend fun resolveVideoUrl(hash: String): String? = unused()
     override suspend fun recognizeAudio(pcm: ByteArray): List<NetworkRecognitionMatch> = unused()
     override suspend fun claimDailyVip(receiveDay: String): NetworkVipRewardResult = unused()
+    override suspend fun serverTimeSeconds(): Long = error("unused")
+    override suspend fun vipCheckInRecords(): List<NetworkVipCheckInRecord> = error("unused")
     override suspend fun upgradeDailyVip(): NetworkVipRewardResult = unused()
 }

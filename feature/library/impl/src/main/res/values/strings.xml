@@ -11,8 +11,8 @@
     <string name="feature_library_impl_my_unnamed_user">Unnamed user</string>
     <string name="feature_library_impl_my_default_signature">No profile bio yet</string>
     <string name="feature_library_impl_my_vip">VIP</string>
-    <string name="feature_library_impl_my_daily_vip_check_in">Check in</string>
-    <string name="feature_library_impl_my_daily_vip_login">Sign in to claim; returning won’t check in automatically</string>
+    <string name="feature_library_impl_my_daily_vip_check_in">Check-in calendar</string>
+    <string name="feature_library_impl_my_daily_vip_login">Sign in to view your check-in calendar</string>
     <string name="feature_library_impl_my_cloud">My cloud music</string>
     <string name="feature_library_impl_my_cloud_body">Browse and play music stored in your account</string>
     <string name="feature_library_impl_my_cloud_login">Sign in to access cloud music</string>

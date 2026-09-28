@@ -5,6 +5,7 @@ import com.resonote.core.model.AuthGateReason
 import com.resonote.core.model.AuthState
 import com.resonote.core.navigation.LoginContinuation
 import com.resonote.core.navigation.LoginGateNavKey
+import com.resonote.core.navigation.VipCalendarNavKey
 import com.resonote.feature.cloud.api.CloudNavKey
 
 internal fun MutableList<NavKey>.synchronizeAuthenticationGate(authState: AuthState) {
@@ -18,6 +19,12 @@ internal fun MutableList<NavKey>.synchronizeAuthenticationGate(authState: AuthSt
     }
     removeAll { it is LoginGateNavKey }
     destination?.let(::add)
+    if (authState is AuthState.Authenticated &&
+        continuation == LoginContinuation.VipCalendar &&
+        none { it is VipCalendarNavKey }
+    ) {
+        add(VipCalendarNavKey)
+    }
     if (authState is AuthState.Authenticated && continuation == LoginContinuation.Cloud && none { it is CloudNavKey }) {
         add(CloudNavKey)
     }

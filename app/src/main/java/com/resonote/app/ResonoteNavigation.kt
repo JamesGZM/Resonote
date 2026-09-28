@@ -22,10 +22,13 @@ import androidx.navigation3.ui.NavDisplay
 import androidx.navigation3.ui.defaultPopTransitionSpec
 import com.resonote.core.model.AuthState
 import com.resonote.core.model.OnlineSong
+import com.resonote.core.model.RiskChallengeHandle
+import com.resonote.core.navigation.LoginContinuation
 import com.resonote.core.navigation.LoginGateNavKey
 import com.resonote.core.navigation.RiskVerificationContinuation
 import com.resonote.core.navigation.RiskVerificationNavKey
 import com.resonote.core.navigation.TabsShellNavKey
+import com.resonote.core.navigation.VipCalendarNavKey
 import com.resonote.core.playback.PlaybackState
 import com.resonote.feature.album.api.AlbumNavKey
 import com.resonote.feature.album.impl.AlbumRoute
@@ -78,6 +81,8 @@ import com.resonote.feature.settings.impl.PrivacySettingsRoute
 import com.resonote.feature.settings.impl.SettingsRoute
 import com.resonote.feature.video.api.VideoNavKey
 import com.resonote.feature.video.impl.VideoRoute
+import com.resonote.feature.vip.impl.VipCalendarRoute
+import com.resonote.feature.vip.impl.VipCalendarViewModel
 
 private const val PLAYER_EXPAND_DURATION_MILLIS = 320
 private const val PLAYER_COLLAPSE_DURATION_MILLIS = 260
@@ -102,6 +107,8 @@ internal fun ResonoteNavDisplay(
     onOpenPlaylistPicker: (OnlineSong) -> Unit,
     onOpenSongInfo: (OnlineSong) -> Unit,
     onOpenDailyVip: () -> Unit,
+    vipCalendarViewModel: VipCalendarViewModel,
+    onVipVerify: (RiskChallengeHandle) -> Unit,
     onTabBarInsetChanged: (Dp) -> Unit,
     onVideoFullscreenChange: (Boolean) -> Unit,
     completedLoginRiskHandle: String?,
@@ -122,6 +129,11 @@ internal fun ResonoteNavDisplay(
             defaultPopTransitionSpec<NavKey>().invoke(this)
         },
         entryProvider = entryProvider {
+            entry<VipCalendarNavKey> {
+                VipCalendarRoute(vipCalendarViewModel, onBack = {
+                    backStack.popCurrentDestination(viewModel::acknowledgeAuthenticationGate)
+                }, onVerify = onVipVerify)
+            }
             entry<TabsShellNavKey> {
                 TabsShell(
                     tabsShellState = tabsShellState,
@@ -144,7 +156,9 @@ internal fun ResonoteNavDisplay(
                         if (authState is AuthState.Authenticated) {
                             onOpenDailyVip()
                         } else if (backStack.lastOrNull() !is LoginGateNavKey) {
-                            backStack.add(LoginGateNavKey(sessionExpired = false))
+                            backStack.add(
+                                LoginGateNavKey(sessionExpired = false, continuation = LoginContinuation.VipCalendar),
+                            )
                         }
                     },
                     onFollowingClick = {

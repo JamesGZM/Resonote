@@ -6,6 +6,22 @@ import org.junit.Test
 
 class RedactedNetworkLoggingInterceptorTest {
     @Test
+    fun diagnosticEnvelopeExcludesPayloadAndUntrustedMetadata() {
+        val envelope = """
+            {"status":0,"error_code":"20017","code":"token=secret","message":"private","data":{"token":"secret"}}
+        """.trimIndent()
+
+        assertThat(envelope.diagnosticEnvelope())
+            .isEqualTo("status=0 error_code=20017 errcode=absent code=redacted ssaCode=absent")
+    }
+
+    @Test
+    fun diagnosticEnvelopeHandlesMalformedAndNonObjectBodies() {
+        assertThat("{unfinished".diagnosticEnvelope()).isEqualTo("envelope=non-json-or-truncated")
+        assertThat("[]".diagnosticEnvelope()).isEqualTo("envelope=non-json-or-truncated")
+    }
+
+    @Test
     fun labelExcludesQueryAndSensitiveValues() {
         val request =
             Request.Builder()

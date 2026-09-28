@@ -8,6 +8,7 @@ import com.resonote.core.database.ResonoteDatabase
 import com.resonote.core.database.history.DeviceHistoryDao
 import com.resonote.core.database.karaoke.KaraokeDao
 import com.resonote.core.database.local.LocalMediaDao
+import com.resonote.core.database.vip.VipCheckInDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -24,7 +25,7 @@ internal object DatabaseModule {
         context,
         ResonoteDatabase::class.java,
         "resonote.db",
-    ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build()
+    ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5).build()
 
     @Provides
     fun provideLocalMediaDao(database: ResonoteDatabase): LocalMediaDao = database.localMediaDao()
@@ -34,6 +35,18 @@ internal object DatabaseModule {
 
     @Provides
     fun provideKaraokeDao(database: ResonoteDatabase): KaraokeDao = database.karaokeDao()
+
+    @Provides
+    fun provideVipCheckInDao(database: ResonoteDatabase): VipCheckInDao = database.vipCheckInDao()
+
+    internal val MIGRATION_4_5 = object : Migration(4, 5) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `vip_check_in` (`userId` TEXT NOT NULL, `date` TEXT NOT NULL, " +
+                    "`signed` INTEGER NOT NULL, `upgraded` INTEGER NOT NULL, PRIMARY KEY(`userId`, `date`))",
+            )
+        }
+    }
 
     internal val MIGRATION_1_2 = object : Migration(1, 2) {
         override fun migrate(db: SupportSQLiteDatabase) {

@@ -35,7 +35,6 @@ import com.resonote.core.designsystem.component.ResonoteSnackbarHost
 import com.resonote.core.designsystem.tokens.ResonoteTokens
 import com.resonote.core.model.OnlineSong
 import com.resonote.core.model.PlaybackUnavailableReason
-import com.resonote.core.model.RiskChallengeHandle
 import com.resonote.core.navigation.TabsShellNavKey
 import com.resonote.core.playback.PlaybackIssue
 import com.resonote.core.playback.PlaybackState
@@ -51,13 +50,10 @@ import com.resonote.feature.player.impl.badgeLabel
 import com.resonote.feature.recognition.api.RecognitionNavKey
 import com.resonote.feature.search.api.SearchTab
 import com.resonote.feature.video.api.VideoNavKey
-import com.resonote.feature.vip.impl.DailyVipDialogRoute
-import com.resonote.feature.vip.impl.DailyVipViewModel
 
 @Stable
 internal class ResonoteOverlayState {
     var queueOpen by mutableStateOf(false)
-    var dailyVipDialogOpen by mutableStateOf(false)
     var songActionRequest by mutableStateOf<OnlineSongActionRequest?>(null)
     var playlistPickerSong by mutableStateOf<OnlineSong?>(null)
     var infoSong by mutableStateOf<OnlineSong?>(null)
@@ -86,8 +82,6 @@ internal fun BoxScope.ResonoteAppOverlays(
     snackbarController: ResonoteSnackbarController,
     onOpenPlaylistPicker: (OnlineSong) -> Unit,
     onSearch: (String, SearchTab) -> Unit,
-    onOpenRiskVerification: (RiskChallengeHandle) -> Unit,
-    dailyVipViewModel: DailyVipViewModel,
 ) {
     val queueNextMessage = stringResource(R.string.song_action_added_next)
     val queueAddedMessage = stringResource(R.string.song_action_added_queue)
@@ -191,17 +185,6 @@ internal fun BoxScope.ResonoteAppOverlays(
             },
         )
     }
-
-    DailyVipDialogRoute(
-        visible = state.dailyVipDialogOpen,
-        onDismiss = { state.dailyVipDialogOpen = false },
-        onRewardApplied = {
-            myViewModel.refresh()
-            playbackViewModel.refreshCurrentOnlineSource(force = true)
-        },
-        onRiskVerificationRequired = onOpenRiskVerification,
-        viewModel = dailyVipViewModel,
-    )
 
     if (snackbarHostSurface == null) {
         GlobalSnackbarHost(

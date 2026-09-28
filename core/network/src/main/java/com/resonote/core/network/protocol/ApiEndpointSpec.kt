@@ -11,6 +11,8 @@ internal enum class ApiRiskPolicy { Detect, Bypass }
 internal enum class ApiServiceAuthenticationPolicy(val serviceCodes: Set<String>) {
     None(emptySet()),
     SearchLoginRequired(setOf("152")),
+    UserDetailSessionExpired(setOf("20018")),
+    DailyVipSessionExpired(setOf("20018")),
 }
 
 internal data class ApiEndpointSpec(

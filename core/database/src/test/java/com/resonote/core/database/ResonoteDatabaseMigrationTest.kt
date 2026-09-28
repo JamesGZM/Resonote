@@ -76,10 +76,15 @@ class ResonoteDatabaseMigrationTest {
                     DatabaseModule.MIGRATION_1_2,
                     DatabaseModule.MIGRATION_2_3,
                     DatabaseModule.MIGRATION_3_4,
+                    DatabaseModule.MIGRATION_4_5,
                 )
                 .allowMainThreadQueries()
                 .build()
         try {
+            migrated.vipCheckInDao().merge(
+                com.resonote.core.database.vip.VipCheckInEntity("account", "2026-09-28", true, false),
+            )
+            assertThat(migrated.vipCheckInDao().find("account", "2026-09-28")?.signed).isTrue()
             assertThat(migrated.localMediaDao().findById("retained")?.title).isEqualTo("Retained")
             migrated.deviceHistoryDao().record(historyEntity())
             assertThat(migrated.deviceHistoryDao().findAll().single().mediaId).isEqualTo("cloud-hash")

@@ -79,7 +79,7 @@ class MyScreenshotTest {
 
         assertThat(checkInBounds.left).isAtLeast(userIdBounds.right)
         assertThat(checkInBounds.center.y).isWithin(1f).of(userIdBounds.center.y)
-        composeRule.onNodeWithText("签到").performClick()
+        composeRule.onNodeWithText("签到日历").performClick()
         assertThat(dailyVipClicks).isEqualTo(1)
     }
 

@@ -5,6 +5,7 @@ import com.resonote.core.model.AudioQuality
 import com.resonote.core.model.CollectionLoadResult
 import com.resonote.core.model.ContentFailure
 import com.resonote.core.network.ApiProtocolException
+import com.resonote.core.network.NetworkVipCheckInRecord
 import com.resonote.core.network.model.NetworkMobileCodeLoginResult
 import com.resonote.core.network.model.NetworkPlaylistInfo
 import com.resonote.core.network.model.NetworkPlaylistPage
@@ -208,6 +209,8 @@ class CollectionRepositoriesTest {
             error("unused")
         override suspend fun claimDailyVip(receiveDay: String): com.resonote.core.network.model.NetworkVipRewardResult =
             error("unused")
+        override suspend fun serverTimeSeconds(): Long = error("unused")
+        override suspend fun vipCheckInRecords(): List<NetworkVipCheckInRecord> = error("unused")
         override suspend fun upgradeDailyVip(): com.resonote.core.network.model.NetworkVipRewardResult = error("unused")
     }
 }

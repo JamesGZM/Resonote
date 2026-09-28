@@ -10,6 +10,13 @@ internal class DefaultVipRewardRepository @Inject constructor(
     private val network: VipNetworkDataSource,
     private val riskChallenges: RiskChallengeRegistry,
 ) : VipRewardRepository {
+    override suspend fun serverTimeSeconds() = loadCollection(riskChallenges) { network.serverTimeSeconds() }
+    override suspend fun records() = loadCollection(riskChallenges) {
+        network.vipCheckInRecords().map {
+            com.resonote.core.model.VipCheckInRecord(java.time.LocalDate.parse(it.date), it.upgraded, it.upgraded)
+        }
+    }
+
     override suspend fun claimDaily(receiveDay: String) = loadCollection(riskChallenges) {
         require(RECEIVE_DAY_PATTERN.matches(receiveDay)) { "receiveDay must use yyyy-MM-dd" }
         network.claimDailyVip(receiveDay).let {

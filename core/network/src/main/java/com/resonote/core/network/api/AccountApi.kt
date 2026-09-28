@@ -11,9 +11,11 @@ import com.resonote.core.network.api.model.UserPlaylistsData
 import com.resonote.core.network.api.model.UserPlaylistsRequest
 import com.resonote.core.network.api.model.UserVipData
 import com.resonote.core.network.protocol.ApiRequestPolicy
+import com.resonote.core.network.protocol.ApiServiceAuthenticationPolicy
 import com.resonote.core.network.protocol.ApiSessionPropagation
 import com.resonote.core.network.protocol.ApiSignatureMode
 import kotlinx.serialization.json.JsonElement
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Headers
@@ -22,9 +24,15 @@ import retrofit2.http.Query
 import retrofit2.http.Url
 
 internal interface AccountApi {
-    @ApiRequestPolicy(router = "usercenter.kugou.com")
+    @ApiRequestPolicy(
+        router = "usercenter.kugou.com",
+        serviceAuthentication = ApiServiceAuthenticationPolicy.UserDetailSessionExpired,
+    )
     @POST("v3/get_my_info")
-    suspend fun userDetail(@Query("plat") platform: Int = 1, @Body body: UserDetailRequest): ApiResponse<UserDetailData>
+    suspend fun userDetail(
+        @Query("plat") platform: Int = 1,
+        @Body body: UserDetailRequest,
+    ): Response<ApiResponse<UserDetailData>>
 
     @ApiRequestPolicy
     @GET
@@ -87,7 +95,15 @@ internal interface AccountApi {
         @Query("qrcode") qrCode: String,
     ): ApiResponse<JsonElement>
 
+    @ApiRequestPolicy(router = "usercenter.kugou.com")
+    @POST("v1/server_now")
+    suspend fun serverTime(@Body body: JsonElement, @Query("plat") platform: Int = 3): ApiResponse<JsonElement>
+
     @ApiRequestPolicy
+    @GET("youth/v1/activity/get_month_vip_record")
+    suspend fun vipCheckInRecords(@Query("latest_limit") limit: Int = 100): ApiResponse<JsonElement>
+
+    @ApiRequestPolicy(serviceAuthentication = ApiServiceAuthenticationPolicy.DailyVipSessionExpired)
     @Headers("Content-Type: application/x-www-form-urlencoded")
     @POST("youth/v1/recharge/receive_vip_listen_song")
     suspend fun claimDailyVip(
@@ -95,7 +111,7 @@ internal interface AccountApi {
         @Query("receive_day") receiveDay: String,
     ): ApiResponse<JsonElement>
 
-    @ApiRequestPolicy
+    @ApiRequestPolicy(serviceAuthentication = ApiServiceAuthenticationPolicy.DailyVipSessionExpired)
     @POST("youth/v1/listen_song/upgrade_vip_reward")
     suspend fun upgradeDailyVip(
         @Query("kugouid") userId: Long,

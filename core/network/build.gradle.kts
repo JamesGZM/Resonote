@@ -6,6 +6,13 @@ plugins {
 
 android {
     namespace = "com.resonote.core.network"
+    defaultConfig {
+        buildConfigField(
+            "boolean",
+            "DIAGNOSTIC_LOGGING",
+            providers.gradleProperty("resonoteDiagnosticLogging").orElse("false").get().toBoolean().toString(),
+        )
+    }
     buildFeatures {
         buildConfig = true
     }

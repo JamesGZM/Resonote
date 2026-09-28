@@ -58,6 +58,18 @@ class MainActivityViewModelTest {
     fun tearDown() = Dispatchers.resetMain()
 
     @Test
+    fun calendarLoginContinuationOpensCalendarOnlyOnce() {
+        val backStack = mutableListOf<androidx.navigation3.runtime.NavKey>(
+            com.resonote.core.navigation.TabsShellNavKey,
+            LoginGateNavKey(false, LoginContinuation.VipCalendar),
+        )
+        backStack.synchronizeAuthenticationGate(AuthState.Authenticated("fixture"))
+        backStack.synchronizeAuthenticationGate(AuthState.Authenticated("fixture"))
+        assertThat(backStack.last()).isEqualTo(com.resonote.core.navigation.VipCalendarNavKey)
+        assertThat(backStack.count { it == com.resonote.core.navigation.VipCalendarNavKey }).isEqualTo(1)
+    }
+
+    @Test
     fun requiredExpiredAcknowledgedAndAuthenticatedStatesRemainCentralized() = runTest {
         val repository = FakeAuthRepository()
         val viewModel = MainActivityViewModel(

@@ -1225,6 +1225,7 @@ class ApiNetworkDataSourceTest {
         assertThat(detail.registrationEpochSeconds).isEqualTo(1_530_403_200)
         val request = gatewayServer.takeRequest()
         assertThat(request.requestUrl?.encodedPath).isEqualTo("/v3/get_my_info")
+        assertThat(request.requestUrl?.queryParameter("appid")).isEqualTo("3116")
         assertThat(request.requestUrl?.queryParameter("plat")).isEqualTo("1")
         assertThat(request.getHeader("x-router")).isEqualTo("usercenter.kugou.com")
         val body = json.parseToJsonElement(request.body.readUtf8()).jsonObject
@@ -1232,6 +1233,30 @@ class ApiNetworkDataSourceTest {
         assertThat(body["usertype"]?.jsonPrimitive?.content).isEqualTo("1")
         assertThat(body["userid"]?.jsonPrimitive?.content).isEqualTo("99")
         assertThat(body["p"]?.jsonPrimitive?.content).matches("[0-9A-F]+")
+    }
+
+    @Test
+    fun userDetailExpiredCredentialOpensAuthenticationGate() = runTest {
+        gatewayServer.enqueue(jsonResponse("""{"status":0,"error_code":20018}"""))
+        val source = dataSource()
+
+        val failure = runCatching { source.userDetail() }.exceptionOrNull() as ApiAuthenticationRequiredException
+
+        assertThat(failure.reason).isEqualTo(ApiAuthenticationGateReason.SessionExpired)
+        assertThat(failure.serviceCode).isEqualTo("20018")
+        assertThat(source.authenticationClearCount).isEqualTo(1)
+        assertThat(gatewayServer.requestCount).isEqualTo(1)
+    }
+
+    @Test
+    fun userDetailHttpUnauthorizedOpensAuthenticationGate() = runTest {
+        gatewayServer.enqueue(MockResponse().setResponseCode(401))
+        val source = dataSource()
+
+        val failure = runCatching { source.userDetail() }.exceptionOrNull() as ApiAuthenticationRequiredException
+
+        assertThat(failure.reason).isEqualTo(ApiAuthenticationGateReason.SessionExpired)
+        assertThat(source.authenticationClearCount).isEqualTo(1)
     }
 
     @Test
@@ -1968,6 +1993,59 @@ class ApiNetworkDataSourceTest {
         assertThat(check.requestUrl?.encodedPath).isEqualTo("/v2/get_userinfo_qrcode")
         assertThat(check.requestUrl?.queryParameter("qrcode")).isEqualTo("qr-key")
         assertThat(check.requestUrl?.queryParameter("appid")).isEqualTo("3116")
+    }
+
+    @Test
+    fun vipCalendarReadsServerTimeAndRecentRecords() = runTest {
+        gatewayServer.enqueue(jsonResponse("""{"status":1,"data":{"timestamp":1700000000}}"""))
+        gatewayServer.enqueue(
+            jsonResponse(
+                """{"status":1,"data":{"list":[{"day":"2026-09-28","vip_type":"svip"},{"day":"2026-09-27","vip_type":"tvip"}]}}""",
+            ),
+        )
+        val source = dataSource()
+        assertThat(source.serverTimeSeconds()).isEqualTo(1700000000L)
+        val records = source.vipCheckInRecords()
+        assertThat(records.map { it.upgraded }).containsExactly(true, false).inOrder()
+        val time = gatewayServer.takeRequest()
+        assertThat(time.method).isEqualTo("POST")
+        assertThat(time.requestUrl?.encodedPath).isEqualTo("/v1/server_now")
+        assertThat(time.requestUrl?.queryParameter("plat")).isEqualTo("3")
+        assertThat(time.getHeader("x-router")).isEqualTo("usercenter.kugou.com")
+        val history = gatewayServer.takeRequest()
+        assertThat(history.method).isEqualTo("GET")
+        assertThat(history.requestUrl?.queryParameter("latest_limit")).isEqualTo("100")
+        assertThat(history.requestUrl?.queryParameter("signature")).isNotEmpty()
+    }
+
+    @Test
+    fun dailyVipRejectsMissingSuccessAndExpiresOnlyExplicitCredentialFailure() = runTest {
+        gatewayServer.enqueue(jsonResponse("""{}"""))
+        gatewayServer.enqueue(jsonResponse("""{"status":0,"error_code":20018}"""))
+        val source = dataSource()
+        assertThat(runCatching { source.claimDailyVip("2026-09-28") }.exceptionOrNull())
+            .isInstanceOf(ApiProtocolException::class.java)
+        assertThat(source.authenticationClearCount).isEqualTo(0)
+        assertThat(runCatching { source.upgradeDailyVip() }.exceptionOrNull())
+            .isInstanceOf(ApiAuthenticationRequiredException::class.java)
+        assertThat(source.authenticationClearCount).isEqualTo(1)
+    }
+
+    @Test
+    fun calendarMalformedRecordsAreNotSilentlyEmpty() = runTest {
+        gatewayServer.enqueue(jsonResponse("""{"status":1,"data":{"list":[{"day":"invalid"}]}}"""))
+        assertThat(runCatching { dataSource().vipCheckInRecords() }.exceptionOrNull())
+            .isInstanceOf(ApiProtocolException::class.java)
+    }
+
+    @Test
+    fun dailyVipUpgradeAlreadyDoneAndChallengeRemainRecoverable() = runTest {
+        gatewayServer.enqueue(jsonResponse("""{"status":0,"error_code":20030}"""))
+        gatewayServer.enqueue(jsonResponse("""{"status":0,"error_code":20028,"ssaCode":"event"}"""))
+        val source = dataSource()
+        assertThat(source.upgradeDailyVip().alreadyDone).isTrue()
+        assertThat(runCatching { source.claimDailyVip("2026-09-28") }.exceptionOrNull())
+            .isInstanceOf(com.resonote.core.network.ApiRiskException::class.java)
     }
 
     @Test

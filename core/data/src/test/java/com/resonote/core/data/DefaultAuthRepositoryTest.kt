@@ -10,6 +10,7 @@ import com.resonote.core.model.QrLoginCheckResult
 import com.resonote.core.model.QrLoginKeyResult
 import com.resonote.core.model.SendMobileCodeResult
 import com.resonote.core.network.ApiRiskException
+import com.resonote.core.network.NetworkVipCheckInRecord
 import com.resonote.core.network.model.NetworkAccountOption
 import com.resonote.core.network.model.NetworkMobileCodeLoginResult
 import com.resonote.core.network.model.NetworkPasswordLoginResult
@@ -337,6 +338,8 @@ class DefaultAuthRepositoryTest {
         override suspend fun checkQrLogin(key: String): NetworkQrLoginStatus = qrStatus
         override suspend fun claimDailyVip(receiveDay: String): com.resonote.core.network.model.NetworkVipRewardResult =
             error("unused")
+        override suspend fun serverTimeSeconds(): Long = error("unused")
+        override suspend fun vipCheckInRecords(): List<NetworkVipCheckInRecord> = error("unused")
         override suspend fun upgradeDailyVip(): com.resonote.core.network.model.NetworkVipRewardResult = error("unused")
     }
 

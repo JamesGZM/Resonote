@@ -17,6 +17,7 @@ import com.resonote.core.network.ApiNetworkException
 import com.resonote.core.network.ApiPlaybackUnavailableException
 import com.resonote.core.network.ApiProtocolException
 import com.resonote.core.network.ApiRiskException
+import com.resonote.core.network.NetworkVipCheckInRecord
 import com.resonote.core.network.model.NetworkMobileCodeLoginResult
 import com.resonote.core.network.model.NetworkPlaylistPage
 import com.resonote.core.network.model.NetworkPlaylistSummary
@@ -573,6 +574,8 @@ class DefaultHomeRepositoryTest {
             error("unused")
         override suspend fun claimDailyVip(receiveDay: String): com.resonote.core.network.model.NetworkVipRewardResult =
             error("unused")
+        override suspend fun serverTimeSeconds(): Long = error("unused")
+        override suspend fun vipCheckInRecords(): List<NetworkVipCheckInRecord> = error("unused")
         override suspend fun upgradeDailyVip(): com.resonote.core.network.model.NetworkVipRewardResult = error("unused")
     }
 

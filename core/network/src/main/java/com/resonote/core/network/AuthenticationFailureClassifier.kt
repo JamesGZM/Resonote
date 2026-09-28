@@ -1,6 +1,8 @@
 package com.resonote.core.network
 
 import com.resonote.core.network.protocol.ApiSessionPropagation
+import com.resonote.core.network.protocol.diagnosticCode
+import com.resonote.core.network.protocol.diagnosticNetworkLog
 import com.resonote.core.network.session.ApiAuthenticationContext
 import com.resonote.core.network.session.ApiSessionManager
 
@@ -16,6 +18,7 @@ internal object AuthenticationFailureClassifier {
         context: ApiAuthenticationContext,
         serviceCode: String? = null,
     ): ApiAuthenticationRequiredException? = sessions.reportAuthenticationFailure(context)?.let { reason ->
+        diagnosticNetworkLog { "authentication classification=$reason code=${serviceCode.diagnosticCode()}" }
         ApiAuthenticationRequiredException(reason, serviceCode)
     }
 

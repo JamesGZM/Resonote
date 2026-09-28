@@ -12,6 +12,7 @@ import com.resonote.core.network.ApiNetworkException
 import com.resonote.core.network.ApiPlaybackUnavailableException
 import com.resonote.core.network.ApiRiskBlockedException
 import com.resonote.core.network.ApiServiceException
+import com.resonote.core.network.NetworkVipCheckInRecord
 import com.resonote.core.network.model.NetworkCloudPage
 import com.resonote.core.network.model.NetworkCloudStorage
 import com.resonote.core.network.model.NetworkCloudTrack
@@ -419,6 +420,8 @@ class UserRepositoriesTest {
             rewardFailure?.let { throw it }
             return NetworkVipRewardResult(true, true)
         }
+        override suspend fun serverTimeSeconds(): Long = error("unused")
+        override suspend fun vipCheckInRecords(): List<NetworkVipCheckInRecord> = error("unused")
         override suspend fun upgradeDailyVip(): NetworkVipRewardResult {
             rewardFailure?.let { throw it }
             return NetworkVipRewardResult(false, false)
